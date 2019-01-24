@@ -1,5 +1,3 @@
-import assertRevert from "zeppelin-solidity/test/helpers/assertRevert";
-
 const GoodDollar = artifacts.require("GoodDollar");
 const GoodDollarReserve = artifacts.require("GoodDollarReserve");
 const RedemptionFunctional = artifacts.require("RedemptionFunctional");

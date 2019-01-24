@@ -1,5 +1,3 @@
-import assertRevert from "zeppelin-solidity/test/helpers/assertRevert";
-
 const GoodReserve = artifacts.require("GoodDollarReserve");
 
 contract("GoodDollarReserve", accounts => {

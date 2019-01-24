@@ -18,7 +18,7 @@ module.exports = function(deployer,network,accounts) {
         await deployer.deploy(Identity);
         let GDD = await GoodDollar.deployed();
         // Deploying the GoodDollarReserve and Creating 10 Ethers in it's account from the deployer.
-        await deployer.deploy(GoodDollarReserve, GDD.address, BancorFormula.address, {'value': web3.utils.toWei("1", "ether")}); 
+        await deployer.deploy(GoodDollarReserve, GDD.address, BancorFormula.address,"1000", {'value': web3.utils.toWei("0.01", "ether")}); 
         
         await deployer.deploy(RedemptionFunctional, Identity.address, RedemptionData.address, GoodDollarReserve.address);
 

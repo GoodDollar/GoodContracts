@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -23,7 +23,8 @@ contract GoodDollarReserve is Ownable {
 
     uint256 public inflationRate = 1;
 
-    constructor(address _token, address _formula) public payable {
+    constructor(address _token, address _formula, uint32 ratio) public payable {
+        reserveRatio = ratio;
         token = GoodDollar(_token);
         formula = BancorFormula(_formula);
     }

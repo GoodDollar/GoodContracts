@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
@@ -21,10 +21,10 @@ contract GoodDollar is ERC20Detailed,ERC20Mintable,ERC20Burnable,Ownable {
     }
 
     constructor (
-        string name,
-        string symbol,
+        string memory name,
+        string memory symbol,
         uint8 decimals,
-        address[] minters
+        address[] memory minters
     ) public
         ERC20Burnable()
         ERC20Mintable()

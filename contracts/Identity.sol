@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 
 contract Identity is Ownable {
+    
     mapping(address => bool) private white_listed;
 
     uint8 public whiteListedUserCount;
@@ -14,12 +15,12 @@ contract Identity is Ownable {
     }
 
     modifier whiteListed() {
-        bool check = checkUser(msg.sender);
+        bool check = isVerified(msg.sender);
         require(check);
         _;
     }   
     
-    function checkUser(
+    function isVerified(
         address _account
     ) public view returns(bool) {
         return white_listed[_account];
@@ -33,6 +34,14 @@ contract Identity is Ownable {
     ) public whiteListed returns(bool) {
         white_listed[_account] = true;
         whiteListedUserCount = whiteListedUserCount + 1;
+        return true;
+    }
+
+    function blackListUser(
+        address _account
+    ) public onlyOwner returns(bool) {
+        white_listed[_account] = false;
+        whiteListedUserCount = whiteListedUserCount - 1;
         return true;
     }
 

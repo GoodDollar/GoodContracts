@@ -19,15 +19,15 @@ module.exports = {
     'development': { // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
-      network_id: "6000", // Match any network id
+      network_id: "4447", // Match any network id
       from: '0x244a9ac7012f1b5e6f74f78e1dc69ef69df1dab6' // should be equal to first address in truffle UI list - address[0]
 
     },
     test: {
       host: "127.0.0.1",
       port: 9545, // my "ganache " runs on 8545 - configurable
-      network_id: "6000", // my "ganache " runs with 6000 network_id - configurable
-      from: '0x967c5155b22fd296b66d0f2f48cd7afe854adea8' // should be equal to first address in truffle UI list - address[0]
+      network_id: "4447", // my "ganache " runs with 6000 network_id - configurable
+      from: '0x244a9ac7012f1b5e6f74f78e1dc69ef69df1dab6' // should be equal to first address in truffle UI list - address[0]
     },
 
     'ganache': {

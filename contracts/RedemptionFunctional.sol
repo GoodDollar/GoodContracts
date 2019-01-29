@@ -17,7 +17,7 @@ contract RedemptionFunctional is Ownable {
     event ClaimCalculated(uint256 base, uint256 interest, uint256 total);
 
     modifier whiteListed() {
-        bool check = identity.checkUser(msg.sender);
+        bool check = identity.isVerified(msg.sender);
         require(check);
         _;
     }  

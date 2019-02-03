@@ -16,7 +16,7 @@ module.exports = {
   // to customize your Truffle configuration!
 
   networks: {
-    'development': { // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
+    'develop': { // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
       network_id: "4447", // Match any network id

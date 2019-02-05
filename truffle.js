@@ -40,14 +40,14 @@ module.exports = {
 
     ropsten: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/" + infura_api)
+        return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/" + infura_api,0,10)
       },
       network_id: 3,
       gas:2071238
     },
     kovan: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://kovan.infura.io/" + infura_api)
+        return new HDWalletProvider(mnemonic, "https://kovan.infura.io/" + infura_api,0,10)
       },
       network_id: 42,
       gas:4700000,

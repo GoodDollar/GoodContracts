@@ -35,7 +35,7 @@ contract("GoodDollar", accounts => {
     let instance = await GoodDollar.deployed();
     let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
     let identity = await Identity.deployed()
-    let whitelisted = await identity.checkUser(accounts[1])
+    let whitelisted = await identity.isVerified(accounts[1])
     assert.equal(whitelisted, false);
   });
 
@@ -44,11 +44,11 @@ contract("GoodDollar", accounts => {
     let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
     let identity = await Identity.deployed()
     await identity.whiteListUser(accounts[1])
-    let whitelisted = await identity.checkUser(accounts[1])
+    let whitelisted = await identity.isVerified(accounts[1])
     assert.equal(whitelisted, true);
   });
 
-  it("Should entitle a first-time users to 10 tokens", async () => {
+  it("Should entitle a first-time users to tokens", async () => {
     let instance = await GoodDollar.deployed();
     let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
     let owner = await instanceRedemptionFunctional.owner();

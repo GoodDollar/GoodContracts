@@ -57,7 +57,7 @@ contract GoodDollarReserve is Ownable {
     }
 
     function buy() public payable returns(bool) {
-        require(msg.value > 0);
+        require(msg.value > 0,"value can't be 0");
         uint256 tokensToMint = formula.calculatePurchaseReturn(
             totalSupply(),
 
@@ -76,7 +76,7 @@ contract GoodDollarReserve is Ownable {
     }
 
     function sell(uint256 _sellAmount) public returns(bool){
-        require(_sellAmount > 0 && token.balanceOf(msg.sender) >= _sellAmount);
+        require(_sellAmount > 0 && token.balanceOf(msg.sender) >= _sellAmount, "Not enough balance or amount 0");
         uint256 ethAmount = formula.calculateSaleReturn(
             totalSupply(),
             poolBalance(),

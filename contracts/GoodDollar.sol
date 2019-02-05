@@ -5,8 +5,9 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./token/ERC827Token.sol";
 
-contract GoodDollar is ERC20Detailed,ERC20Mintable,ERC20Burnable,Ownable {
+contract GoodDollar is ERC827Token,ERC20Detailed,ERC20Mintable,ERC20Burnable, Ownable {
     using SafeMath for uint256;
 
     event PopulatedMarket();

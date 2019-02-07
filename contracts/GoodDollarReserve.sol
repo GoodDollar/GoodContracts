@@ -2,13 +2,15 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/access/roles/SignerRole.sol";
 
 import "./BancorFormula.sol";
 import "./GoodDollar.sol";
 import "./IMonetaryPolicy.sol";
 
-contract GoodDollarReserve is IMonetaryPolicy, Ownable {
+contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
   using SafeMath for uint256;
+  using SafeMath for uint;
 
   GoodDollar public token;
   BancorFormula public formula;
@@ -20,9 +22,13 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable {
 
   // Reserve ratio, represented in value between
   // 1 and 1,000,000. So 0.1 = 100000.
-  uint32 public reserveRatio = 100000;
+  uint32 public reserveRatio = 10000;
 
   uint256 public inflationRate = 1;
+
+  //1% tx fee as default
+  uint transactionFee = 10000 ;
+  uint burnFee = 0;
 
   constructor(address _token, address _formula, uint32 ratio) public payable {
     reserveRatio = ratio;
@@ -30,8 +36,17 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable {
     formula = BancorFormula(_formula);
   }
 
-  function processTX(address from, address to, uint256 value) external returns (uint256 txFee, uint256 burn) {
-    return (0,0);
+  function setFees(uint _txFee, uint _burnFee) external onlySigner {
+    transactionFee = _txFee;
+    burnFee = _burnFee;
+  }
+
+  function calcFees(uint _value) public view returns (uint txFee, uint burn) {
+    txFee = _value.mul(transactionFee).div(1000000);
+    burn = _value.mul(burnFee).div(1000000);
+  }
+  function processTX(address _from, address _to, uint256 _value) external returns (uint txFee, uint burn) {
+    return calcFees(_value);
   }
 
   // The etherium amount the GoodDollarReserve has. Initiated in the deployment of the contract.

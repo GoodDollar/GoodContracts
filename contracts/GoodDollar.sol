@@ -42,7 +42,7 @@ contract GoodDollar is ERC827Token,ERC20Detailed,ERC20Mintable,ERC20Burnable, Ow
 
   // Creats initial amount of this coin (GoodDollar) in the market
   // Amount is 100 coins for a start (of the GoodDollar market)
-  function initialMove(address _gcm) canPopulate public onlyOwner returns(bool) {
+  function initialMove(address _gcm,uint _amount) canPopulate public onlyOwner returns(bool) {
     // amount is 100 * 10^18 as each token seems to be viewed as
     // a wei-like equivalent in the bancor formulas
     
@@ -50,7 +50,7 @@ contract GoodDollar is ERC827Token,ERC20Detailed,ERC20Mintable,ERC20Burnable, Ow
     // replace "18" in the number of decimals. 
     //Don't replace in decimals var itself; it is uint8 and wiil cause inaccuracy. Should not change to uint256 also.
     uint256 _decimals = uint256(decimals());
-    uint256 amount = 100*(10**_decimals); // ** is math.power
+    uint256 amount = _amount*(10**_decimals); // ** is math.power
 
     mint(_gcm, amount);
 

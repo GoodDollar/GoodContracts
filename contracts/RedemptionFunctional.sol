@@ -46,7 +46,7 @@ contract RedemptionFunctional is Ownable {
     // the existing supply - what was causing the issue
     // in the earlier calculation.
     total = total.sub(market.totalSupply());
-    uint256 amount = total.div(identity.whiteListedUserCount());
+    uint256 amount = total.div(identity.whiteListedCount());
     //emit ClaimCalculated(base,interest,total);
     return amount;
   }

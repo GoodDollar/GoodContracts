@@ -40,6 +40,7 @@ contract("GoodDollarReserve", accounts => {
 
   it("Should charge fees correctly", async () => {
     let gd = await GoodDollar.deployed()
+    let identity = await Identity.deployed()
     let totalSupplyBefore = (await gd.totalSupply()).toNumber()
     let result = await gd.transfer(accounts[1],10.5*100)
     let feesResult = result.logs.find(log => log.event=='TransactionFees')
@@ -49,6 +50,13 @@ contract("GoodDollarReserve", accounts => {
     assert.equal(feesResult.args.burned.toNumber(),21)
     assert.equal(totalSupplyAfter, totalSupplyBefore - feesResult.args.burned.toNumber())
     
+  })
+
+  it("Should not allow transfer from unverified accounts", async () => {
+    let gd = await GoodDollar.deployed()
+    let result = await gd.transfer(accounts[0],1*100,{from: accounts[4]}).then(x => "success").catch(x => "failure")
+    console.log(result)
+    assert.equal(result,"failure")
   })
 
 })

@@ -7,6 +7,7 @@ import "openzeppelin-solidity/contracts/access/roles/SignerRole.sol";
 import "./BancorFormula.sol";
 import "./GoodDollar.sol";
 import "./IMonetaryPolicy.sol";
+import "./Identity.sol";
 
 contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
   using SafeMath for uint256;
@@ -14,6 +15,7 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
 
   GoodDollar public token;
   BancorFormula public formula;
+  Identity public identity;
 
   // Members
   // =======
@@ -30,10 +32,11 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
   uint transactionFee = 10000 ;
   uint burnFee = 0;
 
-  constructor(address _token, address _formula, uint32 ratio) public payable {
+  constructor(GoodDollar _token, BancorFormula _formula,Identity _identity, uint32 ratio) public payable {
     reserveRatio = ratio;
-    token = GoodDollar(_token);
-    formula = BancorFormula(_formula);
+    token = _token;
+    identity = _identity;
+    formula = _formula;
   }
 
   function setFees(uint _txFee, uint _burnFee) external onlySigner {
@@ -46,6 +49,8 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
     burn = _value.mul(burnFee).div(1000000);
   }
   function processTX(address _from, address _to, uint256 _value) external returns (uint txFee, uint burn) {
+    //enforce sender is verified
+    require(identity.isVerified(_from),"Non verified citizens can't send funds");
     return calcFees(_value);
   }
 

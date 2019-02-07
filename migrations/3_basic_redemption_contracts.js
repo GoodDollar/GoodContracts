@@ -16,14 +16,16 @@ module.exports = function(deployer,network,accounts) {
         await deployer.deploy(RedemptionData);
         await deployer.deploy(ExpArray);
         await deployer.deploy(BancorFormula, ExpArray.address);
-        await deployer.deploy(Identity);
+        let identity = await deployer.deploy(Identity);
         let GDD = await GoodDollar.deployed();
         
         // Deploying the GoodDollarReserve and Creating 10 Ethers in it's account from the deployer.
-        await deployer.deploy(GoodDollarReserve, GDD.address, BancorFormula.address,"10000", {'value': web3.utils.toWei("1", "ether")});         
+        await deployer.deploy(GoodDollarReserve, GDD.address, BancorFormula.address,Identity.address,"10000", {'value': web3.utils.toWei("1", "ether")});         
         await deployer.deploy(RedemptionFunctional, Identity.address, RedemptionData.address, GoodDollarReserve.address);
         await deployer.deploy(OneTimePaymentLinks,GoodDollar.address)
-        
+        identity.whiteListUser(GoodDollar.address)
+        identity.whiteListUser(GoodDollarReserve.address)
+        identity.whiteListUser(OneTimePaymentLinks.address)
         let totalSupply = 0;
 
         totalSupply = (await GDD.totalSupply.call()).toString(10);

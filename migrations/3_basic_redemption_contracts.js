@@ -16,13 +16,16 @@ module.exports = function(deployer,network,accounts) {
         await deployer.deploy(RedemptionData);
         await deployer.deploy(ExpArray);
         await deployer.deploy(BancorFormula, ExpArray.address);
-        await deployer.deploy(Identity);
+        let identity = await deployer.deploy(Identity);
         let GDD = await GoodDollar.deployed();
+        
         // Deploying the GoodDollarReserve and Creating 10 Ethers in it's account from the deployer.
-        await deployer.deploy(GoodDollarReserve, GDD.address, BancorFormula.address,"1000", {'value': web3.utils.toWei("0.01", "ether")});         
+        await deployer.deploy(GoodDollarReserve, GDD.address, BancorFormula.address,Identity.address,"10000", {'value': web3.utils.toWei("1", "ether")});         
         await deployer.deploy(RedemptionFunctional, Identity.address, RedemptionData.address, GoodDollarReserve.address);
         await deployer.deploy(OneTimePaymentLinks,GoodDollar.address)
-        
+        identity.whiteListUser(GoodDollar.address)
+        identity.whiteListUser(GoodDollarReserve.address)
+        identity.whiteListUser(OneTimePaymentLinks.address)
         let totalSupply = 0;
 
         totalSupply = (await GDD.totalSupply.call()).toString(10);
@@ -30,11 +33,15 @@ module.exports = function(deployer,network,accounts) {
         console.log("Initializing amount of GTC in the market.");
         
         // Minting X number of GoodDollars to the GoodDollar market.
-        await GDD.initialMove(GoodDollarReserve.address); 
+        let reserve = await GoodDollarReserve.deployed()
+        await GDD.initialMove(GoodDollarReserve.address,100000); 
         totalSupply = (await GDD.totalSupply.call()).toString(10);
-        console.log("After initialMove() - GoodDollar totalSupply:",totalSupply);
+        let poolBalance = (await reserve.poolBalance()).toString(10);
+        let forex = (await reserve.calculateAmountPurchased(web3.utils.toWei("1","ether"))).toString(10);
+        console.log("After initialMove() - GoodDollar totalSupply:",{totalSupply,poolBalance,oneETHtoGD:forex});
 
-        await GDD.transferOwnership(GoodDollarReserve.address);
+        await GDD.setMonetaryPolicy(GoodDollarReserve.address);
+        await GDD.transferOwnership(GoodDollarReserve.address);        
         await GDD.addMinter(GoodDollarReserve.address);
         await GDD.renounceMinter();
         console.log("Done moving ownership of token to reserve");

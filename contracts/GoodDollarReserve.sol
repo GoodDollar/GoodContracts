@@ -2,104 +2,129 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/access/roles/SignerRole.sol";
 
 import "./BancorFormula.sol";
 import "./GoodDollar.sol";
+import "./IMonetaryPolicy.sol";
+import "./Identity.sol";
 
-contract GoodDollarReserve is Ownable {
-    using SafeMath for uint256;
+contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
+  using SafeMath for uint256;
+  using SafeMath for uint;
 
-    GoodDollar public token;
-    BancorFormula public formula;
+  GoodDollar public token;
+  BancorFormula public formula;
+  Identity public identity;
 
-    // Members
-    // =======
-    // totalSupply(): The GoodDollar (GTC coins) amount the contract supervise (the whole GTC coins ever exists are documented here). Initiated on "InitialMove()"
-    // poolBalance(): The ethers (ETH coins) amount the GoodDollarReserve as a contract has in the accounthas. Initiated in the deployment of the contract.
+  // Members
+  // =======
+  // totalSupply(): The GoodDollar (GTC coins) amount the contract supervise (the whole GTC coins ever exists are documented here). Initiated on "InitialMove()"
+  // poolBalance(): The ethers (ETH coins) amount the GoodDollarReserve as a contract has in the accounthas. Initiated in the deployment of the contract.
 
-    // Reserve ratio, represented in value between
-    // 1 and 1,000,000. So 0.1 = 100000.
-    uint32 public reserveRatio = 100000;
+  // Reserve ratio, represented in value between
+  // 1 and 1,000,000. So 0.1 = 100000.
+  uint32 public reserveRatio = 10000;
 
-    uint256 public inflationRate = 1;
+  uint256 public inflationRate = 1;
 
-    constructor(address _token, address _formula, uint32 ratio) public payable {
-        reserveRatio = ratio;
-        token = GoodDollar(_token);
-        formula = BancorFormula(_formula);
-    }
+  //1% tx fee as default
+  uint transactionFee = 10000 ;
+  uint burnFee = 0;
 
-    // The etherium amount the GoodDollarReserve has. Initiated in the deployment of the contract.
-    function poolBalance() public view returns(uint256) {
-        return address(this).balance;
-    }
+  constructor(GoodDollar _token, BancorFormula _formula,Identity _identity, uint32 ratio) public payable {
+    reserveRatio = ratio;
+    token = _token;
+    identity = _identity;
+    formula = _formula;
+  }
 
-    function calculateAmountPurchased(uint256 _eth) public view returns(uint256) {
-        uint256 tokensForPrice = formula.calculatePurchaseReturn(
-            totalSupply(),
-            poolBalance(),
-            reserveRatio,
-            _eth
-        );
+  function setFees(uint _txFee, uint _burnFee) external onlySigner {
+    transactionFee = _txFee;
+    burnFee = _burnFee;
+  }
 
-        return tokensForPrice;
-    }
+  function calcFees(uint _value) public view returns (uint txFee, uint burn) {
+    txFee = _value.mul(transactionFee).div(1000000);
+    burn = _value.mul(burnFee).div(1000000);
+  }
+  function processTX(address _from, address _to, uint256 _value) external returns (uint txFee, uint burn) {
+    //enforce sender is verified
+    require(identity.isVerified(_from),"Non verified citizens can't send funds");
+    return calcFees(_value);
+  }
 
-    function calculatePriceForSale(uint256 _sellAmount) public view returns(uint256) {
-        uint256 ethAmount = formula.calculateSaleReturn(
-            totalSupply(),
-            poolBalance(),
-            reserveRatio,
-            _sellAmount
-        );
+  // The etherium amount the GoodDollarReserve has. Initiated in the deployment of the contract.
+  function poolBalance() public view returns(uint256) {
+    return address(this).balance;
+  }
 
-        return ethAmount;
-    }
+  function calculateAmountPurchased(uint256 _eth) public view returns(uint256) {
+    uint256 tokensForPrice = formula.calculatePurchaseReturn(
+        totalSupply(),
+        poolBalance(),
+        reserveRatio,
+        _eth
+    );
 
-    function buy() public payable returns(bool) {
-        require(msg.value > 0,"value can't be 0");
-        uint256 tokensToMint = formula.calculatePurchaseReturn(
-            totalSupply(),
+    return tokensForPrice;
+  }
 
-            // the function is payable. Means the money sent was *already reflected* in the poolBalance! (eth)
-            // But the user requested to buy according to the amount of poolBalance before he/she made the payment and changeed the formula
-             //when purchasing with eth the poolbalance is changed before this calculation
+  function calculatePriceForSale(uint256 _sellAmount) public view returns(uint256) {
+    uint256 ethAmount = formula.calculateSaleReturn(
+        totalSupply(),
+        poolBalance(),
+        reserveRatio,
+        _sellAmount
+    );
 
-            //so we have to consider this
-            poolBalance()-msg.value,
-            reserveRatio,
-            msg.value
-        );
-        token.mint(msg.sender, tokensToMint);
+    return ethAmount;
+  }
 
-        return true;
-    }
+  function buy() public payable returns(bool) {
+    require(msg.value > 0,"value can't be 0");
+    uint256 tokensToMint = formula.calculatePurchaseReturn(
+        totalSupply(),
 
-    function sell(uint256 _sellAmount) public returns(bool){
-        require(_sellAmount > 0 && token.balanceOf(msg.sender) >= _sellAmount, "Not enough balance or amount 0");
-        uint256 ethAmount = formula.calculateSaleReturn(
-            totalSupply(),
-            poolBalance(),
-            reserveRatio,
-            _sellAmount
-        );
+        // the function is payable. Means the money sent was *already reflected* in the poolBalance! (eth)
+        // But the user requested to buy according to the amount of poolBalance before he/she made the payment and changeed the formula
+          //when purchasing with eth the poolbalance is changed before this calculation
 
-        token.burn(_sellAmount);
-        msg.sender.transfer(ethAmount);
+        //so we have to consider this
+        poolBalance()-msg.value,
+        reserveRatio,
+        msg.value
+    );
+    token.mint(msg.sender, tokensToMint);
 
-        return true;
-    }
+    return true;
+  }
 
-    function totalSupply() public view returns (uint256) {
-        return token.totalSupply();
-    }
+  function sell(uint256 _sellAmount) public returns(bool){
+    require(_sellAmount > 0 && token.balanceOf(msg.sender) >= _sellAmount, "Not enough balance or amount 0");
+    uint256 ethAmount = formula.calculateSaleReturn(
+        totalSupply(),
+        poolBalance(),
+        reserveRatio,
+        _sellAmount
+    );
 
-    function mint(
-        address _account,
-        uint256 _amount
-    ) onlyOwner public returns (bool) {
-        token.mint(_account, _amount);
+    token.burn(_sellAmount);
+    msg.sender.transfer(ethAmount);
 
-        return true;
-    }
+    return true;
+  }
+
+  function totalSupply() public view returns (uint256) {
+    return token.totalSupply();
+  }
+
+  function mint(
+    address _account,
+    uint256 _amount
+  ) onlyOwner public returns (bool) {
+    token.mint(_account, _amount);
+
+    return true;
+  }
 }

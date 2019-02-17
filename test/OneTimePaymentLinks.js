@@ -46,19 +46,31 @@ contract("OneTimePaymentLinks", accounts => {
   });
   
 
-  it("Should approve and deposit (ERC827)", async () => {
-    let amount = 5
-    let instance = await OTPL.deployed()
-    let gdInstance = await GoodDollar.deployed()
-    let encodedABI = await instance.contract.methods.deposit(accounts[2],web3.utils.sha3("23511"),amount).encodeABI()
-    let balancePre = (await gdInstance.balanceOf(accounts[2])).toNumber();
-    let tx = await gdInstance.approveAndCall(instance.address,amount, encodedABI ,{from : accounts[2]})
-    let balance = (await gdInstance.balanceOf(instance.address)).toNumber();
-    let balanceUser = (await gdInstance.balanceOf(accounts[2])).toNumber();
-    assert.equal(balance,amount);
-    assert.equal(balanceUser,5);
-  });
+//   it("Should approve and deposit (ERC827)", async () => {
+//     let amount = 5
+//     let instance = await OTPL.deployed()
+//     let gdInstance = await GoodDollar.deployed()
+//     let encodedABI = await instance.contract.methods.deposit(accounts[2],web3.utils.sha3("23511"),amount).encodeABI()
+//     let balancePre = (await gdInstance.balanceOf(accounts[2])).toNumber();
+//     let tx = await gdInstance.approveAndCall(instance.address,amount, encodedABI ,{from : accounts[2]})
+//     let balance = (await gdInstance.balanceOf(instance.address)).toNumber();
+//     let balanceUser = (await gdInstance.balanceOf(accounts[2])).toNumber();
+//     assert.equal(balance,amount);
+//     assert.equal(balanceUser,5);
+//   });
 
+    it("Should transferAndCall deposit (ERC677)", async () => {
+        let amount = 5
+        let instance = await OTPL.deployed()
+        let gdInstance = await GoodDollar.deployed()
+        let encodedABI = await instance.contract.methods.deposit(accounts[2],web3.utils.sha3("23511"),amount).encodeABI()
+        let balancePre = (await gdInstance.balanceOf(accounts[2])).toNumber();
+        let tx = await gdInstance.transferAndCall(instance.address,amount, encodedABI ,{from : accounts[2]})
+        let balance = (await gdInstance.balanceOf(instance.address)).toNumber();
+        let balanceUser = (await gdInstance.balanceOf(accounts[2])).toNumber();
+        assert.equal(balance,amount);
+        assert.equal(balanceUser,5);
+    });
   it("Should not withdraw funds twice", async () => {
     let instance = await OTPL.deployed();
     let gdInstance = await GoodDollar.deployed()

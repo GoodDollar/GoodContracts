@@ -53,6 +53,15 @@ module.exports = {
       gas:4700000,
       skipDryRun:true,
       gasPrice:2000000000 //2 gwei
+    },
+    fuse: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/",0,10)
+      },
+      network_id: 121,
+      gas:4700000,
+      skipDryRun:true,
+      gasPrice:1000000000 //1 gwei
     }
   },
   compilers: {

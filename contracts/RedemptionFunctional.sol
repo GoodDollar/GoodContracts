@@ -14,7 +14,7 @@ contract RedemptionFunctional is Ownable {
   RedemptionData public data;
   GoodDollarReserve public market;
 
-  event UBIClaimed(indexed address by, uint256 total);
+  event UBIClaimed(address indexed by, uint256 total);
 
   modifier whiteListed() {
     bool check = identity.isVerified(msg.sender);

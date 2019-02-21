@@ -11,7 +11,7 @@ contract("GoodDollarReserve", accounts => {
     let instance = await GoodDollarReserve.deployed()
     await instance.setFees(20000,20000)
     console.log("Before Balance:",(await gd.balanceOf(accounts[0])).toNumber())
-    await instance.buy({value:web3.utils.toWei("1","ether")})
+    await instance.buy({value:web3.utils.toWei("1","gwei")})
     console.log("After Buy Balance:",(await gd.balanceOf(accounts[0])).toNumber())
 
   })

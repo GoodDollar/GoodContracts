@@ -8,8 +8,8 @@ contract OneTimePaymentLinks is Ownable {
 
   using SafeMath for uint256;
 
-  event PaymentDeposit(address sender, bytes32 hash, uint amount);
-  event PaymentWithdraw(address reciever, bytes32 hash, uint amount);
+  event PaymentDeposit(address indexed sender, bytes32 hash, uint amount);
+  event PaymentWithdraw(address indexed reciever, bytes32 indexed hash, uint amount);
 
   mapping(bytes32 => uint) public payments;   
   mapping(bytes32 => bool) public hashes;

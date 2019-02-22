@@ -3,7 +3,12 @@
   "version": "0.0.6",
   "description": "GoodDollar Contracts",
   "scripts": {
-    "test": "truffle test ",
+    "start": "(ganache-cli --deterministic --port 8545 &) && wait-on tcp:8545",
+    "deploy": "wait-on tcp:8545 --delay 5000 && truffle migrate --network ganache --reset",
+    "stop": "fkill :8545 || true",
+    "pretest": "npm run start",
+    "test": "wait-on tcp:8545 && truffle test --network ganache",
+    "posttest": "npm run stop",
     "migrate:ganache": "truffle migrate --network ganache",
     "migrate_reset:ganache": "truffle migrate --network ganache --reset"
   },
@@ -41,9 +46,11 @@
     "@babel/preset-env": "^7.3.1",
     "@babel/register": "^7.0.0",
     "bindings": "^1.4.0",
+    "fkill-cli": "^5.2.0",
     "fs-extra": "^7.0.1",
     "openzeppelin-solidity": "^2.1.2",
     "truffle-hdwallet-provider": "^1.0.3",
+    "wait-on": "^3.2.0",
     "web3": "^1.0.0-beta.41",
     "websocket": "^1.0.28"
   }

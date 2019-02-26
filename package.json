@@ -3,15 +3,18 @@
   "version": "0.0.6",
   "description": "GoodDollar Contracts",
   "scripts": {
-    "start": "(ganache-cli --deterministic --port 8545 --networkId 6000 &) && wait-on tcp:8545",
-    "deploy": "wait-on tcp:8545 --delay 5000 && truffle migrate --network ganache --reset",
+    "start": "run-p ganache deploy",
+    "ganache": "ganache-cli --deterministic --port 9545 --networkId 4447 &",
+    "wait": "wait-on tcp:9545",
+    "deploy": "run-s wait migrate_reset:ganache",
     "stop": "fkill :8545 || true",
     "pretest": "npm run start",
-    "test": "wait-on tcp:8545 && truffle test --network ganache",
+    "test": "run-s wait test:ganache",
     "posttest": "npm run stop",
-    "lint": "solhint --formatter codeframe contracts/**/*.sol",
-    "migrate:ganache": "truffle migrate --network ganache",
-    "migrate_reset:ganache": "truffle migrate --network ganache --reset"
+    "lint": "solhint --formatter codeframe develop/**/*.sol",
+    "test:ganache": "truffle test --network develop",
+    "migrate:ganache": "truffle migrate --network develop",
+    "migrate_reset:ganache": "truffle migrate --network develop --reset"
   },
   "files": [
     "build",
@@ -51,6 +54,7 @@
     "fkill-cli": "^5.2.0",
     "fs-extra": "^7.0.1",
     "ganache-cli": "^6.3.0",
+    "npm-run-all": "^4.1.5",
     "openzeppelin-solidity": "^2.1.2",
     "truffle": "^5.0.5",
     "truffle-hdwallet-provider": "^1.0.3",

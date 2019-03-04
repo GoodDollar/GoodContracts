@@ -29,15 +29,12 @@ module.exports = {
       network_id: "4447", // my "ganache " runs with 6000 network_id - configurable
       from: '0x244a9ac7012f1b5e6f74f78e1dc69ef69df1dab6' // should be equal to first address in truffle UI list - address[0]
     },
-
-    'ganache': {
+    ganache: {
       host: "127.0.0.1",
       port: 8545, // my "ganache " runs on 8545 - configurable
       network_id: "6000", // my "ganache " runs with 6000 network_id - configurable
-      from: '0x9b36dEa68d42668Bed85c91b990BD306a18310C6' // should be equal to first address in ganache UI list - address[0]
-
+      from: '0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1' // should be equal to first address in ganache UI list - address[0]
     },
-
     ropsten: {
       provider: function() {
         return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/" + infura_api,0,10)
@@ -66,11 +63,11 @@ module.exports = {
   },
   compilers: {
     solc: {
-      version: "0.5.0",  
+      version: "0.5.0",
       settings: {
         optimizer: {
-          enabled: true, 
-          runs: 200    
+          enabled: true,
+          runs: 200
         }
       }
     }

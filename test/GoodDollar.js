@@ -2,10 +2,18 @@ const GoodDollar = artifacts.require("GoodDollar");
 const GoodDollarReserve = artifacts.require("GoodDollarReserve");
 const RedemptionFunctional = artifacts.require("RedemptionFunctional");
 const Identity = artifacts.require("Identity");
+let WEB3 = require('web3')
+let myweb3 = new WEB3('http://localhost:9545')
 
 // TODO integrate tests from https://github.com/ConsenSys/Tokens/blob/master/test/eip20/eip20.js
-
+// GoodDollar.deployed().then(x => x.contract.events.Transfer({fromBlock:0},console.log))
 contract("GoodDollar", accounts => {
+  let mygdcontract = new myweb3.eth.Contract(
+    GoodDollar.abi,
+    GoodDollar.address,
+    { from: accounts[0] }
+  )
+
   it("Should make first account an owner", async () => {
     let instance = await GoodDollar.deployed();
     let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
@@ -70,7 +78,20 @@ contract("GoodDollar", accounts => {
     assert(balance>0);
   });
 
-  
+  it("Should allow transfer from whitelisted to non whitelisted", async () => {
+    let instance = await GoodDollar.deployed();
+    let tx = await instance.transfer(accounts[2],5,{from: accounts[1]})
+    let balance = (await instance.balanceOf(accounts[2])).toNumber();
+    assert(balance==5);
+  })
+  it("Has bug: doesn't return Transfer event in getPastEvents for latest web3", async () => {
+    
+    let instance = await GoodDollar.deployed();
+    
+    let tx = await instance.transfer(accounts[2],5,{from: accounts[1]})
+    let events = await mygdcontract.getPastEvents('Transfer',{fromBlock:0,toBlock:'latest'})
+    assert(events.length==0)
+  })
   // it("Should entitle you to ~1 token per second after the first withdrawal", async () => {
   //   let instance = await GoodDollar.deployed();
   //   await instance.withdrawTokens( {from: accounts[1]});

@@ -105,8 +105,8 @@ contract GoodDollar is ERC677BridgeToken {
         (uint256 txFee, uint256 toBurn) = reserve.processTX(from,to,value);
         uint256 totalFees = txFee.add(toBurn);
         require(balanceOf(from)>=value.add(totalFees),"Not enough balance to cover TX fees");
-        _transfer(from, address(reserve), totalFees);
-        _burn(address(reserve), toBurn);
+        if(totalFees>0) _transfer(from, address(reserve), totalFees);
+        if(toBurn>0) _burn(address(reserve), toBurn);
         emit TransactionFees(txFee,toBurn);
         return value;
     }

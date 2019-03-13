@@ -8,11 +8,13 @@ contract OneTimePaymentLinks is Ownable {
 
     using SafeMath for uint256;
 
-    event PaymentDeposit(address indexed sender, bytes32 hash, uint amount);
-    event PaymentWithdraw(address indexed reciever, bytes32 indexed hash, uint amount);
+    event PaymentDeposit(address indexed from, bytes32 hash, uint amount);
+    event PaymentCancel(address indexed from, bytes32 hash, uint amount);
+    event PaymentWithdraw(address indexed from, address indexed to, bytes32 indexed hash, uint amount);
 
     mapping(bytes32 => uint) public payments;   
     mapping(bytes32 => bool) public hashes;
+    mapping(bytes32 => address) public senders;
     mapping(address => uint) public erc677Deposits;
     ERC20 private token;
 
@@ -52,6 +54,7 @@ contract OneTimePaymentLinks is Ownable {
         token.transferFrom(_from,address(this),_amount);
     payments[_hash] = _amount;
     hashes[_hash] = true;
+    senders[_hash] = _from;
     emit PaymentDeposit(_from,_hash,_amount);
   }
 
@@ -65,7 +68,20 @@ contract OneTimePaymentLinks is Ownable {
     uint amount = payments[hash];
     token.transfer(msg.sender,amount);
     payments[hash] = 0;
-    emit PaymentWithdraw(msg.sender,hash,amount);
+    emit PaymentWithdraw(senders[hash],msg.sender,hash,amount);
+  }
+
+  /**
+  cancel one time link by owner
+  @param _hash the hash of the link
+  */
+  function cancel(bytes32 _hash) public {
+    require(senders[_hash]==msg.sender,"you are not the owner of the link");
+    require(payments[_hash]>0,"payment withdrawn already");
+    uint amount = payments[_hash];
+    token.transfer(msg.sender,amount);
+    payments[_hash] = 0;
+    emit PaymentCancel(msg.sender,_hash,amount);
   }
 
   function isLinkUsed(bytes32 hash) public view returns (bool) {

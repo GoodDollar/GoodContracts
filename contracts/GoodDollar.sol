@@ -94,7 +94,9 @@ contract GoodDollar is ERC677BridgeToken {
     function transferAndCall(address _to, uint _value, bytes calldata _data) external returns (bool)
     {
         uint256 newValue = _processTX(msg.sender, _to, _value);
-        return _transferAndCall(_to,newValue,_data);
+        bool res = _transferAndCall(_to,newValue,_data);
+        require(res,"Transfer And Call Failed");
+        return res;
         // return ERC677BridgeToken.transferAndCall(_to, newValue, _data);
     }
     /**

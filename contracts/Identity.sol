@@ -69,8 +69,8 @@ contract Identity is WhitelistedRole {
       delete didHashToAddress[pHash];
     }
   }
-  function whiteListUser(address _account) public {
-    addWhitelisted(_account);
+  function whiteListUser(address _account, string memory _did) public {
+    addWhitelistedWithDID(_account, _did);
   }
 
   function blackListUser(address _account) public {

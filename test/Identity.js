@@ -47,4 +47,25 @@ contract("Identity", accounts => {
     assert.equal(countAfter.toNumber(),count.toNumber()-1)
     
   });
+
+  it("Should register with profile", async () => {
+    let instance = await Identity.deployed();
+    await instance.addWhitelistedWithDID(accounts[8],'did:gooddollar:epxuhtuejmdc')
+    let result = await instance.isWhitelisted(accounts[8])
+    assert.equal(result,true)
+    let didHash = web3.utils.sha3('did:gooddollar:epxuhtuejmdc')
+    assert.equal(await instance.didHashToAddress(didHash),accounts[8])
+    assert.equal(await instance.addrToDID(accounts[8]),'did:gooddollar:epxuhtuejmdc')
+  });
+
+  it("Should transfer account", async () => {
+    let instance = await Identity.deployed();
+    await instance.transferAccount(accounts[7],{ from: accounts[8] })
+    let result = await instance.isWhitelisted(accounts[7])
+    assert.equal(result,true)
+    let didHash = web3.utils.sha3('did:gooddollar:epxuhtuejmdc')
+    assert.equal(await instance.didHashToAddress(didHash),accounts[7])
+    assert.equal(await instance.addrToDID(accounts[7]),'did:gooddollar:epxuhtuejmdc')
+  });
+
 })

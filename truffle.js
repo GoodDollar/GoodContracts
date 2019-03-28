@@ -10,7 +10,7 @@ const HDWalletProvider = require("truffle-hdwallet-provider");
 
 const mnemonic = process.env.MNEMONIC
 const infura_api = process.env.INFURA_API
-
+console.log({ mnemonic, infura_api })
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
   // to customize your Truffle configuration!
@@ -37,14 +37,14 @@ module.exports = {
     },
     ropsten: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/" + infura_api,0,10)
+        return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/v3/" + infura_api,0,10)
       },
       network_id: 3,
       gas:2071238
     },
     kovan: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://kovan.infura.io/" + infura_api,0,10)
+        return new HDWalletProvider(mnemonic, "https://kovan.infura.io/v3/" + infura_api,0,10)
       },
       network_id: 42,
       gas:4700000,

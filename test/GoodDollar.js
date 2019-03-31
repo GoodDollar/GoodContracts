@@ -84,6 +84,22 @@ contract("GoodDollar", accounts => {
     let balance = (await instance.balanceOf(accounts[2])).toNumber();
     assert(balance==5);
   })
+
+  it("Should not allow transfer from non-whitelisted", async () => {
+    let instance = await GoodDollar.deployed();
+    let txFailed = false
+    try
+    {
+      let tx = await instance.transfer(accounts[1],5,{from: accounts[2]})
+    }    
+    catch (e) {
+      txFailed = true
+    }
+    let balance = (await instance.balanceOf(accounts[2])).toNumber();
+    assert.equal(balance,5);
+    assert.equal(txFailed,true);
+  })
+
   // it("Has bug: doesn't return Transfer event in getPastEvents for latest web3", async () => {
     
   //   let instance = await GoodDollar.deployed();

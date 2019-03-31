@@ -26,13 +26,12 @@ contract("Identity", accounts => {
   it("Should allow owner to whitelist", async () => {
     let instance = await Identity.deployed();
     await instance.blackListUser(accounts[9])
-    let count = await instance.whiteListedCount()
+    let notWhitelisted = await instance.isWhitelisted(accounts[9])
     await instance.whiteListUser(accounts[9],'did:gd')
-    let countAfter = await instance.whiteListedCount()
     let result = await instance.isWhitelisted(accounts[9])
 
     assert.equal(result, true)
-    assert.equal(countAfter.toNumber(),count.toNumber()+1)
+    assert.equal(notWhitelisted, false)
     
   });
 

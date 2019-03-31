@@ -9,8 +9,8 @@ contract("OneTimePaymentLinks", accounts => {
   before("topup wallet",async () => {
     let instance = await GoodDollar.deployed();
     let identity = await Identity.deployed()
-    await identity.whiteListUser(accounts[1])
-    await identity.whiteListUser(accounts[2])
+    await identity.whiteListUser(accounts[1],'did:gd')
+    await identity.whiteListUser(accounts[2],'did:gd')
     let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
     await instanceRedemptionFunctional.claimTokens.sendTransaction( {from: accounts[1]});
     await instanceRedemptionFunctional.claimTokens.sendTransaction( {from: accounts[2]});

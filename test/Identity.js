@@ -27,7 +27,7 @@ contract("Identity", accounts => {
     let instance = await Identity.deployed();
     await instance.blackListUser(accounts[9])
     let count = await instance.whiteListedCount()
-    await instance.whiteListUser(accounts[9])
+    await instance.whiteListUser(accounts[9],'did:gd')
     let countAfter = await instance.whiteListedCount()
     let result = await instance.isWhitelisted(accounts[9])
 

@@ -23,9 +23,9 @@ module.exports = function(deployer,network,accounts) {
         await deployer.deploy(GoodDollarReserve, GDD.address, BancorFormula.address,Identity.address,"10000", {'value': web3.utils.toWei("1", "gwei")});         
         await deployer.deploy(RedemptionFunctional, Identity.address, RedemptionData.address, GoodDollarReserve.address);
         await deployer.deploy(OneTimePaymentLinks,GoodDollar.address)
-        identity.whiteListUser(GoodDollar.address)
-        identity.whiteListUser(GoodDollarReserve.address)
-        identity.whiteListUser(OneTimePaymentLinks.address)
+        identity.addWhitelisted(GoodDollar.address)
+        identity.addWhitelisted(GoodDollarReserve.address)
+        identity.addWhitelisted(OneTimePaymentLinks.address)
         let totalSupply = 0;
 
         totalSupply = (await GDD.totalSupply.call()).toString(10);

@@ -29,14 +29,17 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
   uint256 public inflationRate = 1;
 
   //1% tx fee as default
-  uint transactionFee = 10000 ;
-  uint burnFee = 0;
+  uint public transactionFee = 10000 ;
+  uint public burnFee = 0;
 
-  constructor(GoodDollar _token, BancorFormula _formula,Identity _identity, uint32 ratio) public payable {
+  mapping (address => bool) excludedFromPolicy;
+
+  constructor(GoodDollar _token, BancorFormula _formula,Identity _identity,address oneTimePaymentLinks, uint32 ratio) public payable {
     reserveRatio = ratio;
     token = _token;
     identity = _identity;
     formula = _formula;
+    setExcludeFromPolicy(oneTimePaymentLinks, true);
   }
 
   function setFees(uint _txFee, uint _burnFee) external onlySigner {
@@ -48,7 +51,14 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
     txFee = _value.mul(transactionFee).div(1000000);
     burn = _value.mul(burnFee).div(1000000);
   }
+
+  function setExcludeFromPolicy(address to, bool exclude) public onlySigner {
+    excludedFromPolicy[to] = exclude;
+  }
+
   function processTX(address _from, address _to, uint256 _value) external returns (uint txFee, uint burn) {
+    if(excludedFromPolicy[_from])
+      return (0,0);
     //enforce sender is verified
     require(identity.isVerified(_from),"Non verified citizens can't send funds");
     return calcFees(_value);

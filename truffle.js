@@ -56,7 +56,7 @@ module.exports = {
         return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/",0,10)
       },
       network_id: 121,
-      gas:5700000,
+      gas:4500000,
       skipDryRun:true,
       gasPrice:1000000000 //1 gwei
     }

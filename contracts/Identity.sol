@@ -13,7 +13,7 @@ contract Identity is WhitelistedRole {
     addWhitelisted(msg.sender);
   }
   
-  function isVerified(
+  function isUBIWhitelisted(
     address _account
   ) public view returns(bool) {
     return isWhitelisted(_account);

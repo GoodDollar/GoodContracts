@@ -60,7 +60,7 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
     if(excludedFromPolicy[_from])
       return (0,0);
     //enforce sender is verified
-    require(identity.isVerified(_from),"Non verified citizens can't send funds");
+    require(identity.isWhitelisted(_from),"Non verified citizens can't send funds");
     return calcFees(_value);
   }
 

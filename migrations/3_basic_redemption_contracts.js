@@ -5,15 +5,13 @@ var ExpArray = artifacts.require("ExpArray");
 var GoodDollar = artifacts.require("GoodDollar");
 var Identity = artifacts.require("Identity");
 var GoodDollarReserve = artifacts.require("GoodDollarReserve");
-var RedemptionData = artifacts.require("RedemptionData");
-var RedemptionFunctional = artifacts.require("RedemptionFunctional");
 var OneTimePaymentLinks = artifacts.require("OneTimePaymentLinks");
+var UBI = artifacts.require("UBI");
 var releaser = require("../contracts/releaser");
 
 module.exports = function(deployer,network,accounts) {
     deployer.then(async () => {
         let owner = accounts[0];
-        await deployer.deploy(RedemptionData);
         await deployer.deploy(ExpArray);
         await deployer.deploy(BancorFormula, ExpArray.address);
         let identity = await deployer.deploy(Identity);
@@ -22,7 +20,7 @@ module.exports = function(deployer,network,accounts) {
         await deployer.deploy(OneTimePaymentLinks,GoodDollar.address)
         // Deploying the GoodDollarReserve and Creating 10 Ethers in it's account from the deployer.
         await deployer.deploy(GoodDollarReserve, GDD.address, BancorFormula.address,Identity.address,OneTimePaymentLinks.address, "10000", {'value': web3.utils.toWei("1", "gwei")});         
-        await deployer.deploy(RedemptionFunctional, Identity.address, RedemptionData.address, GoodDollarReserve.address);
+        await deployer.deploy(UBI, Identity.address, GDD.address, BancorFormula.address);
         identity.addWhitelisted(GoodDollar.address)
         identity.addWhitelisted(GoodDollarReserve.address)
         identity.addWhitelisted(OneTimePaymentLinks.address)
@@ -43,21 +41,17 @@ module.exports = function(deployer,network,accounts) {
         await GDD.setMonetaryPolicy(GoodDollarReserve.address);
         await GDD.transferOwnership(GoodDollarReserve.address);        
         await GDD.addMinter(GoodDollarReserve.address);
+        await GDD.addMinter(UBI.address);
         await GDD.renounceMinter();
         console.log("Done moving ownership of token to reserve");
-        (await RedemptionData.deployed()).transferOwnership(RedemptionFunctional.address);
-        console.log("Done moving ownership of claim data to claim contract");
-        (await GoodDollarReserve.deployed()).transferOwnership(RedemptionFunctional.address);
-        console.log("Done moving ownership of reserve to claim contract");
-
-        process.deployment = {
-            "BancorFormula": BancorFormula.address,
-            "ExpArray": ExpArray.address,
-            "GoodDollar": GDD.address,
-            "GoodDollarReserve": GoodDollarReserve.address,
-            "RedemptionData": RedemptionData.address,
-            "RedemptionFunctional": RedemptionFunctional.address
-        }
+        // process.deployment = {
+        //     "BancorFormula": BancorFormula.address,
+        //     "ExpArray": ExpArray.address,
+        //     "GoodDollar": GDD.address,
+        //     "GoodDollarReserve": GoodDollarReserve.address,
+        //     "RedemptionData": RedemptionData.address,
+        //     "RedemptionFunctional": RedemptionFunctional.address
+        // }
 
        
         // await releaser(process.deployment, network);

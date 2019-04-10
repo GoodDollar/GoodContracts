@@ -2,7 +2,7 @@
 // const Web3 = require('web3')
 const OTPL = artifacts.require("OneTimePaymentLinks");
 const GoodDollar = artifacts.require("GoodDollar");
-const RedemptionFunctional = artifacts.require("RedemptionFunctional");
+const UBI = artifacts.require("UBI");
 const Identity = artifacts.require("Identity");
 
 contract("OneTimePaymentLinks", accounts => {
@@ -11,9 +11,9 @@ contract("OneTimePaymentLinks", accounts => {
     let identity = await Identity.deployed()
     await identity.whiteListUser(accounts[1],'did:gd')
     await identity.whiteListUser(accounts[2],'did:gd')
-    let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
-    await instanceRedemptionFunctional.claimTokens.sendTransaction( {from: accounts[1]});
-    await instanceRedemptionFunctional.claimTokens.sendTransaction( {from: accounts[2]});
+    let instanceUBI = await UBI.deployed();
+    await instanceUBI.claimTokens( {from: accounts[1]});
+    await instanceUBI.claimTokens( {from: accounts[2]});
   });
 
   it("Should deposit funds", async () => {

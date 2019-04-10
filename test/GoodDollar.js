@@ -1,6 +1,6 @@
 const GoodDollar = artifacts.require("GoodDollar");
 const GoodDollarReserve = artifacts.require("GoodDollarReserve");
-const RedemptionFunctional = artifacts.require("RedemptionFunctional");
+const UBI = artifacts.require("UBI");
 const Identity = artifacts.require("Identity");
 let WEB3 = require('web3')
 // let myweb3 = new WEB3(web3.currentProvider)
@@ -16,8 +16,8 @@ contract("GoodDollar", accounts => {
 
   it("Should make first account an owner", async () => {
     let instance = await GoodDollar.deployed();
-    let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
-    let owner = await instanceRedemptionFunctional.owner();
+    let instanceUBI = await UBI.deployed();
+    let owner = await instanceUBI.owner();
     console.log(owner,accounts);
     assert.equal(owner, accounts[0]);
     
@@ -25,8 +25,8 @@ contract("GoodDollar", accounts => {
 
   it("Should give the owner 0 tokens", async () => {
     let instance = await GoodDollar.deployed();
-    let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
-    let owner = await instanceRedemptionFunctional.owner();
+    let instanceUBI = await UBI.deployed();
+    let owner = await instanceUBI.owner();
     let balance = (await instance.balanceOf.call(accounts[0])).toNumber();
 
     assert.equal(balance, 0);
@@ -41,28 +41,25 @@ contract("GoodDollar", accounts => {
 
   it("Should not whitelist a first-time user", async () => {
     let instance = await GoodDollar.deployed();
-    let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
     let identity = await Identity.deployed()
-    let whitelisted = await identity.isVerified(accounts[1])
+    let whitelisted = await identity.isWhitelisted(accounts[1])
     assert.equal(whitelisted, false);
   });
 
   it("Should whitelist a user by a whitelisted user", async () => {
     let instance = await GoodDollar.deployed();
-    let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
     let identity = await Identity.deployed()
     await identity.whiteListUser(accounts[1],'did:gd')
-    let whitelisted = await identity.isVerified(accounts[1])
+    let whitelisted = await identity.isWhitelisted(accounts[1])
     assert.equal(whitelisted, true);
   });
 
   it("Should entitle a first-time users to tokens", async () => {
     let instance = await GoodDollar.deployed();
-    let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
-    let owner = await instanceRedemptionFunctional.owner();
+    let UBIInstance = await UBI.deployed();
     let identity = await Identity.deployed()
     await identity.whiteListUser(accounts[1],'did:gd')
-    let entitlement = (await instanceRedemptionFunctional.checkEntitlement.call({from:accounts[1]})).toNumber();
+    let entitlement = (await UBIInstance.checkEntitlement.call({from:accounts[1]})).toNumber();
     assert(entitlement>0);
   });
 
@@ -70,12 +67,10 @@ contract("GoodDollar", accounts => {
 
   it("Should withdraw your entitlement", async () => {
     let instance = await GoodDollar.deployed();
-    let instanceRedemptionFunctional = await RedemptionFunctional.deployed();
-    let entitlement = 33333
-    await instanceRedemptionFunctional.claimTokens.sendTransaction( {from: accounts[1]});
+    let UBIInstance = await UBI.deployed();
+    await UBIInstance.claimTokens.sendTransaction( {from: accounts[1]});
     let balance = (await instance.balanceOf(accounts[1])).toNumber();
-
-    assert(balance>0);
+    assert(balance>=100);
   });
 
   it("Should allow transfer from whitelisted to non whitelisted", async () => {

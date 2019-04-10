@@ -21,6 +21,8 @@ contract UBI is Ownable,DSMath {
 
   uint public currentDay = 0;
   uint INFLATION = 10;
+  uint DECIMALS = 2;
+  uint MINIMUM_UBI = 100;
   Identity public identity;
   BancorFormula public formula;
   GoodDollar public token;
@@ -39,8 +41,12 @@ contract UBI is Ownable,DSMath {
     identity = Identity(_identity_contract);
     formula = BancorFormula(_bancor_formula);
     token = GoodDollar(_token);
+    DECIMALS = uint(token.decimals());
+    //1 GD
+    MINIMUM_UBI = 10**DECIMALS;
     lastCalculatedDailyUBI = now;
-    dailyUBIAmounts[0] = 1;
+    //initialize day 1
+    dailyUBIAmounts[0] = MINIMUM_UBI;
     
   }
 
@@ -120,7 +126,9 @@ contract UBI is Ownable,DSMath {
 
   function calcUBI() public view returns ( uint ) {
     (uint sumClaims, uint sumUsers) = getClaimsAndUsersSum(10);
-    return calcUBIHelper(currentDay, sumClaims, sumUsers, INFLATION);
+    uint formulaResult = calcUBIHelper(currentDay, sumClaims, sumUsers, INFLATION);
+    //make sure UBI is minimum 1 GD
+    return formulaResult<MINIMUM_UBI ? MINIMUM_UBI : formulaResult;
   }
 
   /*
@@ -138,9 +146,8 @@ contract UBI is Ownable,DSMath {
     uint32 expN = uint32(_day);
     //1.1^(t/365)
     (uint res, uint8 precision) = formula.power(baseN, BASE_D, expN, EXP_D);
-    uint8 decimals = 2;
     //add token precision ie decimals
-    uint Mt = monetaryBaseHistory[(_day - 1)%30] * (10**uint(decimals));
+    uint Mt = monetaryBaseHistory[(_day - 1)%30] * (10**DECIMALS);
     uint Nt = userBaseHistory[(_day - 1)%30];
     //wad precision = 18 decimals
     uint L_wad = (_sumClaims == 0 || _sumUsers == 0) ? 1 * WAD : wdiv(_sumClaims,_sumUsers);

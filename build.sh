@@ -3,7 +3,7 @@
 # npm run migarate_reset:ganache
 # export NETWORK='kovan'
 # npm run migarate_reset:ganache
-./minimize.sh build/contracts
+minimize.sh build/contracts
 git add build/contracts/*
 git commit -a -m "add: version release"
 npm version patch

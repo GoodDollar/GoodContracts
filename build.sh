@@ -1,5 +1,5 @@
 [[ -z $(git status -s) ]] || (echo "Error git not clean" && exit 1)
-source .env
+[[ -z $MNEMONIC ]] || (echo "Error MNEMONIC missing no env?" && exit 1)
 if [  $1 == 'deploy' ]; then 
     export NETWORK='fuse'
     npm run migrate_reset:ganache

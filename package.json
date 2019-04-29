@@ -14,7 +14,8 @@
     "test:ganache": "wait-on tcp:8545 && truffle test --network ganache && kill -9 $(lsof -t -i:8545)",
     "migrate:ganache": "truffle migrate --network ${NETWORK-develop}",
     "migrate_reset:ganache": "truffle migrate --network ${NETWORK-develop} --reset",
-    "coverage": "solidity-coverage"
+    "coverage": "solidity-coverage",
+    "coveralls": "cat ./coverage/lcov.info | node node_modules/.bin/coveralls"
   },
   "files": [
     "build",
@@ -51,6 +52,7 @@
     "@babel/preset-env": "^7.3.1",
     "@babel/register": "^7.0.0",
     "bindings": "^1.4.0",
+    "coveralls": "^3.0.3",
     "fkill-cli": "^5.2.0",
     "fs-extra": "^7.0.1",
     "ganache-cli": "^6.3.0",

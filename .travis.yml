@@ -1,3 +1,11 @@
 language: node_js
 
-cache: npm
+cache:
+  npm: true
+
+script:
+  - npm run coverage
+  - npm run coveralls
+
+after_failure:
+  - cat /home/travis/.npm/_logs/*-debug.log

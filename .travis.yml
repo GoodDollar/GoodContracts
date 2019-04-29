@@ -7,11 +7,6 @@ env:
   global:
     - MNEMONIC="choice congress hobby buddy dutch busy army eager empty solution start grunt"
 
-before_install:
-  - npm install -g truffle coveralls
-  - ganache-cli -m "$MNEMONIC" --port 9545 --networkId 4447 -g 10000000000 &
-  - truffle migrate --reset --network develop
-
 script:
   - npm run coverage
   - npm run coveralls

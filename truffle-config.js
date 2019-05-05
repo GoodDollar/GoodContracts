@@ -35,6 +35,13 @@ module.exports = {
       network_id: "*", // my "ganache " runs with 6000 network_id - configurable
       // from: '0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1' // should be equal to first address in ganache UI list - address[0]
     },
+    coverage: {
+      host: '127.0.0.1',
+      network_id: '*', // eslint-disable-line camelcase
+      port: 8555,
+      gas: 0xfffffffffff,
+      gasPrice: 0x01
+    },
     ropsten: {
       provider: function() {
         return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/v3/" + infura_api,0,10)

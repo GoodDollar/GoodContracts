@@ -12,8 +12,8 @@
     "test:wait": "run-s deploy test:ganache",
     "lint": "solhint --formatter codeframe develop/**/*.sol",
     "test:ganache": "wait-on tcp:8545 && truffle test --network ganache && kill -9 $(lsof -t -i:8545)",
-    "migrate:ganache": "truffle migrate --network ${NETWORK-develop}",
-    "migrate_reset:ganache": "truffle migrate --network ${NETWORK-develop} --reset",
+    "migrate:ganache": "truffle migrate --network ${NETWORK-develop} && ./minimize.sh 'build/contracts'",
+    "migrate_reset:ganache": "truffle migrate --network ${NETWORK-develop} --reset && ./minimize.sh 'build/contracts'",
     "coverage": "truffle compile && scripts/coverage.sh",
     "coveralls": "cat ./coverage/lcov.info | node node_modules/.bin/coveralls"
   },

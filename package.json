@@ -1,10 +1,10 @@
 {
   "name": "@gooddollar/goodcontracts",
-  "version": "0.0.13",
+  "version": "0.1.0",
   "description": "GoodDollar Contracts",
   "scripts": {
     "start": "run-p ganache deploy",
-    "ganache": "(mkdir devBlockchain || true) && ganache-cli -m \"$MNEMONIC\" -g 1000000 --port 9545 --networkId 4447 --db devBlockchain",
+    "ganache": "ganache-cli -m \"$MNEMONIC\" -g 1000000 --port 9545 --networkId 4447 --db devBlockchain",
     "ganache:test": "ganache-cli &",
     "wait": "wait-on tcp:9545",
     "deploy": "run-s wait migrate_reset:ganache",
@@ -12,10 +12,8 @@
     "test:wait": "run-s deploy test:ganache",
     "lint": "solhint --formatter codeframe develop/**/*.sol",
     "test:ganache": "wait-on tcp:8545 && truffle test --network ganache && kill -9 $(lsof -t -i:8545)",
-    "migrate:ganache": "truffle migrate --network ${NETWORK-develop} && ./minimize.sh 'build/contracts'",
-    "migrate_reset:ganache": "truffle migrate --network ${NETWORK-develop} --reset && ./minimize.sh 'build/contracts'",
-    "coverage": "truffle compile && scripts/coverage.sh",
-    "coveralls": "cat ./coverage/lcov.info | node node_modules/.bin/coveralls"
+    "migrate:ganache": "truffle migrate --network ${NETWORK-develop}",
+    "migrate_reset:ganache": "truffle migrate --network ${NETWORK-develop} --reset"
   },
   "files": [
     "build",

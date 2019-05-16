@@ -1,68 +1,31 @@
 pragma solidity ^0.5.2;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
-import "./ERC20.sol";
-import "../identity/Identity.sol";
-import "../DAO.sol";
+import "../identity/IdentityGuard.sol";
 
-contract GoodDollar is ERC20, MinterRole, Identity {
+contract GoodDollar is ERC20Detailed, ERC20Mintable, IdentityGuard, Ownable {
 
     Identity _identity;
-    DAO _dao;
 
-    uint256 txFees;
+    address _feeRecipient;
+    uint256 _txFees;
 
     constructor(
         string memory name,
         string memory symbol,
         uint8 decimals,
         Identity identity,
-        DAO dao
+        address feeRecipient
     ) 
         public
-        ERC20(name, symbol, decimals)
+        ERC20Detailed(name, symbol, decimals)
     {
         _identity = identity;
-        _dao = dao;
-        addMinter(address(_dao));
-    }
-
-    function name() public view returns (string memory)
-    {
-        return super._name();
-    }
-
-    function symbol() public view returns (string memory)
-    {
-        return super._symbol();
-    }
-
-    function decimals() public view returns (uint8)
-    {
-        return super._decimals();
-    }
-
-    function totalSupply() public view returns (uint256)
-    {
-        return super._totalSupply();
-    }
-
-    function balanceOf(address account)
-        public
-        view
-        returns (uint256)
-    {
-        return super._balanceOf(account);
-    }
-
-    function allowance(address owner, address spender)
-        public
-        view
-        returns (uint256)
-    {
-        return super._allowance(owner, spender);
+        _feeRecipient = feeRecipient;
+        addMinter(feeRecipient);
     }
 
     function transfer(address to, uint256 value)
@@ -72,7 +35,7 @@ contract GoodDollar is ERC20, MinterRole, Identity {
         returns (bool)
     {
         value = processFees(msg.sender, value);
-        return super._transfer(msg.sender, to, value);
+        return super.transfer(to, value);
     }
 
     function approve(
@@ -84,7 +47,7 @@ contract GoodDollar is ERC20, MinterRole, Identity {
         requireWhitelisted(spender)
         returns (bool)
     {
-        return super._approve(msg.sender, spender, value);
+        return super.approve(spender, value);
     }
 
     function transferFrom(
@@ -100,29 +63,16 @@ contract GoodDollar is ERC20, MinterRole, Identity {
     {
 
         value = processFees(from, value);
-        return super._transferFrom(msg.sender, from, to, value);
+        return super.transferFrom(from, to, value);
     }
 
     function mint(address to, uint256 value) 
         public
         onlyMinter
+        requireWhitelisted(to)
         returns (bool)
     {
-        return super._mint(to, value);
-    }
-
-    function burn(uint256 value)
-        public
-        returns (bool)
-    {
-        return super._burn(msg.sender, value);
-    }
-
-    function burnFrom(address account, uint256 value)
-        public
-        returns (bool)
-    {
-        return super._burnFrom(msg.sender, account, value);
+        return super.mint(to, value);
     }
 
     function increaseAllowance(address spender, uint256 addedValue) 
@@ -131,23 +81,23 @@ contract GoodDollar is ERC20, MinterRole, Identity {
         requireWhitelisted(spender)
         returns (bool)
     {
-        return super._increaseAllowance(msg.sender, spender, addedValue);
+        return super.increaseAllowance(spender, addedValue);
     }
 
-    function DecreaseAllowance(address spender, uint256 subtractedValue) 
+    function decreaseAllowance(address spender, uint256 subtractedValue) 
         public
         onlyWhitelisted
         requireWhitelisted(spender)
         returns (bool)
     {
-        return super._decreaseAllowance(msg.sender, spender, subtractedValue);
+        return super.decreaseAllowance(spender, subtractedValue);
     }
 
-    function setFees(uint256 value) 
+    function setFees(uint256 txFees) 
         private
-        onlyMinter
+        onlyOwner
     {
-        txFees = value;
+        _txFees = txFees;
     }
     
     function getFees() 
@@ -155,7 +105,7 @@ contract GoodDollar is ERC20, MinterRole, Identity {
         view
         returns (uint256)
     {
-        return txFees;
+        return _txFees;
     }
 
 
@@ -164,11 +114,10 @@ contract GoodDollar is ERC20, MinterRole, Identity {
         returns (uint256)
     {
         if (account == msg.sender) {
-            super._transfer(msg.sender, address(_dao), getFees());
+            super.transfer(_feeRecipient, getFees());
         } else {
-            super._transferFrom(msg.sender, account, address(_dao), getFees());            
+            super.transferFrom(account, _feeRecipient, getFees());            
         }
         return value.sub(getFees());
     }
-
 }

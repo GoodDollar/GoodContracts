@@ -14,17 +14,7 @@ contract Identity is WhitelistAdminRole {
   event WhitelistAdded(address indexed account);
   event WhitelistRemoved(address indexed account);
 
-  modifier onlyWhitelisted()
-  {
-    require(isWhitelisted(msg.sender), "Is not whitelisted" );
-    _;
-  }
-
-  modifier requireWhitelisted(address account)
-  {
-    require(isWhitelisted(account), "Is not whitelisted");
-    _;
-  }
+ 
 
   function addWhitelisted(address account) 
     public

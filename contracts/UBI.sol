@@ -167,6 +167,7 @@ contract UBI is Ownable,DSMath {
    */
   function calculateClaim(address _user) public view returns (uint amount) {
     uint8 ubiDays = uint8( (now - last_claimed[_user]).div(1 days) );
+    ubiDays = identity.isUBIWhitelisted(msg.sender)? ubiDays : 1
     if(ubiDays < 1)
       return 0;
     ubiDays = ubiDays > 7 ? 7 : ubiDays;

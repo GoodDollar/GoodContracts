@@ -5,7 +5,7 @@ echo $MNEMONIC
 #exit on any command failure
 set -e
 CHANGES=`git status --porcelain --untracked-files=no -s`
-if [[ -z $CHANGES ]]
+if [[ $CHANGES ]]
 then 
     echo "Error git not clean";
     exit -1;

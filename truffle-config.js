@@ -19,9 +19,8 @@ module.exports = {
     'develop': { // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
-      network_id: "4447", // Match any network id
+      network_id: "4447" // Match any network id,
       // from: '0x244a9ac7012f1b5e6f74f78e1dc69ef69df1dab6' // should be equal to first address in truffle UI list - address[0]
-
     },
     test: {
       host: "127.0.0.1",
@@ -70,7 +69,7 @@ module.exports = {
   },
   compilers: {
     solc: {
-      version: "0.5.2",
+      version: "0.5.4",
       settings: {
         optimizer: {
           enabled: true,

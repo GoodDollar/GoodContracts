@@ -1,12 +1,10 @@
 pragma solidity ^0.5.2;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-
+import "@daostack/arc/contracts/controller/DAOToken.sol";
 import "../identity/IdentityGuard.sol";
+import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
 
-contract GoodDollar is ERC20Detailed, ERC20Mintable, IdentityGuard, Ownable {
+contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
 
     Identity _identity;
 
@@ -16,16 +14,16 @@ contract GoodDollar is ERC20Detailed, ERC20Mintable, IdentityGuard, Ownable {
     constructor(
         string memory name,
         string memory symbol,
-        uint8 decimals,
+        uint256 cap,
         Identity identity,
         address feeRecipient
     ) 
         public
-        ERC20Detailed(name, symbol, decimals)
+        DAOToken(name, symbol, cap)
+        IdentityGuard(identity)
     {
         _identity = identity;
         _feeRecipient = feeRecipient;
-        addMinter(feeRecipient);
     }
 
     function transfer(address to, uint256 value)
@@ -94,7 +92,7 @@ contract GoodDollar is ERC20Detailed, ERC20Mintable, IdentityGuard, Ownable {
     }
 
     function setFees(uint256 txFees) 
-        private
+        public
         onlyOwner
     {
         _txFees = txFees;
@@ -106,6 +104,13 @@ contract GoodDollar is ERC20Detailed, ERC20Mintable, IdentityGuard, Ownable {
         returns (uint256)
     {
         return _txFees;
+    }
+
+    function setFeeRecipient(address feeRecipient)
+        public
+        onlyOwner
+    {
+        _feeRecipient = feeRecipient;
     }
 
 

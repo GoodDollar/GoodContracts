@@ -1,12 +1,10 @@
 pragma solidity ^0.5.2;
 
-import "@daostack/arc/contracts/controller/DAOToken.sol";
 import "../identity/IdentityGuard.sol";
 import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
+import "@daostack/arc/contracts/controller/DAOToken.sol";
 
 contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
-
-    Identity _identity;
 
     address _feeRecipient;
     uint256 _txFees;
@@ -17,12 +15,11 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
         uint256 cap,
         Identity identity,
         address feeRecipient
-    ) 
+    )
         public
         DAOToken(name, symbol, cap)
         IdentityGuard(identity)
     {
-        _identity = identity;
         _feeRecipient = feeRecipient;
     }
 
@@ -32,12 +29,12 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
         requireWhitelisted(to)
         returns (bool)
     {
-        value = processFees(msg.sender, value);
-        return super.transfer(to, value);
+        uint256 bruttoValue = processFees(msg.sender, value);
+        return super.transfer(to, bruttoValue);
     }
 
     function approve(
-        address spender, 
+        address spender,
         uint256 value
     )
         public
@@ -60,11 +57,11 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
         returns (bool)
     {
 
-        value = processFees(from, value);
-        return super.transferFrom(from, to, value);
+        uint256 bruttoValue = processFees(from, value);
+        return super.transferFrom(from, to, bruttoValue);
     }
 
-    function mint(address to, uint256 value) 
+    function mint(address to, uint256 value)
         public
         onlyMinter
         requireWhitelisted(to)
@@ -73,7 +70,7 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
         return super.mint(to, value);
     }
 
-    function increaseAllowance(address spender, uint256 addedValue) 
+    function increaseAllowance(address spender, uint256 addedValue)
         public
         onlyWhitelisted
         requireWhitelisted(spender)
@@ -82,7 +79,7 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
         return super.increaseAllowance(spender, addedValue);
     }
 
-    function decreaseAllowance(address spender, uint256 subtractedValue) 
+    function decreaseAllowance(address spender, uint256 subtractedValue)
         public
         onlyWhitelisted
         requireWhitelisted(spender)
@@ -91,14 +88,14 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
         return super.decreaseAllowance(spender, subtractedValue);
     }
 
-    function setFees(uint256 txFees) 
+    function setFees(uint256 txFees)
         public
         onlyOwner
     {
         _txFees = txFees;
     }
     
-    function getFees() 
+    function getFees()
         public
         view
         returns (uint256)
@@ -114,14 +111,14 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
     }
 
 
-    function processFees(address account, uint256 value) 
+    function processFees(address account, uint256 value)
         internal
         returns (uint256)
     {
         if (account == msg.sender) {
             super.transfer(_feeRecipient, getFees());
         } else {
-            super.transferFrom(account, _feeRecipient, getFees());            
+            super.transferFrom(account, _feeRecipient, getFees());
         }
         return value.sub(getFees());
     }

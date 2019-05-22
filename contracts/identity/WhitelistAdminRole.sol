@@ -3,6 +3,7 @@ pragma solidity 0.5.4;
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
+/** @title Contract managing the whitelist admin role */
 contract WhitelistAdminRole is Ownable {
     using Roles for Roles.Role;
 
@@ -26,7 +27,7 @@ contract WhitelistAdminRole is Ownable {
     }
 
     /**
-     * @dev Checks if account is whitelist dmin
+     * @dev Checks if account is whitelist admin
      * @param account Account to check
      * @return Boolean indicating if account is whitelist admin
      */

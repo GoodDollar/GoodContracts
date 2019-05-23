@@ -28,7 +28,7 @@ then
     if [[ $MNEMONIC_PROD && $prompt =~ [yY](es)* ]]
     then
         export MNEMONIC = $MNEMONIC_PROD
-        export NETWORK='fuse'
+        export NETWORK='production'
         npm run migrate_reset:ganache
     fi
 

@@ -8,10 +8,13 @@ require("ts-node/register");
 require("dotenv").load();
 // }
 const HDWalletProvider = require("truffle-hdwallet-provider");
+const PrivateKeyProvider = require("truffle-hdwallet-provider-privkey");
 
 const mnemonic = process.env.MNEMONIC;
+const privateKey = process.env.PRIVATE_KEY;
+
 const infura_api = process.env.INFURA_API;
-console.log({ mnemonic, infura_api });
+console.log({ mnemonic, privateKey, infura_api });
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
   // to customize your Truffle configuration!
@@ -87,7 +90,7 @@ module.exports = {
     },
     production: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
+        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
       },
       network_id: 121,
       gas:4500000,

@@ -7,8 +7,7 @@ set -e
 CHANGES=`git status --porcelain --untracked-files=no -s`
 if [[ $CHANGES ]]
 then 
-    echo "Error git not clean";
-    exit -1;
+    echo "Warning git not clean";
 fi
 if [[ -z $MNEMONIC_STAGING || -z $INFURA_API ]]
 then
@@ -17,7 +16,7 @@ then
 fi
 if [[  $1 == 'deploy' ]]
 then 
-    export MNEMONIC = $MNEMONIC_STAGING
+    export MNEMONIC=$MNEMONIC_STAGING
     echo "deploying to fuse"
     export NETWORK='fuse'
     # npm run migrate_reset:ganache
@@ -25,9 +24,9 @@ then
     export NETWORK='kovan'
     npm run migrate_reset:ganache
     read -p "deploy to production? " prompt
-    if [[ $MNEMONIC_PROD && $prompt =~ [yY](es)* ]]
+    if [[ $PRIVATE_KEY_PROD && $prompt =~ [yY](es)* ]]
     then
-        export MNEMONIC = $MNEMONIC_PROD
+        export PRIVATE_KEY=$PRIVATE_KEY_PROD
         export NETWORK='production'
         npm run migrate_reset:ganache
     fi

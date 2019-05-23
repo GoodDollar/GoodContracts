@@ -5,19 +5,20 @@ require("@babel/polyfill");
 require("ts-node/register");
 
 // if (process.env.NODE_ENV !== 'production') { // https://codeburst.io/process-env-what-it-is-and-why-when-how-to-use-it-effectively-505d0b2831e7
-require('dotenv').load();
+require("dotenv").load();
 // }
 const HDWalletProvider = require("truffle-hdwallet-provider");
 
-const mnemonic = process.env.MNEMONIC
-const infura_api = process.env.INFURA_API
-console.log({ mnemonic, infura_api })
+const mnemonic = process.env.MNEMONIC;
+const infura_api = process.env.INFURA_API;
+console.log({ mnemonic, infura_api });
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
   // to customize your Truffle configuration!
 
   networks: {
-    'develop': { // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
+    develop: {
+      // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
       network_id: "4447" // Match any network id,
@@ -32,13 +33,13 @@ module.exports = {
     },
     test: {
       host: "127.0.0.1",
-      port: 8545,
-      network_id: "*", 
-      gas: 8000000,
+      port: 8545, // my "ganache " runs on 8545 - configurable
+      network_id: "*" // my "ganache " runs with 6000 network_id - configurable
+      // from: '0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1' // should be equal to first address in ganache UI list - address[0]
     },
     coverage: {
-      host: '127.0.0.1',
-      network_id: '*', // eslint-disable-line camelcase
+      host: "127.0.0.1",
+      network_id: "*", // eslint-disable-line camelcase
       port: 8555,
       gas: 0xfffffffffff,
       gasPrice: 0x01
@@ -63,16 +64,30 @@ module.exports = {
     },
     kovan: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://kovan.infura.io/v3/" + infura_api,0,10)
+        return new HDWalletProvider(
+          mnemonic,
+          "https://kovan.infura.io/v3/" + infura_api,
+          0,
+          10
+        );
       },
       network_id: 42,
-      gas:4700000,
-      skipDryRun:true,
-      gasPrice:2000000000 //2 gwei
+      gas: 4700000,
+      skipDryRun: true,
+      gasPrice: 2000000000 //2 gwei
     },
     fuse: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/",0,10)
+        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
+      },
+      network_id: 121,
+      gas: 4500000,
+      skipDryRun: true,
+      gasPrice: 1000000000 //1 gwei
+    },
+    production: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
       },
       network_id: 121,
       gas:4500000,

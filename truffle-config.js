@@ -2,6 +2,7 @@ require("@babel/register")({
   ignore: [/node_modules/]
 });
 require("@babel/polyfill");
+require("ts-node/register");
 
 // if (process.env.NODE_ENV !== 'production') { // https://codeburst.io/process-env-what-it-is-and-why-when-how-to-use-it-effectively-505d0b2831e7
 require('dotenv').load();
@@ -77,5 +78,6 @@ module.exports = {
         }
       }
     }
-  }
+  },
+  test_file_extension_regexp: /.*\.ts$/,
 };

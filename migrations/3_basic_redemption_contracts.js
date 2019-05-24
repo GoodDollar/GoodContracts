@@ -64,11 +64,11 @@ module.exports = function(deployer, network, accounts) {
     await GDD.addMinter(GoodDollarReserve.address);
     await GDD.renounceMinter();
     console.log("Done moving ownership of token to reserve");
-    (await RedemptionData.deployed()).transferOwnership(
+    await (await RedemptionData.deployed()).transferOwnership(
       RedemptionFunctional.address
     );
     console.log("Done moving ownership of claim data to claim contract");
-    (await GoodDollarReserve.deployed()).transferOwnership(
+    await (await GoodDollarReserve.deployed()).transferOwnership(
       RedemptionFunctional.address
     );
     console.log("Done moving ownership of reserve to claim contract");
@@ -83,7 +83,7 @@ module.exports = function(deployer, network, accounts) {
       network,
       networkId: parseInt(deployer.network_id)
     };
-
+    console.log("Writing deployment file...", { releasedContracts });
     await releaser(releasedContracts, network);
   });
 };

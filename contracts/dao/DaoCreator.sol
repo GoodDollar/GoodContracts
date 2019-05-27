@@ -1,7 +1,8 @@
 pragma solidity 0.5.4;
 
-import "@daostack/infra/contracts/votingMachines/AbsoluteVote.sol";
 import "@daostack/arc/contracts/controller/Controller.sol";
+import "@daostack/arc/contracts/universalSchemes/SchemeRegistrar.sol";
+import "@daostack/infra/contracts/votingMachines/AbsoluteVote.sol";
 
 import "../token/GoodDollar.sol";
 import "../identity/IdentityGuard.sol";
@@ -25,7 +26,8 @@ contract ControllerCreatorGoodDollar {
  */
 contract DaoCreatorGoodDollar {
 
-    mapping(address=>address) public locks;
+    Avatar public avatar;
+    address public lock;
 
     event NewOrg (address _avatar);
     event InitialSchemesSet (address _avatar);
@@ -59,7 +61,7 @@ contract DaoCreatorGoodDollar {
         require(_founders.length == _foundersTokenAmount.length);
         require(_founders.length == _foundersReputationAmount.length);
         require(_founders.length > 0);
-        require(locks[address(_avatar)] == msg.sender);
+        require(lock == msg.sender);
         // Mint token and reputation for founders:
         for (uint256 i = 0; i < _founders.length; i++) {
             require(_founders[i] != address(0));
@@ -91,6 +93,7 @@ contract DaoCreatorGoodDollar {
         string calldata _tokenName,
         string calldata _tokenSymbol,
         uint256 _cap,
+        uint256 _fee,
         Identity _identity,
         address[] calldata _founders,
         uint[] calldata _foundersTokenAmount,
@@ -104,6 +107,7 @@ contract DaoCreatorGoodDollar {
             _tokenName,
             _tokenSymbol,
             _cap,
+            _fee,
             _identity,
             _founders,
             _foundersTokenAmount,
@@ -129,7 +133,7 @@ contract DaoCreatorGoodDollar {
     {
         // this action can only be executed by the account that holds the lock
         // for this controller
-        require(locks[address(_avatar)] == msg.sender);
+        require(lock == msg.sender);
         // register initial schemes:
         ControllerInterface controller = ControllerInterface(_avatar.owner());
         for (uint256 i = 0; i < _schemes.length; i++) {
@@ -139,7 +143,7 @@ contract DaoCreatorGoodDollar {
         // Unregister self:
         controller.unregisterScheme(address(this), address(_avatar));
         // Remove lock:
-        delete locks[address(_avatar)];
+        lock = address(0);
         emit InitialSchemesSet(address(_avatar));
     }
 
@@ -159,6 +163,7 @@ contract DaoCreatorGoodDollar {
         string memory _tokenName,
         string memory _tokenSymbol,
         uint256 _cap,
+        uint256 _fee,
         Identity _identity,
         address[] memory _founders,
         uint[] memory _foundersTokenAmount,
@@ -166,12 +171,13 @@ contract DaoCreatorGoodDollar {
     ) private returns(address)
     {
         // Create Token, Reputation and Avatar:
+        require(lock == address(0));
         require(_founders.length == _foundersTokenAmount.length);
         require(_founders.length == _foundersReputationAmount.length);
         require(_founders.length > 0);
-        GoodDollar nativeToken = new GoodDollar(_tokenName, _tokenSymbol, _cap, _identity, address(0));
+        GoodDollar nativeToken = new GoodDollar(_tokenName, _tokenSymbol, _cap, _identity, address(0), _fee);
         Reputation nativeReputation = new Reputation();
-        Avatar avatar = new Avatar("GoodDollar", nativeToken, nativeReputation);
+        avatar = new Avatar("GoodDollar", nativeToken, nativeReputation);
 
         // Mint token and reputation for founders:
         for (uint256 i = 0; i < _founders.length; i++) {
@@ -187,15 +193,18 @@ contract DaoCreatorGoodDollar {
         // Create Controller:
         ControllerInterface controller = ControllerInterface(controllerCreatorGoodDollar.create(avatar));
 
-        // Set fee recipient
+        // Set fee recipient and minters
         nativeToken.setFeeRecipient(address(avatar));
+        nativeToken.addMinter(address(avatar));
+        nativeToken.addMinter(address(controller));
+        nativeToken.renounceMinter();
 
         // Transfer ownership:
         avatar.transferOwnership(address(controller));
         nativeToken.transferOwnership(address(controller));
         nativeReputation.transferOwnership(address(controller));
 
-        locks[address(avatar)] = msg.sender;
+        lock = msg.sender;
 
         emit NewOrg (address(avatar));
         return (address(avatar));

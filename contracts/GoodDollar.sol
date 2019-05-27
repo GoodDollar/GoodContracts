@@ -100,7 +100,7 @@ contract GoodDollar is ERC677BridgeToken {
         // return ERC677BridgeToken.transferAndCall(_to, newValue, _data);
     }
     /**
-    * @title Process transaction for transaction fees and burn fees
+    * @dev Process transaction for transaction fees and burn fees
     * @param from TX from
     * @param to TX to
     * @param value TX value

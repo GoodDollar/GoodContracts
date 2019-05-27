@@ -53,7 +53,7 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
   }
 
   /**
-    @title calculates the fees of the transaction: TX fee and BurnFee
+    @dev calculates the fees of the transaction: TX fee and BurnFee
     @return A tuple with the calculated fees
   */
   function calcFees(uint _value) public view returns (uint txFee, uint burn) {
@@ -62,14 +62,14 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
   }
 
   /***
-    @title adds an address to the list of addresses that the policy is not applied on
+    @dev adds an address to the list of addresses that the policy is not applied on
  */
   function setExcludeFromPolicy(address to, bool exclude) public onlySigner {
     excludedFromPolicy[to] = exclude;
   }
 
   /**
-    @title process GoodDollar token tx and enforces:
+    @dev process GoodDollar token tx and enforces:
     1. User is whitelisted (A GoodDollar citizen) - otherwise an exception is thrown
     2. Fees Calculation for the transaction
     @return a tuple with the 2 TX fees: TX fee and Burn Fee

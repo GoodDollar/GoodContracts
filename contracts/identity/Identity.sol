@@ -2,20 +2,26 @@ pragma solidity 0.5.4;
 
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./WhitelistAdminRole.sol";
+import "./IdentityAdminRole.sol";
 
 /**  @title Identity contract responsible for whitelisting
   * and keeping track of amount of whitelisted users
   */
-contract Identity is WhitelistAdminRole {
+contract Identity is IdentityAdminRole {
   using Roles for Roles.Role;
-  using SafeMath for uint;
+  using SafeMath for uint256;
 
   Roles.Role private whitelist;
-  uint whitelistedCount;
+  Roles.Role private claimers;
+
+  uint256 claimerCount;
 
   event WhitelistAdded(address indexed account);
   event WhitelistRemoved(address indexed account);
+
+  event ClaimerAdded(address indexed account);
+  event ClaimerRemoved(address indexed account);
+
 
 
 /**
@@ -23,10 +29,13 @@ contract Identity is WhitelistAdminRole {
  * Can only be called by whitelist Administrators
  * @param account address to pass to internal function
  */
-  function addWhitelisted(address account)
+  function addIdentity(address account, bool isClaimer)
     public
-    onlyWhitelistAdmin
+    onlyIdentityAdmin
   {
+    if (isClaimer) {
+      _addClaimer(account);
+    }
     _addWhitelisted(account);
   }
 
@@ -35,10 +44,13 @@ contract Identity is WhitelistAdminRole {
  * Can only be called by whitelist Administrators
  * @param account address to pass to internal function
  */
-  function removeWhitelisted(address account)
+  function removeIdentity(address account)
     public
-    onlyWhitelistAdmin
+    onlyIdentityAdmin
   {
+    if (isClaimer(account)) {
+      _removeClaimer(account);
+    }
     _removeWhitelisted(account);
   }
 
@@ -55,16 +67,24 @@ contract Identity is WhitelistAdminRole {
     return whitelist.has(account);
   }
 
+  function isClaimer(address account)
+    public
+    view
+    returns (bool)
+  {
+    return claimers.has(account);
+  }
+
 /**
  * @dev Gets the amount of currently whitelisted users
  * @return a uint representing the current amount of whitelisted users
  */
-  function getWhitelistedCount()
+  function getClaimerCount()
     public
     view
     returns (uint)
   {
-    return whitelistedCount;
+    return claimerCount;
   }
 
 /**
@@ -72,10 +92,10 @@ contract Identity is WhitelistAdminRole {
  * given amount
  * @param value an uint with which the whitelisted count will increase by
  */
-  function increaseWhitelistedCount(uint value)
+  function increaseClaimerCount(uint value)
     internal
   {
-    whitelistedCount = whitelistedCount.add(value);
+    claimerCount = claimerCount.add(value);
   }
 
 /**
@@ -83,10 +103,10 @@ contract Identity is WhitelistAdminRole {
  * given amount
  * @param value an uint with which the whitelisted count will increase by
  */
-  function decreaseWhitelistedCount(uint value)
+  function decreaseClaimerCount(uint value)
     internal
   {
-    whitelistedCount = whitelistedCount.sub(value);
+    claimerCount = claimerCount.sub(value);
   }
 
 /**
@@ -98,7 +118,6 @@ contract Identity is WhitelistAdminRole {
     internal
   {
     whitelist.add(account);
-    increaseWhitelistedCount(1);
     emit WhitelistAdded(account);
   }
 
@@ -111,7 +130,22 @@ contract Identity is WhitelistAdminRole {
     internal
   {
     whitelist.remove(account);
-    decreaseWhitelistedCount(1);
     emit WhitelistRemoved(account);
+  }
+
+  function _addClaimer(address account)
+    internal
+  {
+    claimers.add(account);
+    increaseClaimerCount(1);
+    emit ClaimerAdded(account);
+  }
+
+  function _removeClaimer(address account)
+    internal
+  {
+    claimers.remove(account);
+    decreaseClaimerCount(1);
+    emit ClaimerRemoved(account);
   }
 }

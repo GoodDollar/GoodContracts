@@ -14,7 +14,7 @@ contract Identity is IdentityAdminRole {
   Roles.Role private whitelist;
   Roles.Role private claimers;
 
-  uint256 claimerCount;
+  uint256 private claimerCount;
 
   event WhitelistAdded(address indexed account);
   event WhitelistRemoved(address indexed account);

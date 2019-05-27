@@ -5,14 +5,21 @@ const ControllerCreatorGoodDollar = artifacts.require('./ControllerCreatorGoodDo
 const Avatar = artifacts.require('./Avatar.sol');
 const AbsoluteVote = artifacts.require('./AbsoluteVote.sol');
 
-const tokenName = "TestToken";
-const tokenSymbol = "TST";
+const SchemeRegistrar = artifacts.require('./SchemeRegistrar.sol');
+
+const tokenName = "GoodDollar";
+const tokenSymbol = "GDD";
 const cap = web3.utils.toWei("100000000","ether");
 
+const initFee = web3.utils.toWei("0.0001");
 const initRep = web3.utils.toWei("10");
 const initRepInWei = [initRep];
 const initToken = web3.utils.toWei("1000");
 const initTokenInWei = [initToken];
+
+// initial preliminary constants
+const votePrecedence = 50;
+const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 module.exports = async function(deployer) {
   deployer.deploy(Identity).then(async (identity) => {
@@ -20,21 +27,39 @@ module.exports = async function(deployer) {
     await web3.eth.getAccounts(function(err,res) { accounts = res; });
     const founders = [accounts[0]];
 
-    await Promise.all(founders.map(f => identity.addWhitelisted(f)));
+    await Promise.all(founders.map(f => identity.addIdentity(f, true)));
 
     const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar);
     const daoCreator = await deployer.deploy(DaoCreatorGoodDollar, controllerCreator.address);
 
-    const returnedParams = await daoCreator.forgeOrg(
-      tokenName, tokenSymbol, cap, identity.address,
+    await daoCreator.forgeOrg(
+      tokenName, tokenSymbol, cap, initFee, identity.address,
       founders, initTokenInWei, initRepInWei);
 
-    const avatar = await Avatar.at(returnedParams.logs[0].args._avatar);
+    const avatar = await Avatar.at(await daoCreator.avatar());;
+    await identity.addIdentity(avatar.address, false);
 
     // Schemes
+    // Deploy Voting Maching
     const absoluteVote = await deployer.deploy(AbsoluteVote);
+    await absoluteVote.setParameters(votePrecedence, NULL_ADDRESS);
+    const voteParametersHash = await absoluteVote.getParametersHash(votePrecedence, NULL_ADDRESS);
 
+    // Deploy SchemeRegistrar
+    const schemeRegistrar = await deployer.deploy(SchemeRegistrar);
+    await schemeRegistrar.setParameters(voteParametersHash, voteParametersHash, absoluteVote.address);
+    const schemeRegisterParams = await schemeRegistrar.getParametersHash(voteParametersHash, voteParametersHash, absoluteVote.address);
 
-    // TODO: Deploy UBI scheme
+    // Subscribe schemes
+    const schemesArray = [schemeRegistrar.address];
+    const paramsArray = [schemeRegisterParams];
+    const permissionArray = ['0x0000001F'];
+
+    await daoCreator.setSchemes(
+      avatar.address,
+      schemesArray,
+      paramsArray,
+      permissionArray,
+      "metaData"); 
   });
 };

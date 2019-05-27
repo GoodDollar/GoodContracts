@@ -22,13 +22,15 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
         string memory symbol,
         uint256 cap,
         Identity identity,
-        address feeRecipient
+        address feeRecipient,
+        uint256 txFees
     )
         public
         DAOToken(name, symbol, cap)
         IdentityGuard(identity)
     {
         _feeRecipient = feeRecipient;
+        _txFees = txFees;
     }
 
     /**

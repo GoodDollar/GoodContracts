@@ -41,4 +41,14 @@ contract IdentityGuard {
     require(_identity.isWhitelisted(account), "Is not whitelisted");
     _;
   }
+
+  modifier onlyClaimer() {
+    require(_identity.isClaimer(msg.sender), "is not claimer");
+    _;
+  }
+
+  modifier requireClaimer(address account) {
+    require(_identity.isClaimer(account), "is not claimer");
+    _;
+  }
 }

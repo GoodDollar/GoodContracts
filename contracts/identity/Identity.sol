@@ -25,9 +25,13 @@ contract Identity is IdentityAdminRole {
 
 
 /**
- * @dev Calls internal function _addWhitelisted with given address.
- * Can only be called by whitelist Administrators
+ * @dev Calls internal function _addWhitelisted with given address
+ * and internal function _addClaimer with given address if
+ * given bool is true.
+ * Can only be called by Identity Administrators
  * @param account address to pass to internal function
+ * @param isClaimer bool indicating weather or not address should
+ * be added to claimers.
  */
   function addIdentity(address account, bool isClaimer)
     public
@@ -40,8 +44,9 @@ contract Identity is IdentityAdminRole {
   }
 
 /**
- * @dev Calls internal function _removeWhitelisted with given address.
- * Can only be called by whitelist Administrators
+ * @dev Calls internal function _removeWhitelisted with given address
+ * and internal function _removeClaimer if given account is a claimer
+ * Can only be called by identity Administrators
  * @param account address to pass to internal function
  */
   function removeIdentity(address account)
@@ -67,6 +72,11 @@ contract Identity is IdentityAdminRole {
     return whitelist.has(account);
   }
 
+/**
+ * @dev Reverts if given address has not been added to claimers
+ * @param account the address to check
+ * @return a bool indicating weather the address is present in claimers
+ */
   function isClaimer(address account)
     public
     view
@@ -76,8 +86,8 @@ contract Identity is IdentityAdminRole {
   }
 
 /**
- * @dev Gets the amount of currently whitelisted users
- * @return a uint representing the current amount of whitelisted users
+ * @dev Gets the amount of claimers
+ * @return a uint representing the current amount of claimers
  */
   function getClaimerCount()
     public
@@ -110,8 +120,8 @@ contract Identity is IdentityAdminRole {
   }
 
 /**
- * @dev Internal function that adds given address to the whitelist,
- * increments the count of whitelisted users by one and emits an event
+ * @dev Internal function that adds given address
+ * to the whitelist and emits an event
  * @param account the address to add to whitelist
  */
   function _addWhitelisted(address account)
@@ -122,8 +132,8 @@ contract Identity is IdentityAdminRole {
   }
 
 /**
- * @dev Internal function that removes given address from the whitelist,
- * decrements the count of whitelisted users by one and emits an event
+ * @dev Internal function that removes given address
+ * from the whitelist and emits an event
  * @param account the address to remove from whitelist
  */
   function _removeWhitelisted(address account)
@@ -133,6 +143,12 @@ contract Identity is IdentityAdminRole {
     emit WhitelistRemoved(account);
   }
 
+/**
+ * @dev Internal function that adds given address
+ * to claimers, increments claimer count by one and
+ * emits an event
+ * @param account the address to add to claimers
+ */
   function _addClaimer(address account)
     internal
   {
@@ -141,6 +157,12 @@ contract Identity is IdentityAdminRole {
     emit ClaimerAdded(account);
   }
 
+/**
+ * @dev Internal function that removes given address
+ * from claimers, decrements claimer count by one and
+ * emits an event
+ * @param account the address to remove from claimers
+ */
   function _removeClaimer(address account)
     internal
   {

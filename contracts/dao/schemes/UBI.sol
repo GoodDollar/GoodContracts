@@ -7,6 +7,10 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "../../identity/Identity.sol";
 
+
+/** @title UBI scheme contract responsible for calculating distribution
+ * and performing the distribution itself
+ */
 contract UBI {
     using SafeMath for uint256;
 
@@ -22,11 +26,25 @@ contract UBI {
     uint256 public claimDistribution;
     mapping (address => bool) hasClaimed;
 
+    /**
+     * @dev Modifier that requires that the
+     * contract is active
+     */
     modifier requireActive() {
         require(isActive, "is not active");
         _;
     }
 
+
+    /**
+     * @dev Constructor. Checks if avatar is a zero address
+     * and if periodEnd variable is after periodStart.
+     * @param _avatar the avatar contract
+     * @param _identity the identity contract
+     * @param _amountToMint the amount to mint once UBI starts
+     * @param _periodStart period from when the contract is able to start
+     * @param _periodEnd period from when the contract is able to end
+     */
     constructor(
         Avatar _avatar,
         Identity _identity,
@@ -49,11 +67,26 @@ contract UBI {
         isActive = false;
     }
 
+    /**
+     * @dev function that returns an uint256 that
+     * represents the amount each claimer can claim.
+     * @param reserve the account balance to calculate from
+     * @return The reserve divided by the amount of registered claimers
+     */
     function calcDistribution(uint256 reserve) internal view returns(uint256) {
         uint claimers = identity.getClaimerCount();
         return reserve.div(claimers);
     }
 
+    /**
+     * @dev Function that commences distribution period on contract.
+     * Can only be called after periodStart and before periodEnd and
+     * can only be done once.
+     * Minting amount given in constructor is minted and the reserve is sent
+     * to this contract to allow claimers to claim. The claim distribution
+     * is then calculated and true is returned to indicate that claiming
+     * can be done
+     */
     function start() external returns(bool) {
         ControllerInterface controller = ControllerInterface(avatar.owner());
 
@@ -89,6 +122,13 @@ contract UBI {
         return true;
     }
 
+
+    /**
+     * @dev Function that ends the claiming period. Can only be done if
+     * Contract has been started and periodEnd is passed.
+     * Sends the remaining funds on contract back to the avatar contract
+     * address
+     */
     function end() external requireActive returns(bool) {
         require(now >= periodEnd, "period has not ended");
 
@@ -102,6 +142,10 @@ contract UBI {
         isActive = false;
     }
 
+    /**
+     * @dev Function that claims UBI to message sender.
+     * Each claimer can only claim once per UBI contract
+     */
     function claim() external requireActive returns(bool) {
         require(!hasClaimed[msg.sender], "has already claimed");
 

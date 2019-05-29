@@ -9,18 +9,14 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const UBI = artifacts.require("UBI");
 
-type ThenArg<T> = T extends Promise<infer U> ? U :
-  T extends (...args: any[]) => Promise<infer U> ? U :
-  T;
-
 contract("Integration - Claiming UBI", ([founder, whitelisted]) => {
 
-  let identity: ThenArg<ReturnType<typeof Identity['new']>>;
-  let avatar: ThenArg<ReturnType<typeof Avatar['new']>>;
-  let controller: ThenArg<ReturnType<typeof ControllerInterface['new']>>;
-  let absoluteVote: ThenArg<ReturnType<typeof AbsoluteVote['new']>>;
-  let token: ThenArg<ReturnType<typeof GoodDollar['new']>>;
-  let ubi: ThenArg<ReturnType<typeof UBI['new']>>;
+  let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
+  let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
+  let controller: helpers.ThenArg<ReturnType<typeof ControllerInterface['new']>>;
+  let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote['new']>>;
+  let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
+  let ubi: helpers.ThenArg<ReturnType<typeof UBI['new']>>;
 
   let proposalId: string;
 
@@ -75,7 +71,7 @@ contract("Integration - Claiming UBI", ([founder, whitelisted]) => {
   });
 
   it("should start UBI period", async () => {
-    await helpers.assertVMException(ubi.start());
+    await helpers.assertVMException(ubi.start(), "not in period");
     await helpers.increaseTime(periodOffset*1.5);
     assert(await ubi.start());
   });
@@ -96,7 +92,7 @@ contract("Integration - Claiming UBI", ([founder, whitelisted]) => {
   });
 
   it("should end UBI period", async () => {
-     await helpers.assertVMException(ubi.end());
+     await helpers.assertVMException(ubi.end(), "period has not ended");
      await helpers.increaseTime(periodOffset);
      assert(await ubi.end());
   });

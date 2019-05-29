@@ -1,22 +1,16 @@
 import * as helpers from'./helpers';
 
-
 const Identity = artifacts.require("Identity");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
 const Avatar = artifacts.require("Avatar");
 const GoodDollar = artifacts.require("GoodDollar");
 const ControllerInterface = artifacts.require("ControllerInterface");
 
-type ThenArg<T> = T extends Promise <infer U> ? U :
-  T extends (...args: any[]) => Promise<infer U> ? U :
-  T;
-
 contract("Identity - Whitelist and Claimer", ([founder, whitelisted, nonwhitelisted]) => {
 
-    let identity: ThenArg<ReturnType<typeof Identity['new']>>;
-    let avatar: ThenArg<ReturnType<typeof Avatar['new']>>;
-    let token: ThenArg<ReturnType<typeof GoodDollar['new']>>;
-
+    let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
+    let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
+    let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
 
     before(async () => {
         identity = await Identity.deployed();
@@ -45,30 +39,23 @@ contract("Identity - Whitelist and Claimer", ([founder, whitelisted, nonwhitelis
 
     it("should increment claimers when adding identity", async() => {
         let oldClaimerCount = await identity.getClaimerCount();
-
         expect(oldClaimerCount.toString()).to.be.equal('2');
 
         await identity.addIdentity(nonwhitelisted, true);
 
         let newClaimerCount = await identity.getClaimerCount();
-
         expect(newClaimerCount.toString()).to.be.equal('3');
 
         await identity.removeIdentity(nonwhitelisted);
     });
 
     it("should decrement claimers when removing identity", async() => {
-
         let oldClaimerCount = await identity.getClaimerCount();
-
         expect(oldClaimerCount.toString()).to.be.equal('2');
-
         await identity.removeIdentity(whitelisted);
 
         let newClaimerCount = await identity.getClaimerCount();
-
         expect(newClaimerCount.toString()).to.be.equal('1');
-
         await identity.addIdentity(whitelisted, true);
     });
 
@@ -76,19 +63,22 @@ contract("Identity - Whitelist and Claimer", ([founder, whitelisted, nonwhitelis
         await token.transfer(whitelisted, web3.utils.toWei("10"));
         
         await helpers.assertVMException(
-            token.transfer(nonwhitelisted, web3.utils.toWei("1"), {from: whitelisted})
+            token.transfer(nonwhitelisted, web3.utils.toWei("1"), {from: whitelisted}),
+            "Is not whitelisted"
         );
     });
 
     it("should revert when non admin tries to whitelist", async () => {
         await helpers.assertVMException(
-            identity.addIdentity(nonwhitelisted, true, {from: whitelisted})
+            identity.addIdentity(nonwhitelisted, true, {from: whitelisted}),
+            "not IdentityAdmin"
         );
     });
 
     it("should revert when adding to whitelist twice", async() => {
         await helpers.assertVMException(
-          identity.addIdentity(whitelisted, true)
+          identity.addIdentity(whitelisted, true),
+          "VM Exception"
         );
     })
 
@@ -98,7 +88,8 @@ contract("Identity - Whitelist and Claimer", ([founder, whitelisted, nonwhitelis
         let claimerCount = await identity.getClaimerCount();
 
         await helpers.assertVMException(
-          identity.addIdentity(nonwhitelisted, true)
+          identity.addIdentity(nonwhitelisted, true),
+          "VM Exception"
         );
 
         let claimerCountnew = await identity.getClaimerCount();

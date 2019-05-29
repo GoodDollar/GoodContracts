@@ -29,16 +29,18 @@ export const increaseTime = async function(duration) {
   });
 };
 
-export const outOfGasMessage = 'VM Exception while processing transaction: out of gas';
+export type ThenArg<T> = T extends Promise <infer U> ? U :
+  T extends (...args: any[]) => Promise<infer U> ? U :
+  T;
 
-export async function assertVMException<T>(error: Promise<T>) {
+export async function assertVMException<T>(error: Promise<T>, message) {
   try {
     await error;
     assert(false, 'Expected error but it succeeded');
   } catch (error) {
     let condition = (
-      error.message.search('VM Exception') > -1
+      error.message.search(message) > -1
     );
     assert.isTrue(condition, 'Expected a VM Exception, got this instead:' + error.message);
   }
-}
+};

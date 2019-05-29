@@ -58,13 +58,13 @@ contract DaoCreatorGoodDollar {
     external
     returns(bool)
     {
-        require(_founders.length == _foundersTokenAmount.length);
-        require(_founders.length == _foundersReputationAmount.length);
-        require(_founders.length > 0);
-        require(lock == msg.sender);
+        require(_founders.length == _foundersTokenAmount.length, "Not enough founder tokens");
+        require(_founders.length == _foundersReputationAmount.length, "Founder reputation missing");
+        require(_founders.length > 0, "Must have at least one founder");
+        require(lock == msg.sender, "Message sender is not lock");
         // Mint token and reputation for founders:
         for (uint256 i = 0; i < _founders.length; i++) {
-            require(_founders[i] != address(0));
+            require(_founders[i] != address(0), "Founder cannot be zero address");
             if (_foundersTokenAmount[i] > 0) {
                 ControllerInterface(
                 _avatar.owner()).mintTokens(_foundersTokenAmount[i], _founders[i], address(_avatar));
@@ -133,7 +133,7 @@ contract DaoCreatorGoodDollar {
     {
         // this action can only be executed by the account that holds the lock
         // for this controller
-        require(lock == msg.sender);
+        require(lock == msg.sender, "Message sender is not lock");
         // register initial schemes:
         ControllerInterface controller = ControllerInterface(_avatar.owner());
         for (uint256 i = 0; i < _schemes.length; i++) {
@@ -171,17 +171,17 @@ contract DaoCreatorGoodDollar {
     ) private returns(address)
     {
         // Create Token, Reputation and Avatar:
-        require(lock == address(0));
-        require(_founders.length == _foundersTokenAmount.length);
-        require(_founders.length == _foundersReputationAmount.length);
-        require(_founders.length > 0);
+        require(lock == address(0), "Lock already exists");
+        require(_founders.length == _foundersTokenAmount.length, "Not enough founder tokens");
+        require(_founders.length == _foundersReputationAmount.length, "Founder reputation missing");
+        require(_founders.length > 0, "Must have at least one founder");
         GoodDollar nativeToken = new GoodDollar(_tokenName, _tokenSymbol, _cap, _identity, address(0), _fee);
         Reputation nativeReputation = new Reputation();
         avatar = new Avatar("GoodDollar", nativeToken, nativeReputation);
 
         // Mint token and reputation for founders:
         for (uint256 i = 0; i < _founders.length; i++) {
-            require(_founders[i] != address(0));
+            require(_founders[i] != address(0), "Founder cannot be zero address");
             if (_foundersTokenAmount[i] > 0) {
                 nativeToken.mint(_founders[i], _foundersTokenAmount[i]);
             }

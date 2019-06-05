@@ -6,12 +6,12 @@ import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "../../identity/Identity.sol";
-
+import "../../identity/IdentityGuard.sol";
 
 /** @title UBI scheme contract responsible for calculating distribution
  * and performing the distribution itself
  */
-contract UBI {
+contract UBI is IdentityGuard {
     using SafeMath for uint256;
 
     Avatar public avatar;
@@ -53,6 +53,7 @@ contract UBI {
         uint _periodEnd
     )
     public
+    IdentityGuard(_identity)
     {
         require(_avatar != Avatar(0), "avatar cannot be zero");
         require(_periodStart < _periodEnd, "start cannot be after nor equal to end");
@@ -140,13 +141,14 @@ contract UBI {
         }
 
         isActive = false;
+        return true;
     }
 
     /**
      * @dev Function that claims UBI to message sender.
      * Each claimer can only claim once per UBI contract
      */
-    function claim() external requireActive returns(bool) {
+    function claim() external requireActive onlyClaimer returns(bool) {
         require(!hasClaimed[msg.sender], "has already claimed");
 
         DAOToken token = avatar.nativeToken();

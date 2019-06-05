@@ -9,7 +9,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const UBI = artifacts.require("UBI");
 
-contract("Integration - Claiming UBI", ([founder, claimer]) => {
+contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer]) => {
 
   let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
   let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
@@ -89,6 +89,10 @@ contract("Integration - Claiming UBI", ([founder, claimer]) => {
 
     expect(claimerBalanceDiff.toString()).to.be.equal(claimDistributionMinusFee.toString());
   });
+
+  it("should not allow non-claimer to claim", async () => {
+    await helpers.assertVMException(ubi.claim({ from: nonClaimer }), "is not claimer");
+  })
 
   it("should end UBI period", async () => {
      await helpers.assertVMException(ubi.end(), "period has not ended");

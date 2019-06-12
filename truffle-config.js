@@ -31,9 +31,10 @@ module.exports = {
     },
     ganache: {
       host: "127.0.0.1",
-      port: 8545, // my "ganache " runs on 8545 - configurable
-      network_id: "*", // my "ganache " runs with 6000 network_id - configurable
-      // from: '0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1' // should be equal to first address in ganache UI list - address[0]
+      port: 8545,
+      network_id: "4447", // my "ganache " runs with 6000 network_id - configurable
+      gas: 8000000,
+      from: '0x9689dc4d84b36efa1f02260a90063ae91ef0cbd8'
     },
     coverage: {
       host: '127.0.0.1',

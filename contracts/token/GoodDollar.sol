@@ -2,10 +2,10 @@ pragma solidity ^0.5.2;
 
 import "../identity/IdentityGuard.sol";
 import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
-import "@daostack/arc/contracts/controller/DAOToken.sol";
+import "./ERC677Token.sol";
 
 /** @title The GoodDollar contract */
-contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
+contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
 
     address _feeRecipient;
     uint256 _txFees;
@@ -26,7 +26,7 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
         uint256 txFees
     )
         public
-        DAOToken(name, symbol, cap)
+        ERC677Token(name, symbol, cap)
         IdentityGuard(identity)
     {
         _feeRecipient = feeRecipient;
@@ -91,6 +91,16 @@ contract GoodDollar is DAOToken, IdentityGuard, MinterRole {
 
         uint256 bruttoValue = processFees(from, value);
         return super.transferFrom(from, to, bruttoValue);
+    }
+
+    function transferAndCall(address to, uint value, bytes memory data)
+        public
+        onlyWhitelisted
+        requireWhitelisted(to)
+        returns (bool)
+    {
+        uint256 bruttoValue = processFees(msg.sender, value);
+        return super.transferAndCall(to, bruttoValue, data);
     }
 
     /**

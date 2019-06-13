@@ -9,7 +9,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const UBI = artifacts.require("UBI");
 
-contract("Integration - Claiming UBI", ([founder, whitelisted]) => {
+contract("Integration - Claiming UBI", ([founder, claimer]) => {
 
   let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
   let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
@@ -33,17 +33,16 @@ contract("Integration - Claiming UBI", ([founder, whitelisted]) => {
     token = await GoodDollar.at(await avatar.nativeToken());
     ubi = await UBI.new(avatar.address, identity.address, web3.utils.toWei("1000"), periodStart, periodEnd);
 
-    await identity.addIdentity(whitelisted, true);
-    await identity.addIdentity(ubi.address, false);
+    await identity.addClaimer(claimer);
   });
 
   it("should perform transactions and increase fee reserve", async () => {
     const oldReserve = await token.balanceOf(avatar.address);
     expect(oldReserve.toString()).to.be.equal(web3.utils.toWei("0"));
 
-    await token.transfer(whitelisted, web3.utils.toWei("10"));
-    await token.transfer(whitelisted, web3.utils.toWei("10"));
-    await token.transfer(whitelisted, web3.utils.toWei("10"));
+    await token.transfer(claimer, web3.utils.toWei("10"));
+    await token.transfer(claimer, web3.utils.toWei("10"));
+    await token.transfer(claimer, web3.utils.toWei("10"));
 
     // Check that reserve has received fees
     const reserve = (await token.balanceOf(avatar.address)) as any;
@@ -77,18 +76,18 @@ contract("Integration - Claiming UBI", ([founder, whitelisted]) => {
   });
 
   it("should correctly claim UBI", async () => {
-    const oldWhitelistedBalance = await token.balanceOf(whitelisted);
+    const oldClaimerBalance = await token.balanceOf(claimer);
 
-    assert(await ubi.claim({ from: whitelisted }));
+    assert(await ubi.claim({ from: claimer }));
 
-    // Check that whitelisted has received the claimed amount
+    // Check that claimer has received the claimed amount
     const fee = await token.getFees();
     const claimDistributionMinusFee = ((await ubi.claimDistribution()) as any).sub(fee);
 
-    const whitelistedBalance = (await token.balanceOf(whitelisted)) as any;
-    const whitelistedBalanceDiff = whitelistedBalance.sub(oldWhitelistedBalance);
+    const claimerBalance = (await token.balanceOf(claimer)) as any;
+    const claimerBalanceDiff = claimerBalance.sub(oldClaimerBalance);
 
-    expect(whitelistedBalanceDiff.toString()).to.be.equal(claimDistributionMinusFee.toString());
+    expect(claimerBalanceDiff.toString()).to.be.equal(claimDistributionMinusFee.toString());
   });
 
   it("should end UBI period", async () => {

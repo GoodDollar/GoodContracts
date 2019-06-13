@@ -43,8 +43,8 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
      */
     function transfer(address to, uint256 value)
         public
-        onlyWhitelisted
-        requireWhitelisted(to)
+        onlyNotBlacklisted
+        requireNotBlacklisted(to)
         returns (bool)
     {
         uint256 bruttoValue = processFees(msg.sender, value);
@@ -63,8 +63,8 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
         uint256 value
     )
         public
-        onlyWhitelisted
-        requireWhitelisted(spender)
+        onlyNotBlacklisted
+        requireNotBlacklisted(spender)
         returns (bool)
     {
         return super.approve(spender, value);
@@ -83,9 +83,9 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
         uint256 value
     )
         public
-        onlyWhitelisted
-        requireWhitelisted(from)
-        requireWhitelisted(to)
+        onlyNotBlacklisted
+        requireNotBlacklisted(from)
+        requireNotBlacklisted(to)
         returns (bool)
     {
 
@@ -95,8 +95,8 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
 
     function transferAndCall(address to, uint value, bytes memory data)
         public
-        onlyWhitelisted
-        requireWhitelisted(to)
+        onlyNotBlacklisted
+        requireNotBlacklisted(to)
         returns (bool)
     {
         uint256 bruttoValue = processFees(msg.sender, value);
@@ -112,7 +112,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
     function mint(address to, uint256 value)
         public
         onlyMinter
-        requireWhitelisted(to)
+        requireNotBlacklisted(to)
         returns (bool)
     {
         return super.mint(to, value);
@@ -126,8 +126,8 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
      */
     function increaseAllowance(address spender, uint256 addedValue)
         public
-        onlyWhitelisted
-        requireWhitelisted(spender)
+        onlyNotBlacklisted
+        requireNotBlacklisted(spender)
         returns (bool)
     {
         return super.increaseAllowance(spender, addedValue);
@@ -141,8 +141,8 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
      */
     function decreaseAllowance(address spender, uint256 subtractedValue)
         public
-        onlyWhitelisted
-        requireWhitelisted(spender)
+        onlyNotBlacklisted
+        requireNotBlacklisted(spender)
         returns (bool)
     {
         return super.decreaseAllowance(spender, subtractedValue);

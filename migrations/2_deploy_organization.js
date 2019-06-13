@@ -27,7 +27,7 @@ module.exports = async function(deployer) {
     await web3.eth.getAccounts(function(err,res) { accounts = res; });
     const founders = [accounts[0]];
 
-    await Promise.all(founders.map(f => identity.addIdentity(f, true)));
+    await Promise.all(founders.map(f => identity.addClaimer(f)));
 
     const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar);
     const daoCreator = await deployer.deploy(DaoCreatorGoodDollar, controllerCreator.address);
@@ -36,8 +36,11 @@ module.exports = async function(deployer) {
       tokenName, tokenSymbol, cap, initFee, identity.address,
       founders, initTokenInWei, initRepInWei);
 
-    const avatar = await Avatar.at(await daoCreator.avatar());;
-    await identity.addIdentity(avatar.address, false);
+    const avatar = await Avatar.at(await daoCreator.avatar());
+
+    console.log(`AVATAR: ${avatar.address}`);
+    console.log(`CONTROLLER: ${await avatar.owner()}`);
+    console.log(`NATIVE TOKEN: ${await avatar.nativeToken()}`);
 
     // Schemes
     // Deploy Voting Maching

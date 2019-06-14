@@ -5,22 +5,23 @@ import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-import "../../identity/Identity.sol";
 
 contract OneTimePayments {
     using SafeMath for uint256;
 
     Avatar public avatar;
-    Identity public identity;
-    DAOToken private token;
 
-    mapping(bytes32 => uint256) public paymentAmount;
-    mapping(bytes32 => bool) public hashUsed;
-    mapping(bytes32 => address) public paymentSender;
+    struct Payment {
+        bool hasPayment;
+        uint256 paymentAmount;
+        address paymentSender;
+    }
+
+    mapping(bytes32 => Payment) payments;
 
     event PaymentDeposited(address indexed from, bytes32 hash, uint256 amount);
     event PaymentCancelled(address indexed from, bytes32 hash, uint256 amount);
-    event PaymentWithdrawn(address indexed from, address indexed to, bytes32 indexed hash, uint256 amount);
+    event PaymentWithdrawn(address indexed to, bytes32 indexed hash, uint256 amount);
 
     modifier requireActive() {
         ControllerInterface controller = ControllerInterface(avatar.owner());
@@ -29,15 +30,12 @@ contract OneTimePayments {
     }
 
     constructor(
-        Avatar _avatar,
-        Identity _identity
+        Avatar _avatar
     )
         public
     {
         require(_avatar != Avatar(0), "avatar cannot be zero");
         avatar = _avatar;
-        identity = _identity;
-        token = avatar.nativeToken();
     }
     
     function onTokenTransfer(address sender, uint256 value, bytes calldata data)
@@ -47,14 +45,11 @@ contract OneTimePayments {
     {
         bytes32 hash = abi.decode(data, (bytes32));
 
-        require(hashUsed[hash] == false, "Hash already in use");
-        require(msg.sender == address(token), "Only callable by this");
+        require(!payments[hash].hasPayment, "Hash already in use");
+        require(msg.sender == address(avatar.nativeToken()), "Only callable by this");
         require(value > 0, "cannot deposit nothing");
 
-        hashUsed[hash] = true;
-        
-        paymentAmount[hash] = value;
-        paymentSender[hash] = sender;
+        payments[hash] = Payment(true, value, sender);
 
         emit PaymentDeposited(sender, hash, value);
     }
@@ -62,22 +57,19 @@ contract OneTimePayments {
     function withdraw(string memory code) public requireActive {
         bytes32 hash = keccak256(abi.encodePacked(code));
 
-        require(hashUsed[hash] == true, "Hash not in use");
-        require(msg.sender != address(this), 'Cannot withdraw to this');
+        require(payments[hash].hasPayment, "Hash not in use");
 
-        hashUsed[hash] = false;
-        
-        token.transfer(msg.sender, paymentAmount[hash]);
+        uint256 value = payments[hash].paymentAmount;
+        delete payments[hash];
 
-        emit PaymentWithdrawn(paymentSender[hash], msg.sender, hash, paymentAmount[hash]);
+        avatar.nativeToken().transfer(msg.sender, value);
 
-        paymentAmount[hash] = 0;
-        paymentSender[hash] = address(0);
+        emit PaymentWithdrawn(msg.sender, hash, value);
     }
 
     function hasPayment(bytes32 hash) public view returns (uint256) {
-        require(hashUsed[hash] == true, "Hash not in use");
+        require(payments[hash].hasPayment, "Hash not in use");
 
-        return paymentAmount[hash];
+        return payments[hash].paymentAmount;
     }
 }

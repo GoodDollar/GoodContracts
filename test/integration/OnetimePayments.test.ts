@@ -19,67 +19,88 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
   let controller: helpers.ThenArg<ReturnType<typeof ControllerInterface['new']>>;
   let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote['new']>>;
   let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
-  let onetimepayments: helpers.ThenArg<ReturnType<typeof OneTimePayments['new']>>;
+  let oneTimePayments: helpers.ThenArg<ReturnType<typeof OneTimePayments['new']>>;
 
   let proposalId: string;
 
   before(async () => {
-  	identity = await Identity.deployed();
-  	avatar = await Avatar.at(await (await DaoCreatorGoodDollar.deployed()).avatar());
-  	controller = await ControllerInterface.at(await avatar.owner());
-  	absoluteVote = await AbsoluteVote.deployed();
-  	token = await GoodDollar.at(await avatar.nativeToken());
-  	onetimepayments = await OneTimePayments.new(avatar.address, identity.address);
+    identity = await Identity.deployed();
+    avatar = await Avatar.at(await (await DaoCreatorGoodDollar.deployed()).avatar());
+    controller = await ControllerInterface.at(await avatar.owner());
+    absoluteVote = await AbsoluteVote.deployed();
+    token = await GoodDollar.at(await avatar.nativeToken());
+    oneTimePayments = await OneTimePayments.new(avatar.address);
 
-  	await identity.addClaimer(claimer);
-  })
+    await identity.addClaimer(claimer);
+  });
 
-  it("should correctly propose OneTimePayment scheme", async () => {
+  it("should not allow One-Time payments before registering", async () => {
+    await token.transfer(claimer, web3.utils.toWei("10"));
+
+    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer }),
+      "Scheme is not registered");
+  });
+
+  it("should correctly propose One-Time Payment scheme", async () => {
     // Propose it
-  	const schemeRegistrar = await SchemeRegistrar.deployed();    
-    const transaction = await schemeRegistrar.proposeScheme(avatar.address, onetimepayments.address, 
+    const schemeRegistrar = await SchemeRegistrar.deployed();    
+    const transaction = await schemeRegistrar.proposeScheme(avatar.address, oneTimePayments.address, 
       helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
 
     proposalId = transaction.logs[0].args._proposalId;
   });
 
   it("should correctly register One-Time payment scheme", async () => {
-  	const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
-  	const excecuteProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+    const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+    const excecuteProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
 
-  	assert(excecuteProposalEventExists);
+    assert(excecuteProposalEventExists);
   });
 
   it("should deposit successfully", async () => {
-  	await token.transfer(claimer, web3.utils.toWei("10"));
+    await token.transfer(claimer, web3.utils.toWei("10"));
 
-  	await token.transferAndCall(onetimepayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer });
+    await token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer });
 
-  	const onePayment = await onetimepayments.hasPayment(DEPOSIT_CODE_HASH);
-  	expect(onePayment.toString()).to.be.equal(web3.utils.toWei("4.9999"));
+    const onePayment = await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH);
+    expect(onePayment.toString()).to.be.equal(web3.utils.toWei("4.9999"));
   });
 
   it("should withdraw successfully", async () => {
-    await onetimepayments.withdraw(DEPOSIT_CODE, { from: founder });
+    await oneTimePayments.withdraw(DEPOSIT_CODE, { from: founder });
 
-    await helpers.assertVMException(onetimepayments.hasPayment(DEPOSIT_CODE_HASH), "Hash not in use")
+    await helpers.assertVMException(oneTimePayments.hasPayment(DEPOSIT_CODE_HASH), "Hash not in use")
   });
 
-  it("should propose to unregister One-Time payment scheme", async () => {
-  	const schemeRegistrar = await SchemeRegistrar.deployed();
-  	const transaction = await schemeRegistrar.proposeToRemoveScheme(avatar.address, onetimepayments.address,
-  		helpers.NULL_HASH);
+  it("should not allow withdraw from unused link", async () => {
+    await helpers.assertVMException(oneTimePayments.withdraw("test2", { from: founder}), "Hash not in use");
+  });
 
-  	proposalId = transaction.logs[0].args._proposalId;
+  it("should not allow to withdraw from already withdrawn", async () => {
+    await helpers.assertVMException(oneTimePayments.withdraw(DEPOSIT_CODE, { from: founder}), "Hash not in use");
+  })
+
+  it("should propose to unregister One-Time payment scheme", async () => {
+    const schemeRegistrar = await SchemeRegistrar.deployed();
+    const transaction = await schemeRegistrar.proposeToRemoveScheme(avatar.address, oneTimePayments.address,
+      helpers.NULL_HASH);
+
+    proposalId = transaction.logs[0].args._proposalId;
   });
 
   it("should correctly unregister One-Time payment scheme", async () => {
-  	const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
-  	const excecuteProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+    const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+    const excecuteProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
 
-  	assert(excecuteProposalEventExists);
+    assert(excecuteProposalEventExists);
   });
 
+  it("should not allow One-Time payments after registering", async () => {
+    await token.transfer(claimer, web3.utils.toWei("10"));
+
+    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer }),
+      "Scheme is not registered");
+  });
 });
 
 export {}

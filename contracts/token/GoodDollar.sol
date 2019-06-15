@@ -88,19 +88,18 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
         requireNotBlacklisted(to)
         returns (bool)
     {
-
         uint256 bruttoValue = processFees(from, value);
         return super.transferFrom(from, to, bruttoValue);
     }
 
-    function transferAndCall(address to, uint value, bytes memory data)
-        public
+    function transferAndCall(address to, uint value, bytes calldata data)
+        external
         onlyNotBlacklisted
         requireNotBlacklisted(to)
         returns (bool)
     {
         uint256 bruttoValue = processFees(msg.sender, value);
-        return super.transferAndCall(to, bruttoValue, data);
+        return super._transferAndCall(to, bruttoValue, data);
     }
 
     /**

@@ -22,8 +22,8 @@ contract ERC677Token is ERC677, DAOToken {
     * @param _value The amount to be transferred.
     * @param _data The extra data to be passed to the receiving contract.
     */
-    function transferAndCall(address _to, uint256 _value, bytes memory _data)
-        public
+    function _transferAndCall(address _to, uint256 _value, bytes memory _data)
+        internal
         returns (bool)
     {
         require(super.transfer(_to, _value), "Transfer failed");

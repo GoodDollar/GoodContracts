@@ -121,6 +121,27 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
     }
 
     /**
+     * @dev Burns a specific amount of tokens.
+     * @param value The amount of token to be burned.
+     */
+    function burn(uint256 value) public onlyNotBlacklisted {
+        super.burn(value);
+    }
+
+    /**
+     * @dev Burns a specific amount of tokens from the target address and decrements allowance
+     * @param from address The address which you want to send tokens from
+     * @param value uint256 The amount of token to be burned
+     */
+    function burnFrom(address from, uint256 value)
+        public
+        onlyNotBlacklisted
+        requireNotBlacklisted(from)
+    {
+        super.burnFrom(from, value);
+    }
+
+    /**
      * @dev Increase the amount of tokens that an owner allows a spender
      * @param spender The address which will spend the funds
      * @param addedValue The amount of tokens to increase the allowance by

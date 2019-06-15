@@ -115,7 +115,10 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
         requireNotBlacklisted(to)
         returns (bool)
     {
-        return super.mint(to, value);
+        if (cap > 0)
+            require(totalSupply().add(value) <= cap);
+        super._mint(to, value);
+        return true;
     }
 
     /**

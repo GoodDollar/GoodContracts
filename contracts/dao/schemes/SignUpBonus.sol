@@ -11,7 +11,7 @@ import "../../identity/IdentityGuard.sol";
  * @title Sign-on bonus scheme responsible for minting
  * a set amount to any claimer once
  */
-contract SignerBonus is IdentityGuard {
+contract SignUpBonus is IdentityGuard {
     using SafeMath for uint256;
 
     Avatar public avatar;

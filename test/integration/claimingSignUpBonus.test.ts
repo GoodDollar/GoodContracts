@@ -33,7 +33,7 @@ contract("Integration - Claiming signer bonus", ([founder, claimer, claimer2, no
     });
 
     it("should not allow claimer to claim before starting scheme", async () => {
-      await helpers.assertVMException(signUpBonus.claim({ from: claimer }), "scheme is not registered")
+      await helpers.assertVMException(signUpBonus.claim({ from: claimer }), "Scheme is not registered")
     })
 
     it("should start SignUpBonus scheme", async () => {
@@ -81,7 +81,7 @@ contract("Integration - Claiming signer bonus", ([founder, claimer, claimer2, no
     });
 
     it("should not allow claimer to claim after scheme is unregistered", async () => {
-      await helpers.assertVMException(signUpBonus.claim({ from: claimer2 }), "scheme is not registered");
+      await helpers.assertVMException(signUpBonus.claim({ from: claimer2 }), "Scheme is not registered");
     })
 });
 

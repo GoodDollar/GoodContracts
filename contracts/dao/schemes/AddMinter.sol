@@ -4,26 +4,27 @@ import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 
 import "../../token/GoodDollar.sol";
+import "./SchemeGuard.sol";
 
-contract AddMinter {
+/* @title Scheme for proposing and adding a new minter.
+ */
+contract AddMinter is SchemeGuard {
 
-    Avatar public avatar;
     address public minter;
 
-    constructor(Avatar _avatar, address _minter) public {
-        require(_avatar != Avatar(0), "Avatar must not be null");
+    constructor(Avatar _avatar, address _minter) 
+        public
+        SchemeGuard(_avatar) 
+    {
         require(_minter != address(0), "Minter must not be null");
 
-        avatar = _avatar;
         minter = _minter;
     }
 
-    function addMinter() public {
-        ControllerInterface controller = ControllerInterface(avatar.owner());
-
-        require(controller.isSchemeRegistered(address(this), address(avatar)),
-          "scheme is not registered");
-
+    /* @dev Makes controller add the given minter to minters.
+     * can only be done if scheme has been registered.
+     */
+    function addMinter() public onlyRegistered {
         controller.genericCall(
             address(avatar.nativeToken()),
             abi.encodeWithSignature("addMinter(address)", minter),

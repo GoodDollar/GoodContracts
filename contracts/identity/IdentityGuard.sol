@@ -9,15 +9,15 @@ import "./Identity.sol";
  */
 contract IdentityGuard {
 
-    Identity _identity;
+    Identity public identity;
 
     /**
      * @dev Constructor. Checks if identity is a zero address
-     * @param identity The identity contract.
+     * @param _identity The identity contract.
      */
-    constructor(Identity identity) public {
-        require(identity != Identity(0), "Supplied identity is null");
-        _identity = identity;
+    constructor(Identity _identity) public {
+        require(_identity != Identity(0), "Supplied identity is null");
+        identity = _identity;
     }
 
     /**
@@ -25,7 +25,7 @@ contract IdentityGuard {
      * to be not blacklisted
      */
     modifier onlyNotBlacklisted() {
-        require(!_identity.isBlacklisted(msg.sender), "Is blacklisted");
+        require(!identity.isBlacklisted(msg.sender), "Is blacklisted");
         _;
     }
 
@@ -35,17 +35,22 @@ contract IdentityGuard {
      * @param account The address to be checked
      */
     modifier requireNotBlacklisted(address account) {
-        require(!_identity.isBlacklisted(account), "Is blacklisted");
+        require(!identity.isBlacklisted(account), "Is blacklisted");
         _;
     }
 
     modifier onlyClaimer() {
-        require(_identity.isClaimer(msg.sender), "is not claimer");
+        require(identity.isClaimer(msg.sender), "is not claimer");
         _;
     }
 
     modifier requireClaimer(address account) {
-        require(_identity.isClaimer(account), "is not claimer");
+        require(identity.isClaimer(account), "is not claimer");
         _;
+    }
+
+    function setIdentity(Identity _identity) public {
+        require(_identity.isRegistered(), "Identity is not registered");
+        identity = _identity;
     }
 }

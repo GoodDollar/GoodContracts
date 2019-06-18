@@ -6,15 +6,13 @@ import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "../../identity/IdentityGuard.sol";
+import "./SchemeGuard.sol";
 
-/**
- * @title Sign-on bonus scheme responsible for minting
- * a set amount to any claimer once
+/* @title Sign-Up bonus scheme responsible for minting
+ * a given amount to any claimer once per claimer
  */
-contract SignUpBonus is IdentityGuard {
+contract SignUpBonus is IdentityGuard, SchemeGuard {
     using SafeMath for uint256;
-
-    Avatar public avatar;
 
     uint256 public bonus;
     mapping (address => bool) hasClaimed;
@@ -28,18 +26,14 @@ contract SignUpBonus is IdentityGuard {
     )
         public
         IdentityGuard(_identity)
+        SchemeGuard(_avatar)
     {
-        require(_avatar != Avatar(0), "avatar cannot be zero");
-
-        avatar = _avatar;
         bonus = _bonus;
     }
 
-    function claim() external onlyClaimer {
-        ControllerInterface controller = ControllerInterface(avatar.owner());
-        require(controller.isSchemeRegistered(address(this), address(avatar)),
-         "scheme is not registered");
-
+    /* @dev bonus claiming function. Allows only registered claimers to receive
+     */
+    function claim() external onlyClaimer onlyRegistered {
         require(!hasClaimed[msg.sender], "has already claimed");
         hasClaimed[msg.sender] = true;
 

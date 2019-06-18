@@ -2,12 +2,17 @@ pragma solidity 0.5.4;
 
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
+import "@daostack/arc/contracts/controller/Avatar.sol";
+import "@daostack/arc/contracts/controller/ControllerInterface.sol";
+
+import "../dao/schemes/SchemeGuard.sol";
 import "./IdentityAdminRole.sol";
 
 /** @title Identity contract responsible for whitelisting
  * and keeping track of amount of whitelisted users
  */
-contract Identity is IdentityAdminRole {
+contract Identity is IdentityAdminRole, SchemeGuard {
     using Roles for Roles.Role;
     using SafeMath for uint256;
 
@@ -22,6 +27,8 @@ contract Identity is IdentityAdminRole {
     event ClaimerAdded(address indexed account);
     event ClaimerRemoved(address indexed account);
 
+    constructor() public SchemeGuard(Avatar(0)) {}
+
     /**
      * @dev Adds an address as a claimer. Eligble for claiming UBI.
      * Can only be called by Identity Administrators.
@@ -29,6 +36,7 @@ contract Identity is IdentityAdminRole {
      */
     function addClaimer(address account)
         public
+        onlyRegistered
         onlyIdentityAdmin
     {
         claimers.add(account);
@@ -43,6 +51,7 @@ contract Identity is IdentityAdminRole {
      */
     function removeClaimer(address account)
         public
+        onlyRegistered
         onlyIdentityAdmin
     {
         claimers.remove(account);
@@ -82,6 +91,7 @@ contract Identity is IdentityAdminRole {
      */
     function addBlacklisted(address account)
         public
+        onlyRegistered
         onlyIdentityAdmin
     {
         blacklist.add(account);
@@ -95,6 +105,7 @@ contract Identity is IdentityAdminRole {
      */
     function removeBlacklisted(address account)
         public
+        onlyRegistered
         onlyIdentityAdmin
     {
         blacklist.remove(account);

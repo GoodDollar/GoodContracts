@@ -37,12 +37,23 @@ module.exports = {
       gas: 0xfffffffffff,
       gasPrice: 0x01
     },
-    ropsten: {
+    mainnet: {
       provider: function() {
+        return new HDWalletProvider(mnemonic, "https://mainnet.infura.io/v3/" + infura_api,0,10)
+      },
+      network_id: 1,
+      skipDryRun:true,
+      gas: 8000000,
+      gasPrice: 10000000000
+    },
+    ropsten: {
+      provider: function () {
         return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/v3/" + infura_api,0,10)
       },
+      gas: 8000000,
+      gasPrice: 40000000000,
       network_id: 3,
-      gas:2071238
+      skipDryRun: true
     },
     kovan: {
       provider: function() {
@@ -61,7 +72,16 @@ module.exports = {
       gas:4500000,
       skipDryRun:true,
       gasPrice:1000000000 //1 gwei
-    }
+    },
+    xdai: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://dai.poa.network/",0,10)
+      },
+      skipDryRun:true,
+      gas: 8000000,
+      network_id: 100,
+      gasPrice: 10000000000
+    },
   },
   compilers: {
     solc: {

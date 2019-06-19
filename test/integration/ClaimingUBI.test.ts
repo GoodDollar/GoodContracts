@@ -48,7 +48,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer]) => {
     const reserve = (await token.balanceOf(avatar.address)) as any;
 
     const reserveDiff = reserve.sub(oldReserve);
-    const totalFees = ((await token.getFees()) as any).mul(new web3.utils.BN("3"));
+    const totalFees = ((await token.getFees()) as any).mul(new (web3 as any).utils.BN("3"));
     expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
   });
 

@@ -20,7 +20,7 @@ contract TransferAndCallMock {
         return true;
     }
 
-    function mockTransfer(address to, uint256 value) public returns (bool) {
+    function mockTransfer() public returns (bool) {
         calledFallback = true;
         return true;
     }

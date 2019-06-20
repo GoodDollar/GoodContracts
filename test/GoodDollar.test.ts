@@ -24,7 +24,7 @@ contract("GoodDollar", ([founder, claimer]) => {
     });
 
     it("transferAndCall should call correct function on receiver contract", async () => {
-        let data = (receiver as any).contract.methods.mockTransfer(claimer, web3.utils.toWei("2")).encodeABI();
+        let data = (receiver as any).contract.methods.mockTransfer().encodeABI();
 
         assert(await token.transferAndCall(receiver.address, web3.utils.toWei("10"), data));
         assert(await receiver.wasCalled());

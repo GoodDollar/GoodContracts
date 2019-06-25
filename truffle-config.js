@@ -83,6 +83,12 @@ module.exports = {
       gasPrice: 10000000000
     },
   },
+  mocha: {
+     reporter: 'eth-gas-reporter',
+     reporterOptions : {
+        currency: 'USD'
+     },
+  },
   compilers: {
     solc: {
       version: "0.5.4",

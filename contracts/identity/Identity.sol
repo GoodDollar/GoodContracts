@@ -4,7 +4,6 @@ import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
-import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 
 import "../dao/schemes/SchemeGuard.sol";
 import "./IdentityAdminRole.sol";

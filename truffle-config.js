@@ -30,6 +30,12 @@ module.exports = {
       gas: 8000000,
       from: '0x9689dc4d84b36efa1f02260a90063ae91ef0cbd8'
     },
+    test: {
+      host: "127.0.0.1",
+      port: 8545,
+      network_id: "*", 
+      gas: 8000000,
+    },
     coverage: {
       host: '127.0.0.1',
       network_id: '*', // eslint-disable-line camelcase
@@ -83,11 +89,16 @@ module.exports = {
       gasPrice: 10000000000
     },
   },
+  /*rpc: {
+    host: 'localhost',
+    post: '8080'
+  },*/
   mocha: {
-     reporter: 'eth-gas-reporter',
-     reporterOptions : {
-        currency: 'USD'
-     },
+     //reporter: 'eth-gas-reporter',
+     //reporter: 'mocha-lcov-reporter',
+     //reporterOptions : {
+     //   currency: 'USD'
+     //},
   },
   compilers: {
     solc: {

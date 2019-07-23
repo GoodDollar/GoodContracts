@@ -47,7 +47,7 @@ contract IdentityAdminRole is Ownable {
      * @dev Removes a whitelist admin account. Is only callable by owner.
      * @param account Address to be removed
      */
-    function removeIdentityAdmin(address account) public onlyOwner {
+    function removeIdentityAdmin(address account) public onlyOwner requireIdentityAdmin(account) {
         _removeIdentityAdmin(account);
     }
 

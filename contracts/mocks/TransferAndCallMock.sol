@@ -1,6 +1,8 @@
 pragma solidity 0.5.4;
 
-contract TransferAndCallMock {
+import "../token/ERC677/ERC677Receiver.sol";
+
+contract TransferAndCallMock is ERC677Receiver {
     address public sender;
     uint256 public value;
 
@@ -13,11 +15,8 @@ contract TransferAndCallMock {
         sender = _sender;
         value = _value;
 
-        if (_data.length > 0) {
-            (bool res,) = address(this).call(_data);
-            return res;
-        }
-        return true;
+        (bool res,) = address(this).call(_data);
+        return res;
     }
 
     function mockTransfer() public returns (bool) {
@@ -26,7 +25,6 @@ contract TransferAndCallMock {
     }
 
     function wasCalled() public view returns(bool) {
-        require(calledFallback, "function not called");
-        return true;
+        return calledFallback;
     }
 }

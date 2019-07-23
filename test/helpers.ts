@@ -41,6 +41,18 @@ export async function assertVMException<T>(error: Promise<T>, message) {
     let condition = (
       error.message.search(message) > -1
     );
-    assert.isTrue(condition, 'Expected a VM Exception, got this instead:' + error.message);
+    assert.isTrue(condition, 'Expected specefic VM Exception, got this instead: \n ' + error.message);
+  };
+};
+
+export async function assertVMRevert<T>(error: Promise<T>) {
+  try {
+    await error;
+    assert(false, 'Expected error but it succeeded');
+  } catch (error) {
+    let condition = (
+      error.message.search('VM Exception while processing transaction: revert') > -1
+    );
+    assert.isTrue(condition, 'Expected revert VM Exception, got this instead: \n ' + error.message);
   }
 };

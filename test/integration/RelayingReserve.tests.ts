@@ -36,6 +36,12 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 		await identity.addClaimer(claimer);
 	});
 
+	it("should not allow relayer with null address receiver", async () => {
+		const periodStart = (await web3.eth.getBlock('latest')).timestamp + periodOffset;
+		const periodEnd = periodStart + periodOffset;
+		helpers.assertVMException(ReserveRelayer.new(avatar.address, helpers.NULL_ADDRESS, periodStart, periodEnd), "receiver cannot be null address");
+	});
+
 	it("should perform transactions and increase fee reserve", async () => {
 	  const oldReserve = await token.balanceOf(avatar.address);
 	  expect(oldReserve.toString()).to.be.equal(web3.utils.toWei("0"));

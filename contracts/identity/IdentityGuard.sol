@@ -22,7 +22,7 @@ contract IdentityGuard {
      * to be not blacklisted
      */
     modifier onlyNotBlacklisted() {
-        require(!identity.isBlacklisted(msg.sender), "Is blacklisted");
+        require(!identity.isBlacklisted(msg.sender), "Caller is blacklisted");
         _;
     }
 
@@ -31,7 +31,7 @@ contract IdentityGuard {
      * @param _account The address to be checked
      */
     modifier requireNotBlacklisted(address _account) {
-        require(!identity.isBlacklisted(_account), "Is blacklisted");
+        require(!identity.isBlacklisted(_account), "Receiver is blacklisted");
         _;
     }
 
@@ -55,8 +55,8 @@ contract IdentityGuard {
     /* @dev Allows anyone to set a new identity contract if
      * the given contract has been registered as a scheme
      */
-    function setIdentity(Identity _identity) public onlyNotBlacklisted {
-        require(_identity.isRegistered(), "Identity is not registered");
+    function setIdentity(Identity _identity) public {
+        _identity.isRegistered();
         identity = _identity;
     }
 }

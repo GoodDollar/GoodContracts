@@ -33,9 +33,7 @@ contract OneTimePayments is SchemeGuard {
     )
         public
         SchemeGuard(_avatar)
-    {
-        require(_avatar != Avatar(0), "avatar cannot be zero");
-    }
+    {}
     
     /* @dev ERC677 on transfer function. When transferAndCall is called, the non-taxed 
      * remainder of the transfer is stored in a payment under a hash of the given data.
@@ -52,11 +50,12 @@ contract OneTimePayments is SchemeGuard {
 
         require(!payments[hash].hasPayment, "Hash already in use");
         require(msg.sender == address(avatar.nativeToken()), "Only callable by this");
-        require(value > 0, "cannot deposit nothing");
 
         payments[hash] = Payment(true, value, sender);
 
         emit PaymentDeposited(sender, hash, value);
+
+        return true;
     }
 
     /* @dev [WIP] Withdrawal function. 
@@ -70,7 +69,7 @@ contract OneTimePayments is SchemeGuard {
         require(payments[hash].hasPayment, "Hash not in use");
 
         uint256 value = payments[hash].paymentAmount;
-        delete payments[hash];
+        payments[hash].hasPayment = false;
 
         avatar.nativeToken().transfer(msg.sender, value);
 
@@ -80,9 +79,7 @@ contract OneTimePayments is SchemeGuard {
     /* @dev function to check if a payment hash is in use
      * @param hash the given bytes32 hash
      */
-    function hasPayment(bytes32 hash) public view returns (uint256) {
-        require(payments[hash].hasPayment, "Hash not in use");
-
-        return payments[hash].paymentAmount;
+    function hasPayment(bytes32 hash) public view returns (bool) {
+        return payments[hash].hasPayment;
     }
 }

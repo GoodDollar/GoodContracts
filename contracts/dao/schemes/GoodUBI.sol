@@ -41,7 +41,7 @@ contract GoodUBI is AbstractUBI, DSMath {
         formula = _formula;
     }
 
-    function distributionFormula(uint256 _value, address _user) internal returns(uint256) {
+    function distributionFormula(uint256 /*_value*/, address _user) internal returns(uint256) {
         uint256 ubiDays = (now - lastClaimed[_user]).div(1 days);
         ubiDays = ubiDays > 7 ? 7 : ubiDays;
         if (ubiDays < 1) {

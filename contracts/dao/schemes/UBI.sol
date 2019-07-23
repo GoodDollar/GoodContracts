@@ -43,7 +43,6 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
         ActivePeriod(_periodStart, _periodEnd)
         SchemeGuard(_avatar)
     {
-        require(_avatar != Avatar(0), "avatar cannot be zero");
         amountToMint = _amountToMint;
     }
 
@@ -150,7 +149,7 @@ contract UBI is AbstractUBI {
      * @param reserve the account balance to calculate from
      * @return The reserve divided by the amount of registered claimers
      */
-    function distributionFormula(uint256 reserve, address user) internal returns(uint256) {
+    function distributionFormula(uint256 reserve, address /*user*/) internal returns(uint256) {
         uint claimers = identity.getClaimerCount();
         return reserve.div(claimers);
     }

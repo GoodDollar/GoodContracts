@@ -11,7 +11,7 @@ import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 contract SchemeGuard is Ownable {
 
     Avatar avatar;
-    ControllerInterface controller;
+    ControllerInterface controller = ControllerInterface(0);
 
     constructor(Avatar _avatar) public {
         avatar = _avatar;
@@ -33,7 +33,7 @@ contract SchemeGuard is Ownable {
      */
     modifier onlyNotRegistered() {
         require(!controller.isSchemeRegistered(address(this), address(avatar)),
-         "Scheme is not registered");
+         "Scheme is registered");
         _;
     }
 
@@ -41,15 +41,14 @@ contract SchemeGuard is Ownable {
      * can only be done by owner of scheme
      */
     function setAvatar(Avatar _avatar) public onlyOwner {
-        require(_avatar != Avatar(0), "Avatar cannot be zero");
         avatar = _avatar;
         controller = ControllerInterface(avatar.owner());
     }
 
     /* @dev function to see if an avatar has been set and if scheme is registered
      */
-    function isRegistered() public view returns (bool) {
+    function isRegistered() public view {
         require(avatar != Avatar(0), "Avatar is not set");
-        return controller.isSchemeRegistered(address(this), address(avatar));
+        require(controller.isSchemeRegistered(address(this), address(avatar)), "Scheme is not registered");
     }
 }

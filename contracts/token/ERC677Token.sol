@@ -26,11 +26,11 @@ contract ERC677Token is ERC677, DAOToken {
         internal
         returns (bool)
     {
-        require(super.transfer(_to, _value), "Transfer failed");
+        require(super.transfer(_to, _value));
         emit Transfer(msg.sender, _to, _value, _data);
       
         if (isContract(_to)) {
-            require(contractFallback(_to, _value, _data), "Contract fallback failed");
+            require(contractFallback(_to, _value, _data));
         }
         return true;
     }
@@ -40,7 +40,7 @@ contract ERC677Token is ERC677, DAOToken {
         returns (bool)
     {
         ERC677Receiver receiver = ERC677Receiver(_to);
-        receiver.onTokenTransfer(msg.sender, _value, _data);
+        require(receiver.onTokenTransfer(msg.sender, _value, _data), "Contract Fallback failed");
         return true;
     }
 

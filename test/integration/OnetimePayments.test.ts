@@ -57,19 +57,35 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
     assert(excecuteProposalEventExists);
   });
 
+  it("should not have payment", async () => {
+    assert(!(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH)));
+  });
+
+  it("should only allow token to deposit", async () => {
+    helpers.assertVMException(oneTimePayments.onTokenTransfer(claimer, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer }), "Only callable by this");
+  });
+
   it("should deposit successfully", async () => {
-    await token.transfer(claimer, web3.utils.toWei("10"));
+    await token.transfer(claimer, web3.utils.toWei("300"));
 
     await token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer });
 
-    const onePayment = await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH);
-    expect(onePayment.toString()).to.be.equal(web3.utils.toWei("4.9999"));
+    assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
   });
+
+  it("should not allow to deposit to same hash", async () => {
+
+    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer }), "Hash already in use");
+  });
+
+  it("should have payment", async () => {
+    assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
+  })
 
   it("should withdraw successfully", async () => {
     await oneTimePayments.withdraw(DEPOSIT_CODE, { from: founder });
 
-    await helpers.assertVMException(oneTimePayments.hasPayment(DEPOSIT_CODE_HASH), "Hash not in use")
+    assert(!(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH)));
   });
 
   it("should not allow withdraw from unused link", async () => {

@@ -40,6 +40,14 @@ contract("Integration - Claiming Reputation", ([founder, claimer, claimer2]) => 
     await identity.addClaimer(claimer);
   });
 
+  it("should not allow creation of scheme with zero or less reputation", async () => {
+    const periodStart = (await web3.eth.getBlock('latest')).timestamp + periodOffset;
+    const periodEnd = periodStart + periodOffset;
+
+    helpers.assertVMException(ReputationMock.new(avatar.address, identity.address, 0, periodStart, periodEnd, { from: founder }),
+      "reputation reward cannot be equal to or lower than zero");
+  });
+
   it("should correctly propose Rep scheme", async () => {
     // Propose it
     const schemeRegistrar = await SchemeRegistrar.deployed();

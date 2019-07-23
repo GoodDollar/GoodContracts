@@ -38,45 +38,6 @@ contract DaoCreatorGoodDollar {
         controllerCreatorGoodDollar = _controllerCreatorGoodDollar;
     }
 
-    /**
-      * @dev addFounders add founders to the organization.
-      *      this function can be called only after forgeOrg and before setSchemes
-      * @param _avatar the organization avatar
-      * @param _founders An array with the addresses of the founders of the organization
-      * @param _foundersTokenAmount An array of amount of tokens that the founders
-      *  receive in the new organization
-      * @param _foundersReputationAmount An array of amount of reputation that the
-      *   founders receive in the new organization
-      * @return bool true or false
-      */
-    function addFounders (
-        Avatar _avatar,
-        address[] calldata _founders,
-        uint[] calldata _foundersTokenAmount,
-        uint[] calldata _foundersReputationAmount
-    )
-    external
-    returns(bool)
-    {
-        require(_founders.length == _foundersTokenAmount.length, "Not enough founder tokens");
-        require(_founders.length == _foundersReputationAmount.length, "Founder reputation missing");
-        require(_founders.length > 0, "Must have at least one founder");
-        require(lock == msg.sender, "Message sender is not lock");
-        // Mint token and reputation for founders:
-        for (uint256 i = 0; i < _founders.length; i++) {
-            require(_founders[i] != address(0), "Founder cannot be zero address");
-            if (_foundersTokenAmount[i] > 0) {
-                ControllerInterface(
-                _avatar.owner()).mintTokens(_foundersTokenAmount[i], _founders[i], address(_avatar));
-            }
-            if (_foundersReputationAmount[i] > 0) {
-                ControllerInterface(
-                _avatar.owner()).mintReputation(_foundersReputationAmount[i], _founders[i], address(_avatar));
-            }
-        }
-        return true;
-    }
-
   /**
     * @dev Create a new organization
     * @param _tokenName The name of the token associated with the organization

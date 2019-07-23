@@ -17,7 +17,6 @@ contract AddMinter is SchemeGuard {
         SchemeGuard(_avatar) 
     {
         require(_minter != address(0), "Minter must not be null");
-
         minter = _minter;
     }
 

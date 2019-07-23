@@ -19,12 +19,12 @@ contract ReputationMock is ReputationReward, ActivePeriod {
 
     function start() public returns (bool){
         require(super.start());
-        require(super.rewardAddress(creator));
-        require(super.rewardAddress(msg.sender));
+        super.rewardAddress(creator);
+        super.rewardAddress(msg.sender);
     }
 
     function end() public returns (bool) {
         require(super.end());
-        require(super.rewardAddress(msg.sender));
+        super.rewardAddress(msg.sender);
     }
 }

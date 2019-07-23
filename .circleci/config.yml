@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:9.10
+      - image: circleci/node:10.16
 
     working_directory: ~/repo
 
@@ -12,6 +12,9 @@ jobs:
       - run:
           name: update-npm
           command: 'sudo npm install -g npm@latest'
+
+      - run:
+          command: 'sudo npm install -g ts-node'
 
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
@@ -28,3 +31,7 @@ jobs:
       - run: # run tests
           name: test
           command: npm run test
+
+      - run:
+          name: coverage
+          command: npm run coverage

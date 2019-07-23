@@ -40,6 +40,11 @@ contract ActivePeriod {
         _;
     }
 
+    /* @dev makes sure that the end period is after the start period
+     * and sets the contract to inactive
+     * @param _periodStart The time from when the contract can be started
+     * @param _periodEnd The time from which the contract can be ended
+     */
     constructor( uint _periodStart, uint _periodEnd) public {
         require(_periodStart < _periodEnd, "start cannot be after nor equal to end");
 

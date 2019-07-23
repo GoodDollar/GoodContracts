@@ -8,7 +8,7 @@ import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../dao/schemes/SchemeGuard.sol";
 import "./IdentityAdminRole.sol";
 
-/** @title Identity contract responsible for whitelisting
+/* @title Identity contract responsible for whitelisting
  * and keeping track of amount of whitelisted users
  */
 contract Identity is IdentityAdminRole, SchemeGuard {
@@ -28,8 +28,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
 
     constructor() public SchemeGuard(Avatar(0)) {}
 
-    /**
-     * @dev Adds an address as a claimer. Eligble for claiming UBI.
+    /* @dev Adds an address as a claimer. Eligble for claiming UBI.
      * Can only be called by Identity Administrators.
      * @param account address to add as a claimer
      */
@@ -43,8 +42,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         emit ClaimerAdded(account);
     }
 
-    /**
-     * @dev Removes an address as a claimer.
+    /* @dev Removes an address as a claimer.
      * Can only be called by Identity Administrators.
      * @param account address to remove as a claimer
      */
@@ -58,8 +56,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         emit ClaimerRemoved(account);
     }
 
-    /**
-     * @dev Reverts if given address has not been added to claimers
+    /* @dev Reverts if given address has not been added to claimers
      * @param account the address to check
      * @return a bool indicating weather the address is present in claimers
      */
@@ -71,8 +68,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         return claimers.has(account);
     }
 
-    /**
-     * @dev Gets the amount of claimers
+    /* @dev Gets the amount of claimers
      * @return a uint representing the current amount of claimers
      */
     function getClaimerCount()
@@ -83,8 +79,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         return claimerCount;
     }
 
-    /**
-     * @dev Adds an address to blacklist.
+    /* @dev Adds an address to blacklist.
      * Can only be called by Identity Administrators.
      * @param account address to add as blacklisted
      */
@@ -97,8 +92,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         emit BlacklistAdded(account);
     }
 
-    /**
-     * @dev Removes an address from blacklist
+    /* @dev Removes an address from blacklist
      * Can only be called by Identity Administrators.
      * @param account address to remove as blacklisted
      */
@@ -111,8 +105,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         emit BlacklistRemoved(account);
     }
 
-    /**
-     * @dev Reverts if given address has been added to the blacklist
+    /* @dev Reverts if given address has been added to the blacklist
      * @param account the address to check
      * @return a bool indicating weather the address is present in the blacklist
      */
@@ -124,8 +117,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         return blacklist.has(account);
     }
 
-    /**
-     * @dev Internal function that increases count of whitelisted users by
+    /* @dev Internal function that increases count of whitelisted users by
      * given amount
      * @param value an uint with which the whitelisted count will increase by
      */
@@ -135,8 +127,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         claimerCount = claimerCount.add(value);
     }
 
-    /**
-     * @dev Internal function that decreases count of whitelisted users by
+    /* @dev Internal function that decreases count of whitelisted users by
      * given amount
      * @param value an uint with which the whitelisted count will increase by
      */

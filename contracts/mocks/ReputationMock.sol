@@ -1,7 +1,5 @@
 pragma solidity 0.5.4;
 
-import "@daostack/arc/contracts/controller/Avatar.sol";
-
 import "../dao/schemes/ReputationReward.sol";
 import "../dao/schemes/ActivePeriod.sol";
 

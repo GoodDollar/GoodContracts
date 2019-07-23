@@ -59,9 +59,9 @@ contract("Integration - Claiming Reputation", ([founder, claimer, claimer2]) => 
 
   it("should reward claimer and creator for starting period", async () => {
     const oldReputationBalanceClaimer = await reputation.balanceOf(claimer);
-    expect(oldReputationBalanceClaimer.toString()).to.be.equal('0');
-
     const oldReputationBalanceFounder = (await reputation.balanceOf(founder)) as any;
+    
+    expect(oldReputationBalanceClaimer.toString()).to.be.equal('0');
     expect(oldReputationBalanceFounder.toString()).to.be.equal(reward.toString());
 
     await helpers.assertVMException(reputationMock.start(), "not in period");
@@ -69,13 +69,11 @@ contract("Integration - Claiming Reputation", ([founder, claimer, claimer2]) => 
     assert(await reputationMock.start({ from: claimer }));
 
     const newReputationBalanceClaimer = await reputation.balanceOf(claimer);
-    expect(newReputationBalanceClaimer.toString()).to.be.equal(reward.toString());
-
     const newReputationBalanceFounder = (await reputation.balanceOf(founder)) as any;
     const founderNewOldRepDiff = newReputationBalanceFounder.sub(oldReputationBalanceFounder);
 
+    expect(newReputationBalanceClaimer.toString()).to.be.equal(reward.toString());
     expect(founderNewOldRepDiff.toString()).to.be.equal(reward.toString());
-
   });
 
   it("should reward for ending Rep period", async () => {

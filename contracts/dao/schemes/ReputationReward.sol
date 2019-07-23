@@ -16,6 +16,9 @@ contract ReputationReward is IdentityGuard, SchemeGuard {
     uint public reputationReward;
 
     /* @dev Constructor. Checks that given reward amount is above 0
+     * @param _avatar The Avatar of the organization
+     * @param _identity The identity contract
+     * @param _reputationReward The reward to grant
      */
     constructor(
         Avatar _avatar,
@@ -33,6 +36,9 @@ contract ReputationReward is IdentityGuard, SchemeGuard {
         reputationReward = _reputationReward;
     }
 
+    /* @dev Rewards a given address with the reward given in the constructor
+     * @return true if successful
+     */
     function rewardAddress(address _to)
         internal
         requireClaimer(_to)
@@ -40,7 +46,6 @@ contract ReputationReward is IdentityGuard, SchemeGuard {
         returns (bool)
     {
         controller.mintReputation(reputationReward, _to, address(avatar));
-
         return true;
     } 
 }

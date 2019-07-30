@@ -1,0 +1,1 @@
+[![Coverage Status](https://coveralls.io/repos/github/etoroxlabs/GoodContracts/badge.svg?branch=master&t=dVBxdT)](https://coveralls.io/github/etoroxlabs/GoodContracts?branch=master)

@@ -8,8 +8,8 @@ const AbsoluteVote = artifacts.require('./AbsoluteVote.sol');
 
 const SchemeRegistrar = artifacts.require('./SchemeRegistrar.sol');
 
-const tokenName = "TestCoin";
-const tokenSymbol = "TDD";
+const tokenName = "GoodDollar";
+const tokenSymbol = "GDD";
 const cap = web3.utils.toWei("100000000","ether");
 
 const initFee = web3.utils.toWei("0.0001");

@@ -32,7 +32,6 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 		absoluteVote = await AbsoluteVote.deployed();
 		token = await GoodDollar.at(await avatar.nativeToken());
 		reserveRelayer = await ReserveRelayer.new(avatar.address, receiver, periodStart, periodEnd);
-
 		await identity.addClaimer(claimer);
 	});
 
@@ -66,7 +65,7 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 		proposalId = transaction.logs[0].args._proposalId;
 	});
 
-	it("should correctly register UBI scheme", async () => {
+	it("should correctly register ReserveRelayer scheme", async () => {
 		const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
 		const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
 

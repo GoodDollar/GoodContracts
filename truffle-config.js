@@ -89,16 +89,11 @@ module.exports = {
       gasPrice: 10000000000
     },
   },
-  /*rpc: {
-    host: 'localhost',
-    post: '8080'
-  },*/
   mocha: {
-     //reporter: 'eth-gas-reporter',
-     //reporter: 'mocha-lcov-reporter',
-     //reporterOptions : {
-     //   currency: 'USD'
-     //},
+     reporter: 'eth-gas-reporter',
+     reporterOptions : {
+        currency: 'USD'
+     },
   },
   compilers: {
     solc: {

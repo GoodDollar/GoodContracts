@@ -12,6 +12,8 @@ const OneTimePayments = artifacts.require("OneTimePayments");
 const DEPOSIT_CODE = 'test';
 const DEPOSIT_CODE_HASH = web3.utils.keccak256(DEPOSIT_CODE);
 
+const GASLIMIT = 800000;
+
 contract("Integration - One-Time Payments", ([founder, claimer]) => {
   
   let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
@@ -29,7 +31,7 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
     controller = await ControllerInterface.at(await avatar.owner());
     absoluteVote = await AbsoluteVote.deployed();
     token = await GoodDollar.at(await avatar.nativeToken());
-    oneTimePayments = await OneTimePayments.new(avatar.address);
+    oneTimePayments = await OneTimePayments.new(avatar.address, GASLIMIT);
 
     await identity.addClaimer(claimer);
   });
@@ -82,18 +84,22 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
     assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
   })
 
+  it("should not withdraw due to gas limit", async () => {
+    await helpers.assertVMException(oneTimePayments.withdraw("test1", { gas: 1000000 }), "Cannot exceed gas limit")
+  })
+
   it("should withdraw successfully", async () => {
-    await oneTimePayments.withdraw(DEPOSIT_CODE, { from: founder });
+    await oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000 });
 
     assert(!(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH)));
   });
 
   it("should not allow withdraw from unused link", async () => {
-    await helpers.assertVMException(oneTimePayments.withdraw("test2", { from: founder}), "Hash not in use");
+    await helpers.assertVMException(oneTimePayments.withdraw("test2", { gas: 590000}), "Hash not in use");
   });
 
   it("should not allow to withdraw from already withdrawn", async () => {
-    await helpers.assertVMException(oneTimePayments.withdraw(DEPOSIT_CODE, { from: founder}), "Hash not in use");
+    await helpers.assertVMException(oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000}), "Hash not in use");
   })
 
   it("should propose to unregister One-Time payment scheme", async () => {

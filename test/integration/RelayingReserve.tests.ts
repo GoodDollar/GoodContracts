@@ -53,7 +53,7 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 	  const reserve = (await token.balanceOf(avatar.address)) as any;
 
 	  const reserveDiff = reserve.sub(oldReserve);
-	  const totalFees = ((await token.getFees()) as any).mul(new (web3 as any).utils.BN("3"));
+	  const totalFees = ((await token.getFees(web3.utils.toWei("10"))) as any).mul(new (web3 as any).utils.BN("3"));
 	  expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
 	});
 
@@ -79,11 +79,13 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 		const oldBalance = await token.balanceOf(receiver);
 		expect(oldBalance.toString()).to.be.equal("0");
 
+		const fees = (await token.getFees(await token.balanceOf(avatar.address))) as any;
+		const reserve = (await token.balanceOf(avatar.address)) as any;
+		
 		assert(await reserveRelayer.start());
 
 		const newBalance = await token.balanceOf(receiver);
-		const totalReserve = ((await token.getFees()) as any).mul(new (web3 as any).utils.BN("2"));
-		
-		expect(newBalance.toString()).to.be.equal(totalReserve.toString());
+
+		expect(newBalance.toString()).to.be.equal((reserve.sub(fees)).toString());
 	});
 })

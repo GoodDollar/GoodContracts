@@ -1,4 +1,5 @@
 const Identity = artifacts.require('./Identity');
+const FeeFormula = artifacts.require('./FeeFormula');
 const Controller = artifacts.require('./Controller.sol');
 const DaoCreatorGoodDollar = artifacts.require('./DaoCreatorGoodDollar.sol');
 const ControllerCreatorGoodDollar = artifacts.require('./ControllerCreatorGoodDollar.sol');
@@ -30,17 +31,19 @@ module.exports = async function(deployer) {
     await web3.eth.getAccounts(function(err,res) { accounts = res; });
     const founders = [accounts[0]];
 
+    const feeFormula = await deployer.deploy(FeeFormula);
     const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar);
     const daoCreator = await deployer.deploy(DaoCreatorGoodDollar, controllerCreator.address);
 
     await daoCreator.forgeOrg(
-      tokenName, tokenSymbol, cap, initFee, identity.address,
+      tokenName, tokenSymbol, cap, feeFormula.address, identity.address,
       founders, initTokenInWei, initRepInWei);
 
     const avatar = await Avatar.at(await daoCreator.avatar());
     const controller = await Controller.at(await avatar.owner());
 
     await identity.setAvatar(avatar.address);
+    await feeFormula.setAvatar(avatar.address);
     //await identity.transferOwnership(controller.addresss, { from: founders });
 
     console.log(`AVATAR: ${avatar.address}`);
@@ -59,9 +62,9 @@ module.exports = async function(deployer) {
     const schemeRegisterParams = await schemeRegistrar.getParametersHash(voteParametersHash, voteParametersHash, absoluteVote.address);
 
     // Subscribe schemes
-    const schemesArray = [schemeRegistrar.address, identity.address];
-    const paramsArray = [schemeRegisterParams, NULL_HASH];
-    const permissionArray = ['0x0000001F', '0x0000001F'];
+    const schemesArray = [schemeRegistrar.address, identity.address, feeFormula.address];
+    const paramsArray = [schemeRegisterParams, NULL_HASH, NULL_HASH];
+    const permissionArray = ['0x0000001F', '0x0000001F', '0x0000001F'];
 
     await daoCreator.setSchemes(
       avatar.address,

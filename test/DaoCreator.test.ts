@@ -1,6 +1,7 @@
 import * as helpers from'./helpers';
 
 const Identity = artifacts.require("Identity");
+const FeeFormula = artifacts.require("FeeFormula");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
 const ControllerCreatorGoodDollar = artifacts.require('./ControllerCreatorGoodDollar.sol');
 const Avatar = artifacts.require("Avatar");
@@ -11,7 +12,6 @@ const tokenName = "GoodDollar";
 const tokenSymbol = "GDD";
 const cap = web3.utils.toWei("100000000","ether");
 
-const initFee = web3.utils.toWei("0.0001");
 const initRep = web3.utils.toWei("10");
 const zeroRep = web3.utils.toWei("0");
 const initRepInWei = [initRep];
@@ -22,6 +22,7 @@ const initTokenInWei = [initToken];
 contract("Dao - Forging organizations, adding founders", ([founder, joiner, stranger]) => {
     
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
+    let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
     let controllerCreator: helpers.ThenArg<ReturnType<typeof ControllerCreatorGoodDollar['new']>>;
@@ -34,16 +35,17 @@ contract("Dao - Forging organizations, adding founders", ([founder, joiner, stra
         newDaoCreator = await DaoCreatorGoodDollar.new(controllerCreator.address);
         avatar = await Avatar.at(await daoCreator.avatar());
         identity = await Identity.deployed();
+        feeFormula = await FeeFormula.deployed();
     });
 
     it("should not allow to forge organizations twice", async () => {
         await newDaoCreator.forgeOrg(
-            tokenName, tokenSymbol, cap, initFee, identity.address,
+            tokenName, tokenSymbol, cap, feeFormula.address, identity.address,
             [founder], [zeroToken], [zeroRep]);
 
         await helpers.assertVMException(
             newDaoCreator.forgeOrg(
-                tokenName, tokenSymbol, cap, initFee,
+                tokenName, tokenSymbol, cap, feeFormula.address,
                 identity.address, [founder], [zeroToken], [zeroRep]
             ),
             "Lock already exists"
@@ -66,7 +68,7 @@ contract("Dao - Forging organizations, adding founders", ([founder, joiner, stra
     it("should not allow zero address founder", async () => {
         await helpers.assertVMException(
             daoCreator.forgeOrg(
-                tokenName, tokenSymbol, cap, initFee, identity.address,
+                tokenName, tokenSymbol, cap, feeFormula.address, identity.address,
                 [helpers.NULL_ADDRESS], initTokenInWei, initRepInWei
             ),
             "Founder cannot be zero address"
@@ -76,7 +78,7 @@ contract("Dao - Forging organizations, adding founders", ([founder, joiner, stra
     it("should not allow founders without reputation to forge org", async () => {
         await helpers.assertVMException(
             daoCreator.forgeOrg(
-                tokenName, tokenSymbol, cap, initFee, identity.address,
+                tokenName, tokenSymbol, cap, feeFormula.address, identity.address,
                 [founder], initTokenInWei, []
             ),
             "Founder reputation missing"
@@ -86,7 +88,7 @@ contract("Dao - Forging organizations, adding founders", ([founder, joiner, stra
     it("should not allow founders without tokens to forge org", async () =>{
         await helpers.assertVMException(
             daoCreator.forgeOrg(
-                tokenName, tokenSymbol, cap, initFee, identity.address,
+                tokenName, tokenSymbol, cap, feeFormula.address, identity.address,
                 [founder], [], initRepInWei
             ),
             "Not enough founder tokens"
@@ -96,7 +98,7 @@ contract("Dao - Forging organizations, adding founders", ([founder, joiner, stra
     it("should not allow sender to forge org without founders", async () => {
         await helpers.assertVMException(
             daoCreator.forgeOrg(
-                tokenName, tokenSymbol, cap, initFee, identity.address,
+                tokenName, tokenSymbol, cap, feeFormula.address, identity.address,
                 [], [], []
             ),
             "Must have at least one founder"
@@ -110,7 +112,7 @@ contract("Dao - Forging organizations, adding founders", ([founder, joiner, stra
 
         await helpers.assertVMException(
             daoCreator.forgeOrg(
-                tokenName, tokenSymbol, cap, initFee, identity.address,
+                tokenName, tokenSymbol, cap, feeFormula.address, identity.address,
                 newfounders, newTokeninWei, newRepinWei
             ),
             "Founder cannot be zero address"

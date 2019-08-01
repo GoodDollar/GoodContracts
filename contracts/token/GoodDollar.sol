@@ -1,14 +1,16 @@
 pragma solidity ^0.5.2;
+import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
 
 import "../identity/IdentityGuard.sol";
-import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
+import "../dao/schemes/FeeGuard.sol";
+
 import "./ERC677Token.sol";
 
+
 /** @title The GoodDollar contract */
-contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
+contract GoodDollar is ERC677Token, IdentityGuard, FeeGuard, MinterRole {
 
     address _feeRecipient;
-    uint256 _txFees;
 
     /**
      * @param name The name of the token
@@ -21,16 +23,16 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
         string memory name,
         string memory symbol,
         uint256 cap,
+        FeeFormula formula,
         Identity identity,
-        address feeRecipient,
-        uint256 txFees
+        address feeRecipient
     )
         public
         ERC677Token(name, symbol, cap)
         IdentityGuard(identity)
+        FeeGuard(formula)
     {
         _feeRecipient = feeRecipient;
-        _txFees = txFees;
     }
 
     /**
@@ -172,36 +174,25 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
     }
 
     /**
-     * @dev Sets the transaction fees for transfers
-     * @param txFees the value to set
-     */
-    function setFees(uint256 txFees)
-        public
-        onlyOwner
-    {
-        _txFees = txFees;
-    }
-
-    /**
      * @dev Gets the current transaction fees
      * @return an uint256 that represents
      * the current transaction fees
      */
-    function getFees()
+    function getFees(uint256 value)
         public
         view
         returns (uint256)
     {
-        return _txFees;
+        return formula.getTxFees(value);
     }
 
     /**
      * @dev Sets the address that receives the transactional fees
      * @param feeRecipient The new address to receive transactional fees
      */
-    function setFeeRecipient(address feeRecipient)
+    function setFeeRecipient(address feeRecipient, Avatar avatar)
         public
-        onlyOwner
+        onlyOwnerOrAvatar(avatar)
     {
         _feeRecipient = feeRecipient;
     }
@@ -216,11 +207,12 @@ contract GoodDollar is ERC677Token, IdentityGuard, MinterRole {
         internal
         returns (uint256)
     {
+        uint256 txFees = getFees(value);
         if (account == msg.sender) {
-            super.transfer(_feeRecipient, getFees());
+            super.transfer(_feeRecipient, txFees);
         } else {
-            super.transferFrom(account, _feeRecipient, getFees());
+            super.transferFrom(account, _feeRecipient, txFees);
         }
-        return value.sub(getFees());
+        return value.sub(txFees);
     }
 }

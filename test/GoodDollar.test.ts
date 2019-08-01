@@ -1,6 +1,7 @@
 import * as helpers from './helpers';
 
 const Identity = artifacts.require("Identity");
+const FeeFormula = artifacts.require("FeeFormula");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
 const Avatar = artifacts.require("Avatar");
 const ControllerInterface = artifacts.require("ControllerInterface");
@@ -11,6 +12,7 @@ contract("GoodDollar", ([founder, claimer, outsider]) => {
 
     let receiver: helpers.ThenArg<ReturnType<typeof TransferAndCallMock['new']>>;
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
+    let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
     let cappedToken: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
@@ -20,10 +22,11 @@ contract("GoodDollar", ([founder, claimer, outsider]) => {
     before(async () => {
         receiver = await TransferAndCallMock.new();
         identity = await Identity.deployed();
+        feeFormula = await FeeFormula.deployed();
         avatar = await Avatar.at(await (await DaoCreatorGoodDollar.deployed()).avatar());
         controller = await ControllerInterface.at(await avatar.owner());
-        unCappedToken = await GoodDollar.new('Test', 'TDD', 0, identity.address, receiver.address, web3.utils.toWei("10"))
-        cappedToken = await GoodDollar.new('Test', 'TDD', web3.utils.toWei('10') , identity.address, receiver.address, web3.utils.toWei("10"));
+        unCappedToken = await GoodDollar.new('Test', 'TDD', 0, feeFormula.address, identity.address, receiver.address)
+        cappedToken = await GoodDollar.new('Test', 'TDD', web3.utils.toWei('10') , feeFormula.address, identity.address, receiver.address);
         token = await GoodDollar.at(await avatar.nativeToken());
 
         await token.transfer(claimer, web3.utils.toWei("100"));

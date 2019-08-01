@@ -6,7 +6,7 @@ import "@daostack/infra/contracts/votingMachines/AbsoluteVote.sol";
 
 import "../token/GoodDollar.sol";
 import "../identity/IdentityGuard.sol";
-
+import "../dao/schemes/FeeFormula.sol";
 /**
  * @title ControllerCreator for creating a single controller. Taken from @daostack.
  */
@@ -54,7 +54,7 @@ contract DaoCreatorGoodDollar {
         string calldata _tokenName,
         string calldata _tokenSymbol,
         uint256 _cap,
-        uint256 _fee,
+        FeeFormula _formula,
         Identity _identity,
         address[] calldata _founders,
         uint[] calldata _foundersTokenAmount,
@@ -68,7 +68,7 @@ contract DaoCreatorGoodDollar {
             _tokenName,
             _tokenSymbol,
             _cap,
-            _fee,
+            _formula,
             _identity,
             _founders,
             _foundersTokenAmount,
@@ -124,7 +124,7 @@ contract DaoCreatorGoodDollar {
         string memory _tokenName,
         string memory _tokenSymbol,
         uint256 _cap,
-        uint256 _fee,
+        FeeFormula _formula,
         Identity _identity,
         address[] memory _founders,
         uint[] memory _foundersTokenAmount,
@@ -136,7 +136,7 @@ contract DaoCreatorGoodDollar {
         require(_founders.length == _foundersTokenAmount.length, "Not enough founder tokens");
         require(_founders.length == _foundersReputationAmount.length, "Founder reputation missing");
         require(_founders.length > 0, "Must have at least one founder");
-        GoodDollar nativeToken = new GoodDollar(_tokenName, _tokenSymbol, _cap, _identity, address(0), _fee);
+        GoodDollar nativeToken = new GoodDollar(_tokenName, _tokenSymbol, _cap, _formula, _identity, address(0));
         Reputation nativeReputation = new Reputation();
         avatar = new Avatar("GoodDollar", nativeToken, nativeReputation);
 
@@ -155,7 +155,7 @@ contract DaoCreatorGoodDollar {
         ControllerInterface controller = ControllerInterface(controllerCreatorGoodDollar.create(avatar));
 
         // Set fee recipient and minters
-        nativeToken.setFeeRecipient(address(avatar));
+        nativeToken.setFeeRecipient(address(avatar), avatar);
         nativeToken.addMinter(address(avatar));
         nativeToken.addMinter(address(controller));
         nativeToken.renounceMinter();

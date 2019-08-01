@@ -16,6 +16,8 @@ import "./SchemeGuard.sol";
 contract OneTimePayments is SchemeGuard {
     using SafeMath for uint256;
 
+    uint256 gasLimit;
+
     struct Payment {
         bool hasPayment;
         uint256 paymentAmount;
@@ -29,11 +31,14 @@ contract OneTimePayments is SchemeGuard {
     event PaymentWithdrawn(address indexed to, bytes32 indexed hash, uint256 amount);
 
     constructor(
-        Avatar _avatar
+        Avatar _avatar,
+        uint256 _gasLimit
     )
         public
         SchemeGuard(_avatar)
-    {}
+    {
+        gasLimit = _gasLimit;
+    }
     
     /* @dev ERC677 on transfer function. When transferAndCall is called, the non-taxed 
      * remainder of the transfer is stored in a payment under a hash of the given data.
@@ -64,6 +69,8 @@ contract OneTimePayments is SchemeGuard {
      * @pram code The string to encode into hash of payment
      */
     function withdraw(string memory code) public onlyRegistered {
+        require(gasleft() < gasLimit, "Cannot exceed gas limit");
+
         bytes32 hash = keccak256(abi.encodePacked(code));
 
         require(payments[hash].hasPayment, "Hash not in use");

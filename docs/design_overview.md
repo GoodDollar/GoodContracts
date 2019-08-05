@@ -3,7 +3,7 @@ Welcome to the GoodDollar repository! The [GoodDollar](https://www.gooddollar.or
 
 In this document, we present the on going development efforts and specification of the extended design of the GoodDollar contract system.
 
-This specification is subject to ongoing development and frequent review. This test may not reflect the most recent commits to this repo. 
+This text introduces the core components of the GoodDollar contract system and is intended as a brief overview of the current status of development. This specification is subject to ongoing development and frequent review. This text may not reflect the most recent commit.
 
 ## GoodDollar Design Overview
 
@@ -15,7 +15,7 @@ In the Table presented below, we provide an overview of the extended design of t
 
 # GoodDollar Contract System: Key Concepts
 
-The GoodDollar contract system is a decentralized autonomous organization consisting of four main components:
+The GoodDollar contract system is a decentralized autonomous organization, consisting of four main components:
 
 ## Token
 The GoodDollar is a mintable, burnable and ERC20 compatible token. The GoodDollar token can collect an adjustable fee stored in a reserve, whenever a transaction is made.
@@ -24,7 +24,7 @@ The GoodDollar is a mintable, burnable and ERC20 compatible token. The GoodDolla
 ## DAU
 The DAU is a decentralized decision-making and ressource distribution mechanism. It contains four elements: 
 
-* Schemes -   A "scheme" is a 'wrapper' enacting a given policy or functionality in the GoodDollar contract system. Schemes are deployed and elected by the DAU contract through a re-defineable voting mechanisms. The UBI distribution policy, the one-time payment link policy, the sign-up bonus policy, and the identity contract are all currently implemented as 'schemes' and can be reiterated and redployed by the GoodDollar community. 
+* Schemes -   A "scheme" is a 'wrapper' enacting a given policy or functionality in the GoodDollar contract system. Schemes are deployed by users and elected by the DAU contract through 'reputation voting' (see below). The UBI distribution policy, the one-time payment link policy, the sign-up bonus policy, and the identity contract are all currently implemented as 'schemes' and can be reiterated and redployed by the GoodDollar community. 
 
 
 * Voting Mechanism - Proposals are approved or rejected through voting. Rules can be implemented for any voting process, from a simple vote to an absolute vote where 51% of voting power is required for approval.
@@ -61,8 +61,7 @@ name | Description
 
 The GoodDollar token is a mintable, burnable and ERC20 compatible token. What makes it different from other ERC20 tokens is that whenever a transfer is made it will collect some fees that will be stored in a reserve. 
 
-Below are three main functions, that have been adopted from the standard framework in order to perform the actions necessary to allow the system to work.
-
+Below are three main functions, that have been adopted from the standard contract:
 name | Description | Working Priciple
 | ------------- | ------------- | ------------- |
 `transfer(to, value) / transferFrom(from, to, value)` | Gives the system the ability to collect fees. | Whenever transfer or transferFrom is called with a given value, processFees is called with said value, transferring the transactional fees (set by the DAO at any given time, by a specific scheme) to the feeRecipient and returning the new value to be transferred along.
@@ -95,32 +94,39 @@ The Avatar is the outer facing part of the DAO system, which interacts with the 
 
 #### UBI
 
-A UBI scheme can be created by anyone and is designed to be used only one-time. A UBI scheme is proposed and then the users of the DAO vote for it (weighed by their reputation points), deciding which proposal they prefer. Once the decision is taken, the scheme will be eligble to start. The Controller then transfers the reserves from the Avatar to the UBI allowing the distribution. 
+A UBI scheme can be created by anyone and submitted to GoodDollar Community. A UBI scheme is proposed and voted upon by users. Once a UBI scheme is implemented, the Controller transfers the alotted amounts from the reserves.
 
-Initially, when the UBI is created the start and end periods are given. A bool, isActive, is set to false, making the policy ‘dormant’ until start() is called. Once the start() is called the UBI is active and the claiming process begins. First of all, the Reserve (Avatar) sends all its funds to the UBI contract, and the amount to mint indicated in the constructor is minted to the contract.
+When the UBI scheme is created, the author defines start and end periods. A bool, isActive, is set to false, making the policy ‘dormant’ until start() is called. Once start() is called the UBI is active and the claiming process begins. 
+
+The Reserve (Avatar) sends all its funds to the UBI contract, and the GoodDollar to mint, indicated in the constructor, is minted to and sent to the contract.
 
 ![UBIstates](images/UBIStates.svg)
 
 *__Figure 3:__ The three states the UBI contract moves through*
 
-Then the distribution ratio is calculated and isActive is set to true, allowing users registered as claimers before the start period to claim UBI. Thereafter, their claiming status is updated in order to prevent multiple claiming by the same claimer and then the G$ are transferred to the claimers.
+Then, the distribution ratio is calculated and isActive is set to true, allowing users registered as claimers (before the start period) to claim UBI. After a successfull claim is registered, the users claimin status is updated in order to prevent multiple claims from the same address. 
 
 ![UBIsequence](images/UBISequenceDiagram.svg)
 
 *__Figure 4:__ UBI claiming sequence diagram*
 
-Finally, the end() function needs to be called in order to terminate the contract. This can only be done after the end period has been reached. Similarly to the start() function, the end() functions can be called by whoever is willing to pay the costs in exchange for reputation points. When the scheme ends, it transfers any and all remaining funds back to the reserve, leaving the scheme empty and 'useless'
+Finally, the end() function is called, terminating the contract. This can only be done after the period has been exceeded. A deprecated scheme transfers all remaining funds back to the reserve.
 
-### Sign-up bonus
 
-The sign-up bonus is a scheme that actually mints new tokens every time a user claims tokens. This can only be done once per-claimer, and only by verified claimers.
+### Supporting Contracts
 
-### OneTimePayments
+A number of contracts are implemented to support the launch of the GoodDollar system. These contracts are implemented as 'schemes' and are subject to reputation voting by the community. 
 
-The OneTimePayments scheme takes care of allowing people who have GoodDollar to deposit some GoodDollar on a one-time payment address. Consequently, non-wallet holders will be able to withdraw the token automatically
+#### Sign-up bonus
 
-### Identity
+The sign-up bonus scheme allocates an initial amount of GoodDollar to new users. 
 
-The identity scheme works as an access unit which allows admins to register and authenticate users. The identity defines who is eligible to claim UBI and counts the total number of people signed-up. The purpose of the Identity is solely to ensure that transactions performed are only done by users that have not been blacklisted, and that claims are only done by claimers. 
+#### OneTimePayments
+
+The OneTimePayments scheme allocates GoodDollar to new addresses. The private key or mnemonic phrase associated with the address will be send to a new email.
+
+#### Identity
+
+The Identity scheme manages the list of verified user addresses and blacklisted addresses.
 
 

@@ -19,6 +19,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     Roles.Role private claimers;
 
     uint256 private claimerCount;
+    mapping(address => uint) dateAdded;
 
     event BlacklistAdded(address indexed account);
     event BlacklistRemoved(address indexed account);
@@ -38,7 +39,10 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         onlyIdentityAdmin
     {
         claimers.add(account);
+        
         increaseClaimerCount(1);
+        dateAdded[account] = now;
+        
         emit ClaimerAdded(account);
     }
 
@@ -52,7 +56,10 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         onlyIdentityAdmin
     {
         claimers.remove(account);
+
         decreaseClaimerCount(1);
+        delete dateAdded[account];
+
         emit ClaimerRemoved(account);
     }
 

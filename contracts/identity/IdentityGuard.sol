@@ -1,12 +1,15 @@
 pragma solidity ^0.5.2;
 
 import "./Identity.sol";
+import "../dao/AvatarGuard.sol";
+
+import "@daostack/arc/contracts/controller/Avatar.sol";
 
 /* @title The IdentityGuard contract
  * @dev Contract containing an identity and
  * modifiers to ensure proper access
  */
-contract IdentityGuard {
+contract IdentityGuard is AvatarGuard {
 
     Identity public identity;
 
@@ -55,7 +58,7 @@ contract IdentityGuard {
     /* @dev Allows anyone to set a new identity contract if
      * the given contract has been registered as a scheme
      */
-    function setIdentity(Identity _identity) public {
+    function setIdentity(Identity _identity, Avatar _avatar) public onlyOwnerOrAvatar(_avatar) {
         _identity.isRegistered();
         identity = _identity;
     }

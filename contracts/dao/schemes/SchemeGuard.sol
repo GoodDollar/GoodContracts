@@ -1,14 +1,14 @@
 pragma solidity 0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
+
+import "../AvatarGuard.sol";
 
 /* @dev abstract contract for ensuring that schemes have been registered properly
  * Allows setting zero Avatar in scenarios where Avatar hasn't been created yet 
  */
-contract SchemeGuard is Ownable {
+contract SchemeGuard is AvatarGuard {
 
     Avatar avatar;
     ControllerInterface controller = ControllerInterface(0);
@@ -40,7 +40,7 @@ contract SchemeGuard is Ownable {
     /* @dev Sets a new given avatar and controller for scheme
      * can only be done by owner of scheme
      */
-    function setAvatar(Avatar _avatar) public onlyOwner {
+    function setAvatar(Avatar _avatar) public onlyOwnerOrAvatar(_avatar) {
         avatar = _avatar;
         controller = ControllerInterface(avatar.owner());
     }

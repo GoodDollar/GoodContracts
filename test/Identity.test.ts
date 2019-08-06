@@ -1,29 +1,42 @@
 import * as helpers from'./helpers';
 
 const Identity = artifacts.require("Identity");
-const IdentityMock = artifacts.require("IdentityMock");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
 const Avatar = artifacts.require("Avatar");
 const GoodDollar = artifacts.require("GoodDollar");
 const ControllerInterface = artifacts.require("ControllerInterface");
+const SchemeRegistrar = artifacts.require("SchemeRegistrar");
+const AbsoluteVote = artifacts.require("AbsoluteVote");
+const IdentityGuard = artifacts.require("IdentityGuard");
 const IdentityGuardMock = artifacts.require("IdentityGuardMock");
 const IdentityGuardFailMock = artifacts.require("IdentityGuardFailMock");
+const IdentityAdminAdder = artifacts.require("IdentityAdminAdder");
+const IdentityAdminRemover = artifacts.require("IdentityAdminRemover");
 
 contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted2, claimer, outsider]) => {
 
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
-    let dangerIdentity: helpers.ThenArg<ReturnType<typeof IdentityMock['new']>>;
+    let dangerIdentity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
+    let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote['new']>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
+    let identityGuard: helpers.ThenArg<ReturnType<typeof IdentityGuard['new']>>;
     let mock: helpers.ThenArg<ReturnType <typeof IdentityGuardMock['new']>>;
+    let identityAdminAdder: helpers.ThenArg<ReturnType <typeof IdentityAdminAdder['new']>>;
+    let identityAdminAdder2: helpers.ThenArg<ReturnType <typeof IdentityAdminAdder['new']>>;
+    let identityAdminRemover: helpers.ThenArg<ReturnType <typeof IdentityAdminRemover['new']>>;
+
+    let proposalId: string;
 
     before(async () => {
         identity = await Identity.deployed();
-        dangerIdentity = await IdentityMock.new();
+        dangerIdentity = await Identity.new();
 
         avatar = await Avatar.at(await (await DaoCreatorGoodDollar.deployed()).avatar());
         token = await GoodDollar.at(await avatar.nativeToken());
+        absoluteVote = await AbsoluteVote.deployed();
 
+        identityGuard = await IdentityGuard.new(dangerIdentity.address);
         await helpers.assertVMException(IdentityGuardFailMock.new(), "Supplied identity is null");
         mock = await IdentityGuardMock.new(identity.address);
     });
@@ -66,7 +79,6 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         assert(!(await identity.isClaimer(claimer)));
     });
 
-
     it("should increment and decrement claimers when adding claimer", async () => {
         const oldClaimerCount = await identity.getClaimerCount();
 
@@ -96,20 +108,114 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         );
     });
 
+    it("should not be able to add zero address as identity admin", async() => {
+        helpers.assertVMException(
+            IdentityAdminAdder.new(
+                avatar.address,
+                identity.address,
+                helpers.NULL_ADDRESS,
+                (await web3.eth.getBlock('latest')).timestamp - 100000,
+                (await web3.eth.getBlock('latest')).timestamp + 900000
+            ),
+            "admin cannot be null address"
+        );
+    })
+
     it("should add identity admin", async () => {
-        await identity.addIdentityAdmin(outsider);
+        identityAdminAdder = await IdentityAdminAdder.new(
+            avatar.address,
+            identity.address,
+            outsider,
+            (await web3.eth.getBlock('latest')).timestamp + 100000,
+            (await web3.eth.getBlock('latest')).timestamp + 1000000
+        );
+
+        const schemeRegistrar = await SchemeRegistrar.deployed();
+        let transaction = await schemeRegistrar.proposeScheme(avatar.address, identityAdminAdder.address, 
+          helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
+
+        proposalId = transaction.logs[0].args._proposalId;
+
+        const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+        const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+
+        // Verifies that the ExecuteProposal event has been emitted
+        assert(executeProposalEventExists);
+        await identityAdminAdder.transferOwnership(await avatar.owner());
+
+        await helpers.assertVMException(identityAdminAdder.start(), "not in period")
+        await helpers.increaseTime(100000);
+
+        await identityAdminAdder.start();
+
+        expect(await identity.isIdentityAdmin(outsider)).to.be.equal(true);
     });
 
     it("should remove identity admin", async () => {
-        await identity.removeIdentityAdmin(outsider);
+        identityAdminRemover = await IdentityAdminRemover.new(
+            avatar.address,
+            identity.address,
+            outsider,
+            (await web3.eth.getBlock('latest')).timestamp + 100000,
+            (await web3.eth.getBlock('latest')).timestamp + 1000000
+            );
+
+        const schemeRegistrar = await SchemeRegistrar.deployed();
+        let transaction = await schemeRegistrar.proposeScheme(avatar.address, identityAdminRemover.address,
+            helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
+
+        proposalId = transaction.logs[0].args._proposalId;
+
+        const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+        const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+        assert(executeProposalEventExists);
+
+        await helpers.assertVMException(identityAdminRemover.start(), "not in period")
+        await helpers.increaseTime(100000);
+
+        await identityAdminRemover.start();
+
+        expect(await identity.isIdentityAdmin(outsider)).to.be.equal(false);
     });
 
     it("should not remove identity admin twice", async () => {
-        await helpers.assertVMException(identity.removeIdentityAdmin(outsider), "not IdentityAdmin");
+        await helpers.assertVMException(
+            IdentityAdminRemover.new(
+                avatar.address,
+                identity.address,
+                outsider,
+                (await web3.eth.getBlock('latest')).timestamp,
+                (await web3.eth.getBlock('latest')).timestamp + 900000
+            ),
+            "Given address is not admin"
+        );
     });
 
     it("should renounce identity admin", async () => {
-        await identity.addIdentityAdmin(outsider);
+        identityAdminAdder2 = await IdentityAdminAdder.new(
+            avatar.address,
+            identity.address,
+            outsider,
+            (await web3.eth.getBlock('latest')).timestamp,
+            (await web3.eth.getBlock('latest')).timestamp + 900000
+        );
+
+        const schemeRegistrar = await SchemeRegistrar.deployed();
+        let transaction = await schemeRegistrar.proposeScheme(avatar.address, identityAdminAdder2.address, 
+          helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
+
+        proposalId = transaction.logs[0].args._proposalId;
+
+        const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+        const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+
+        // Verifies that the ExecuteProposal event has been emitted
+        assert(executeProposalEventExists);
+        await identityAdminAdder2.transferOwnership(await avatar.owner());
+        await identityAdminAdder2.start();
+
+        expect(await identity.isIdentityAdmin(outsider)).to.be.equal(true);
+
         await identity.renounceIdentityAdmin( { from: outsider } )
     });
 
@@ -150,17 +256,14 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         await identity.removeClaimer(claimer);
     });
 
-    it("should not allow non-registered identity contract", async () => {
-        await helpers.assertVMException(token.setIdentity(dangerIdentity.address), "Scheme is not registered");
+    it("should not allow setting non-registered identity contract", async () => {
+        await helpers.assertVMException(identityGuard.setIdentity(dangerIdentity.address, avatar.address), "Scheme is not registered");
         dangerIdentity = await Identity.new();
     });
 
-
     it("should allow to set registered identity", async () => {
-        assert(await token.setIdentity(identity.address));
+        assert(await identityGuard.setIdentity(identity.address, avatar.address));
     });
-
 });
 
-// Important see: https://stackoverflow.com/questions/40900791/cannot-redeclare-block-scoped-variable-in-unrelated-files
 export {}

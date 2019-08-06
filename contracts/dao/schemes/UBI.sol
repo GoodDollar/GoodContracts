@@ -69,8 +69,6 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
         DAOToken token = avatar.nativeToken();
         uint256 reserve = token.balanceOf(address(avatar));
 
-        controller = ControllerInterface(avatar.owner());
-
         controller.genericCall(
             address(token),
             abi.encodeWithSignature("transfer(address,uint256)", address(this), reserve),

@@ -62,6 +62,4 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
 	it("should allow owner to set new formula", async () => {
 		assert(await feeGuard.setFormula(newFormula.address, avatar.address, { from: founder }));
 	});
-
-
 });

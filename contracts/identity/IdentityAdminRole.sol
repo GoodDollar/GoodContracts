@@ -3,8 +3,10 @@ pragma solidity 0.5.4;
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
-/** @title Contract managing the whitelist admin role */
-contract IdentityAdminRole is Ownable {
+import "../dao/AvatarGuard.sol";
+
+/** @title Contract managing the identity admin role */
+contract IdentityAdminRole is AvatarGuard {
     using Roles for Roles.Role;
 
     event IdentityAdminAdded(address indexed account);
@@ -21,34 +23,39 @@ contract IdentityAdminRole is Ownable {
         _;
     }
 
-    modifier requireIdentityAdmin(address account) {
-        require(isIdentityAdmin(account), "not IdentityAdmin");
-        _;
-    }
-
     /**
-     * @dev Checks if account is whitelist admin
+     * @dev Checks if account is identity admin
      * @param account Account to check
-     * @return Boolean indicating if account is whitelist admin
+     * @return Boolean indicating if account is identity admin
      */
     function isIdentityAdmin(address account) public view returns (bool) {
         return IdentityAdmins.has(account);
     }
 
     /**
-     * @dev Adds a whitelist admin account. Is only callable by owner.
+     * @dev Adds a identity admin account. Is only callable by owner.
      * @param account Address to be added
      */
-    function addIdentityAdmin(address account) public onlyOwner {
+    function addIdentityAdmin(address account, Avatar _avatar) 
+        public
+        onlyOwnerOrAvatar(_avatar)
+        returns(bool)
+    {
         _addIdentityAdmin(account);
+        return true;
     }
 
     /**
-     * @dev Removes a whitelist admin account. Is only callable by owner.
+     * @dev Removes a identity admin account. Is only callable by owner.
      * @param account Address to be removed
      */
-    function removeIdentityAdmin(address account) public onlyOwner requireIdentityAdmin(account) {
+    function removeIdentityAdmin(address account, Avatar _avatar) 
+        public
+        onlyOwnerOrAvatar(_avatar)
+        returns (bool)
+    {
         _removeIdentityAdmin(account);
+        return true;
     }
 
     /** @dev Allows a privileged holder to renounce their role */

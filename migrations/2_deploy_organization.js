@@ -44,11 +44,13 @@ module.exports = async function(deployer) {
 
     await identity.setAvatar(avatar.address);
     await feeFormula.setAvatar(avatar.address);
-    //await identity.transferOwnership(controller.addresss, { from: founders });
+    await identity.transferOwnership(await avatar.owner());
+    await feeFormula.transferOwnership(await avatar.owner());
 
     console.log(`AVATAR: ${avatar.address}`);
     console.log(`CONTROLLER: ${controller.address}`);
     console.log(`NATIVE TOKEN: ${await avatar.nativeToken()}`);
+    console.log(`FOUNDER: ${founders}`);
 
     // Schemes
     // Deploy Voting Matching

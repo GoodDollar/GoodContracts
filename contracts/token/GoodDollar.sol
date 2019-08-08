@@ -2,13 +2,13 @@ pragma solidity ^0.5.2;
 import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
 
 import "../identity/IdentityGuard.sol";
-import "../dao/schemes/FeeGuard.sol";
+import "../dao/schemes/FormulaHolder.sol";
 
 import "./ERC677Token.sol";
 
 
 /** @title The GoodDollar contract */
-contract GoodDollar is ERC677Token, IdentityGuard, FeeGuard, MinterRole {
+contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
 
     address _feeRecipient;
 
@@ -30,7 +30,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FeeGuard, MinterRole {
         public
         ERC677Token(name, symbol, cap)
         IdentityGuard(identity)
-        FeeGuard(formula)
+        FormulaHolder(formula)
     {
         _feeRecipient = feeRecipient;
     }

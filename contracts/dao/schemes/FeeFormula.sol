@@ -22,7 +22,7 @@ contract FeeFormula is AbstractFees {
      * @param _value the value to calculate fees from
      * @return the transactional fee for given value
      */
-    function getTxFees(uint256 _value) public view onlyRegistered returns (uint256) {
+    function getTxFees(uint256 _value) public view returns (uint256) {
         return _value.div(100);
     }
 }

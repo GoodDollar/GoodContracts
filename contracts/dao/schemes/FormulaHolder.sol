@@ -5,7 +5,7 @@ import "./FeeFormula.sol";
 
 /* @title Fee guard contract in charge of setting registered fee formula schemes to contract
  */
-contract FeeGuard is AvatarGuard {
+contract FormulaHolder is AvatarGuard {
 
     FeeFormula public formula;
 

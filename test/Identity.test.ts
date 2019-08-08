@@ -10,8 +10,8 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const IdentityGuard = artifacts.require("IdentityGuard");
 const IdentityGuardMock = artifacts.require("IdentityGuardMock");
 const IdentityGuardFailMock = artifacts.require("IdentityGuardFailMock");
-const IdentityAdminAdder = artifacts.require("IdentityAdminAdder");
-const IdentityAdminRemover = artifacts.require("IdentityAdminRemover");
+const AddAdmin = artifacts.require("AddAdmin");
+const RemoveAdmin = artifacts.require("RemoveAdmin");
 
 contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted2, claimer, outsider]) => {
 
@@ -22,9 +22,9 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
     let identityGuard: helpers.ThenArg<ReturnType<typeof IdentityGuard['new']>>;
     let mock: helpers.ThenArg<ReturnType <typeof IdentityGuardMock['new']>>;
-    let identityAdminAdder: helpers.ThenArg<ReturnType <typeof IdentityAdminAdder['new']>>;
-    let identityAdminAdder2: helpers.ThenArg<ReturnType <typeof IdentityAdminAdder['new']>>;
-    let identityAdminRemover: helpers.ThenArg<ReturnType <typeof IdentityAdminRemover['new']>>;
+    let addAdmin: helpers.ThenArg<ReturnType <typeof AddAdmin['new']>>;
+    let addAdmin2: helpers.ThenArg<ReturnType <typeof AddAdmin['new']>>;
+    let removeAdmin: helpers.ThenArg<ReturnType <typeof RemoveAdmin['new']>>;
 
     let proposalId: string;
 
@@ -110,28 +110,24 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
 
     it("should not be able to add zero address as identity admin", async() => {
         helpers.assertVMException(
-            IdentityAdminAdder.new(
+            AddAdmin.new(
                 avatar.address,
                 identity.address,
-                helpers.NULL_ADDRESS,
-                (await web3.eth.getBlock('latest')).timestamp - 100000,
-                (await web3.eth.getBlock('latest')).timestamp + 900000
+                helpers.NULL_ADDRESS
             ),
             "admin cannot be null address"
         );
     })
 
     it("should add identity admin", async () => {
-        identityAdminAdder = await IdentityAdminAdder.new(
+        addAdmin = await AddAdmin.new(
             avatar.address,
             identity.address,
-            outsider,
-            (await web3.eth.getBlock('latest')).timestamp + 100000,
-            (await web3.eth.getBlock('latest')).timestamp + 1000000
+            outsider
         );
 
         const schemeRegistrar = await SchemeRegistrar.deployed();
-        let transaction = await schemeRegistrar.proposeScheme(avatar.address, identityAdminAdder.address, 
+        let transaction = await schemeRegistrar.proposeScheme(avatar.address, addAdmin.address, 
           helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
 
         proposalId = transaction.logs[0].args._proposalId;
@@ -141,27 +137,22 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
 
         // Verifies that the ExecuteProposal event has been emitted
         assert(executeProposalEventExists);
-        await identityAdminAdder.transferOwnership(await avatar.owner());
 
-        await helpers.assertVMException(identityAdminAdder.start(), "not in period")
-        await helpers.increaseTime(100000);
-
-        await identityAdminAdder.start();
+        await addAdmin.transferOwnership(await avatar.owner());
+        await addAdmin.start();
 
         expect(await identity.isIdentityAdmin(outsider)).to.be.equal(true);
     });
 
     it("should remove identity admin", async () => {
-        identityAdminRemover = await IdentityAdminRemover.new(
+        removeAdmin = await RemoveAdmin.new(
             avatar.address,
             identity.address,
             outsider,
-            (await web3.eth.getBlock('latest')).timestamp + 100000,
-            (await web3.eth.getBlock('latest')).timestamp + 1000000
             );
 
         const schemeRegistrar = await SchemeRegistrar.deployed();
-        let transaction = await schemeRegistrar.proposeScheme(avatar.address, identityAdminRemover.address,
+        let transaction = await schemeRegistrar.proposeScheme(avatar.address, removeAdmin.address,
             helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
 
         proposalId = transaction.logs[0].args._proposalId;
@@ -170,38 +161,32 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
         assert(executeProposalEventExists);
 
-        await helpers.assertVMException(identityAdminRemover.start(), "not in period")
-        await helpers.increaseTime(100000);
-
-        await identityAdminRemover.start();
+        await removeAdmin.transferOwnership(await avatar.owner());
+        await removeAdmin.start();
 
         expect(await identity.isIdentityAdmin(outsider)).to.be.equal(false);
     });
 
     it("should not remove identity admin twice", async () => {
         await helpers.assertVMException(
-            IdentityAdminRemover.new(
+            RemoveAdmin.new(
                 avatar.address,
                 identity.address,
-                outsider,
-                (await web3.eth.getBlock('latest')).timestamp,
-                (await web3.eth.getBlock('latest')).timestamp + 900000
+                outsider
             ),
             "Given address is not admin"
         );
     });
 
     it("should renounce identity admin", async () => {
-        identityAdminAdder2 = await IdentityAdminAdder.new(
+        addAdmin2 = await AddAdmin.new(
             avatar.address,
             identity.address,
-            outsider,
-            (await web3.eth.getBlock('latest')).timestamp,
-            (await web3.eth.getBlock('latest')).timestamp + 900000
+            outsider
         );
 
         const schemeRegistrar = await SchemeRegistrar.deployed();
-        let transaction = await schemeRegistrar.proposeScheme(avatar.address, identityAdminAdder2.address, 
+        let transaction = await schemeRegistrar.proposeScheme(avatar.address, addAdmin2.address, 
           helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
 
         proposalId = transaction.logs[0].args._proposalId;
@@ -211,8 +196,9 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
 
         // Verifies that the ExecuteProposal event has been emitted
         assert(executeProposalEventExists);
-        await identityAdminAdder2.transferOwnership(await avatar.owner());
-        await identityAdminAdder2.start();
+        
+        await addAdmin2.transferOwnership(await avatar.owner());
+        await addAdmin2.start();
 
         expect(await identity.isIdentityAdmin(outsider)).to.be.equal(true);
 

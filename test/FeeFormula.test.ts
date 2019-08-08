@@ -8,8 +8,8 @@ const ControllerInterface = artifacts.require("ControllerInterface");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const AbsoluteVote = artifacts.require("AbsoluteVote");
 const FeeFormula = artifacts.require("FeeFormula");
-const FeeGuard = artifacts.require("FeeGuard")
-const FeeGuardMock = artifacts.require("FeeGuardMock");
+const FormulaHolder = artifacts.require("FormulaHolder")
+const FormulaHolderMock = artifacts.require("FormulaHolderMock");
 
 contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
 
@@ -19,7 +19,7 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
 	let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
 	let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
 	let newFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
-	let feeGuard: helpers.ThenArg<ReturnType<typeof FeeGuard['new']>>;
+	let feeGuard: helpers.ThenArg<ReturnType<typeof FormulaHolder['new']>>;
 
 	let proposalId: string;
 
@@ -30,11 +30,11 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
 		token = await GoodDollar.at(await avatar.nativeToken());
 		feeFormula = await FeeFormula.deployed();
 		newFormula = await FeeFormula.new();
-		feeGuard = await FeeGuard.new(feeFormula.address, { from: founder });
+		feeGuard = await FormulaHolder.new(feeFormula.address, { from: founder });
 	});
 
-	it("should not allow FeeGuard with null formula", async () => {
-		await helpers.assertVMException(FeeGuardMock.new(), "Supplied formula is null");
+	it("should not allow FormulaHolder with null formula", async () => {
+		await helpers.assertVMException(FormulaHolderMock.new(), "Supplied formula is null");
 	});
 
 	it("should be allowed to register new formula", async () => {

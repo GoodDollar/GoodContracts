@@ -4,12 +4,11 @@ import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 
 import "../../identity/Identity.sol";
-import "./ActivePeriod.sol";
 import "./SchemeGuard.sol";
 
 /* @title Scheme contract responsible for adding given address to identity admins
  */
-contract IdentityAdminAdder is ActivePeriod, SchemeGuard {
+contract AddAdmin is SchemeGuard {
 
     Identity public identity;
     address public admin;
@@ -19,12 +18,9 @@ contract IdentityAdminAdder is ActivePeriod, SchemeGuard {
     constructor(
         Avatar _avatar,
         Identity _identity,
-        address _admin,
-        uint _periodStart,
-        uint _periodEnd
+        address _admin
     )
         public
-        ActivePeriod(_periodStart, _periodEnd)
         SchemeGuard(_avatar)
     {
         require(_admin != address(0), "admin cannot be null address");
@@ -36,7 +32,6 @@ contract IdentityAdminAdder is ActivePeriod, SchemeGuard {
      * address to list of admins and then ends even if still within period
      */
     function start() onlyRegistered public returns(bool) {
-        require(super.start());
 
         controller.genericCall(
             address(identity),
@@ -44,6 +39,6 @@ contract IdentityAdminAdder is ActivePeriod, SchemeGuard {
             avatar,
             0);
 
-        return super.internalEnd();
+        selfdestruct(address(avatar));
     }
 }

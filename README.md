@@ -4,6 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Contributing
+
+Welcome to the GoodDollar repository! 
+
 Everyone is welcome: Developers, designers, and entrepreneurs with a passion for decentralized technologies and a vision to build a new world that has equality, security, inclusivity, and innovation as its cornerstones.
 Refer to [GoodDocs](https://docs.gooddollar.org/contributing) for further information.
 
@@ -43,7 +46,6 @@ Path | Description
 `scripts/` | Specific scripts for testing and coverage
 
 # Learn about GoodDollar
-Welcome to the GoodDollar repository! 
 
 The [GoodDollar](https://www.gooddollar.org/#what-is-GoodDollar) mission is reducing wealth inquality by building a new, global, open-source cryptocurrency for distributing money according to the principles of universal basic income (UBI).
 

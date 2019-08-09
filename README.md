@@ -29,9 +29,6 @@ Once the console is open, compile the contracts and run the migration script
 You need to have [`node`](https://nodejs.org/) installed.
 This repository has only been tested on UNIX-derived systems.
 
-## Getting started
-See [separate document](docs/design_overview.md).
-
 ## Files
 Path | Description
 ------------- | -------------

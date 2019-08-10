@@ -48,6 +48,8 @@ The [GoodDollar](https://www.gooddollar.org/#what-is-GoodDollar) mission is redu
 
 To learn more about the reasoning behind the GoodDollar Experiment, please read the [Position Paper](https://www.gooddollar.org/wp-content/uploads/2018/11/GD-Wealth-Distribution-Position-Paper.pdf).
 
+This implementation of the GoodDollar contract system contains forked and modified from the DAOstack repo. We recommend anyone interested in learning about DAOs to [read and contribute] https://github.com/daostack
+
 In this document, we present the on going development efforts and specification of the extended design of the GoodDollar contract system. In section one, we introduce the key concepts of the contract system. In section two, we introduce the individual contracts available in this repo. 
 
 This text introduces the core components of the GoodDollar contract system and is intended as a brief overview of the current status of development. This specification is subject to ongoing development and frequent review. This text may not reflect the most recent commit.

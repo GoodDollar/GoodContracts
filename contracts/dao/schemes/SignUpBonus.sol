@@ -9,36 +9,34 @@ import "../../identity/IdentityGuard.sol";
 import "./SchemeGuard.sol";
 
 /* @title Sign-Up bonus scheme responsible for minting
- * a given amount to any claimer once per claimer
+ * a given amount to users
  */
 contract SignUpBonus is IdentityGuard, SchemeGuard {
     using SafeMath for uint256;
 
-    uint256 public bonus;
-    mapping (address => bool) hasClaimed;
+    uint256 public maxBonus;
+    mapping(address => uint256) rewarded;
 
     event BonusClaimed(address indexed account, uint256 amount);
 
     constructor(
         Avatar _avatar,
         Identity _identity,
-        uint256 _bonus
+        uint256 _maxBonus
     )
         public
         IdentityGuard(_identity)
         SchemeGuard(_avatar)
     {
-        bonus = _bonus;
+        maxBonus = _maxBonus;
     }
 
-    /* @dev bonus claiming function. Allows only registered claimers to receive
-     */
-    function claim() external onlyClaimer onlyRegistered {
-        require(!hasClaimed[msg.sender], "has already claimed");
-        hasClaimed[msg.sender] = true;
+    function awardUser(address _user, uint256 _amount) public onlyRegistered onlyIdentityAdmin {
+        require(rewarded[_user].add(_amount) <= maxBonus, "Cannot award user beyond max");
 
-        controller.mintTokens(bonus, msg.sender, address(avatar));
+        rewarded[_user] = rewarded[_user].add(_amount);
+        controller.mintTokens(_amount, _user, address(avatar));
 
-        emit BonusClaimed(msg.sender, bonus);
+        emit BonusClaimed(_user, _amount);
     }
  }

@@ -55,6 +55,11 @@ contract IdentityGuard is AvatarGuard {
         _;
     }
 
+    modifier onlyIdentityAdmin() {
+        require(identity.isIdentityAdmin(msg.sender), "not IdentityAdmin");
+        _;
+    }
+
     /* @dev Allows anyone to set a new identity contract if
      * the given contract has been registered as a scheme
      */

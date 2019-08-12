@@ -9,7 +9,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const SignUpBonus = artifacts.require("SignUpBonus");
 
-contract("Integration - Claiming signer bonus", ([founder, claimer, claimer2, nonClaimer]) => {
+contract("Integration - awarding signer bonus", ([founder, claimer, claimer2, nonClaimer]) => {
 
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
@@ -26,14 +26,12 @@ contract("Integration - Claiming signer bonus", ([founder, claimer, claimer2, no
       controller = await ControllerInterface.at(await avatar.owner());
       absoluteVote = await AbsoluteVote.deployed();
       token = await GoodDollar.at(await avatar.nativeToken());
-      signUpBonus = await SignUpBonus.new(avatar.address, identity.address, 5);
+      signUpBonus = await SignUpBonus.new(avatar.address, identity.address, 6);
 
-      await identity.addClaimer(claimer);
-      await identity.addClaimer(claimer2);
     });
 
-    it("should not allow claimer to claim before starting scheme", async () => {
-      await helpers.assertVMException(signUpBonus.claim({ from: claimer }), "Scheme is not registered")
+    it("should not allow awarding before starting scheme", async () => {
+      await helpers.assertVMException(signUpBonus.awardUser(claimer, 3), "Scheme is not registered")
     })
 
     it("should start SignUpBonus scheme", async () => {
@@ -50,22 +48,23 @@ contract("Integration - Claiming signer bonus", ([founder, claimer, claimer2, no
       assert(executeProposalEventExists);
     });
 
-    it("should not allow non-claimer to claim", async () => {
-      await helpers.assertVMException(signUpBonus.claim({ from: nonClaimer }), "is not claimer");
-    })
+    it("should not allow awarding by non admin", async () => {
+      await helpers.assertVMException(signUpBonus.awardUser(nonClaimer, 5, { from: nonClaimer }), "not IdentityAdmin")
+    });
 
-    it("should allow claimer to claim", async () => {
+    it("should allow awarding", async () => {
       let oldBalance = await token.balanceOf(claimer);
       expect(oldBalance.toString()).to.be.equal("0");
-      await signUpBonus.claim({ from: claimer });
+      
+      await signUpBonus.awardUser(claimer, 5);
 
       let newBalance = await token.balanceOf(claimer);
       expect(newBalance.toString()).to.be.equal("5");
-    })
-
-    it("should not allow claimer to claim twice", async() => {
-      await helpers.assertVMException(signUpBonus.claim({ from: claimer}), "has already claimed");
     });
+
+    it("should not allow awarding more than max bonus", async () => {
+      await helpers.assertVMException(signUpBonus.awardUser(claimer, 2), "Cannot award user beyond max");
+    })
 
     it("should end SignUpBonus scheme", async () => {
       const schemeRegistrar = await SchemeRegistrar.deployed();
@@ -79,10 +78,6 @@ contract("Integration - Claiming signer bonus", ([founder, claimer, claimer2, no
 
       assert(executeProposalEventExists);
     });
-
-    it("should not allow claimer to claim after scheme is unregistered", async () => {
-      await helpers.assertVMException(signUpBonus.claim({ from: claimer2 }), "Scheme is not registered");
-    })
 });
 
 export{}

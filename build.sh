@@ -19,7 +19,7 @@ then
     export MNEMONIC=$MNEMONIC_STAGING
     echo "deploying to fuse dev"
     export NETWORK='fuse'
-    # npm run migrate_reset:ganache
+    npm run migrate_reset:ganache
     echo "deploying to fuse staging"
     export NETWORK='staging'
     npm run migrate_reset:ganache

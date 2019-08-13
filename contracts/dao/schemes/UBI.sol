@@ -67,7 +67,6 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
         return claimAmount;
     }
 
-
     /* @dev Function that commences distribution period on contract.
      * Can only be called after periodStart and before periodEnd and
      * can only be done once.
@@ -106,17 +105,17 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
      * Sends the remaining funds on contract back to the avatar contract
      * address
      */
-    function end() public returns(bool) {
-        require(super.end());
+    function end(Avatar /*_avatar*/) public {
 
         DAOToken token = avatar.nativeToken();
 
         uint256 remainingReserve = token.balanceOf(address(this));
+
         if (remainingReserve > 0) {
             token.transfer(address(avatar), remainingReserve);
         }
 
-        return true;
+        super.end(avatar);
     }
 
     /* @dev Function that claims UBI to message sender.

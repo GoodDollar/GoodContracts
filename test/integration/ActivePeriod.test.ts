@@ -53,14 +53,14 @@ contract("Integration - Active Period", ([founder, claimer, nonClaimer]) => {
   });
 
   it("should not end inactive scheme", async () => {
-    helpers.assertVMException(activePeriodMock.end(), "is not active");
+    helpers.assertVMException(activePeriodMock.end(avatar.address), "is not active");
   });
 
   it("should not allow starting twice", async () => {
     await helpers.increaseTime(periodOffset*1.5);
     await activePeriodMock.start();
     await helpers.assertVMException(activePeriodMock.start(), "cannot start twice");
-    await activePeriodMock.end();
+    await activePeriodMock.end(avatar.address);
   });
 
   it("should unregister scheme", async () => {

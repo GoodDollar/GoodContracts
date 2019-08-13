@@ -88,9 +88,9 @@ contract("Integration - Claiming Reputation", ([founder, claimer, claimer2]) => 
     const oldReputationBalanceClaimer = (await reputation.balanceOf(claimer)) as any;
     expect(oldReputationBalanceClaimer.toString()).to.be.equal(reward);
 
-    await helpers.assertVMException(reputationMock.end(), "period has not ended");
+    await helpers.assertVMException(reputationMock.end(avatar.address), "period has not ended");
     await helpers.increaseTime(periodOffset);
-    assert(await reputationMock.end({ from: claimer }));
+    assert(await reputationMock.end(avatar.address, { from: claimer }));
 
     const newReputationBalanceClaimer = (await reputation.balanceOf(claimer)) as any;
     const claimerRepDiff = newReputationBalanceClaimer.sub(oldReputationBalanceClaimer);

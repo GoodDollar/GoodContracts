@@ -1,5 +1,7 @@
 pragma solidity 0.5.4;
 
+import "@daostack/arc/contracts/controller/Avatar.sol";
+
 /* @title Abstract contract responsible for ensuring a scheme is only usable within a set period
  */
 contract ActivePeriod {
@@ -64,15 +66,15 @@ contract ActivePeriod {
 
     /* @dev public end function. Calls internalEnd if after period end
      */
-    function end() public requirePeriodEnd returns(bool) {
-        return internalEnd();
+    function end(Avatar _avatar) public requirePeriodEnd {
+        return internalEnd(_avatar);
     }
 
     /* @dev internal end function. Sets scheme to inactive if active
      */
-    function internalEnd() internal requireActive returns(bool) {
+    function internalEnd(Avatar _avatar) internal requireActive {
         isActive = false;
         emit SchemeEnded(msg.sender, now);
-        return true;
+        selfdestruct(address(_avatar));
     }
 }

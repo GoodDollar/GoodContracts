@@ -29,5 +29,7 @@ contract AddMinter is SchemeGuard {
             abi.encodeWithSignature("addMinter(address)", minter),
             avatar,
             0);
+
+        selfdestruct(address(avatar));
     }
 }

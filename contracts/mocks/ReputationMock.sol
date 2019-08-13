@@ -23,8 +23,9 @@ contract ReputationMock is ReputationReward, ActivePeriod {
         super.rewardAddress(msg.sender);
     }
 
-    function end() public returns (bool) {
-        require(super.end());
+    function end(Avatar _avatar) public {
         super.rewardAddress(msg.sender);
+
+        super.end(_avatar);
     }
 }

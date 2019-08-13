@@ -55,6 +55,11 @@ contract IdentityGuard is AvatarGuard {
         _;
     }
 
+    modifier onlyAddedBefore(uint date) {
+        require(identity.wasAdded(msg.sender) <= date, "Was not added within period");
+        _;
+    }
+
     modifier onlyIdentityAdmin() {
         require(identity.isIdentityAdmin(msg.sender), "not IdentityAdmin");
         _;

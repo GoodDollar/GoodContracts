@@ -10,7 +10,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const UBI = artifacts.require("UBI");
 
-contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer]) => {
+contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer, stranger]) => {
 
   let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
   let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
@@ -30,7 +30,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer]) => {
     const periodStart = (await web3.eth.getBlock('latest')).timestamp + periodOffset;
     const periodEnd = periodStart + periodOffset;
     const periodStart2 = periodEnd + periodOffset;
-    const periodEnd2 = periodStart2 + periodOffset;
+    const periodEnd2 = periodStart2 + periodOffset*2;
 
     identity = await Identity.deployed();
     feeFormula = await FeeFormula.deployed();
@@ -118,6 +118,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer]) => {
     const oldClaimerBalance = await token.balanceOf(claimer);
 
     assert(await ubi.claim({ from: claimer }));
+    const amountClaimed = await ubi.getClaimAmount();
 
     // Check that claimer has received the claimed amount
     const fee = await token.getFees(await token.balanceOf(ubi.address));
@@ -127,14 +128,36 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer]) => {
     const claimerBalanceDiff = claimerBalance.sub(oldClaimerBalance);
 
     expect(claimerBalanceDiff.toString()).to.be.equal(claimDistributionMinusFee.toString());
+    expect(claimerBalanceDiff.toString()).to.be.equal(amountClaimed.toString());
+  });
+
+  it("should show amount of claimers", async () => {
+    const claimerAmount = await ubi.getClaimerCount();
+    expect(claimerAmount.toString()).to.be.equal("1");
+  });
+
+  it("should show amount claimed", async () => {
+    const amountClaimed = await ubi.getClaimAmount();
+
+    const distribution = (await ubi.claimDistribution()) as any;
+    const expectedDistribution = await distribution.sub(await token.getFees(distribution));
+
+    expect(expectedDistribution.toString()).to.be.equal(amountClaimed.toString());
   });
 
   it("should not allow to claim twice", async () => {
     await helpers.assertVMException(ubi.claim({ from: claimer }), "has already claimed");
-  })
+  });
 
   it("should not allow non-claimer to claim", async () => {
     await helpers.assertVMException(ubi.claim({ from: nonClaimer }), "is not claimer");
+  });
+
+  it("should not allow new claimer to claim", async () => {
+    await helpers.increaseTime(periodOffset);
+    await identity.addClaimer(stranger);
+
+    await helpers.assertVMException(ubi.claim( { from: stranger }), "Was not added within period");
   });
 
   it("should end UBI period", async () => {

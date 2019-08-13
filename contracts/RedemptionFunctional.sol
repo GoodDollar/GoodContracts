@@ -37,18 +37,7 @@ contract RedemptionFunctional is Ownable {
 
 
   function calculateClaim() internal view returns(uint256) {
-    uint256 base = 100;
-    uint256 interest = base.add(market.inflationRate());
-    uint256 total = interest.mul(market.totalSupply());
-    total = total.div(base);
-    // total at this point is the existing supply plus
-    // the suggested total interest, so we need to remove
-    // the existing supply - what was causing the issue
-    // in the earlier calculation.
-    total = total.sub(market.totalSupply());
-    uint256 amount = total.div(identity.whiteListedCount());
-    //emit ClaimCalculated(base,interest,total);
-    return amount;
+    return 100;
   }
 
   function claimTokens() public whiteListed returns(bool) {

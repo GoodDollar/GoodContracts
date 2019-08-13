@@ -17,11 +17,11 @@ fi
 if [[  $1 == 'deploy' ]]
 then 
     export MNEMONIC=$MNEMONIC_STAGING
-    echo "deploying to fuse"
+    echo "deploying to fuse dev"
     export NETWORK='fuse'
     # npm run migrate_reset:ganache
-    echo "deploying to kovan"
-    export NETWORK='kovan'
+    echo "deploying to fuse staging"
+    export NETWORK='staging'
     npm run migrate_reset:ganache
     read -p "deploy to production? " prompt
     if [[ $PRIVATE_KEY_PROD && $prompt =~ [yY](es)* ]]

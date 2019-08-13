@@ -86,6 +86,10 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         return claimerCount;
     }
 
+    function wasAdded(address account) public view returns (uint) {
+        return dateAdded[account];
+    }
+
     /* @dev Adds an address to blacklist.
      * Can only be called by Identity Administrators.
      * @param account address to add as blacklisted

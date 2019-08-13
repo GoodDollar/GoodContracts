@@ -172,11 +172,11 @@ A number of contracts are implemented to support the launch of the GoodDollar sy
 
 ### Sign-up bonus
 
-The sign-up bonus scheme allocates an initial amount of GoodDollar to new users. 
+The sign-up bonus scheme allows administrators to award tokens up to a given maximum to users for inviting others.
 
 ### OneTimePayments
 
-The OneTimePayments scheme allocates GoodDollar to new addresses. The private key or mnemonic phrase associated with the address will be send to a new email.
+The OneTimePayments scheme is able to receive funds and keep them stored under a hashed code, allowing users to send funds to unregistered users that can be claimed once they have been registered.
 
 ### Identity
 

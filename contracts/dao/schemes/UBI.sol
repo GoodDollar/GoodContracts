@@ -8,6 +8,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../identity/Identity.sol";
 import "../../identity/IdentityGuard.sol";
 
+import "../../token/GoodDollar.sol";
+
 import "./ActivePeriod.sol";
 import "./SchemeGuard.sol";
 
@@ -20,6 +22,9 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
 
     uint256 public claimDistribution;
     mapping (address => bool) hasClaimed;
+
+    uint256 public amountOfClaimers;
+    uint256 public claimAmount;
 
     event UBIClaimed(address indexed claimer, uint256 amount);
 
@@ -54,6 +59,15 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
      */
     function distributionFormula(uint256 reserve, address user) internal returns(uint256);
 
+    function getClaimerCount() public view returns (uint256) {
+        return amountOfClaimers;
+    }
+
+    function getClaimAmount() public view returns (uint256) {
+        return claimAmount;
+    }
+
+
     /* @dev Function that commences distribution period on contract.
      * Can only be called after periodStart and before periodEnd and
      * can only be done once.
@@ -64,6 +78,9 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
      */
     function start() public onlyRegistered returns(bool) {
         require(super.start());
+
+        amountOfClaimers = 0;
+        claimAmount = 0;
 
         // Transfer the fee reserve to this contract
         DAOToken token = avatar.nativeToken();
@@ -105,12 +122,22 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
     /* @dev Function that claims UBI to message sender.
      * Each claimer can only claim once per UBI contract
      */
-    function claim() public requireActive onlyClaimer returns(bool) {
+    function claim() 
+        public 
+        requireActive
+        onlyClaimer
+        onlyAddedBefore(periodStart)
+        returns(bool)
+    {
         require(!hasClaimed[msg.sender], "has already claimed");
 
-        DAOToken token = avatar.nativeToken();
+        GoodDollar token = GoodDollar(address(avatar.nativeToken()));
+
         hasClaimed[msg.sender] = true;
         token.transfer(msg.sender, claimDistribution);
+
+        amountOfClaimers = amountOfClaimers.add(1);
+        claimAmount = claimAmount.add(claimDistribution.sub(token.getFees(claimDistribution)));
 
         emit UBIClaimed(msg.sender, claimDistribution);
         return true;

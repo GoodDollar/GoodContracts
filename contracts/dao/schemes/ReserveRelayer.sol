@@ -51,6 +51,6 @@ contract ReserveRelayer is ActivePeriod, SchemeGuard {
             avatar,
             0);
 
-        return super.internalEnd();
+        super.internalEnd(avatar);
     }
 }

@@ -66,13 +66,13 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer, stranger]
   });
 
   it("should end UBI scheme with no remaining reserve", async () => {
-    await helpers.assertVMException(noMintUBI.end(), "period has not ended");
+    await helpers.assertVMException(noMintUBI.end(avatar.address), "period has not ended");
     await helpers.increaseTime(periodOffset);
 
     const reserve = await token.balanceOf(noMintUBI.address);
 
     expect(reserve.toString()).to.be.equal("0");
-    assert(await noMintUBI.end());
+    assert(await noMintUBI.end(avatar.address));
   });
 
   it("should perform transactions and increase fee reserve", async () => {
@@ -161,9 +161,9 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer, stranger]
   });
 
   it("should end UBI period", async () => {
-    await helpers.assertVMException(ubi.end(), "period has not ended");
+    await helpers.assertVMException(ubi.end(avatar.address), "period has not ended");
     await helpers.increaseTime(periodOffset);
-    assert(await ubi.end());
+    assert(await ubi.end(avatar.address));
   });
 });
 

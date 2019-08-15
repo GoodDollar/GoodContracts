@@ -1,6 +1,7 @@
 pragma solidity 0.5.4;
 
 import "../dao/schemes/ActivePeriod.sol";
+import "@daostack/arc/contracts/controller/Avatar.sol";
 
 contract ActivePeriodMock is ActivePeriod {
 
@@ -10,7 +11,7 @@ contract ActivePeriodMock is ActivePeriod {
         require(super.start());
     }
 
-    function end() public returns (bool) {
-        require(super.internalEnd());
+    function end(Avatar _avatar) public {
+        super.internalEnd(_avatar);
     }
 }

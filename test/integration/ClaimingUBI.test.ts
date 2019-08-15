@@ -9,8 +9,9 @@ const ControllerInterface = artifacts.require("ControllerInterface");
 const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const UBI = artifacts.require("UBI");
+const FixedUBI = artifacts.require("FixedUBI");
 
-contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer, stranger]) => {
+contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, nonClaimer, stranger]) => {
 
   let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
   let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
@@ -21,6 +22,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer, stranger]
   let ubi: helpers.ThenArg<ReturnType<typeof UBI['new']>>;
   let noMintUBI: helpers.ThenArg<ReturnType<typeof UBI['new']>>;
   let reserveUBI: helpers.ThenArg<ReturnType<typeof UBI['new']>>;
+  let fixedUBI: helpers.ThenArg<ReturnType<typeof FixedUBI['new']>>;
 
   let proposalId: string;
 
@@ -31,6 +33,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer, stranger]
     const periodEnd = periodStart + periodOffset;
     const periodStart2 = periodEnd + periodOffset;
     const periodEnd2 = periodStart2 + periodOffset*2;
+    const periodEnd3 = periodEnd2 + periodOffset;
 
     identity = await Identity.deployed();
     feeFormula = await FeeFormula.deployed();
@@ -40,6 +43,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer, stranger]
     token = await GoodDollar.at(await avatar.nativeToken());
     noMintUBI = await UBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodStart, periodEnd);
     ubi = await UBI.new(avatar.address, identity.address, web3.utils.toWei("1000"), periodStart2, periodEnd2);
+    fixedUBI = await FixedUBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodEnd2, periodEnd3, web3.utils.toWei("1.0101"));
 
     await identity.addClaimer(claimer);
   });
@@ -114,6 +118,25 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer, stranger]
     assert(await ubi.start());
   });
 
+  it("should not start fixed claim scheme without enough funds", async () => {
+      const schemeRegistrar = await SchemeRegistrar.deployed();
+      let transaction = await schemeRegistrar.proposeScheme(avatar.address, fixedUBI.address, 
+        helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
+
+      proposalId = transaction.logs[0].args._proposalId;
+
+      const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+      const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+
+      // Verifies that the ExecuteProposal event has been emitted
+      assert(executeProposalEventExists);
+
+      await identity.addClaimer(claimer2);
+      await identity.addClaimer(claimer3);
+
+      await helpers.assertVMException(fixedUBI.start(), "Reserve not large enough");
+    });
+
   it("should correctly claim UBI", async () => {
     const oldClaimerBalance = await token.balanceOf(claimer);
 
@@ -164,6 +187,10 @@ contract("Integration - Claiming UBI", ([founder, claimer, nonClaimer, stranger]
     await helpers.assertVMException(ubi.end(avatar.address), "period has not ended");
     await helpers.increaseTime(periodOffset);
     assert(await ubi.end(avatar.address));
+  });
+
+  it("should allow starting fixed claim scheme", async () => {
+     assert(await fixedUBI.start());
   });
 });
 

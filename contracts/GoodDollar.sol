@@ -101,14 +101,25 @@ contract GoodDollar is ERC677BridgeToken {
     }
     /**
     * @dev Process transaction for transaction fees and burn fees
+    * @param from TX from
+    * @param to TX to
+    * @param value TX value
+    * @return the TX initial value
     */
     function _processTX(address from, address to, uint256 value) internal returns (uint256) {
+        // If the reserve contract does not exists - return the initial value (no fees calculation)
         if(address(reserve) == address(0))  return value;
+        // calculate TX fee and Burn Fee
         (uint256 txFee, uint256 toBurn) = reserve.processTX(from,to,value);
+        // calculate total fees that need to be payed in addition to the TX value
         uint256 totalFees = txFee.add(toBurn);
+        // verify user has sufficient amount to pay also fees
         require(balanceOf(from)>=value.add(totalFees),"Not enough balance to cover TX fees");
+        // transfer total fees of the TX to the reverse, for handle
         if(totalFees>0) _transfer(from, address(reserve), totalFees);
+        // Tell reserve to burn, out of the total fees, the Burn Fee amount
         if(toBurn>0) _burn(address(reserve), toBurn);
+        // publish event to preserve information, how many fees were collected for this TX (i.e. for logging and future usage)
         emit TransactionFees(txFee,toBurn);
         return value;
     }

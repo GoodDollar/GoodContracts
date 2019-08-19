@@ -13,6 +13,9 @@ contract Identity is WhitelistedRole {
     addWhitelisted(msg.sender);
   }
   
+  /**
+    @return if the user is whitelisted or not
+  */
   function isVerified(
     address _account
   ) public view returns(bool) {
@@ -57,7 +60,9 @@ contract Identity is WhitelistedRole {
       delete didHashToAddress[pHash];
     }
   }
-
+  /**
+    Removes the user from the whitelist, Removes the user DID from records, removes the DID hash to address mapping
+   */
   function renounceWhitelisted() public {
     if(!isWhitelisted(msg.sender)) return;
     super.renounceWhitelisted();

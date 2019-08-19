@@ -28,10 +28,15 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
 
   uint256 public inflationRate = 1;
 
-  //1% tx fee as default
-  uint public transactionFee = 10000 ;
+  // 1% tx fee as default
+  // 1% is represented as 10000, and divided by 1000000 when required to be % representation to enable more granularity in the numbers (as Solidity doesn't support floating point)
+  // transaction fee can be collected for different purpose (See GoodDollar.sol for concurrent usage of the fee)
+  uint public transactionFee = 10000;
+
+  // BurnFee is used to take out some of the token from the GoodDollar initial token balance, and by that reserve it's value
   uint public burnFee = 0;
 
+  // Lists of addresses that are not required to pay fee
   mapping (address => bool) excludedFromPolicy;
 
   constructor(GoodDollar _token, BancorFormula _formula,Identity _identity,address oneTimePaymentLinks, uint32 ratio) public payable {
@@ -47,15 +52,28 @@ contract GoodDollarReserve is IMonetaryPolicy, Ownable, SignerRole {
     burnFee = _burnFee;
   }
 
+  /**
+    @dev calculates the fees of the transaction: TX fee and BurnFee
+    @return A tuple with the calculated fees
+  */
   function calcFees(uint _value) public view returns (uint txFee, uint burn) {
-    txFee = _value.mul(transactionFee).div(1000000);
-    burn = _value.mul(burnFee).div(1000000);
+    txFee = _value.mul(transactionFee).div(1000000); // percent calculation
+    burn = _value.mul(burnFee).div(1000000); // percent calculation
   }
 
+  /***
+    @dev adds an address to the list of addresses that the policy is not applied on
+ */
   function setExcludeFromPolicy(address to, bool exclude) public onlySigner {
     excludedFromPolicy[to] = exclude;
   }
 
+  /**
+    @dev process GoodDollar token tx and enforces:
+    1. User is whitelisted (A GoodDollar citizen) - otherwise an exception is thrown
+    2. Fees Calculation for the transaction
+    @return a tuple with the 2 TX fees: TX fee and Burn Fee
+  */
   function processTX(address _from, address _to, uint256 _value) external returns (uint txFee, uint burn) {
     if(excludedFromPolicy[_from])
       return (0,0);

@@ -10,8 +10,9 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const UBI = artifacts.require("UBI");
 const FixedUBI = artifacts.require("FixedUBI");
+const ReserveRelayer = artifacts.require("ReserveRelayer");
 
-contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, nonClaimer, stranger]) => {
+contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, claimer4, nonClaimer, stranger]) => {
 
   let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
   let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
@@ -20,9 +21,10 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, n
   let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote['new']>>;
   let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
   let ubi: helpers.ThenArg<ReturnType<typeof UBI['new']>>;
-  let noMintUBI: helpers.ThenArg<ReturnType<typeof UBI['new']>>;
   let reserveUBI: helpers.ThenArg<ReturnType<typeof UBI['new']>>;
   let fixedUBI: helpers.ThenArg<ReturnType<typeof FixedUBI['new']>>;
+  let emptyUBI: helpers.ThenArg<ReturnType<typeof UBI['new']>>;
+  let reserveRelayer: helpers.ThenArg<ReturnType<typeof ReserveRelayer['new']>>;
 
   let proposalId: string;
 
@@ -33,7 +35,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, n
     const periodEnd = periodStart + periodOffset;
     const periodStart2 = periodEnd + periodOffset;
     const periodEnd2 = periodStart2 + periodOffset*2;
-    const periodEnd3 = periodEnd2 + periodOffset;
+    const periodEnd3 = periodEnd2 + periodOffset*100000;
 
     identity = await Identity.deployed();
     feeFormula = await FeeFormula.deployed();
@@ -41,17 +43,19 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, n
     controller = await ControllerInterface.at(await avatar.owner());
     absoluteVote = await AbsoluteVote.deployed();
     token = await GoodDollar.at(await avatar.nativeToken());
-    noMintUBI = await UBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodStart, periodEnd);
-    ubi = await UBI.new(avatar.address, identity.address, web3.utils.toWei("1000"), periodStart2, periodEnd2);
+    ubi = await UBI.new(avatar.address, identity.address, web3.utils.toWei("0.3"), periodStart2, periodEnd2);
+    reserveUBI = await UBI.new(avatar.address, identity.address, web3.utils.toWei("300000"), periodStart2, periodEnd2);
+    emptyUBI = await UBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodStart, periodEnd);
     fixedUBI = await FixedUBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodEnd2, periodEnd3, web3.utils.toWei("1.0101"));
+    reserveRelayer = await ReserveRelayer.new(avatar.address, fixedUBI.address, periodEnd2, periodEnd3);
 
     await identity.addClaimer(claimer);
   });
 
-  it("should correctly propose and register no minting UBI scheme", async () => {
+  it("should end UBI scheme with no remaining reserve", async () => {
     // Propose it
     const schemeRegistrar = await SchemeRegistrar.deployed();
-    let transaction = await schemeRegistrar.proposeScheme(avatar.address, noMintUBI.address, 
+    let transaction = await schemeRegistrar.proposeScheme(avatar.address, emptyUBI.address, 
       helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
 
     proposalId = transaction.logs[0].args._proposalId;
@@ -61,22 +65,18 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, n
 
     // Verifies that the ExecuteProposal event has been emitted
     assert(executeProposalEventExists);
-  });
-  
-  it("should start no minting UBI scheme", async () => {
-    await helpers.assertVMException(noMintUBI.start(), "not in period");
-    await helpers.increaseTime(periodOffset*1.1);
-    assert(await noMintUBI.start());
-  });
 
-  it("should end UBI scheme with no remaining reserve", async () => {
-    await helpers.assertVMException(noMintUBI.end(avatar.address), "period has not ended");
+    await helpers.assertVMException(emptyUBI.start(), "not in period");
+    await helpers.increaseTime(periodOffset*1.1);
+    assert(await emptyUBI.start());
+
+    await helpers.assertVMException(emptyUBI.end(avatar.address), "period has not ended");
     await helpers.increaseTime(periodOffset);
 
-    const reserve = await token.balanceOf(noMintUBI.address);
+    const reserve = await token.balanceOf(emptyUBI.address);
 
     expect(reserve.toString()).to.be.equal("0");
-    assert(await noMintUBI.end(avatar.address));
+    assert(await emptyUBI.end(avatar.address));
   });
 
   it("should perform transactions and increase fee reserve", async () => {
@@ -118,30 +118,44 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, n
     assert(await ubi.start());
   });
 
-  it("should not start fixed claim scheme without enough funds", async () => {
-      const schemeRegistrar = await SchemeRegistrar.deployed();
-      let transaction = await schemeRegistrar.proposeScheme(avatar.address, fixedUBI.address, 
-        helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
+  it("should not allow starting scheme without enough funds", async () => {
+    const schemeRegistrar = await SchemeRegistrar.deployed();
+    let transaction = await schemeRegistrar.proposeScheme(avatar.address, reserveUBI.address, 
+      helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
 
-      proposalId = transaction.logs[0].args._proposalId;
+    proposalId = transaction.logs[0].args._proposalId;
 
-      const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
-      const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+    const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+    const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
 
-      // Verifies that the ExecuteProposal event has been emitted
-      assert(executeProposalEventExists);
+    // Verifies that the ExecuteProposal event has been emitted
+    assert(executeProposalEventExists);
 
-      await identity.addClaimer(claimer2);
-      await identity.addClaimer(claimer3);
+    await helpers.assertVMException(reserveUBI.start(), "Not enough funds to start");
+  });
 
-      await helpers.assertVMException(fixedUBI.start(), "Reserve not large enough");
-    });
+  it("should register fixed claim scheme and add claimers", async () => {
+    const schemeRegistrar = await SchemeRegistrar.deployed();
+    let transaction = await schemeRegistrar.proposeScheme(avatar.address, fixedUBI.address, 
+      helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
+
+    proposalId = transaction.logs[0].args._proposalId;
+
+    const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+    const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+
+    // Verifies that the ExecuteProposal event has been emitted
+    assert(executeProposalEventExists);
+
+    await identity.addClaimer(claimer2);
+    await identity.addClaimer(claimer3);
+  });
 
   it("should correctly claim UBI", async () => {
     const oldClaimerBalance = await token.balanceOf(claimer);
 
     assert(await ubi.claim({ from: claimer }));
-    const amountClaimed = await ubi.getClaimAmount();
+    const amountClaimed = await ubi.getClaimAmount(0);
 
     // Check that claimer has received the claimed amount
     const fee = await token.getFees(await token.balanceOf(ubi.address));
@@ -155,12 +169,13 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, n
   });
 
   it("should show amount of claimers", async () => {
-    const claimerAmount = await ubi.getClaimerCount();
+
+    const claimerAmount = await ubi.getClaimerCount(0);
     expect(claimerAmount.toString()).to.be.equal("1");
   });
 
   it("should show amount claimed", async () => {
-    const amountClaimed = await ubi.getClaimAmount();
+    const amountClaimed = await ubi.getClaimAmount(0);
 
     const distribution = (await ubi.claimDistribution()) as any;
     const expectedDistribution = await distribution.sub(await token.getFees(distribution));
@@ -191,6 +206,55 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, n
 
   it("should allow starting fixed claim scheme", async () => {
      assert(await fixedUBI.start());
+     await helpers.increaseTime(periodOffset*5);
+  });
+
+  it("should correctly register ReserveRelayer scheme and transfer new fees to fixed UBI", async () => {
+    await token.transfer(claimer, web3.utils.toWei("10"));
+    await token.transfer(claimer, web3.utils.toWei("10"));
+    await token.transfer(avatar.address, web3.utils.toWei("100"));
+
+    const schemeRegistrar = await SchemeRegistrar.deployed();
+    const transaction = await schemeRegistrar.proposeScheme(avatar.address, reserveRelayer.address,
+      helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
+
+    proposalId = transaction.logs[0].args._proposalId;
+
+    const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+    const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+
+    assert(executeProposalEventExists);
+    assert(await reserveRelayer.start());
+  });
+
+  it("should allow claiming from fixed UBI", async () => {
+    assert(await fixedUBI.claim({ from: claimer3 }));
+  });
+
+  it("should not allow claiming on same day from fixed UBI", async () => {
+    await helpers.assertVMException(fixedUBI.claim({ from: claimer3 }), "Has claimed within a day");
+  });
+
+  it("should not allow to claim for more than seven days", async () => {
+    await helpers.increaseTime(periodOffset*5000);
+    await token.burn(await token.balanceOf(claimer3), { from: claimer3 });
+    const oldBalanceclaimer3 = await token.balanceOf(claimer3);
+    expect(oldBalanceclaimer3.toString()).to.be.equal(web3.utils.toWei("0"));
+    await fixedUBI.claim({ from: claimer3 });
+
+    const newBalanceclaimer3 = await token.balanceOf(claimer3);
+
+    const maxValue = ((web3.utils.toWei("7.0707")) as any) - (await token.getFees(web3.utils.toWei("7.0707")) as any);
+    expect(newBalanceclaimer3.toString()).to.be.equal(maxValue.toString());
+  });
+
+  it("should get daily stats", async () => {
+    const res = await fixedUBI.getDailyStats();
+
+    const maxValue = ((web3.utils.toWei("7.0707")) as any) - (await token.getFees(web3.utils.toWei("7.0707")) as any);
+
+    expect(res[0].toString()).to.be.equal("1");
+    expect(res[1].toString()).to.be.equal(maxValue.toString());    
   });
 });
 

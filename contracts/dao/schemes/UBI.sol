@@ -18,28 +18,34 @@ import "./SchemeGuard.sol";
 contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
     using SafeMath for uint256;
 
-    uint256 public amountToMint;
+    uint256 initialReserve;
 
     uint256 public claimDistribution;
-    mapping (address => bool) hasClaimed;
 
-    uint256 public amountOfClaimers;
-    uint256 public claimAmount;
+    struct Day {
+        mapping (address => bool) hasClaimed;
+        uint256 amountOfClaimers;
+        uint256 claimAmount;
+    }
+
+    mapping (uint => Day) claimDay;
+
+    uint public currentDay;
+    uint public lastCalc;
 
     event UBIClaimed(address indexed claimer, uint256 amount);
-
+    event UBIEnded(uint256 claimers, uint256 claimamount);
     /**
      * @dev Constructor. Checks if avatar is a zero address
      * and if periodEnd variable is after periodStart.
      * @param _avatar the avatar contract
-     * @param _amountToMint the amount to mint once UBI starts
      * @param _periodStart period from when the contract is able to start
      * @param _periodEnd period from when the contract is able to end
      */
     constructor(
         Avatar _avatar,
         Identity _identity,
-        uint256 _amountToMint,
+        uint256 _initialReserve,
         uint _periodStart,
         uint _periodEnd
     )
@@ -48,7 +54,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
         ActivePeriod(_periodStart, _periodEnd)
         SchemeGuard(_avatar)
     {
-        amountToMint = _amountToMint;
+        initialReserve = _initialReserve;
     }
 
     /**
@@ -59,43 +65,55 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
      */
     function distributionFormula(uint256 reserve, address user) internal returns(uint256);
 
-    function getClaimerCount() public view returns (uint256) {
-        return amountOfClaimers;
+    /* @dev function that gets the amount of people who claimed on the given day
+     * @param day the day to get claimer count from, with 0 being the starting day
+     * @returns an integer indicating the amount of people who claimed that day
+     */
+    function getClaimerCount(uint day) public view returns (uint256) {
+        return claimDay[day].amountOfClaimers;
     }
 
-    function getClaimAmount() public view returns (uint256) {
-        return claimAmount;
+    /* @dev function that gets the amount that was claimed on the given day
+     * @param day the day to get claimer count from, with 0 being the starting day
+     * @returns an integer indicating the amount that has been claimed on the given day
+     */
+    function getClaimAmount(uint day) public view returns (uint256) {
+        return claimDay[day].claimAmount;
+    }
+
+    /* @dev function that gets count of claimers and amount claimed for the most recent
+     * day where claiming transpired.
+     * @returns the amount of claimers and the amount claimed. 
+     */
+    function getDailyStats() public view returns (uint256 count, uint256 amount) {
+        return (getClaimerCount(currentDay), getClaimAmount(currentDay));
     }
 
     /* @dev Function that commences distribution period on contract.
      * Can only be called after periodStart and before periodEnd and
-     * can only be done once.
-     * Minting amount given in constructor is minted and the reserve is sent
-     * to this contract to allow claimers to claim. The claim distribution
-     * is then calculated and true is returned to indicate that claiming
-     * can be done
+     * can only be done once. The reserve is sent
+     * to this contract to allow claimers to claim from said reserve.
+     * The claim distribution is then calculated and true is returned
+     * to indicate that claiming can be done.
      */
     function start() public onlyRegistered returns(bool) {
         require(super.start());
 
-        amountOfClaimers = 0;
-        claimAmount = 0;
+        currentDay = 0;
+        lastCalc = now;
 
         // Transfer the fee reserve to this contract
         DAOToken token = avatar.nativeToken();
-        uint256 reserve = token.balanceOf(address(avatar));
 
-        controller.genericCall(
-            address(token),
-            abi.encodeWithSignature("transfer(address,uint256)", address(this), reserve),
-            avatar,
-            0);
+        if(initialReserve > 0) {
+            require(initialReserve <= token.balanceOf(address(avatar)), "Not enough funds to start");
 
-        // Mint the required amount
-        if (amountToMint > 0) {
-            controller.mintTokens(amountToMint, address(this), address(avatar));
+            controller.genericCall(
+                address(token),
+                abi.encodeWithSignature("transfer(address,uint256)", address(this), initialReserve),
+                avatar,
+                0);
         }
-
         return true;
     }
 
@@ -128,15 +146,15 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
         onlyAddedBefore(periodStart)
         returns(bool)
     {
-        require(!hasClaimed[msg.sender], "has already claimed");
+        require(!claimDay[currentDay].hasClaimed[msg.sender], "has already claimed");
 
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
 
-        hasClaimed[msg.sender] = true;
+        claimDay[currentDay].hasClaimed[msg.sender] = true;
         token.transfer(msg.sender, claimDistribution);
 
-        amountOfClaimers = amountOfClaimers.add(1);
-        claimAmount = claimAmount.add(claimDistribution.sub(token.getFees(claimDistribution)));
+        claimDay[currentDay].amountOfClaimers = claimDay[currentDay].amountOfClaimers.add(1);
+        claimDay[currentDay].claimAmount = claimDay[currentDay].claimAmount.add(claimDistribution.sub(token.getFees(claimDistribution)));
 
         emit UBIClaimed(msg.sender, claimDistribution);
         return true;
@@ -152,21 +170,19 @@ contract UBI is AbstractUBI {
      * and if periodEnd variable is after periodStart.
      * @param _avatar the avatar contract
      * @param _identity the identity contract
-     * @param _amountToMint the amount to mint once UBI starts
      * @param _periodStart period from when the contract is able to start
      * @param _periodEnd period from when the contract is able to end
      */
     constructor(
         Avatar _avatar,
         Identity _identity,
-        uint256 _amountToMint,
+        uint256 _initialReserve,
         uint _periodStart,
         uint _periodEnd
     )
         public
-        AbstractUBI(_avatar, _identity, _amountToMint, _periodStart, _periodEnd)
-    {
-    }
+        AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd)
+    {}
 
     /* @dev function that returns an uint256 that
      * represents the amount each claimer can claim.
@@ -178,14 +194,12 @@ contract UBI is AbstractUBI {
         return reserve.div(claimers);
     }
 
+    /* @dev starts scheme and calculates dispersion of UBI
+     * @returns a bool indicating if scheme has started
+     */
     function start() public returns (bool) {
         require(super.start());
 
-        /* #TODO - Currently, distribution is calculated when contract starts
-         * depending on amount of whitelisted users, but users who are whitelisted
-         * after the start are still able to claim, resulting in the possibility of
-         * the reserve running out preemptively.
-         */
         DAOToken token = avatar.nativeToken();
         claimDistribution = distributionFormula(token.balanceOf(address(this)), address(0));
     }    

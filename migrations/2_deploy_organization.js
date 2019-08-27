@@ -6,8 +6,8 @@ const ControllerCreatorGoodDollar = artifacts.require('./ControllerCreatorGoodDo
 
 const Avatar = artifacts.require('./Avatar.sol');
 const AbsoluteVote = artifacts.require('./AbsoluteVote.sol');
-
 const SchemeRegistrar = artifacts.require('./SchemeRegistrar.sol');
+const releaser = require('../scripts/releaser.js');
 
 const tokenName = "GoodDollar";
 const tokenSymbol = "GDD";
@@ -24,7 +24,7 @@ const votePrecedence = 50;
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 const NULL_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
-module.exports = async function(deployer) {
+module.exports = async function(deployer, network) {
 
   deployer.deploy(Identity).then(async (identity) => {
 
@@ -76,5 +76,19 @@ module.exports = async function(deployer) {
       "metaData");
  
     await Promise.all(founders.map(f => identity.addClaimer(f)));
+
+    const releasedContracts = {
+      GoodDollar: await avatar.nativeToken(),
+      Reputation: await avatar.nativeReputation(),
+      Identity: await identity.address,
+      Avatar: await avatar.address,
+      Controller: await avatar.owner(),
+      AbsoluteVote: await absoluteVote.address,
+      SchemeRegistrar: await schemeRegistrar.address,
+      network,
+      networkId: parseInt(deployer.network_id)
+    };
+    console.log("Writing deployment file...\n", { releasedContracts });
+    await releaser(releasedContracts, network);
   });
 };

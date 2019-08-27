@@ -9,7 +9,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const SignUpBonus = artifacts.require("SignUpBonus");
 
-contract("Integration - awarding signer bonus", ([founder, claimer, claimer2, nonClaimer]) => {
+contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, nonClaimer]) => {
 
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;

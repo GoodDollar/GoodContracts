@@ -17,6 +17,7 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
     let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote['new']>>;
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
     let signUpBonus: helpers.ThenArg<ReturnType<typeof SignUpBonus['new']>>;
+    let emptySignUp: helpers.ThenArg<ReturnType<typeof SignUpBonus['new']>>;
 
     let proposalId: string;
 
@@ -26,12 +27,13 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
       controller = await ControllerInterface.at(await avatar.owner());
       absoluteVote = await AbsoluteVote.deployed();
       token = await GoodDollar.at(await avatar.nativeToken());
-      signUpBonus = await SignUpBonus.new(avatar.address, identity.address, 6);
+      signUpBonus = await SignUpBonus.new(avatar.address, identity.address,web3.utils.toWei("100"), 6);
+      emptySignUp = await SignUpBonus.new(avatar.address, identity.address, 0, 5);
 
     });
 
     it("should not allow awarding before starting scheme", async () => {
-      await helpers.assertVMException(signUpBonus.awardUser(claimer, 3), "Scheme is not registered")
+      await helpers.assertVMException(signUpBonus.awardUser(claimer, 3), "is not active");
     })
 
     it("should start SignUpBonus scheme", async () => {
@@ -46,6 +48,10 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
 
        // Verifies that the ExecuteProposal event has been emitted
       assert(executeProposalEventExists);
+
+      await helpers.assertVMException(signUpBonus.start(), "Not enough funds to start");
+      await token.transfer(avatar.address, web3.utils.toWei("500"));
+      assert(await signUpBonus.start());
     });
 
     it("should not allow awarding by non admin", async () => {
@@ -64,9 +70,13 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
 
     it("should not allow awarding more than max bonus", async () => {
       await helpers.assertVMException(signUpBonus.awardUser(claimer, 2), "Cannot award user beyond max");
-    })
+    });
 
     it("should end SignUpBonus scheme", async () => {
+      await signUpBonus.end(avatar.address);
+    });
+
+    it("should unregister SignUpBonus scheme", async () => {
       const schemeRegistrar = await SchemeRegistrar.deployed();
       const transaction = await schemeRegistrar.proposeToRemoveScheme(avatar.address, signUpBonus.address,
           helpers.NULL_HASH);
@@ -78,6 +88,25 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
 
       assert(executeProposalEventExists);
     });
+
+    it("should start empty SignUpBonus scheme", async () => {
+      const schemeRegistrar = await SchemeRegistrar.deployed();
+      const transaction = await schemeRegistrar.proposeScheme(avatar.address, emptySignUp.address,
+        helpers.NULL_HASH, "0x0000010", helpers.NULL_HASH);
+
+      proposalId = transaction.logs[0].args._proposalId;
+
+      const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+      const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+
+       // Verifies that the ExecuteProposal event has been emitted
+      assert(executeProposalEventExists);
+      assert(await emptySignUp.start());
+    });
+
+    it("should end empty SignUpBonus scheme", async() => {
+      await emptySignUp.end(avatar.address);
+    })
 });
 
 export{}

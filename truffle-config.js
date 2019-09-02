@@ -8,10 +8,19 @@ require("ts-node/register");
 require('dotenv').load();
 // }
 const HDWalletProvider = require("truffle-hdwallet-provider");
+const PrivateKeyProvider = require("truffle-hdwallet-provider-privkey");
 
+<<<<<<< HEAD
 const mnemonic = process.env.MNEMONIC
 const infura_api = process.env.INFURA_API
 console.log({ mnemonic, infura_api })
+=======
+const mnemonic = process.env.MNEMONIC;
+const privateKey = process.env.PRIVATE_KEY;
+
+const infura_api = process.env.INFURA_API;
+console.log({ mnemonic, privateKey, infura_api });
+>>>>>>> 8612761... add: production deploy
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
   // to customize your Truffle configuration!
@@ -81,7 +90,11 @@ module.exports = {
     },
     xdai: {
       provider: function() {
+<<<<<<< HEAD
         return new HDWalletProvider(mnemonic, "https://dai.poa.network/",0,10)
+=======
+        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
+>>>>>>> 8612761... add: production deploy
       },
       skipDryRun:true,
       gas: 8000000,

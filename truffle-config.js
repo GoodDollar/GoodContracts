@@ -95,8 +95,27 @@ module.exports = {
     production: {
       provider: function() {
         return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
-      }
+      },
+      network_id: 121,
+      gas: 4500000,
+      skipDryRun: true,
+      gasPrice: 1000000000 //1 gwei
     },
+    fuse2: {
+      provider: function() {
+        return new HDWalletProvider(
+          mnemonic,
+          // "https://rpc.fusenet.io",
+          "http://54.187.63.20:8545/",
+          0,
+          10
+        );
+      },
+      network_id: 122,
+      gas: 4500000,
+      skipDryRun: true,
+      gasPrice: 1000000000 //1 gwei
+    }
   },
   mocha: {
      reporter: 'eth-gas-reporter',

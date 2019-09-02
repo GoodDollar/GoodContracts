@@ -5,7 +5,7 @@ require("@babel/polyfill");
 require("ts-node/register");
 
 // if (process.env.NODE_ENV !== 'production') { // https://codeburst.io/process-env-what-it-is-and-why-when-how-to-use-it-effectively-505d0b2831e7
-require('dotenv').load();
+require("dotenv").load();
 // }
 const HDWalletProvider = require("truffle-hdwallet-provider");
 const PrivateKeyProvider = require("truffle-hdwallet-provider-privkey");
@@ -21,7 +21,8 @@ module.exports = {
   // to customize your Truffle configuration!
 
   networks: {
-    'develop': { // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
+    develop: {
+      // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
       network_id: "4447" // Match any network id,
@@ -32,33 +33,43 @@ module.exports = {
       port: 8545,
       network_id: "4447", // my "ganache " runs with 6000 network_id - configurable
       gas: 8000000,
-      from: '0x9689dc4d84b36efa1f02260a90063ae91ef0cbd8'
+      from: "0x9689dc4d84b36efa1f02260a90063ae91ef0cbd8"
     },
     test: {
       host: "127.0.0.1",
       port: 8545,
-      network_id: "*", 
-      gas: 8000000,
+      network_id: "*",
+      gas: 8000000
     },
     coverage: {
-      host: '127.0.0.1',
-      network_id: '*', // eslint-disable-line camelcase
+      host: "127.0.0.1",
+      network_id: "*", // eslint-disable-line camelcase
       port: 8555,
       gas: 0xfffffffffff,
       gasPrice: 0x01
     },
     mainnet: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://mainnet.infura.io/v3/" + infura_api,0,10)
+        return new HDWalletProvider(
+          mnemonic,
+          "https://mainnet.infura.io/v3/" + infura_api,
+          0,
+          10
+        );
       },
       network_id: 1,
-      skipDryRun:true,
+      skipDryRun: true,
       gas: 8000000,
       gasPrice: 10000000000
     },
     ropsten: {
-      provider: function () {
-        return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/v3/" + infura_api,0,10)
+      provider: function() {
+        return new HDWalletProvider(
+          mnemonic,
+          "https://ropsten.infura.io/v3/" + infura_api,
+          0,
+          10
+        );
       },
       gas: 8000000,
       gasPrice: 40000000000,
@@ -67,61 +78,51 @@ module.exports = {
     },
     kovan: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://kovan.infura.io/v3/" + infura_api,0,10)
-      },
-      network_id: 42,
-      gas:4700000,
-      skipDryRun:true,
-      gasPrice:2000000000 //2 gwei
-    },
-    fuse: {
-      provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/",0,10)
-      },
-      network_id: 121,
-      gas:4500000,
-      skipDryRun:true,
-      gasPrice:1000000000 //1 gwei
-    },
-    staging: {
-      provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
-      },
-      network_id: 121,
-      gas: 4500000,
-      skipDryRun: true,
-      gasPrice: 1000000000 //1 gwei
-    },
-    production: {
-      provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
-      },
-      network_id: 121,
-      gas: 4500000,
-      skipDryRun: true,
-      gasPrice: 1000000000 //1 gwei
-    },
-    fuse2: {
-      provider: function() {
         return new HDWalletProvider(
           mnemonic,
-          // "https://rpc.fusenet.io",
-          "http://54.187.63.20:8545/",
+          "https://kovan.infura.io/v3/" + infura_api,
           0,
           10
         );
       },
-      network_id: 122,
-      gas: 4500000,
+      network_id: 42,
+      gas: 4700000,
       skipDryRun: true,
-      gasPrice: 1000000000 //1 gwei
+      gasPrice: 2000000000 //2 gwei
+    },
+    fuse: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
+      },
+      network_id: 122,
+      gas: 8500000,
+      skipDryRun: true,
+      gasPrice: 2000000000 //1 gwei
+    },
+    staging: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
+      },
+      network_id: 122,
+      gas: 8500000,
+      skipDryRun: true,
+      gasPrice: 2000000000 //1 gwei
+    },
+    production: {
+      provider: function() {
+        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
+      },
+      network_id: 122,
+      gas: 8500000,
+      skipDryRun: true,
+      gasPrice: 2000000000 //1 gwei
     }
   },
   mocha: {
-     reporter: 'eth-gas-reporter',
-     reporterOptions : {
-        currency: 'USD'
-     },
+    reporter: "eth-gas-reporter",
+    reporterOptions: {
+      currency: "USD"
+    }
   },
   compilers: {
     solc: {
@@ -134,5 +135,5 @@ module.exports = {
       }
     }
   },
-  test_file_extension_regexp: /.*\.ts$/,
+  test_file_extension_regexp: /.*\.ts$/
 };

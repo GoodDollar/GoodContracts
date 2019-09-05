@@ -43,7 +43,6 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 
 	it("should perform transactions and increase fee reserve", async () => {
 	  const oldReserve = await token.balanceOf(avatar.address);
-	  expect(oldReserve.toString()).to.be.equal(web3.utils.toWei("0"));
 
 	  await token.transfer(claimer, web3.utils.toWei("10"));
 	  await token.transfer(claimer, web3.utils.toWei("10"));

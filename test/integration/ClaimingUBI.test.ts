@@ -81,7 +81,6 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
 
   it("should perform transactions and increase fee reserve", async () => {
     const oldReserve = await token.balanceOf(avatar.address);
-    expect(oldReserve.toString()).to.be.equal(web3.utils.toWei("0"));
 
     await token.transfer(claimer, web3.utils.toWei("10"));
     await token.transfer(claimer, web3.utils.toWei("10"));

@@ -18,6 +18,7 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
     let signUpBonus: helpers.ThenArg<ReturnType<typeof SignUpBonus['new']>>;
     let emptySignUp: helpers.ThenArg<ReturnType<typeof SignUpBonus['new']>>;
+    let demandingSignUp: helpers.ThenArg<ReturnType<typeof SignUpBonus['new']>>;
 
     let proposalId: string;
 
@@ -29,6 +30,7 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
       token = await GoodDollar.at(await avatar.nativeToken());
       signUpBonus = await SignUpBonus.new(avatar.address, identity.address,web3.utils.toWei("100"), 6);
       emptySignUp = await SignUpBonus.new(avatar.address, identity.address, 0, 5);
+      demandingSignUp = await SignUpBonus.new(avatar.address, identity.address, web3.utils.toWei("1000000"), 5);
 
     });
 
@@ -49,7 +51,7 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
        // Verifies that the ExecuteProposal event has been emitted
       assert(executeProposalEventExists);
 
-      await helpers.assertVMException(signUpBonus.start(), "Not enough funds to start");
+
       await token.transfer(avatar.address, web3.utils.toWei("500"));
       assert(await signUpBonus.start());
     });
@@ -102,6 +104,21 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
        // Verifies that the ExecuteProposal event has been emitted
       assert(executeProposalEventExists);
       assert(await emptySignUp.start());
+    });
+
+    it("should mpt start empty SignUpBonus scheme", async () => {
+      const schemeRegistrar = await SchemeRegistrar.deployed();
+      const transaction = await schemeRegistrar.proposeScheme(avatar.address, demandingSignUp.address,
+        helpers.NULL_HASH, "0x0000010", helpers.NULL_HASH);
+
+      proposalId = transaction.logs[0].args._proposalId;
+
+      const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+      const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+
+       // Verifies that the ExecuteProposal event has been emitted
+      assert(executeProposalEventExists);
+      await helpers.assertVMException(demandingSignUp.start(), "Not enough funds to start");
     });
 
     it("should end empty SignUpBonus scheme", async() => {

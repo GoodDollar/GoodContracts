@@ -11,6 +11,7 @@ import "./ERC677Token.sol";
 contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
 
     address _feeRecipient;
+    uint8 public constant decimals = 2;
 
     /**
      * @param name The name of the token

@@ -242,6 +242,13 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         await identity.removeClaimer(claimer);
     });
 
+    it("should renounce claimer", async () => {
+        await identity.addClaimer(claimer);
+        assert(await identity.isClaimer(claimer));
+        await identity.renounceClaimer({ from: claimer });
+        assert(!(await identity.isClaimer(claimer)));
+    })
+
     it("should not allow setting non-registered identity contract", async () => {
         await helpers.assertVMException(identityGuard.setIdentity(dangerIdentity.address, avatar.address), "Scheme is not registered");
         dangerIdentity = await Identity.new();

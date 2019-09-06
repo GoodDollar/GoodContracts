@@ -55,12 +55,11 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         onlyRegistered
         onlyIdentityAdmin
     {
-        claimers.remove(account);
+        _removeClaimer(account);
+    }
 
-        decreaseClaimerCount(1);
-        delete dateAdded[account];
-
-        emit ClaimerRemoved(account);
+    function renounceClaimer() public {
+        _removeClaimer(msg.sender);
     }
 
     /* @dev Reverts if given address has not been added to claimers
@@ -114,6 +113,15 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     {
         blacklist.remove(account);
         emit BlacklistRemoved(account);
+    }
+
+    function _removeClaimer(address account) internal {
+        claimers.remove(account);
+
+        decreaseClaimerCount(1);
+        delete dateAdded[account];
+
+        emit ClaimerRemoved(account);
     }
 
     /* @dev Reverts if given address has been added to the blacklist

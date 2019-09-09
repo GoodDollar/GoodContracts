@@ -247,7 +247,34 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         assert(await identity.isClaimer(claimer));
         await identity.renounceClaimer({ from: claimer });
         assert(!(await identity.isClaimer(claimer)));
-    })
+    });
+
+    it("should add with did", async () => {
+        await identity.addClaimerWithDID(claimer, 'testString');
+
+        const str = await identity.addrToDID(claimer);
+
+        expect(str).to.be.equal('testString');
+    });
+
+    it("should not allow transferring account to blacklisted", async () => {
+        await helpers.assertVMException(identity.transferAccount(blacklisted2, {from: claimer}), "Cannot transfer to blacklisted");
+    });
+
+    it("should transfer account to new address", async () => {
+        await identity.transferAccount(outsider, { from: claimer });
+
+        assert(await identity.isClaimer(outsider));
+        const transferstring = await identity.addrToDID(outsider);
+        expect(transferstring).to.be.equal('testString');
+    });
+
+    it("should check last time account was added", async () => {
+        const timeStamp = await identity.wasAddedDID('testString');
+        const currentTime = (await web3.eth.getBlock('latest')).timestamp;
+
+        expect(timeStamp.toString()).to.be.equal(currentTime.toString())
+    });
 
     it("should not allow setting non-registered identity contract", async () => {
         await helpers.assertVMException(identityGuard.setIdentity(dangerIdentity.address, avatar.address), "Scheme is not registered");

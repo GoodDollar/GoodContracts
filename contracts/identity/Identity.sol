@@ -21,6 +21,10 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     uint256 private claimerCount;
     mapping(address => uint) dateAdded;
 
+    mapping (address => string) public addrToDID;
+    mapping (bytes32 => address) public didHashToAddress;
+    mapping (string => uint) didLastAdded;
+
     event BlacklistAdded(address indexed account);
     event BlacklistRemoved(address indexed account);
  
@@ -38,12 +42,20 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         onlyRegistered
         onlyIdentityAdmin
     {
-        claimers.add(account);
-        
-        increaseClaimerCount(1);
-        dateAdded[account] = now;
-        
-        emit ClaimerAdded(account);
+        _addClaimer(account);
+    }
+
+    function addClaimerWithDID(address account, string memory did) 
+        public
+        onlyRegistered
+        onlyIdentityAdmin 
+    {
+        _addClaimer(account);
+
+        bytes32 pHash = keccak256(bytes(did));
+        didLastAdded[did] = now;
+        addrToDID[account] = did;
+        didHashToAddress[pHash] = account;
     }
 
     /* @dev Removes an address as a claimer.
@@ -89,6 +101,25 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         return dateAdded[account];
     }
 
+    function wasAddedDID(string memory did) public view returns (uint) {
+        return didLastAdded[did];
+    }
+
+    function transferAccount(address account) public {
+        require(!isBlacklisted(account), "Cannot transfer to blacklisted");
+
+        _removeClaimer(msg.sender);
+        _addClaimer(account);
+
+        string memory did = addrToDID[msg.sender];
+        bytes32 pHash = keccak256(bytes(did));
+        didLastAdded[did] = now;
+        addrToDID[account] = did;
+        didHashToAddress[pHash] = account;
+
+        delete addrToDID[msg.sender];
+    }
+
     /* @dev Adds an address to blacklist.
      * Can only be called by Identity Administrators.
      * @param account address to add as blacklisted
@@ -113,6 +144,15 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     {
         blacklist.remove(account);
         emit BlacklistRemoved(account);
+    }
+
+    function _addClaimer(address account) internal {
+        claimers.add(account);
+        
+        increaseClaimerCount(1);
+        dateAdded[account] = now;
+        
+        emit ClaimerAdded(account);
     }
 
     function _removeClaimer(address account) internal {

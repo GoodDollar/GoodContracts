@@ -269,12 +269,11 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         expect(transferstring).to.be.equal('testString');
     });
 
-    it("should check last time account was added", async () => {
-        const timeStamp = await identity.wasAddedDID('testString');
-        const currentTime = (await web3.eth.getBlock('latest')).timestamp;
+    it("should not keep did after transferring account", async () => {
+        const emptyString = await identity.addrToDID(claimer);
 
-        expect(timeStamp.toString()).to.be.equal(currentTime.toString())
-    });
+        expect(emptyString).to.be.equal('');
+    })
 
     it("should not allow setting non-registered identity contract", async () => {
         await helpers.assertVMException(identityGuard.setIdentity(dangerIdentity.address, avatar.address), "Scheme is not registered");

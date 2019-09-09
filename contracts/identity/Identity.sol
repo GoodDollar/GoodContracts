@@ -23,7 +23,6 @@ contract Identity is IdentityAdminRole, SchemeGuard {
 
     mapping (address => string) public addrToDID;
     mapping (bytes32 => address) public didHashToAddress;
-    mapping (string => uint) didLastAdded;
 
     event BlacklistAdded(address indexed account);
     event BlacklistRemoved(address indexed account);
@@ -53,7 +52,6 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         _addClaimer(account);
 
         bytes32 pHash = keccak256(bytes(did));
-        didLastAdded[did] = now;
         addrToDID[account] = did;
         didHashToAddress[pHash] = account;
     }
@@ -101,23 +99,17 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         return dateAdded[account];
     }
 
-    function wasAddedDID(string memory did) public view returns (uint) {
-        return didLastAdded[did];
-    }
-
     function transferAccount(address account) public {
         require(!isBlacklisted(account), "Cannot transfer to blacklisted");
+
+        string memory did = addrToDID[msg.sender];
+        bytes32 pHash = keccak256(bytes(did));
 
         _removeClaimer(msg.sender);
         _addClaimer(account);
 
-        string memory did = addrToDID[msg.sender];
-        bytes32 pHash = keccak256(bytes(did));
-        didLastAdded[did] = now;
         addrToDID[account] = did;
         didHashToAddress[pHash] = account;
-
-        delete addrToDID[msg.sender];
     }
 
     /* @dev Adds an address to blacklist.
@@ -159,7 +151,13 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         claimers.remove(account);
 
         decreaseClaimerCount(1);
+
+        string memory did = addrToDID[account];
+        bytes32 pHash = keccak256(bytes(did));
+
         delete dateAdded[account];
+        delete addrToDID[account];
+        delete didHashToAddress[pHash];
 
         emit ClaimerRemoved(account);
     }

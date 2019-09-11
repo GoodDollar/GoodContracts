@@ -69,6 +69,7 @@ contract OneTimePayments is SchemeGuard {
      * @pram code The string to encode into hash of payment
      */
     function withdraw(string memory code) public onlyRegistered {
+        require(gasleft() < gasLimit, "Cannot exceed gas limit");
         bytes32 hash = keccak256(abi.encodePacked(code));
         uint256 value = payments[hash].paymentAmount;
 
@@ -95,8 +96,6 @@ contract OneTimePayments is SchemeGuard {
      * @param value the amopunt in the payment
      */
     function _withdraw(bytes32 hash, uint256 value) internal {
-        require(gasleft() < gasLimit, "Cannot exceed gas limit");
-
         require(payments[hash].hasPayment, "Hash not in use");
 
         payments[hash].hasPayment = false;

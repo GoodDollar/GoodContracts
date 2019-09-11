@@ -102,6 +102,21 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
     await helpers.assertVMException(oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000}), "Hash not in use");
   })
 
+  it("should only allow creator of deposit to cancel", async () => {
+
+    await token.transfer(claimer, web3.utils.toWei("300"));
+
+    await token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer });
+
+    assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
+
+    await helpers.assertVMException(oneTimePayments.cancel(DEPOSIT_CODE, { gas: 590000, from: founder }), "Can only be called by creator");
+
+    await oneTimePayments.cancel(DEPOSIT_CODE, { gas: 590000, from: claimer});
+
+    //await helpers.assertVMException(oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000}), "Hash not in use");
+  })
+
   it("should propose to unregister One-Time payment scheme", async () => {
     const schemeRegistrar = await SchemeRegistrar.deployed();
     const transaction = await schemeRegistrar.proposeToRemoveScheme(avatar.address, oneTimePayments.address,

@@ -63,24 +63,45 @@ contract OneTimePayments is SchemeGuard {
         return true;
     }
 
-    /* @dev [WIP] Withdrawal function. 
+    /* @dev Withdrawal function. 
      * allows users with the original string of a hash to
      * withdraw a payment. Currently vulnerable to frontrunning
      * @pram code The string to encode into hash of payment
      */
     function withdraw(string memory code) public onlyRegistered {
-        require(gasleft() < gasLimit, "Cannot exceed gas limit");
-
         bytes32 hash = keccak256(abi.encodePacked(code));
+        uint256 value = payments[hash].paymentAmount;
+
+        _withdraw(hash, value);
+        emit PaymentWithdrawn(msg.sender, hash, value);
+    }
+
+    /* @dev Cancel function
+     * allows only creator of payment to withdraw
+     * @param code The string to encode into hash of payment 
+     */
+    function cancel(string memory code) public {
+        bytes32 hash = keccak256(abi.encodePacked(code));
+        uint256 value = payments[hash].paymentAmount;
+
+        require(payments[hash].paymentSender == msg.sender, "Can only be called by creator");
+
+        _withdraw(hash, value);
+        emit PaymentCancelled(msg.sender, hash, value);
+    }
+
+    /* @dev Internal withdraw function
+     * @param hash the hash of the payment
+     * @param value the amopunt in the payment
+     */
+    function _withdraw(bytes32 hash, uint256 value) internal {
+        require(gasleft() < gasLimit, "Cannot exceed gas limit");
 
         require(payments[hash].hasPayment, "Hash not in use");
 
-        uint256 value = payments[hash].paymentAmount;
         payments[hash].hasPayment = false;
 
         avatar.nativeToken().transfer(msg.sender, value);
-
-        emit PaymentWithdrawn(msg.sender, hash, value);
     }
 
     /* @dev function to check if a payment hash is in use

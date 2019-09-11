@@ -239,6 +239,10 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     await token.burn(await token.balanceOf(claimer3), { from: claimer3 });
     const oldBalanceclaimer3 = await token.balanceOf(claimer3);
     expect(oldBalanceclaimer3.toString()).to.be.equal(web3.utils.toWei("0"));
+
+    const claimDays = await fixedUBI.checkEntitlement({ from: claimer3 });
+    expect(claimDays.toString()).to.be.equal("7");
+
     await fixedUBI.claim({ from: claimer3 });
 
     const newBalanceclaimer3 = await token.balanceOf(claimer3);

@@ -53,6 +53,20 @@ contract FixedUBI is AbstractUBI {
         currentDay = currentDay.add(dayDiff / 1 days);
     }
 
+    /* @dev Checks amount of days user is eligble to claim for
+     * @returns an uint indicating the amount of days the user can claim for
+     */
+    function checkEntitlement() public requireActive view returns (uint) 
+    {
+        uint claimDays = lastClaimed[msg.sender] < periodStart ?
+            now.sub(periodStart) / 1 days :
+            now.sub(lastClaimed[msg.sender]) / 1 days; 
+        
+        claimDays = claimDays > 7 ? 7 : claimDays;
+
+        return claimDays;
+    }
+
     /* @dev Claiming function. Calculates how many days one can claim for and logs
      * new claim and amount for the day.
      * @returns A bool indicating if UBI was claimed

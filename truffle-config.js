@@ -86,7 +86,7 @@ module.exports = {
         );
       },
       network_id: 42,
-      gas: 4700000,
+      gas: 8000000,
       skipDryRun: true,
       gasPrice: 2000000000 //2 gwei
     },

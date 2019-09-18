@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-
+set -o allexport
+source .env
+set +o allexport
 # Exit script as soon as a command fails.
 set -o errexit
 

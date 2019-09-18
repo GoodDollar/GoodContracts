@@ -21,8 +21,7 @@ const cap = web3.utils.toWei("100000000","ether");
 const initFee = web3.utils.toWei("0.0001");
 const initRep = web3.utils.toWei("10");
 const initRepInWei = [initRep];
-const initToken = web3.utils.toWei("10000");
-const initTokenInWei = [initToken];
+let initToken = web3.utils.toWei("10000");
 
 // initial preliminary constants
 const votePrecedence = 50;
@@ -30,6 +29,15 @@ const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 const NULL_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 module.exports = async function(deployer, network) {
+
+  if (network != 'mainnet' &&
+      network != 'test' &&
+      network != 'ganache' &&
+      network != 'develop') 
+  {
+    initToken = web3.utils.toWei("0");
+  }
+  const initTokenInWei = [initToken];
 
   deployer.deploy(Identity).then(async (identity) => {
 
@@ -52,7 +60,14 @@ module.exports = async function(deployer, network) {
     await feeFormula.setAvatar(avatar.address);
     await identity.transferOwnership(await avatar.owner());
     await feeFormula.transferOwnership(await avatar.owner());
-    await token.transfer(avatar.address, web3.utils.toWei("5000"));
+    
+    if (network == 'mainnet' ||
+        network == 'test' ||
+        network == 'ganache' ||
+        network == 'develop')
+    {
+      await token.transfer(avatar.address, web3.utils.toWei("5000"));
+    }
 
     // Schemes
     // Deploy Voting Matching
@@ -69,25 +84,10 @@ module.exports = async function(deployer, network) {
     let paramsArray;
     let permissionArray;
 
-    if (network == 'mainnet') {
       // Subscribe schemes
-      schemesArray = [schemeRegistrar.address, identity.address, feeFormula.address];
-      paramsArray = [schemeRegisterParams, NULL_HASH, NULL_HASH];
-      permissionArray = ['0x0000001F', '0x0000001F', '0x0000001F'];
-    }
-
-    else {
-      await token.transfer(avatar.address, web3.utils.toWei("3030"));
-      const ubi = await deployer.deploy(UBI, avatar.address, identity.address, "1500", 1567426161, 1607558400, web3.utils.toWei("1.01"));
-      const signupBonus = await deployer.deploy(SignupBonus, avatar.address, identity.address, "1500", 30);
-
-      await ubi.transferOwnership(await avatar.owner())
-      await signupBonus.transferOwnership(await avatar.owner())
-
-      schemesArray = [schemeRegistrar.address, identity.address, feeFormula.address, ubi.address, signupBonus.address];
-      paramsArray = [schemeRegisterParams, NULL_HASH, NULL_HASH, NULL_HASH, NULL_HASH];
-      permissionArray = ['0x0000001F', '0x0000001F', '0x0000001F', '0x0000001F', '0x0000001F'];
-    }
+    schemesArray = [schemeRegistrar.address, identity.address, feeFormula.address];
+    paramsArray = [schemeRegisterParams, NULL_HASH, NULL_HASH];
+    permissionArray = ['0x0000001F', '0x0000001F', '0x0000001F'];
 
     await daoCreator.setSchemes(
       avatar.address,
@@ -98,7 +98,7 @@ module.exports = async function(deployer, network) {
  
     await Promise.all(founders.map(f => identity.addClaimer(f)));
 
-    const releasedContracts = {
+    let releasedContracts = {
       GoodDollar: await avatar.nativeToken(),
       Reputation: await avatar.nativeReputation(),
       Identity: await identity.address,
@@ -106,17 +106,12 @@ module.exports = async function(deployer, network) {
       Controller: await avatar.owner(),
       AbsoluteVote: await absoluteVote.address,
       SchemeRegistrar: await schemeRegistrar.address,
+      UBI: NULL_ADDRESS,
+      SignupBonus: NULL_ADDRESS,
+      OneTimePayments: NULL_ADDRESS,
       network,
       networkId: parseInt(deployer.network_id)
     };
-
-    if (network != 'mainnet') {
-      const ubi = await UBI.deployed();
-      const signupBonus = await SignupBonus.deployed();
-
-      await ubi.start();
-      await signupBonus.start();
-    }
 
     console.log("Writing deployment file...\n", { releasedContracts });
     await releaser(releasedContracts, network);

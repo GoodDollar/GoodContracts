@@ -11,19 +11,70 @@ Everyone is welcome: Developers, designers, and entrepreneurs with a passion for
 Refer to [GoodDocs](https://docs.gooddollar.org/contributing) for further information.
 
 # Try GoodDollar
-## Usage
-To test the library and setup the development environment, issue the following commands in a shell:
-```shell
-  npm install
-  npm run test # compile and test
-```
-## Deploying GoodDollar
 
-Open the truffle console, exporting your passphrase and [infura](https://infura.io) API key
+## Installation
+Clone the repository:
+
 ```shell
-   MNEMONIC=<YOUR_PASSPHRASE> INFURA_API=<YOUR_API_KEY> $(npm bin)/truffle console --network <NETWORK>
+git clone https://github.com/GoodDollar/GoodContracts.git
 ```
-Once the console is open, compile the contracts and run the migration script
+
+Install packages:
+
+```shell
+npm install
+```
+## Usage
+To test the library and setup the environment, issue the following command:
+```shell
+  npm run test
+```
+## Setup GoodDollar
+
+1. Go to the GoodContracts repository:
+
+```shell
+cd GoodContracts
+```
+2. Create a ```.env``` file:
+
+```shell
+cp .env.example .env
+```
+
+3. Fill in the required information. see [Configuration](./docs/Configuration.md) for descriptions.
+
+## Deploy GoodDollar
+
+The GoodContracts DAO can be deployed in two ways:
+
+``` full ``` - All contracts are deployed to the network given in ``` .env ```. This is done by running ``` npm run deploy:full ```
+
+``` light ``` - The DAO contracts and GoodDollar is deployed. OneTimePayments, UBI and SignUpBonus are not. This is done by running ``` npm run deploy ```
+
+## Deploy UBI
+
+New UBI schemes are deployed by calling 
+```shell
+npm run deploy:ubi
+```
+This will deploy a UBI contract with the parameters given in [the migration script](./migrations/3_deploy_new_ubi.js), propose it as a new scheme vote for it and start the contract if enough votes are given. 
+
+## Deploy SignUpBonus
+
+New SignUpBonus schemes are deployed by calling 
+```shell
+npm run deploy:signup
+```
+This will deploy a SignUpBonus contract with the parameters given in [the migration script](./migrations/4_deploy_new_signup.js), propose it as a new scheme vote for it and start the contract if enough votes are given.
+
+## Deploy OneTimePayment
+
+New OneTimePayments schemes are deployed by calling 
+```shell
+npm run deploy:otp
+```
+This will deploy a OneTimePayment contract with the parameters given in [the migration script](./migrations/5_deploy_new_otp.js), propose it as a new scheme vote for it and start the contract if enough votes are given.
 
 ### Prerequisites
 You need to have [`node`](https://nodejs.org/) installed.

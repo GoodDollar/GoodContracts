@@ -123,7 +123,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
      * Sends the remaining funds on contract back to the avatar contract
      * address
      */
-    function end(Avatar /*_avatar*/) public {
+    function end(Avatar /*_avatar*/) public requirePeriodEnd {
 
         DAOToken token = avatar.nativeToken();
 
@@ -154,7 +154,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
         token.transfer(msg.sender, claimDistribution);
 
         claimDay[currentDay].amountOfClaimers = claimDay[currentDay].amountOfClaimers.add(1);
-        claimDay[currentDay].claimAmount = claimDay[currentDay].claimAmount.add(claimDistribution.sub(token.getFees(claimDistribution)));
+        claimDay[currentDay].claimAmount = claimDay[currentDay].claimAmount.add(claimDistribution);
 
         emit UBIClaimed(msg.sender, claimDistribution);
         return true;

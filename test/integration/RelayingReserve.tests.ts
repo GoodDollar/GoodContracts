@@ -78,13 +78,12 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 		const oldBalance = await token.balanceOf(receiver);
 		expect(oldBalance.toString()).to.be.equal("0");
 
-		const fees = (await token.getFees(await token.balanceOf(avatar.address))) as any;
 		const reserve = (await token.balanceOf(avatar.address)) as any;
 		
 		assert(await reserveRelayer.start());
 
 		const newBalance = await token.balanceOf(receiver);
 
-		expect(newBalance.toString()).to.be.equal((reserve.sub(fees)).toString());
+		expect(newBalance.toString()).to.be.equal(reserve.toString());
 	});
 })

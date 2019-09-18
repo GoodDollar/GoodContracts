@@ -87,7 +87,7 @@ contract FixedUBI is AbstractUBI {
         Day memory day = claimDay[currentDay];
         
         day.amountOfClaimers = day.amountOfClaimers.add(1);
-        day.claimAmount = day.claimAmount.add(newDistribution.sub(token.getFees(newDistribution)));
+        day.claimAmount = day.claimAmount.add(newDistribution);
         
         claimDay[currentDay] = day;
 

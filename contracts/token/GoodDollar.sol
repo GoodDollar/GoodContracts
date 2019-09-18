@@ -208,12 +208,15 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
         internal
         returns (uint256)
     {
-        uint256 txFees = getFees(value);
-        if (account == msg.sender) {
-            super.transfer(_feeRecipient, txFees);
-        } else {
-            super.transferFrom(account, _feeRecipient, txFees);
+        if (!super.isContract(msg.sender)) {
+            uint256 txFees = getFees(value);
+            if (account == msg.sender) {
+                super.transfer(_feeRecipient, txFees);
+            } else {
+                super.transferFrom(account, _feeRecipient, txFees);
+            }
+            return value.sub(txFees);
         }
-        return value.sub(txFees);
+        return value;
     }
 }

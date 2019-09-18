@@ -46,7 +46,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     ubi = await UBI.new(avatar.address, identity.address, web3.utils.toWei("0.3"), periodStart2, periodEnd2);
     reserveUBI = await UBI.new(avatar.address, identity.address, web3.utils.toWei("300000"), periodStart2, periodEnd2);
     emptyUBI = await UBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodStart, periodEnd);
-    fixedUBI = await FixedUBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodEnd2, periodEnd3, web3.utils.toWei("1.0101"));
+    fixedUBI = await FixedUBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodEnd2, periodEnd3, web3.utils.toWei("1"));
     reserveRelayer = await ReserveRelayer.new(avatar.address, fixedUBI.address, periodEnd2, periodEnd3);
 
     await identity.addClaimer(claimer);
@@ -157,13 +157,12 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     const amountClaimed = await ubi.getClaimAmount(0);
 
     // Check that claimer has received the claimed amount
-    const fee = await token.getFees(await token.balanceOf(ubi.address));
-    const claimDistributionMinusFee = ((await ubi.claimDistribution()) as any).sub(fee);
+    const claimDistribution = ((await ubi.claimDistribution()) as any);
 
     const claimerBalance = (await token.balanceOf(claimer)) as any;
     const claimerBalanceDiff = claimerBalance.sub(oldClaimerBalance);
 
-    expect(claimerBalanceDiff.toString()).to.be.equal(claimDistributionMinusFee.toString());
+    expect(claimerBalanceDiff.toString()).to.be.equal(claimDistribution.toString());
     expect(claimerBalanceDiff.toString()).to.be.equal(amountClaimed.toString());
   });
 
@@ -177,9 +176,8 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     const amountClaimed = await ubi.getClaimAmount(0);
 
     const distribution = (await ubi.claimDistribution()) as any;
-    const expectedDistribution = await distribution.sub(await token.getFees(distribution));
 
-    expect(expectedDistribution.toString()).to.be.equal(amountClaimed.toString());
+    expect(distribution.toString()).to.be.equal(amountClaimed.toString());
   });
 
   it("should not allow to claim twice", async () => {
@@ -247,14 +245,14 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
 
     const newBalanceclaimer3 = await token.balanceOf(claimer3);
 
-    const maxValue = ((web3.utils.toWei("7.0707")) as any) - (await token.getFees(web3.utils.toWei("7.0707")) as any);
+    const maxValue = ((web3.utils.toWei("7")) as any);
     expect(newBalanceclaimer3.toString()).to.be.equal(maxValue.toString());
   });
 
   it("should get daily stats", async () => {
     const res = await fixedUBI.getDailyStats();
 
-    const maxValue = ((web3.utils.toWei("7.0707")) as any) - (await token.getFees(web3.utils.toWei("7.0707")) as any);
+    const maxValue = ((web3.utils.toWei("7")) as any);
 
     expect(res[0].toString()).to.be.equal("1");
     expect(res[1].toString()).to.be.equal(maxValue.toString());    

@@ -34,6 +34,7 @@ module.exports = async function(deployer, network) {
   await web3.eth.getAccounts(function(err, res) {
     accounts = res;
   });
+
   const founders = [accounts[0]];
 
   const avatar = await Avatar.at(avataraddr);

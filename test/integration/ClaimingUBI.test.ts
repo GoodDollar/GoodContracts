@@ -43,10 +43,10 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     controller = await ControllerInterface.at(await avatar.owner());
     absoluteVote = await AbsoluteVote.deployed();
     token = await GoodDollar.at(await avatar.nativeToken());
-    ubi = await UBI.new(avatar.address, identity.address, web3.utils.toWei("0.3"), periodStart2, periodEnd2);
+    ubi = await UBI.new(avatar.address, identity.address, helpers.toGD("3"), periodStart2, periodEnd2);
     reserveUBI = await UBI.new(avatar.address, identity.address, web3.utils.toWei("300000"), periodStart2, periodEnd2);
-    emptyUBI = await UBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodStart, periodEnd);
-    fixedUBI = await FixedUBI.new(avatar.address, identity.address, web3.utils.toWei("0"), periodEnd2, periodEnd3, web3.utils.toWei("1"));
+    emptyUBI = await UBI.new(avatar.address, identity.address, helpers.toGD("0"), periodStart, periodEnd);
+    fixedUBI = await FixedUBI.new(avatar.address, identity.address, helpers.toGD("0"), periodEnd2, periodEnd3, helpers.toGD("1"));
     reserveRelayer = await ReserveRelayer.new(avatar.address, fixedUBI.address, periodEnd2, periodEnd3);
 
     await identity.addClaimer(claimer);
@@ -82,15 +82,13 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
   it("should perform transactions and increase fee reserve", async () => {
     const oldReserve = await token.balanceOf(avatar.address);
 
-    await token.transfer(claimer, web3.utils.toWei("10"));
-    await token.transfer(claimer, web3.utils.toWei("10"));
-    await token.transfer(claimer, web3.utils.toWei("10"));
+    await token.transfer(claimer, helpers.toGD("300"));
 
     // Check that reserve has received fees
     const reserve = (await token.balanceOf(avatar.address)) as any;
 
     const reserveDiff = reserve.sub(oldReserve);
-    const totalFees = ((await token.getFees(web3.utils.toWei("10"))) as any).mul(new (web3 as any).utils.BN("3"));
+    const totalFees = ((await token.getFees(helpers.toGD("300"))) as any);
     expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
   });
 
@@ -207,9 +205,9 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
   });
 
   it("should correctly register ReserveRelayer scheme and transfer new fees to fixed UBI", async () => {
-    await token.transfer(claimer, web3.utils.toWei("10"));
-    await token.transfer(claimer, web3.utils.toWei("10"));
-    await token.transfer(avatar.address, web3.utils.toWei("100"));
+    await token.transfer(claimer, helpers.toGD("10"));
+    await token.transfer(claimer, helpers.toGD("10"));
+    await token.transfer(avatar.address, helpers.toGD("100"));
 
     const schemeRegistrar = await SchemeRegistrar.deployed();
     const transaction = await schemeRegistrar.proposeScheme(avatar.address, reserveRelayer.address,
@@ -236,23 +234,23 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     await helpers.increaseTime(periodOffset*5000);
     await token.burn(await token.balanceOf(claimer3), { from: claimer3 });
     const oldBalanceclaimer3 = await token.balanceOf(claimer3);
-    expect(oldBalanceclaimer3.toString()).to.be.equal(web3.utils.toWei("0"));
+    expect(oldBalanceclaimer3.toString()).to.be.equal(helpers.toGD("0"));
 
-    const claimDays = await fixedUBI.checkEntitlement({ from: claimer3 });
-    expect(claimDays.toString()).to.be.equal("7");
+    const claimAmount = await fixedUBI.checkEntitlement({ from: claimer3 });
+    expect(claimAmount.toString()).to.be.equal(helpers.toGD("7"));
 
     await fixedUBI.claim({ from: claimer3 });
 
     const newBalanceclaimer3 = await token.balanceOf(claimer3);
 
-    const maxValue = ((web3.utils.toWei("7")) as any);
+    const maxValue = ((helpers.toGD("7")) as any);
     expect(newBalanceclaimer3.toString()).to.be.equal(maxValue.toString());
   });
 
   it("should get daily stats", async () => {
     const res = await fixedUBI.getDailyStats();
 
-    const maxValue = ((web3.utils.toWei("7")) as any);
+    const maxValue = ((helpers.toGD("7")) as any);
 
     expect(res[0].toString()).to.be.equal("1");
     expect(res[1].toString()).to.be.equal(maxValue.toString());    

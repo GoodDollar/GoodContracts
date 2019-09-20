@@ -63,9 +63,9 @@ contract FixedUBI is AbstractUBI {
             now.sub(lastClaimed[msg.sender]) / 1 days; 
         
         claimDays = claimDays > 7 ? 7 : claimDays;
+        uint256 claimAmount = claimDistribution;
 
-        uint256 amount = claimDistribution;
-        return amount.mul(claimDays);
+        return claimAmount.mul(claimDays);
     }
 
     /* @dev Claiming function. Calculates how many days one can claim for and logs

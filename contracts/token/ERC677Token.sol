@@ -46,7 +46,7 @@ contract ERC677Token is ERC677, DAOToken {
 
     function isContract(address _addr)
         view
-        private
+        internal
         returns (bool)
     {
         uint length;

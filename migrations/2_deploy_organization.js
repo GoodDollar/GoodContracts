@@ -28,7 +28,7 @@ module.exports = async function(deployer, network) {
   const networkSettings = settings[network] || settings["default"];
   const cap = toGD(networkSettings.cap);
 
-  const initRep = web3.utils.toWei(networkSettings.reputation);
+  const initRep = networkSettings.reputation;
   const initRepInWei = [initRep];
   let initToken = toGD(networkSettings.foundersTokens);
 

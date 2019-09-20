@@ -37,9 +37,9 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
   });
 
   it("should not allow One-Time payments before registering", async () => {
-    await token.transfer(claimer, web3.utils.toWei("10"));
+    await token.transfer(claimer, helpers.toGD("10"));
 
-    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer }),
+    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer }),
       "Scheme is not registered");
   });
 
@@ -64,20 +64,20 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
   });
 
   it("should only allow token to deposit", async () => {
-    helpers.assertVMException(oneTimePayments.onTokenTransfer(claimer, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer }), "Only callable by this");
+    helpers.assertVMException(oneTimePayments.onTokenTransfer(claimer, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer }), "Only callable by this");
   });
 
   it("should deposit successfully", async () => {
-    await token.transfer(claimer, web3.utils.toWei("300"));
+    await token.transfer(claimer, helpers.toGD("300"));
 
-    await token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer });
+    await token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer });
 
     assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
   });
 
   it("should not allow to deposit to same hash", async () => {
 
-    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer }), "Hash already in use");
+    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer }), "Hash already in use");
   });
 
   it("should have payment", async () => {
@@ -104,9 +104,9 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
 
   it("should only allow creator of deposit to cancel", async () => {
 
-    await token.transfer(claimer, web3.utils.toWei("300"));
+    await token.transfer(claimer, helpers.toGD("300"));
 
-    await token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer });
+    await token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer });
 
     assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
 
@@ -133,9 +133,9 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
   });
 
   it("should not allow One-Time payments after registering", async () => {
-    await token.transfer(claimer, web3.utils.toWei("10"));
+    await token.transfer(claimer, helpers.toGD("10"));
 
-    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, web3.utils.toWei("5"), DEPOSIT_CODE_HASH, { from: claimer }),
+    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer }),
       "Scheme is not registered");
   });
 });

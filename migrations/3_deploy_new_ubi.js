@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 const { toGD } = require("./helpers");
+=======
+const toGD = stringAmount => (parseInt(stringAmount) * 100).toString();
+>>>>>>> fix: ubi deployment params
 const settings = require("./deploy-settings.json");
 const Identity = artifacts.require("./Identity");
 const Controller = artifacts.require("./Controller.sol");

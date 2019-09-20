@@ -1,26 +1,27 @@
-const Identity = artifacts.require('./Identity');
-const Controller = artifacts.require('./Controller.sol');
+const toGD = stringAmount => (parseInt(stringAmount) * 100).toString();
+const settings = require("./deploy-settings.json");
+const Identity = artifacts.require("./Identity");
+const Controller = artifacts.require("./Controller.sol");
 const GoodDollar = artifacts.require("./GoodDollar.sol");
 
-const Avatar = artifacts.require('./Avatar.sol');
-const AbsoluteVote = artifacts.require('./AbsoluteVote.sol');
-const SchemeRegistrar = artifacts.require('./SchemeRegistrar.sol');
+const Avatar = artifacts.require("./Avatar.sol");
+const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
+const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 
 const UBI = artifacts.require("./FixedUBI.sol");
-const SignupBonus = artifacts.require("./SignupBonus.sol");
 
-const releaser = require('../scripts/releaser.js');
+const releaser = require("../scripts/releaser.js");
 const fse = require("fs-extra");
 
-const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
-const NULL_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000';
+const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
+const NULL_HASH =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
-
+  const networkSettings = settings[network] || settings["default"];
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = await JSON.parse(file);
   const networkAddresses = previousDeployment[network];
-
 
   const avataraddr = await networkAddresses.Avatar;
   const voteaddr = await networkAddresses.AbsoluteVote;
@@ -29,7 +30,9 @@ module.exports = async function(deployer, network) {
   const signupaddr = await networkAddresses.SignupBonus;
   const otpaddr = await networkAddresses.OneTimePayments;
 
-  await web3.eth.getAccounts(function(err,res) { accounts = res; });
+  await web3.eth.getAccounts(function(err, res) {
+    accounts = res;
+  });
   const founders = [accounts[0]];
 
   const avatar = await Avatar.at(avataraddr);
@@ -39,12 +42,35 @@ module.exports = async function(deployer, network) {
   const absoluteVote = await AbsoluteVote.at(voteaddr);
   const schemeRegistrar = await SchemeRegistrar.at(schemeaddr);
 
-  const ubi = await deployer.deploy(UBI, avatar.address, identity.address, "0", 1567426161, 1607558400, web3.utils.toWei("1"));
+  const now = new Date();
+  const startUBI = (now.getTime() / 1000).toFixed(0);
+  now.setFullYear(now.getFullYear() + 1);
+  const endUBI = (now.getTime() / 1000).toFixed(0);
+  console.log({
+    total: toGD(networkSettings.totalUBI),
+    startUBI,
+    endUBI,
+    daily: toGD(networkSettings.dailyUBI)
+  });
+  const ubi = await deployer.deploy(
+    UBI,
+    avatar.address,
+    identity.address,
+    toGD(networkSettings.totalUBI),
+    startUBI,
+    endUBI,
+    toGD(networkSettings.dailyUBI)
+  );
 
-  await ubi.transferOwnership(await avatar.owner())
+  await ubi.transferOwnership(await avatar.owner());
 
-  let transaction = await schemeRegistrar.proposeScheme(avatar.address, ubi.address, 
-    NULL_HASH, "0x00000010", NULL_HASH);
+  let transaction = await schemeRegistrar.proposeScheme(
+    avatar.address,
+    ubi.address,
+    NULL_HASH,
+    "0x00000010",
+    NULL_HASH
+  );
 
   let proposalId = transaction.logs[0].args._proposalId;
 

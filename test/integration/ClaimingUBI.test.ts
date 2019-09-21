@@ -244,10 +244,17 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     const newBalanceclaimer3 = await token.balanceOf(claimer3);
 
     const maxValue = ((helpers.toGD("7")) as any);
+    expect(newBalanceclaimer3.toString()).to.be.equal(maxValue.toString());
+  });
+
   it("should get daily stats", async () => {
+    const res = await fixedUBI.getDailyStats();
 
     const maxValue = ((helpers.toGD("7")) as any);
 
     expect(res[0].toString()).to.be.equal("1");
     expect(res[1].toString()).to.be.equal(maxValue.toString());    
   });
+});
+
+export {}

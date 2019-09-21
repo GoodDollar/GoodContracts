@@ -8,7 +8,7 @@ const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 
 const UBI = artifacts.require("./FixedUBI.sol");
-const SignupBonus = artifacts.require("./SignupBonus.sol");
+const SignupBonus = artifacts.require("./SignUpBonus.sol");
 const OneTimePayments = artifacts.require("./OneTimePayments.sol");
 
 const releaser = require("../scripts/releaser.js");

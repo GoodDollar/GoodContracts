@@ -28,9 +28,9 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
       controller = await ControllerInterface.at(await avatar.owner());
       absoluteVote = await AbsoluteVote.deployed();
       token = await GoodDollar.at(await avatar.nativeToken());
-      signUpBonus = await SignUpBonus.new(avatar.address, identity.address,web3.utils.toWei("100"), 6);
+      signUpBonus = await SignUpBonus.new(avatar.address, identity.address,helpers.toGD("100"), 6);
       emptySignUp = await SignUpBonus.new(avatar.address, identity.address, 0, 5);
-      demandingSignUp = await SignUpBonus.new(avatar.address, identity.address, web3.utils.toWei("1000000"), 5);
+      demandingSignUp = await SignUpBonus.new(avatar.address, identity.address, web3.utils.toWei("100000"), 5);
 
     });
 
@@ -52,7 +52,7 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
       assert(executeProposalEventExists);
 
 
-      await token.transfer(avatar.address, web3.utils.toWei("500"));
+      await token.transfer(avatar.address, helpers.toGD("500"));
       assert(await signUpBonus.start());
     });
 
@@ -106,7 +106,7 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
       assert(await emptySignUp.start());
     });
 
-    it("should mpt start empty SignUpBonus scheme", async () => {
+    it("should not start empty SignUpBonus scheme", async () => {
       const schemeRegistrar = await SchemeRegistrar.deployed();
       const transaction = await schemeRegistrar.proposeScheme(avatar.address, demandingSignUp.address,
         helpers.NULL_HASH, "0x0000010", helpers.NULL_HASH);

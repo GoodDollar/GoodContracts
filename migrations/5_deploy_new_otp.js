@@ -1,4 +1,3 @@
-const { toGD } = require("./helpers");
 const Identity = artifacts.require("./Identity");
 const Controller = artifacts.require("./Controller.sol");
 const GoodDollar = artifacts.require("./GoodDollar.sol");

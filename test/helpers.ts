@@ -29,6 +29,8 @@ export const increaseTime = async function(duration) {
   });
 };
 
+export const toGD = stringAmount => (parseInt(stringAmount) * 100).toString()
+
 export type ThenArg<T> = T extends Promise <infer U> ? U :
   T extends (...args: any[]) => Promise<infer U> ? U :
   T;

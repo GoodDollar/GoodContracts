@@ -1,4 +1,4 @@
-const toGD = stringAmount => (parseInt(stringAmount) * 100).toString();
+const { toGD } = require("./helpers");
 const settings = require("./deploy-settings.json");
 const Identity = artifacts.require("./Identity");
 const FeeFormula = artifacts.require("./FeeFormula");

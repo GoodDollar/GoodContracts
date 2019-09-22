@@ -1,7 +1,6 @@
 set -o allexport
 source .env
 set +o allexport
-echo $MNEMONIC
 #exit on any command failure
 set -e
 CHANGES=`git status --porcelain --untracked-files=no -s`

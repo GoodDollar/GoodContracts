@@ -31,7 +31,7 @@ then
     fi        
     
 fi
-read -p "Are you sure you want to continue to publish a new version? <y/N> " prompt
+read -p "Are you sure you want to continue to publish a new version to npm? <y/N> " prompt
 if [[ $prompt =~ [yY](es)? ]]
 then
     git add build/contracts/*

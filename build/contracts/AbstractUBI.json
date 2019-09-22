@@ -408,9 +408,9 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "pragma solidity 0.5.4;\n\nimport \"@daostack/arc/contracts/controller/Avatar.sol\";\nimport \"@daostack/arc/contracts/controller/ControllerInterface.sol\";\n\nimport \"openzeppelin-solidity/contracts/math/SafeMath.sol\";\n\nimport \"../../identity/Identity.sol\";\nimport \"../../identity/IdentityGuard.sol\";\n\nimport \"../../token/GoodDollar.sol\";\n\nimport \"./ActivePeriod.sol\";\nimport \"./SchemeGuard.sol\";\n\n/* @title Base contract template for UBI scheme \n */\ncontract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {\n    using SafeMath for uint256;\n\n    uint256 initialReserve;\n\n    uint256 public claimDistribution;\n\n    struct Day {\n        mapping (address => bool) hasClaimed;\n        uint256 amountOfClaimers;\n        uint256 claimAmount;\n    }\n\n    mapping (uint => Day) claimDay;\n\n    uint public currentDay;\n    uint public lastCalc;\n\n    event UBIClaimed(address indexed claimer, uint256 amount);\n    event UBIEnded(uint256 claimers, uint256 claimamount);\n    /**\n     * @dev Constructor. Checks if avatar is a zero address\n     * and if periodEnd variable is after periodStart.\n     * @param _avatar the avatar contract\n     * @param _periodStart period from when the contract is able to start\n     * @param _periodEnd period from when the contract is able to end\n     */\n    constructor(\n        Avatar _avatar,\n        Identity _identity,\n        uint256 _initialReserve,\n        uint _periodStart,\n        uint _periodEnd\n    )\n        public\n        IdentityGuard(_identity)\n        ActivePeriod(_periodStart, _periodEnd)\n        SchemeGuard(_avatar)\n    {\n        initialReserve = _initialReserve;\n    }\n\n    /**\n     * @dev function that returns an uint256 that\n     * represents the amount each claimer can claim.\n     * @param reserve the account balance to calculate from\n     * @return The distribution for each claimer\n     */\n    function distributionFormula(uint256 reserve, address user) internal returns(uint256);\n\n    /* @dev function that gets the amount of people who claimed on the given day\n     * @param day the day to get claimer count from, with 0 being the starting day\n     * @returns an integer indicating the amount of people who claimed that day\n     */\n    function getClaimerCount(uint day) public view returns (uint256) {\n        return claimDay[day].amountOfClaimers;\n    }\n\n    /* @dev function that gets the amount that was claimed on the given day\n     * @param day the day to get claimer count from, with 0 being the starting day\n     * @returns an integer indicating the amount that has been claimed on the given day\n     */\n    function getClaimAmount(uint day) public view returns (uint256) {\n        return claimDay[day].claimAmount;\n    }\n\n    /* @dev function that gets count of claimers and amount claimed for the most recent\n     * day where claiming transpired.\n     * @returns the amount of claimers and the amount claimed. \n     */\n    function getDailyStats() public view returns (uint256 count, uint256 amount) {\n        return (getClaimerCount(currentDay), getClaimAmount(currentDay));\n    }\n\n    /* @dev Function that commences distribution period on contract.\n     * Can only be called after periodStart and before periodEnd and\n     * can only be done once. The reserve is sent\n     * to this contract to allow claimers to claim from said reserve.\n     * The claim distribution is then calculated and true is returned\n     * to indicate that claiming can be done.\n     */\n    function start() public onlyRegistered returns(bool) {\n        require(super.start());\n\n        currentDay = 0;\n        lastCalc = now;\n\n        // Transfer the fee reserve to this contract\n        DAOToken token = avatar.nativeToken();\n\n        if(initialReserve > 0) {\n            require(initialReserve <= token.balanceOf(address(avatar)), \"Not enough funds to start\");\n\n            controller.genericCall(\n                address(token),\n                abi.encodeWithSignature(\"transfer(address,uint256)\", address(this), initialReserve),\n                avatar,\n                0);\n        }\n        return true;\n    }\n\n    /**\n     * @dev Function that ends the claiming period. Can only be done if\n     * Contract has been started and periodEnd is passed.\n     * Sends the remaining funds on contract back to the avatar contract\n     * address\n     */\n    function end(Avatar /*_avatar*/) public requirePeriodEnd {\n\n        DAOToken token = avatar.nativeToken();\n\n        uint256 remainingReserve = token.balanceOf(address(this));\n\n        if (remainingReserve > 0) {\n            token.transfer(address(avatar), remainingReserve);\n        }\n\n        super.end(avatar);\n    }\n\n    /* @dev Function that claims UBI to message sender.\n     * Each claimer can only claim once per UBI contract\n     */\n    function claim() \n        public \n        requireActive\n        onlyClaimer\n        onlyAddedBefore(periodStart)\n        returns(bool)\n    {\n        require(!claimDay[currentDay].hasClaimed[msg.sender], \"has already claimed\");\n\n        GoodDollar token = GoodDollar(address(avatar.nativeToken()));\n\n        claimDay[currentDay].hasClaimed[msg.sender] = true;\n        token.transfer(msg.sender, claimDistribution);\n\n        claimDay[currentDay].amountOfClaimers = claimDay[currentDay].amountOfClaimers.add(1);\n        claimDay[currentDay].claimAmount = claimDay[currentDay].claimAmount.add(claimDistribution);\n\n        emit UBIClaimed(msg.sender, claimDistribution);\n        return true;\n    }\n}\n\n/* @title UBI scheme contract responsible for calculating distribution\n * and performing the distribution itself\n */\ncontract UBI is AbstractUBI {\n\n    /* @dev Constructor. Checks if avatar is a zero address\n     * and if periodEnd variable is after periodStart.\n     * @param _avatar the avatar contract\n     * @param _identity the identity contract\n     * @param _periodStart period from when the contract is able to start\n     * @param _periodEnd period from when the contract is able to end\n     */\n    constructor(\n        Avatar _avatar,\n        Identity _identity,\n        uint256 _initialReserve,\n        uint _periodStart,\n        uint _periodEnd\n    )\n        public\n        AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd)\n    {}\n\n    /* @dev function that returns an uint256 that\n     * represents the amount each claimer can claim.\n     * @param reserve the account balance to calculate from\n     * @return The reserve divided by the amount of registered claimers\n     */\n    function distributionFormula(uint256 reserve, address /*user*/) internal returns(uint256) {\n        uint claimers = identity.getClaimerCount();\n        return reserve.div(claimers);\n    }\n\n    /* @dev starts scheme and calculates dispersion of UBI\n     * @returns a bool indicating if scheme has started\n     */\n    function start() public returns (bool) {\n        require(super.start());\n\n        DAOToken token = avatar.nativeToken();\n        claimDistribution = distributionFormula(token.balanceOf(address(this)), address(0));\n    }    \n}\n",
-  "sourcePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/dao/schemes/UBI.sol",
+  "sourcePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/UBI.sol",
   "ast": {
-    "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/dao/schemes/UBI.sol",
+    "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/UBI.sol",
     "exportedSymbols": {
       "AbstractUBI": [
         2627
@@ -466,7 +466,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/identity/Identity.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/identity/Identity.sol",
         "file": "../../identity/Identity.sol",
         "id": 2306,
         "nodeType": "ImportDirective",
@@ -477,7 +477,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/identity/IdentityGuard.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/identity/IdentityGuard.sol",
         "file": "../../identity/IdentityGuard.sol",
         "id": 2307,
         "nodeType": "ImportDirective",
@@ -488,7 +488,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/token/GoodDollar.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/token/GoodDollar.sol",
         "file": "../../token/GoodDollar.sol",
         "id": 2308,
         "nodeType": "ImportDirective",
@@ -499,7 +499,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/dao/schemes/ActivePeriod.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/ActivePeriod.sol",
         "file": "./ActivePeriod.sol",
         "id": 2309,
         "nodeType": "ImportDirective",
@@ -510,7 +510,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/dao/schemes/SchemeGuard.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/SchemeGuard.sol",
         "file": "./SchemeGuard.sol",
         "id": 2310,
         "nodeType": "ImportDirective",
@@ -1985,7 +1985,7 @@
                             "name": "super",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 13175,
+                            "referencedDeclaration": 13126,
                             "src": "3502:5:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_super$_AbstractUBI_$2627",
@@ -2032,10 +2032,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        13071,
-                        13072
+                        13022,
+                        13023
                       ],
-                      "referencedDeclaration": 13071,
+                      "referencedDeclaration": 13022,
                       "src": "3494:7:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$returns$__$",
@@ -2140,7 +2140,7 @@
                       "name": "now",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 13070,
+                      "referencedDeclaration": 13021,
                       "src": "3562:3:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -2474,10 +2474,10 @@
                             "name": "require",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [
-                              13071,
-                              13072
+                              13022,
+                              13023
                             ],
-                            "referencedDeclaration": 13072,
+                            "referencedDeclaration": 13023,
                             "src": "3714:7:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
@@ -2587,7 +2587,7 @@
                                       "name": "this",
                                       "nodeType": "Identifier",
                                       "overloadedDeclarations": [],
-                                      "referencedDeclaration": 13174,
+                                      "referencedDeclaration": 13125,
                                       "src": "3950:4:16",
                                       "typeDescriptions": {
                                         "typeIdentifier": "t_contract$_AbstractUBI_$2627",
@@ -2664,7 +2664,7 @@
                                   "name": "abi",
                                   "nodeType": "Identifier",
                                   "overloadedDeclarations": [],
-                                  "referencedDeclaration": 13055,
+                                  "referencedDeclaration": 13006,
                                   "src": "3889:3:16",
                                   "typeDescriptions": {
                                     "typeIdentifier": "t_magic_abi",
@@ -3031,7 +3031,7 @@
                             "name": "this",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 13174,
+                            "referencedDeclaration": 13125,
                             "src": "4461:4:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_contract$_AbstractUBI_$2627",
@@ -3344,7 +3344,7 @@
                         "name": "super",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 13175,
+                        "referencedDeclaration": 13126,
                         "src": "4588:5:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_super$_AbstractUBI_$2627",
@@ -3547,7 +3547,7 @@
                               "name": "msg",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 13068,
+                              "referencedDeclaration": 13019,
                               "src": "4929:3:16",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_magic_message",
@@ -3618,10 +3618,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        13071,
-                        13072
+                        13022,
+                        13023
                       ],
-                      "referencedDeclaration": 13072,
+                      "referencedDeclaration": 13023,
                       "src": "4888:7:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
@@ -3879,7 +3879,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "5078:3:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -3953,7 +3953,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "5121:3:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -4429,7 +4429,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "5373:3:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -5244,7 +5244,7 @@
                             "name": "super",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 13177,
+                            "referencedDeclaration": 13128,
                             "src": "6823:5:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_super$_UBI_$2704",
@@ -5291,10 +5291,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        13071,
-                        13072
+                        13022,
+                        13023
                       ],
-                      "referencedDeclaration": 13071,
+                      "referencedDeclaration": 13022,
                       "src": "6815:7:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$returns$__$",
@@ -5441,7 +5441,7 @@
                                   "name": "this",
                                   "nodeType": "Identifier",
                                   "overloadedDeclarations": [],
-                                  "referencedDeclaration": 13176,
+                                  "referencedDeclaration": 13127,
                                   "src": "6959:4:16",
                                   "typeDescriptions": {
                                     "typeIdentifier": "t_contract$_UBI_$2704",
@@ -5699,7 +5699,7 @@
     "src": "0:6992:16"
   },
   "legacyAST": {
-    "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/dao/schemes/UBI.sol",
+    "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/UBI.sol",
     "exportedSymbols": {
       "AbstractUBI": [
         2627
@@ -5755,7 +5755,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/identity/Identity.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/identity/Identity.sol",
         "file": "../../identity/Identity.sol",
         "id": 2306,
         "nodeType": "ImportDirective",
@@ -5766,7 +5766,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/identity/IdentityGuard.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/identity/IdentityGuard.sol",
         "file": "../../identity/IdentityGuard.sol",
         "id": 2307,
         "nodeType": "ImportDirective",
@@ -5777,7 +5777,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/token/GoodDollar.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/token/GoodDollar.sol",
         "file": "../../token/GoodDollar.sol",
         "id": 2308,
         "nodeType": "ImportDirective",
@@ -5788,7 +5788,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/dao/schemes/ActivePeriod.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/ActivePeriod.sol",
         "file": "./ActivePeriod.sol",
         "id": 2309,
         "nodeType": "ImportDirective",
@@ -5799,7 +5799,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/dao/schemes/SchemeGuard.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/SchemeGuard.sol",
         "file": "./SchemeGuard.sol",
         "id": 2310,
         "nodeType": "ImportDirective",
@@ -7274,7 +7274,7 @@
                             "name": "super",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 13175,
+                            "referencedDeclaration": 13126,
                             "src": "3502:5:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_super$_AbstractUBI_$2627",
@@ -7321,10 +7321,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        13071,
-                        13072
+                        13022,
+                        13023
                       ],
-                      "referencedDeclaration": 13071,
+                      "referencedDeclaration": 13022,
                       "src": "3494:7:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$returns$__$",
@@ -7429,7 +7429,7 @@
                       "name": "now",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 13070,
+                      "referencedDeclaration": 13021,
                       "src": "3562:3:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -7763,10 +7763,10 @@
                             "name": "require",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [
-                              13071,
-                              13072
+                              13022,
+                              13023
                             ],
-                            "referencedDeclaration": 13072,
+                            "referencedDeclaration": 13023,
                             "src": "3714:7:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
@@ -7876,7 +7876,7 @@
                                       "name": "this",
                                       "nodeType": "Identifier",
                                       "overloadedDeclarations": [],
-                                      "referencedDeclaration": 13174,
+                                      "referencedDeclaration": 13125,
                                       "src": "3950:4:16",
                                       "typeDescriptions": {
                                         "typeIdentifier": "t_contract$_AbstractUBI_$2627",
@@ -7953,7 +7953,7 @@
                                   "name": "abi",
                                   "nodeType": "Identifier",
                                   "overloadedDeclarations": [],
-                                  "referencedDeclaration": 13055,
+                                  "referencedDeclaration": 13006,
                                   "src": "3889:3:16",
                                   "typeDescriptions": {
                                     "typeIdentifier": "t_magic_abi",
@@ -8320,7 +8320,7 @@
                             "name": "this",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 13174,
+                            "referencedDeclaration": 13125,
                             "src": "4461:4:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_contract$_AbstractUBI_$2627",
@@ -8633,7 +8633,7 @@
                         "name": "super",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 13175,
+                        "referencedDeclaration": 13126,
                         "src": "4588:5:16",
                         "typeDescriptions": {
                           "typeIdentifier": "t_super$_AbstractUBI_$2627",
@@ -8836,7 +8836,7 @@
                               "name": "msg",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 13068,
+                              "referencedDeclaration": 13019,
                               "src": "4929:3:16",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_magic_message",
@@ -8907,10 +8907,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        13071,
-                        13072
+                        13022,
+                        13023
                       ],
-                      "referencedDeclaration": 13072,
+                      "referencedDeclaration": 13023,
                       "src": "4888:7:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
@@ -9168,7 +9168,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "5078:3:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -9242,7 +9242,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "5121:3:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -9718,7 +9718,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "5373:3:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -10533,7 +10533,7 @@
                             "name": "super",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 13177,
+                            "referencedDeclaration": 13128,
                             "src": "6823:5:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_super$_UBI_$2704",
@@ -10580,10 +10580,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        13071,
-                        13072
+                        13022,
+                        13023
                       ],
-                      "referencedDeclaration": 13071,
+                      "referencedDeclaration": 13022,
                       "src": "6815:7:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$returns$__$",
@@ -10730,7 +10730,7 @@
                                   "name": "this",
                                   "nodeType": "Identifier",
                                   "overloadedDeclarations": [],
-                                  "referencedDeclaration": 13176,
+                                  "referencedDeclaration": 13127,
                                   "src": "6959:4:16",
                                   "typeDescriptions": {
                                     "typeIdentifier": "t_contract$_UBI_$2704",
@@ -10992,8 +10992,8 @@
     "version": "0.5.4+commit.9549d8ff.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.0.11",
-  "updatedAt": "2019-09-20T12:20:21.570Z",
+  "schemaVersion": "3.0.9",
+  "updatedAt": "2019-09-22T12:47:44.182Z",
   "devdoc": {
     "methods": {
       "constructor": {
@@ -11014,7 +11014,7 @@
         "return": "the address of the owner."
       },
       "renounceOwnership()": {
-        "details": "Allows the current owner to relinquish control of the contract."
+        "details": "Allows the current owner to relinquish control of the contract. It will not be possible to call the functions with the `onlyOwner` modifier anymore."
       },
       "transferOwnership(address)": {
         "details": "Allows the current owner to transfer control of the contract to a newOwner.",
@@ -11027,7 +11027,7 @@
   "userdoc": {
     "methods": {
       "renounceOwnership()": {
-        "notice": "Renouncing to ownership will leave the contract without an owner. It will not be possible to call the functions with the `onlyOwner` modifier anymore."
+        "notice": "Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
       }
     }
   }

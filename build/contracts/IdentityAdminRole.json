@@ -180,9 +180,9 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "pragma solidity 0.5.4;\r\n\r\nimport \"openzeppelin-solidity/contracts/access/Roles.sol\";\r\nimport \"openzeppelin-solidity/contracts/ownership/Ownable.sol\";\r\n\r\nimport \"../dao/AvatarGuard.sol\";\r\n\r\n/** @title Contract managing the identity admin role */\r\ncontract IdentityAdminRole is AvatarGuard {\r\n    using Roles for Roles.Role;\r\n\r\n    event IdentityAdminAdded(address indexed account);\r\n    event IdentityAdminRemoved(address indexed account);\r\n\r\n    Roles.Role private IdentityAdmins;\r\n\r\n    constructor() internal {\r\n        _addIdentityAdmin(msg.sender);\r\n    }\r\n\r\n    modifier onlyIdentityAdmin() {\r\n        require(isIdentityAdmin(msg.sender), \"not IdentityAdmin\");\r\n        _;\r\n    }\r\n\r\n    /**\r\n     * @dev Checks if account is identity admin\r\n     * @param account Account to check\r\n     * @return Boolean indicating if account is identity admin\r\n     */\r\n    function isIdentityAdmin(address account) public view returns (bool) {\r\n        return IdentityAdmins.has(account);\r\n    }\r\n\r\n    /**\r\n     * @dev Adds a identity admin account. Is only callable by owner.\r\n     * @param account Address to be added\r\n     */\r\n    function addIdentityAdmin(address account, Avatar _avatar) \r\n        public\r\n        onlyOwnerOrAvatar(_avatar)\r\n        returns(bool)\r\n    {\r\n        _addIdentityAdmin(account);\r\n        return true;\r\n    }\r\n\r\n    /**\r\n     * @dev Removes a identity admin account. Is only callable by owner.\r\n     * @param account Address to be removed\r\n     */\r\n    function removeIdentityAdmin(address account, Avatar _avatar) \r\n        public\r\n        onlyOwnerOrAvatar(_avatar)\r\n        returns (bool)\r\n    {\r\n        _removeIdentityAdmin(account);\r\n        return true;\r\n    }\r\n\r\n    /** @dev Allows a privileged holder to renounce their role */\r\n    function renounceIdentityAdmin() public {\r\n        _removeIdentityAdmin(msg.sender);\r\n    }\r\n\r\n    /** @dev Internal implementation of addIdentityAdmin */\r\n    function _addIdentityAdmin(address account) internal {\r\n        IdentityAdmins.add(account);\r\n        emit IdentityAdminAdded(account);\r\n    }\r\n\r\n    /** @dev Internal implementation of removeIdentityAdmin */\r\n    function _removeIdentityAdmin(address account) internal {\r\n        IdentityAdmins.remove(account);\r\n        emit IdentityAdminRemoved(account);\r\n    }\r\n}",
-  "sourcePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/identity/IdentityAdminRole.sol",
+  "sourcePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/identity/IdentityAdminRole.sol",
   "ast": {
-    "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/identity/IdentityAdminRole.sol",
+    "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/identity/IdentityAdminRole.sol",
     "exportedSymbols": {
       "IdentityAdminRole": [
         3209
@@ -224,7 +224,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/dao/AvatarGuard.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/AvatarGuard.sol",
         "file": "../dao/AvatarGuard.sol",
         "id": 3080,
         "nodeType": "ImportDirective",
@@ -432,7 +432,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "540:3:18",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -538,7 +538,7 @@
                               "name": "msg",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 13068,
+                              "referencedDeclaration": 13019,
                               "src": "631:3:18",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_magic_message",
@@ -626,10 +626,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        13071,
-                        13072
+                        13022,
+                        13023
                       ],
-                      "referencedDeclaration": 13072,
+                      "referencedDeclaration": 13023,
                       "src": "607:7:18",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
@@ -1307,7 +1307,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "1838:3:18",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -1770,7 +1770,7 @@
     "src": "0:2293:18"
   },
   "legacyAST": {
-    "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/identity/IdentityAdminRole.sol",
+    "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/identity/IdentityAdminRole.sol",
     "exportedSymbols": {
       "IdentityAdminRole": [
         3209
@@ -1812,7 +1812,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/Users/madsjorgensen/Documents/Work/GoodContracts/contracts/dao/AvatarGuard.sol",
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/AvatarGuard.sol",
         "file": "../dao/AvatarGuard.sol",
         "id": 3080,
         "nodeType": "ImportDirective",
@@ -2020,7 +2020,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "540:3:18",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -2126,7 +2126,7 @@
                               "name": "msg",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 13068,
+                              "referencedDeclaration": 13019,
                               "src": "631:3:18",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_magic_message",
@@ -2214,10 +2214,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        13071,
-                        13072
+                        13022,
+                        13023
                       ],
-                      "referencedDeclaration": 13072,
+                      "referencedDeclaration": 13023,
                       "src": "607:7:18",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
@@ -2895,7 +2895,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 13068,
+                          "referencedDeclaration": 13019,
                           "src": "1838:3:18",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -3362,8 +3362,8 @@
     "version": "0.5.4+commit.9549d8ff.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.0.11",
-  "updatedAt": "2019-09-20T12:20:21.586Z",
+  "schemaVersion": "3.0.9",
+  "updatedAt": "2019-09-22T12:47:44.214Z",
   "devdoc": {
     "methods": {
       "addIdentityAdmin(address,address)": {
@@ -3395,7 +3395,7 @@
         "details": "Allows a privileged holder to renounce their role "
       },
       "renounceOwnership()": {
-        "details": "Allows the current owner to relinquish control of the contract."
+        "details": "Allows the current owner to relinquish control of the contract. It will not be possible to call the functions with the `onlyOwner` modifier anymore."
       },
       "transferOwnership(address)": {
         "details": "Allows the current owner to transfer control of the contract to a newOwner.",
@@ -3409,7 +3409,7 @@
   "userdoc": {
     "methods": {
       "renounceOwnership()": {
-        "notice": "Renouncing to ownership will leave the contract without an owner. It will not be possible to call the functions with the `onlyOwner` modifier anymore."
+        "notice": "Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
       }
     }
   }

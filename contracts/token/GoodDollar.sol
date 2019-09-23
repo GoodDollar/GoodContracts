@@ -46,6 +46,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
      */
     function transfer(address to, uint256 value)
         public
+        onlyClaimer
         onlyNotBlacklisted
         requireNotBlacklisted(to)
         returns (bool)
@@ -86,6 +87,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
         uint256 value
     )
         public
+        requireClaimer(from)
         onlyNotBlacklisted
         requireNotBlacklisted(from)
         requireNotBlacklisted(to)

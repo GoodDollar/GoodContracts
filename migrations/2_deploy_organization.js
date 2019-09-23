@@ -78,11 +78,6 @@ module.exports = async function(deployer, network) {
     await identity.transferOwnership(await avatar.owner());
     await feeFormula.transferOwnership(await avatar.owner());
 
-    await token.transfer(
-      avatar.address,
-      toGD(networkSettings.founderTokensToAvatar)
-    );
-
     // Schemes
     // Deploy Voting Matching
     const absoluteVote = await deployer.deploy(AbsoluteVote);
@@ -125,7 +120,15 @@ module.exports = async function(deployer, network) {
       permissionArray,
       "metaData"
     );
+
     await Promise.all(founders.map(f => identity.addClaimer(f)));
+    await identity.addClaimer(avatar.address);
+    await identity.addClaimer(controller.address);
+
+    await token.transfer(
+      avatar.address,
+      toGD(networkSettings.founderTokensToAvatar)
+    );
 
     let releasedContracts = {
       GoodDollar: await avatar.nativeToken(),

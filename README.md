@@ -121,7 +121,7 @@ Users suggest, advocate and vote for policy proposals in the form of 'schemes'. 
 
 Once implemented, a scheme will run for a given period of time and subsequently deprecate, at which point the community will vote on either extending or replacing the extant scheme.  
 
-Voting power is defined by 'reputation points', a value assigned to all registered addresses. Reputation points can be distributed by any arbitrary logic and perform any arbritray decision making function in the system. In this implementation, reputation points denotes a weighted distribution in which one reputation point equals one vote in a binary choice evaluated by the absolute majority criterion.  
+Voting power is defined by 'reputation points', a value assigned to all registered addresses. Reputation points can be distributed by any arbitrary logic and perform any arbitrary decision making function in the system. In this implementation, reputation points denote a weighted distribution in which one reputation point equals one vote in a binary choice evaluated by the absolute majority criterion.  
 
 The voting logic itself is *also* implemented as a scheme and is, just as the distribution policy, subject to change by a absolute majority voting.  
 
@@ -133,9 +133,9 @@ The contract system for the current release, comprises four main components:
 
 ## Implementation of a Decentralized Autonomous UBI system (The DAU)
 
-The DAU is a decentralized decision-making and ressource distribution mechanism. It contains four elements: 
+The DAU is a decentralized decision-making and resource distribution mechanism. It contains four elements: 
 
-* Schemes -  A "scheme" is a 'wrapper' enacting a given policy or functionality in the GoodDollar contract system. Schemes are deployed by users and elected by the DAU contract through 'reputation voting' (see below). The UBI distribution policy, the one-time payment link policy, the sign-up bonus policy, and the identity contract are all implemented as 'schemes' and can be reiterated and redployed by the GoodDollar community. 
+* Schemes -  A "scheme" is a 'wrapper' enacting a given policy or functionality in the GoodDollar contract system. Schemes are deployed by users and elected by the DAU contract through 'reputation voting' (see below). The UBI distribution policy, the one-time payment link policy, the sign-up bonus policy, and the identity contract are all implemented as 'schemes' and can be reiterated and redeployed by the GoodDollar community. 
 
 * Reputation points - Reputation points are awarded to user accounts by the DAU. The reputation distribution function will be based on contributions to the system, as defined by the GoodDollar community. Reputation is non-transferable and (re)distributed by the DAU. 
 

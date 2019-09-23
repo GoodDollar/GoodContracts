@@ -33,6 +33,7 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
     token = await GoodDollar.at(await avatar.nativeToken());
     oneTimePayments = await OneTimePayments.new(avatar.address, GASLIMIT);
 
+    await identity.addClaimer(oneTimePayments.address);
     await identity.addClaimer(claimer);
   });
 

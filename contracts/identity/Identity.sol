@@ -141,16 +141,21 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     function _addClaimer(address account) internal {
         claimers.add(account);
         
-        increaseClaimerCount(1);
-        dateAdded[account] = now;
-        
+        if(!isContract(account))
+        {
+            increaseClaimerCount(1);
+            dateAdded[account] = now;
+        }
+
         emit ClaimerAdded(account);
     }
 
     function _removeClaimer(address account) internal {
         claimers.remove(account);
 
-        decreaseClaimerCount(1);
+        if (!isContract(account)) {
+            decreaseClaimerCount(1);
+        }
 
         string memory did = addrToDID[account];
         bytes32 pHash = keccak256(bytes(did));
@@ -172,6 +177,18 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         returns (bool)
     {
         return blacklist.has(account);
+    }
+
+    /* @dev Checks to see if given address is a contract
+     */
+    function isContract(address _addr)
+        view
+        internal
+        returns (bool)
+    {
+        uint length;
+        assembly { length := extcodesize(_addr) }
+        return length > 0;
     }
 
     /* @dev Internal function that increases count of whitelisted users by

@@ -139,6 +139,16 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
     await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer }),
       "Scheme is not registered");
   });
+
+  it("should remove oneTimePayments from claimers without decrementing amount of claimers", async () => {
+    const oldClaimerCount = await identity.getClaimerCount();
+
+    await identity.removeClaimer(oneTimePayments.address);
+
+    const newClaimerCount = await identity.getClaimerCount();
+
+    expect(oldClaimerCount.toString()).to.be.equal(newClaimerCount.toString());
+  });
 });
 
 export {}

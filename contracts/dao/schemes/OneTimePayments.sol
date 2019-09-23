@@ -26,9 +26,9 @@ contract OneTimePayments is SchemeGuard {
 
     mapping(bytes32 => Payment) payments;
 
-    event PaymentDeposited(address indexed from, bytes32 hash, uint256 amount);
-    event PaymentCancelled(address indexed from, bytes32 hash, uint256 amount);
-    event PaymentWithdrawn(address indexed to, bytes32 indexed hash, uint256 amount);
+    event PaymentDeposit(address indexed from, bytes32 hash, uint256 amount);
+    event PaymentCancel(address indexed from, bytes32 hash, uint256 amount);
+    event PaymentWithdraw(address indexed from, address indexed to, bytes32 indexed hash, uint256 amount);
 
     constructor(
         Avatar _avatar,
@@ -58,7 +58,7 @@ contract OneTimePayments is SchemeGuard {
 
         payments[hash] = Payment(true, value, sender);
 
-        emit PaymentDeposited(sender, hash, value);
+        emit PaymentDeposit(sender, hash, value);
 
         return true;
     }
@@ -72,9 +72,10 @@ contract OneTimePayments is SchemeGuard {
         require(gasleft() < gasLimit, "Cannot exceed gas limit");
         bytes32 hash = keccak256(abi.encodePacked(code));
         uint256 value = payments[hash].paymentAmount;
+        address sender = payments[hash].paymentSender;
 
         _withdraw(hash, value);
-        emit PaymentWithdrawn(msg.sender, hash, value);
+        emit PaymentWithdraw(sender, msg.sender, hash, value);
     }
 
     /* @dev Cancel function
@@ -88,7 +89,7 @@ contract OneTimePayments is SchemeGuard {
         require(payments[hash].paymentSender == msg.sender, "Can only be called by creator");
 
         _withdraw(hash, value);
-        emit PaymentCancelled(msg.sender, hash, value);
+        emit PaymentCancel(msg.sender, hash, value);
     }
 
     /* @dev Internal withdraw function

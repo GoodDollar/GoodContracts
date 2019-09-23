@@ -23,7 +23,7 @@ contract("Integration - Claiming Reputation", ([founder, claimer, claimer2]) => 
   let proposalId: string;
 
   const periodOffset = 60000;
-  const reward = "10";
+  const reward = web3.utils.toWei("10");
 
   before(async () => {
     const periodStart = (await web3.eth.getBlock('latest')).timestamp + periodOffset;

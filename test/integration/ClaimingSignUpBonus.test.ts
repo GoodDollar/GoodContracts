@@ -32,6 +32,9 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
       emptySignUp = await SignUpBonus.new(avatar.address, identity.address, 0, 5);
       demandingSignUp = await SignUpBonus.new(avatar.address, identity.address, web3.utils.toWei("100000"), 5);
 
+      await identity.addClaimer(signUpBonus.address);
+      await identity.addClaimer(claimer);
+      await identity.addClaimer(claimer2);
     });
 
     it("should not allow awarding before starting scheme", async () => {

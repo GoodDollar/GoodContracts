@@ -49,7 +49,11 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     fixedUBI = await FixedUBI.new(avatar.address, identity.address, helpers.toGD("0"), periodEnd2, periodEnd3, helpers.toGD("1"));
     reserveRelayer = await ReserveRelayer.new(avatar.address, fixedUBI.address, periodEnd2, periodEnd3);
 
+    await identity.addClaimer(ubi.address);
+    await identity.addClaimer(fixedUBI.address);
+    await identity.addClaimer(reserveRelayer.address);
     await identity.addClaimer(claimer);
+    await identity.addClaimer(claimer4);
   });
 
   it("should end UBI scheme with no remaining reserve", async () => {

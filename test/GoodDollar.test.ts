@@ -26,12 +26,12 @@ contract("GoodDollar", ([founder, claimer, outsider]) => {
         avatar = await Avatar.at(await (await DaoCreatorGoodDollar.deployed()).avatar());
         controller = await ControllerInterface.at(await avatar.owner());
         unCappedToken = await GoodDollar.new('Test', 'TDD', 0, feeFormula.address, identity.address, receiver.address)
-        cappedToken = await GoodDollar.new('Test', 'TDD', web3.utils.toWei('10') , feeFormula.address, identity.address, receiver.address);
+        cappedToken = await GoodDollar.new('Test', 'TDD', helpers.toGD('10') , feeFormula.address, identity.address, receiver.address);
         token = await GoodDollar.at(await avatar.nativeToken());
 
-        await token.transfer(claimer, web3.utils.toWei("100"));
-        await token.transfer(founder, web3.utils.toWei("100"));
-        await token.transfer(outsider, web3.utils.toWei("10"));
+        await token.transfer(claimer, helpers.toGD("100"));
+        await token.transfer(founder, helpers.toGD("100"));
+        await token.transfer(outsider, helpers.toGD("10"));
         await identity.addClaimer(claimer);
 
     });
@@ -45,47 +45,47 @@ contract("GoodDollar", ([founder, claimer, outsider]) => {
     it("should transfer and not call function", async () => {
         let data = "0x0";
 
-        await helpers.assertVMException(token.transferAndCall(receiver.address, web3.utils.toWei("10"), data), "Contract Fallback failed");
+        await helpers.assertVMException(token.transferAndCall(receiver.address, helpers.toGD("10"), data), "Contract Fallback failed");
         assert(!(await receiver.wasCalled()))
     });
 
     it("should transfer, not call and return true if not contract", async () => {
         let data = "0x0";
 
-        assert(await token.transferAndCall(founder, web3.utils.toWei("3"), data));
+        assert(await token.transferAndCall(founder, helpers.toGD("3"), data));
     });
 
     it("should transfer and call correct function on receiver contract", async () => {
         let data = (receiver as any).contract.methods.mockTransfer().encodeABI();
 
-        assert(await token.transferAndCall(receiver.address, web3.utils.toWei("10"), data));
+        assert(await token.transferAndCall(receiver.address, helpers.toGD("10"), data));
         assert(await receiver.wasCalled());
     });
 
     it("should increase allowance", async () => {
-        assert(await token.increaseAllowance(claimer, web3.utils.toWei("20"), { from: founder } ));
+        assert(await token.increaseAllowance(claimer, helpers.toGD("20"), { from: founder } ));
     });
 
     it("should allow to transfer from", async () => {
-        assert(await token.transferFrom(founder, claimer, web3.utils.toWei("10"), { from: claimer }))
+        assert(await token.transferFrom(founder, claimer, helpers.toGD("10"), { from: claimer }))
     })
 
     it("should decrease allowance", async () => {
-        assert(await token.decreaseAllowance(claimer,  web3.utils.toWei("10"), { from: founder } ));
+        assert(await token.decreaseAllowance(claimer,  helpers.toGD("10"), { from: founder } ));
     });
 
     it("should allow to burn", async () => {
-        assert(await token.burn(web3.utils.toWei("10"), { from: claimer }));
+        assert(await token.burn(helpers.toGD("10"), { from: claimer }));
     })
 
     it("should allow to burn from", async () => {
-        assert(await token.approve(claimer, web3.utils.toWei("20"), { from: founder } ));
-        assert(await token.burnFrom(founder, web3.utils.toWei("20"), { from: claimer } ));
+        assert(await token.approve(claimer, helpers.toGD("20"), { from: founder } ));
+        assert(await token.burnFrom(founder, helpers.toGD("20"), { from: claimer } ));
     });
 
     it("should not allow to mint beyond cap", async () => {
-        assert(await unCappedToken.mint(founder, web3.utils.toWei('10')));
+        assert(await unCappedToken.mint(founder, helpers.toGD('10')));
 
-        await helpers.assertVMException(cappedToken.mint(founder, web3.utils.toWei("12")), "Cannot increase supply beyond cap");
+        await helpers.assertVMException(cappedToken.mint(founder, helpers.toGD("12")), "Cannot increase supply beyond cap");
     });
 });

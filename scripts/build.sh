@@ -1,7 +1,6 @@
 set -o allexport
 source .env
 set +o allexport
-echo $MNEMONIC
 #exit on any command failure
 set -e
 CHANGES=`git status --porcelain --untracked-files=no -s`
@@ -19,21 +18,21 @@ then
     export MNEMONIC=$MNEMONIC_STAGING
     echo "deploying to fuse dev"
     export NETWORK='fuse'
-    npm run deploy --network fuse
+    npm run deploy:full
     echo "deploying to fuse staging"
     export NETWORK='staging'
-    npm run deploy --network staging
+    npm run deploy:full
     read -p "deploy to production? " prompt
-    if [[ $PRIVATE_KEY_PROD && $prompt =~ [yY](es)* ]]
+    if [[ $PRIVATE_KEY_PROD && $prompt =~ [yY](es)? ]]
     then
         export PRIVATE_KEY=$PRIVATE_KEY_PROD
         export NETWORK='production'
-        npm run deploy --network production
+        npm run deploy:full
     fi        
     
 fi
-read -p "Are you sure you want to continue to publish a new version? <y/N> " prompt
-if [[ $prompt =~ [yY](es)* ]]
+read -p "Are you sure you want to continue to publish a new version to npm? <y/N> " prompt
+if [[ $prompt =~ [yY](es)? ]]
 then
     git add build/contracts/*
     git commit -a -m "add: version release"

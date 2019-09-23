@@ -44,15 +44,15 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 	it("should perform transactions and increase fee reserve", async () => {
 	  const oldReserve = await token.balanceOf(avatar.address);
 
-	  await token.transfer(claimer, web3.utils.toWei("10"));
-	  await token.transfer(claimer, web3.utils.toWei("10"));
-	  await token.transfer(claimer, web3.utils.toWei("10"));
+	  await token.transfer(claimer, helpers.toGD("10"));
+	  await token.transfer(claimer, helpers.toGD("10"));
+	  await token.transfer(claimer, helpers.toGD("10"));
 
 	  // Check that reserve has received fees
 	  const reserve = (await token.balanceOf(avatar.address)) as any;
 
 	  const reserveDiff = reserve.sub(oldReserve);
-	  const totalFees = ((await token.getFees(web3.utils.toWei("10"))) as any).mul(new (web3 as any).utils.BN("3"));
+	  const totalFees = ((await token.getFees(helpers.toGD("10"))) as any).mul(new (web3 as any).utils.BN("3"));
 	  expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
 	});
 
@@ -78,13 +78,12 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 		const oldBalance = await token.balanceOf(receiver);
 		expect(oldBalance.toString()).to.be.equal("0");
 
-		const fees = (await token.getFees(await token.balanceOf(avatar.address))) as any;
 		const reserve = (await token.balanceOf(avatar.address)) as any;
 		
 		assert(await reserveRelayer.start());
 
 		const newBalance = await token.balanceOf(receiver);
 
-		expect(newBalance.toString()).to.be.equal((reserve.sub(fees)).toString());
+		expect(newBalance.toString()).to.be.equal(reserve.toString());
 	});
 })

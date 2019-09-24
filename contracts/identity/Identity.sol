@@ -18,7 +18,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     Roles.Role private blacklist;
     Roles.Role private claimers;
 
-    uint256 private claimerCount;
+    uint256 private whitelistedCount;
     mapping(address => uint) dateAdded;
 
     mapping (address => string) public addrToDID;
@@ -27,8 +27,8 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     event BlacklistAdded(address indexed account);
     event BlacklistRemoved(address indexed account);
  
-    event ClaimerAdded(address indexed account);
-    event ClaimerRemoved(address indexed account);
+    event WhitelistedAdded(address indexed account);
+    event WhitelistedRemoved(address indexed account);
 
     constructor() public SchemeGuard(Avatar(0)) {}
 
@@ -36,20 +36,20 @@ contract Identity is IdentityAdminRole, SchemeGuard {
      * Can only be called by Identity Administrators.
      * @param account address to add as a claimer
      */
-    function addClaimer(address account)
+    function addWhitelisted(address account)
         public
         onlyRegistered
         onlyIdentityAdmin
     {
-        _addClaimer(account);
+        _addWhitelisted(account);
     }
 
-    function addClaimerWithDID(address account, string memory did) 
+    function addWhitelistedWithDID(address account, string memory did) 
         public
         onlyRegistered
         onlyIdentityAdmin 
     {
-        _addClaimer(account);
+        _addWhitelisted(account);
 
         bytes32 pHash = keccak256(bytes(did));
         addrToDID[account] = did;
@@ -60,23 +60,23 @@ contract Identity is IdentityAdminRole, SchemeGuard {
      * Can only be called by Identity Administrators.
      * @param account address to remove as a claimer
      */
-    function removeClaimer(address account)
+    function removeWhitelisted(address account)
         public
         onlyRegistered
         onlyIdentityAdmin
     {
-        _removeClaimer(account);
+        _removeWhitelisted(account);
     }
 
-    function renounceClaimer() public {
-        _removeClaimer(msg.sender);
+    function renounceWhitelisted() public {
+        _removeWhitelisted(msg.sender);
     }
 
     /* @dev Reverts if given address has not been added to claimers
      * @param account the address to check
      * @return a bool indicating weather the address is present in claimers
      */
-    function isClaimer(address account)
+    function isWhitelisted(address account)
         public
         view
         returns (bool)
@@ -87,12 +87,12 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     /* @dev Gets the amount of claimers
      * @return a uint representing the current amount of claimers
      */
-    function getClaimerCount()
+    function getWhitelistedCount()
         public
         view
         returns (uint)
     {
-        return claimerCount;
+        return whitelistedCount;
     }
 
     function wasAdded(address account) public view returns (uint) {
@@ -105,8 +105,8 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         string memory did = addrToDID[msg.sender];
         bytes32 pHash = keccak256(bytes(did));
 
-        _removeClaimer(msg.sender);
-        _addClaimer(account);
+        _removeWhitelisted(msg.sender);
+        _addWhitelisted(account);
 
         addrToDID[account] = did;
         didHashToAddress[pHash] = account;
@@ -138,23 +138,23 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         emit BlacklistRemoved(account);
     }
 
-    function _addClaimer(address account) internal {
+    function _addWhitelisted(address account) internal {
         claimers.add(account);
         
         if(!isContract(account))
         {
-            increaseClaimerCount(1);
+            increaseWhitelistedCount(1);
             dateAdded[account] = now;
         }
 
-        emit ClaimerAdded(account);
+        emit WhitelistedAdded(account);
     }
 
-    function _removeClaimer(address account) internal {
+    function _removeWhitelisted(address account) internal {
         claimers.remove(account);
 
         if (!isContract(account)) {
-            decreaseClaimerCount(1);
+            decreaseWhitelistedCount(1);
         }
 
         string memory did = addrToDID[account];
@@ -164,7 +164,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         delete addrToDID[account];
         delete didHashToAddress[pHash];
 
-        emit ClaimerRemoved(account);
+        emit WhitelistedRemoved(account);
     }
 
     /* @dev Reverts if given address has been added to the blacklist
@@ -195,19 +195,19 @@ contract Identity is IdentityAdminRole, SchemeGuard {
      * given amount
      * @param value an uint with which the whitelisted count will increase by
      */
-    function increaseClaimerCount(uint value)
+    function increaseWhitelistedCount(uint value)
         internal
     {
-        claimerCount = claimerCount.add(value);
+        whitelistedCount = whitelistedCount.add(value);
     }
 
     /* @dev Internal function that decreases count of whitelisted users by
      * given amount
      * @param value an uint with which the whitelisted count will increase by
      */
-    function decreaseClaimerCount(uint value)
+    function decreaseWhitelistedCount(uint value)
         internal
     {
-        claimerCount = claimerCount.sub(value);
+        whitelistedCount = whitelistedCount.sub(value);
     }
 }

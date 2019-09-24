@@ -8,7 +8,7 @@ const ControllerInterface = artifacts.require("ControllerInterface");
 const GoodDollar = artifacts.require("GoodDollar");
 const TransferAndCallMock = artifacts.require("TransferAndCallMock");
 
-contract("GoodDollar", ([founder, claimer, outsider]) => {
+contract("GoodDollar", ([founder, whitelisted, outsider]) => {
 
     let receiver: helpers.ThenArg<ReturnType<typeof TransferAndCallMock['new']>>;
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
@@ -29,10 +29,10 @@ contract("GoodDollar", ([founder, claimer, outsider]) => {
         cappedToken = await GoodDollar.new('Test', 'TDD', helpers.toGD('10') , feeFormula.address, identity.address, receiver.address);
         token = await GoodDollar.at(await avatar.nativeToken());
 
-        await token.transfer(claimer, helpers.toGD("100"));
+        await token.transfer(whitelisted, helpers.toGD("100"));
         await token.transfer(founder, helpers.toGD("100"));
         await token.transfer(outsider, helpers.toGD("10"));
-        await identity.addClaimer(claimer);
+        await identity.addWhitelisted(whitelisted);
 
     });
 
@@ -63,24 +63,24 @@ contract("GoodDollar", ([founder, claimer, outsider]) => {
     });
 
     it("should increase allowance", async () => {
-        assert(await token.increaseAllowance(claimer, helpers.toGD("20"), { from: founder } ));
+        assert(await token.increaseAllowance(whitelisted, helpers.toGD("20"), { from: founder } ));
     });
 
     it("should allow to transfer from", async () => {
-        assert(await token.transferFrom(founder, claimer, helpers.toGD("10"), { from: claimer }))
+        assert(await token.transferFrom(founder, whitelisted, helpers.toGD("10"), { from: whitelisted }))
     })
 
     it("should decrease allowance", async () => {
-        assert(await token.decreaseAllowance(claimer,  helpers.toGD("10"), { from: founder } ));
+        assert(await token.decreaseAllowance(whitelisted,  helpers.toGD("10"), { from: founder } ));
     });
 
     it("should allow to burn", async () => {
-        assert(await token.burn(helpers.toGD("10"), { from: claimer }));
+        assert(await token.burn(helpers.toGD("10"), { from: whitelisted }));
     })
 
     it("should allow to burn from", async () => {
-        assert(await token.approve(claimer, helpers.toGD("20"), { from: founder } ));
-        assert(await token.burnFrom(founder, helpers.toGD("20"), { from: claimer } ));
+        assert(await token.approve(whitelisted, helpers.toGD("20"), { from: founder } ));
+        assert(await token.burnFrom(founder, helpers.toGD("20"), { from: whitelisted } ));
     });
 
     it("should not allow to mint beyond cap", async () => {

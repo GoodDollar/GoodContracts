@@ -39,19 +39,19 @@ contract IdentityGuard is AvatarGuard {
     }
 
     /* @dev Modifier that requires the sender
-     * to be a claimer
+     * to be whitelisted
      */
-    modifier onlyClaimer() {
-        require(identity.isClaimer(msg.sender), "is not claimer");
+    modifier onlyWhitelisted() {
+        require(identity.isWhitelisted(msg.sender), "is not whitelisted");
         _;
     }
 
     /* @dev Modifier that requires the given address
-     * to be a claimer
+     * to be whitelisted
      * @param _account the given address
      */
-    modifier requireClaimer(address _account) {
-        require(identity.isClaimer(_account), "is not claimer");
+    modifier requireWhitelisted(address _account) {
+        require(identity.isWhitelisted(_account), "is not whitelisted");
         _;
     }
 

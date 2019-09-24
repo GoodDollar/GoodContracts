@@ -10,7 +10,7 @@ const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const ReputationMock = artifacts.require("ReputationMock");
 const Reputation = artifacts.require("Reputation");
 
-contract("Integration - Claiming Reputation", ([founder, claimer, claimer2]) => {
+contract("Integration - Claiming Reputation", ([founder, whitelisted, whitelisted2]) => {
 
   let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
   let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
@@ -37,7 +37,7 @@ contract("Integration - Claiming Reputation", ([founder, claimer, claimer2]) => 
     reputationMock = await ReputationMock.new(avatar.address, identity.address, reward, periodStart, periodEnd, { from: founder } );
     reputation = await Reputation.at(await avatar.nativeReputation());
 
-    await identity.addClaimer(claimer);
+    await identity.addWhitelisted(whitelisted);
   });
 
   it("should not allow creation of scheme with zero or less reputation", async () => {
@@ -65,36 +65,36 @@ contract("Integration - Claiming Reputation", ([founder, claimer, claimer2]) => 
     assert(executeProposalEventExists);
   });
 
-  it("should reward claimer and creator for starting period", async () => {
-    const oldReputationBalanceClaimer = await reputation.balanceOf(claimer);
+  it("should reward whitelisted and creator for starting period", async () => {
+    const oldReputationBalanceWhitelisted = await reputation.balanceOf(whitelisted);
     const oldReputationBalanceFounder = (await reputation.balanceOf(founder)) as any;
     
-    expect(oldReputationBalanceClaimer.toString()).to.be.equal('0');
+    expect(oldReputationBalanceWhitelisted.toString()).to.be.equal('0');
     expect(oldReputationBalanceFounder.toString()).to.be.equal(reward.toString());
 
     await helpers.assertVMException(reputationMock.start(), "not in period");
     await helpers.increaseTime(periodOffset*1.5);
-    assert(await reputationMock.start({ from: claimer }));
+    assert(await reputationMock.start({ from: whitelisted }));
 
-    const newReputationBalanceClaimer = await reputation.balanceOf(claimer);
+    const newReputationBalanceWhitelisted = await reputation.balanceOf(whitelisted);
     const newReputationBalanceFounder = (await reputation.balanceOf(founder)) as any;
     const founderNewOldRepDiff = newReputationBalanceFounder.sub(oldReputationBalanceFounder);
 
-    expect(newReputationBalanceClaimer.toString()).to.be.equal(reward.toString());
+    expect(newReputationBalanceWhitelisted.toString()).to.be.equal(reward.toString());
     expect(founderNewOldRepDiff.toString()).to.be.equal(reward.toString());
   });
 
   it("should reward for ending Rep period", async () => {
-    const oldReputationBalanceClaimer = (await reputation.balanceOf(claimer)) as any;
-    expect(oldReputationBalanceClaimer.toString()).to.be.equal(reward);
+    const oldReputationBalanceWhitelisted = (await reputation.balanceOf(whitelisted)) as any;
+    expect(oldReputationBalanceWhitelisted.toString()).to.be.equal(reward);
 
     await helpers.assertVMException(reputationMock.end(avatar.address), "period has not ended");
     await helpers.increaseTime(periodOffset);
-    assert(await reputationMock.end(avatar.address, { from: claimer }));
+    assert(await reputationMock.end(avatar.address, { from: whitelisted }));
 
-    const newReputationBalanceClaimer = (await reputation.balanceOf(claimer)) as any;
-    const claimerRepDiff = newReputationBalanceClaimer.sub(oldReputationBalanceClaimer);
-    expect(claimerRepDiff.toString()).to.be.equal(reward.toString());
+    const newReputationBalanceWhitelisted = (await reputation.balanceOf(whitelisted)) as any;
+    const whitelistedRepDiff = newReputationBalanceWhitelisted.sub(oldReputationBalanceWhitelisted);
+    expect(whitelistedRepDiff.toString()).to.be.equal(reward.toString());
   });
 });
 

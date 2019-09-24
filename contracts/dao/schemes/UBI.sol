@@ -142,7 +142,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
     function claim() 
         public 
         requireActive
-        onlyClaimer
+        onlyWhitelisted
         onlyAddedBefore(periodStart)
         returns(bool)
     {
@@ -190,7 +190,7 @@ contract UBI is AbstractUBI {
      * @return The reserve divided by the amount of registered claimers
      */
     function distributionFormula(uint256 reserve, address /*user*/) internal returns(uint256) {
-        uint claimers = identity.getClaimerCount();
+        uint claimers = identity.getWhitelistedCount();
         return reserve.div(claimers);
     }
 

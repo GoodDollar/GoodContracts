@@ -75,7 +75,7 @@ contract FixedUBI is AbstractUBI {
     function claim()
         public
         requireActive
-        onlyClaimer
+        onlyWhitelisted
         returns (bool)
     {
         uint256 newDistribution = distributionFormula(claimDistribution, msg.sender);
@@ -93,7 +93,7 @@ contract FixedUBI is AbstractUBI {
         claimDay[currentDay] = day;
 
         emit UBIClaimed(msg.sender, newDistribution);
-        
+
         return true;
     }
 }

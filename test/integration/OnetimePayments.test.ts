@@ -31,9 +31,8 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
     controller = await ControllerInterface.at(await avatar.owner());
     absoluteVote = await AbsoluteVote.deployed();
     token = await GoodDollar.at(await avatar.nativeToken());
-    oneTimePayments = await OneTimePayments.new(avatar.address, GASLIMIT);
+    oneTimePayments = await OneTimePayments.new(avatar.address, identity.address, GASLIMIT);
 
-    await identity.addWhitelisted(oneTimePayments.address);
     await identity.addWhitelisted(whitelisted);
   });
 
@@ -58,6 +57,7 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
     const excecuteProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
 
     assert(excecuteProposalEventExists);
+    await oneTimePayments.start();
   });
 
   it("should not have payment", async () => {

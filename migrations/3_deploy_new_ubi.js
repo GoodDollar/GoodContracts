@@ -76,7 +76,6 @@ module.exports = async function(deployer, network) {
 
   await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
 
-  await identity.addWhitelisted(ubi.address);
   await ubi.start();
 
   let releasedContracts = {

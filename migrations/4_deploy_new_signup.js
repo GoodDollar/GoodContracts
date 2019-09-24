@@ -65,7 +65,6 @@ module.exports = async function(deployer, network) {
 
   await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
 
-  await identity.addWhitelisted(signupBonus.address);
   await signupBonus.start();
 
   let releasedContracts = {

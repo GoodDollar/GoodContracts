@@ -47,7 +47,7 @@ contract("Integration - Claiming UBI", ([founder, whitelisted, whitelisted2, whi
     reserveUBI = await UBI.new(avatar.address, identity.address, web3.utils.toWei("300000"), periodStart2, periodEnd2);
     emptyUBI = await UBI.new(avatar.address, identity.address, helpers.toGD("0"), periodStart, periodEnd);
     fixedUBI = await FixedUBI.new(avatar.address, identity.address, helpers.toGD("0"), periodEnd2, periodEnd3, helpers.toGD("1"));
-    reserveRelayer = await ReserveRelayer.new(avatar.address, fixedUBI.address, periodEnd2, periodEnd3);
+    reserveRelayer = await ReserveRelayer.new(avatar.address, identity.address, fixedUBI.address, periodEnd2, periodEnd3);
 
     await identity.addWhitelisted(ubi.address);
     await identity.addWhitelisted(fixedUBI.address);

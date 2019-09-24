@@ -3,7 +3,7 @@ pragma solidity 0.5.4;
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-import "./SchemeGuard.sol";
+import "./FeelessScheme.sol";
 
 /* @title One Time payment scheme
  * Scheme that allows address to deposit tokens for any address to withdraw
@@ -13,7 +13,7 @@ import "./SchemeGuard.sol";
  * copying any transaction before it is confirmed and raising gas price
  * to ensure it is picked up first. 
  */
-contract OneTimePayments is SchemeGuard {
+contract OneTimePayments is FeelessScheme {
     using SafeMath for uint256;
 
     uint256 gasLimit;
@@ -32,14 +32,22 @@ contract OneTimePayments is SchemeGuard {
 
     constructor(
         Avatar _avatar,
+        Identity _identity,
         uint256 _gasLimit
     )
         public
-        SchemeGuard(_avatar)
+        FeelessScheme(_identity, _avatar)
     {
         gasLimit = _gasLimit;
     }
     
+    function start()
+        public
+        onlyRegistered
+    {
+        addRights();
+    }
+
     /* @dev ERC677 on transfer function. When transferAndCall is called, the non-taxed 
      * remainder of the transfer is stored in a payment under a hash of the given data.
      * @param sender the address of the sender

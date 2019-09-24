@@ -31,14 +31,14 @@ contract("ReserveRelayer - Transferring reserve", ([founder, whitelisted, receiv
 		controller = await ControllerInterface.at(await avatar.owner());
 		absoluteVote = await AbsoluteVote.deployed();
 		token = await GoodDollar.at(await avatar.nativeToken());
-		reserveRelayer = await ReserveRelayer.new(avatar.address, receiver, periodStart, periodEnd);
+		reserveRelayer = await ReserveRelayer.new(avatar.address, identity.address, receiver, periodStart, periodEnd);
 		await identity.addWhitelisted(whitelisted);
 	});
 
 	it("should not allow relayer with null address receiver", async () => {
 		const periodStart = (await web3.eth.getBlock('latest')).timestamp + periodOffset;
 		const periodEnd = periodStart + periodOffset;
-		helpers.assertVMException(ReserveRelayer.new(avatar.address, helpers.NULL_ADDRESS, periodStart, periodEnd), "receiver cannot be null address");
+		helpers.assertVMException(ReserveRelayer.new(avatar.address, identity.address, helpers.NULL_ADDRESS, periodStart, periodEnd), "receiver cannot be null address");
 	});
 
 	it("should perform transactions and increase fee reserve", async () => {

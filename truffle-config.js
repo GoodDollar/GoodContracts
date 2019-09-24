@@ -7,7 +7,7 @@ require("@babel/polyfill");
 require("dotenv").load();
 // }
 const HDWalletProvider = require("truffle-hdwallet-provider");
-const PrivateKeyProvider = require("truffle-hdwallet-provider-privkey");
+const PrivateKeyProvider = require("truffle-privatekey-provider");
 
 const mnemonic = process.env.MNEMONIC;
 const privateKey = process.env.PRIVATE_KEY;
@@ -78,7 +78,7 @@ module.exports = {
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,
-      gasPrice: 2000000000 //1 gwei
+      gasPrice: 1000000000 //1 gwei
     },
     staging: {
       provider: function() {
@@ -87,16 +87,16 @@ module.exports = {
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,
-      gasPrice: 2000000000 //1 gwei
+      gasPrice: 1000000000 //1 gwei
     },
     production: {
       provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
+        return new PrivateKeyProvider(privateKey, "https://rpc.fusenet.io/");
       },
       network_id: 122,
-      // gas: 4500000,
+      gas: 8500000,
       skipDryRun: true,
-      gasPrice: 2000000000 //1 gwei
+      gasPrice: 1000000000 //1 gwei
     }
   },
   compilers: {

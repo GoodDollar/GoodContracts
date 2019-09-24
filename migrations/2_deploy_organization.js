@@ -59,6 +59,7 @@ module.exports = async function(deployer, network) {
       initTokenInWei,
       initRepInWei
     });
+
     await daoCreator.forgeOrg(
       tokenName,
       tokenSymbol,
@@ -69,12 +70,15 @@ module.exports = async function(deployer, network) {
       initTokenInWei,
       initRepInWei
     );
+
     const avatar = await Avatar.at(await daoCreator.avatar());
     const controller = await Controller.at(await avatar.owner());
     const token = await GoodDollar.at(await avatar.nativeToken());
 
     await identity.setAvatar(avatar.address);
     await feeFormula.setAvatar(avatar.address);
+    await identity.addContract(avatar.address);
+    await identity.addContract(await avatar.owner);
     await identity.transferOwnership(await avatar.owner());
     await feeFormula.transferOwnership(await avatar.owner());
 
@@ -122,8 +126,6 @@ module.exports = async function(deployer, network) {
     );
 
     await Promise.all(founders.map(f => identity.addWhitelisted(f)));
-    await identity.addWhitelisted(avatar.address);
-    await identity.addWhitelisted(controller.address);
 
     await token.transfer(
       avatar.address,

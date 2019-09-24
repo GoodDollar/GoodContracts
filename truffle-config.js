@@ -73,45 +73,30 @@ module.exports = {
     },
     fuse: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
       },
-      network_id: 121,
+      network_id: 122,
       gas: 8500000,
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei
     },
     staging: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
       },
-      network_id: 121,
-      gas: 4500000,
+      network_id: 122,
+      gas: 8500000,
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei
     },
     production: {
       provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
+        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
       },
-      network_id: 121,
+      network_id: 122,
       // gas: 4500000,
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei
-    },
-    fuse2: {
-      provider: function() {
-        return new HDWalletProvider(
-          mnemonic,
-          // "https://rpc.fusenet.io",
-          "http://54.187.63.20:8545/",
-          0,
-          10
-        );
-      },
-      network_id: 122,
-      gas: 4500000,
-      skipDryRun: true,
-      gasPrice: 1000000000 //1 gwei
     }
   },
   compilers: {

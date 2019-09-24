@@ -9,7 +9,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const ReserveMinter = artifacts.require("ReserveMinter");
 
-contract("ReserveMinter - Minting to reserve", ([founder, claimer, receiver]) => {
+contract("ReserveMinter - Minting to reserve", ([founder, whitelisted, receiver]) => {
 
 	let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
 	let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
@@ -32,7 +32,7 @@ contract("ReserveMinter - Minting to reserve", ([founder, claimer, receiver]) =>
 		absoluteVote = await AbsoluteVote.deployed();
 		token = await GoodDollar.at(await avatar.nativeToken());
 		reserveMinter = await ReserveMinter.new(avatar.address, helpers.toGD("10"), receiver);
-		await identity.addClaimer(claimer);
+		await identity.addWhitelisted(whitelisted);
 	});
 
 	it("should not allow relayer with null address receiver", async () => {

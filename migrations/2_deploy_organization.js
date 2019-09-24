@@ -121,9 +121,9 @@ module.exports = async function(deployer, network) {
       "metaData"
     );
 
-    await Promise.all(founders.map(f => identity.addClaimer(f)));
-    await identity.addClaimer(avatar.address);
-    await identity.addClaimer(controller.address);
+    await Promise.all(founders.map(f => identity.addWhitelisted(f)));
+    await identity.addWhitelisted(avatar.address);
+    await identity.addWhitelisted(controller.address);
 
     await token.transfer(
       avatar.address,

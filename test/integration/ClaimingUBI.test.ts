@@ -12,7 +12,7 @@ const UBI = artifacts.require("UBI");
 const FixedUBI = artifacts.require("FixedUBI");
 const ReserveRelayer = artifacts.require("ReserveRelayer");
 
-contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, claimer4, nonClaimer, stranger]) => {
+contract("Integration - Claiming UBI", ([founder, whitelisted, whitelisted2, whitelisted3, whitelisted4, nonWhitelisted, stranger]) => {
 
   let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
   let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
@@ -49,11 +49,11 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     fixedUBI = await FixedUBI.new(avatar.address, identity.address, helpers.toGD("0"), periodEnd2, periodEnd3, helpers.toGD("1"));
     reserveRelayer = await ReserveRelayer.new(avatar.address, fixedUBI.address, periodEnd2, periodEnd3);
 
-    await identity.addClaimer(ubi.address);
-    await identity.addClaimer(fixedUBI.address);
-    await identity.addClaimer(reserveRelayer.address);
-    await identity.addClaimer(claimer);
-    await identity.addClaimer(claimer4);
+    await identity.addWhitelisted(ubi.address);
+    await identity.addWhitelisted(fixedUBI.address);
+    await identity.addWhitelisted(reserveRelayer.address);
+    await identity.addWhitelisted(whitelisted);
+    await identity.addWhitelisted(whitelisted4);
   });
 
   it("should end UBI scheme with no remaining reserve", async () => {
@@ -86,7 +86,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
   it("should perform transactions and increase fee reserve", async () => {
     const oldReserve = await token.balanceOf(avatar.address);
 
-    await token.transfer(claimer, helpers.toGD("300"));
+    await token.transfer(whitelisted, helpers.toGD("300"));
 
     // Check that reserve has received fees
     const reserve = (await token.balanceOf(avatar.address)) as any;
@@ -135,7 +135,7 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     await helpers.assertVMException(reserveUBI.start(), "Not enough funds to start");
   });
 
-  it("should register fixed claim scheme and add claimers", async () => {
+  it("should register fixed claim scheme and add whitelisteds", async () => {
     const schemeRegistrar = await SchemeRegistrar.deployed();
     let transaction = await schemeRegistrar.proposeScheme(avatar.address, fixedUBI.address, 
       helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
@@ -148,30 +148,30 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
     // Verifies that the ExecuteProposal event has been emitted
     assert(executeProposalEventExists);
 
-    await identity.addClaimer(claimer2);
-    await identity.addClaimer(claimer3);
+    await identity.addWhitelisted(whitelisted2);
+    await identity.addWhitelisted(whitelisted3);
   });
 
   it("should correctly claim UBI", async () => {
-    const oldClaimerBalance = await token.balanceOf(claimer);
+    const oldWhitelistedBalance = await token.balanceOf(whitelisted);
 
-    assert(await ubi.claim({ from: claimer }));
+    assert(await ubi.claim({ from: whitelisted }));
     const amountClaimed = await ubi.getClaimAmount(0);
 
-    // Check that claimer has received the claimed amount
+    // Check that whitelisted has received the claimed amount
     const claimDistribution = ((await ubi.claimDistribution()) as any);
 
-    const claimerBalance = (await token.balanceOf(claimer)) as any;
-    const claimerBalanceDiff = claimerBalance.sub(oldClaimerBalance);
+    const whitelistedBalance = (await token.balanceOf(whitelisted)) as any;
+    const whitelistedBalanceDiff = whitelistedBalance.sub(oldWhitelistedBalance);
 
-    expect(claimerBalanceDiff.toString()).to.be.equal(claimDistribution.toString());
-    expect(claimerBalanceDiff.toString()).to.be.equal(amountClaimed.toString());
+    expect(whitelistedBalanceDiff.toString()).to.be.equal(claimDistribution.toString());
+    expect(whitelistedBalanceDiff.toString()).to.be.equal(amountClaimed.toString());
   });
 
-  it("should show amount of claimers", async () => {
+  it("should show amount of whitelisteds", async () => {
 
-    const claimerAmount = await ubi.getClaimerCount(0);
-    expect(claimerAmount.toString()).to.be.equal("1");
+    const whitelistedAmount = await ubi.getClaimerCount(0);
+    expect(whitelistedAmount.toString()).to.be.equal("1");
   });
 
   it("should show amount claimed", async () => {
@@ -183,16 +183,16 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
   });
 
   it("should not allow to claim twice", async () => {
-    await helpers.assertVMException(ubi.claim({ from: claimer }), "has already claimed");
+    await helpers.assertVMException(ubi.claim({ from: whitelisted }), "has already claimed");
   });
 
-  it("should not allow non-claimer to claim", async () => {
-    await helpers.assertVMException(ubi.claim({ from: nonClaimer }), "is not claimer");
+  it("should not allow non-whitelisted to claim", async () => {
+    await helpers.assertVMException(ubi.claim({ from: nonWhitelisted }), "is not whitelisted");
   });
 
-  it("should not allow new claimer to claim", async () => {
+  it("should not allow new whitelisted to claim", async () => {
     await helpers.increaseTime(periodOffset);
-    await identity.addClaimer(stranger);
+    await identity.addWhitelisted(stranger);
 
     await helpers.assertVMException(ubi.claim( { from: stranger }), "Was not added within period");
   });
@@ -209,8 +209,8 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
   });
 
   it("should correctly register ReserveRelayer scheme and transfer new fees to fixed UBI", async () => {
-    await token.transfer(claimer, helpers.toGD("10"));
-    await token.transfer(claimer, helpers.toGD("10"));
+    await token.transfer(whitelisted, helpers.toGD("10"));
+    await token.transfer(whitelisted, helpers.toGD("10"));
     await token.transfer(avatar.address, helpers.toGD("100"));
 
     const schemeRegistrar = await SchemeRegistrar.deployed();
@@ -227,28 +227,28 @@ contract("Integration - Claiming UBI", ([founder, claimer, claimer2, claimer3, c
   });
 
   it("should allow claiming from fixed UBI", async () => {
-    assert(await fixedUBI.claim({ from: claimer3 }));
+    assert(await fixedUBI.claim({ from: whitelisted3 }));
   });
 
   it("should not allow claiming on same day from fixed UBI", async () => {
-    await helpers.assertVMException(fixedUBI.claim({ from: claimer3 }), "Has claimed within a day");
+    await helpers.assertVMException(fixedUBI.claim({ from: whitelisted3 }), "Has claimed within a day");
   });
 
   it("should not allow to claim for more than seven days", async () => {
     await helpers.increaseTime(periodOffset*5000);
-    await token.burn(await token.balanceOf(claimer3), { from: claimer3 });
-    const oldBalanceclaimer3 = await token.balanceOf(claimer3);
-    expect(oldBalanceclaimer3.toString()).to.be.equal(helpers.toGD("0"));
+    await token.burn(await token.balanceOf(whitelisted3), { from: whitelisted3 });
+    const oldBalancewhitelisted3 = await token.balanceOf(whitelisted3);
+    expect(oldBalancewhitelisted3.toString()).to.be.equal(helpers.toGD("0"));
 
-    const claimAmount = await fixedUBI.checkEntitlement({ from: claimer3 });
+    const claimAmount = await fixedUBI.checkEntitlement({ from: whitelisted3 });
     expect(claimAmount.toString()).to.be.equal(helpers.toGD("7"));
 
-    await fixedUBI.claim({ from: claimer3 });
+    await fixedUBI.claim({ from: whitelisted3 });
 
-    const newBalanceclaimer3 = await token.balanceOf(claimer3);
+    const newBalancewhitelisted3 = await token.balanceOf(whitelisted3);
 
     const maxValue = ((helpers.toGD("7")) as any);
-    expect(newBalanceclaimer3.toString()).to.be.equal(maxValue.toString());
+    expect(newBalancewhitelisted3.toString()).to.be.equal(maxValue.toString());
   });
 
   it("should get daily stats", async () => {

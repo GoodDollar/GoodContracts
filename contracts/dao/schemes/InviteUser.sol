@@ -40,12 +40,12 @@ contract InviteUser is IdentityGuard, SchemeGuard {
 
     modifier requireNotAdded(address _user) {
         require(invited[_user] == address(0), "User already invited");
-        require(!(identity.isClaimer(_user)), "User already in system");
+        require(!(identity.isWhitelisted(_user)), "User already in system");
         _;
     }
 
     modifier requireAdded(address _user) {
-        require(identity.isClaimer(_user), "User not in system");
+        require(identity.isWhitelisted(_user), "User not in system");
         _;
     }
 

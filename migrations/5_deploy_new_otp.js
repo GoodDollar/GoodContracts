@@ -47,6 +47,7 @@ module.exports = async function(deployer, network) {
   const oneTimePayments = await deployer.deploy(
     OneTimePayments,
     avatar.address,
+    identity.address,
     GASLIMIT
   );
 

@@ -154,16 +154,14 @@ contract DaoCreatorGoodDollar {
         // Create Controller:
         ControllerInterface controller = ControllerInterface(controllerCreatorGoodDollar.create(avatar));
 
-        // Set fee recipient and minters
-        nativeToken.setFeeRecipient(address(avatar), avatar);
-        nativeToken.addMinter(address(avatar));
-        nativeToken.addMinter(address(controller));
+        // renounce minter
+        nativeToken.addMinter(msg.sender);
         nativeToken.renounceMinter();
 
         // Transfer ownership:
         avatar.transferOwnership(address(controller));
-        nativeToken.transferOwnership(address(controller));
-        nativeReputation.transferOwnership(address(controller));
+        nativeToken.transferOwnership(msg.sender);
+        nativeReputation.transferOwnership(msg.sender);
 
         lock = msg.sender;
 

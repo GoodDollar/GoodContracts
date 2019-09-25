@@ -9,7 +9,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const SignUpBonus = artifacts.require("SignUpBonus");
 
-contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, nonClaimer]) => {
+contract("Integration - rewarding whitelisted bonus", ([founder, whitelisted, whitelisted2, nonWhitelisted]) => {
 
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
@@ -32,10 +32,13 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
       emptySignUp = await SignUpBonus.new(avatar.address, identity.address, 0, 5);
       demandingSignUp = await SignUpBonus.new(avatar.address, identity.address, web3.utils.toWei("100000"), 5);
 
+      await identity.addWhitelisted(signUpBonus.address);
+      await identity.addWhitelisted(whitelisted);
+      await identity.addWhitelisted(whitelisted2);
     });
 
     it("should not allow awarding before starting scheme", async () => {
-      await helpers.assertVMException(signUpBonus.awardUser(claimer, 3), "is not active");
+      await helpers.assertVMException(signUpBonus.awardUser(whitelisted, 3), "is not active");
     })
 
     it("should start SignUpBonus scheme", async () => {
@@ -57,21 +60,21 @@ contract("Integration - rewarding claimer bonus", ([founder, claimer, claimer2, 
     });
 
     it("should not allow awarding by non admin", async () => {
-      await helpers.assertVMException(signUpBonus.awardUser(nonClaimer, 5, { from: nonClaimer }), "not IdentityAdmin")
+      await helpers.assertVMException(signUpBonus.awardUser(nonWhitelisted, 5, { from: nonWhitelisted }), "not IdentityAdmin")
     });
 
     it("should allow awarding", async () => {
-      let oldBalance = await token.balanceOf(claimer);
+      let oldBalance = await token.balanceOf(whitelisted);
       expect(oldBalance.toString()).to.be.equal("0");
       
-      await signUpBonus.awardUser(claimer, 5);
+      await signUpBonus.awardUser(whitelisted, 5);
 
-      let newBalance = await token.balanceOf(claimer);
+      let newBalance = await token.balanceOf(whitelisted);
       expect(newBalance.toString()).to.be.equal("5");
     });
 
     it("should not allow awarding more than max bonus", async () => {
-      await helpers.assertVMException(signUpBonus.awardUser(claimer, 2), "Cannot award user beyond max");
+      await helpers.assertVMException(signUpBonus.awardUser(whitelisted, 2), "Cannot award user beyond max");
     });
 
     it("should end SignUpBonus scheme", async () => {

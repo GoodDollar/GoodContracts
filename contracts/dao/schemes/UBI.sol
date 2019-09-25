@@ -11,11 +11,11 @@ import "../../identity/IdentityGuard.sol";
 import "../../token/GoodDollar.sol";
 
 import "./ActivePeriod.sol";
-import "./SchemeGuard.sol";
+import "./FeelessScheme.sol";
 
 /* @title Base contract template for UBI scheme 
  */
-contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
+contract AbstractUBI is IdentityGuard, ActivePeriod, FeelessScheme {
     using SafeMath for uint256;
 
     uint256 initialReserve;
@@ -52,7 +52,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
         public
         IdentityGuard(_identity)
         ActivePeriod(_periodStart, _periodEnd)
-        SchemeGuard(_avatar)
+        FeelessScheme(_identity, _avatar)
     {
         initialReserve = _initialReserve;
     }
@@ -98,6 +98,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
      */
     function start() public onlyRegistered returns(bool) {
         require(super.start());
+        addRights();
 
         currentDay = 0;
         lastCalc = now;
@@ -133,6 +134,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
             token.transfer(address(avatar), remainingReserve);
         }
 
+        removeRights();
         super.end(avatar);
     }
 
@@ -142,7 +144,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, SchemeGuard {
     function claim() 
         public 
         requireActive
-        onlyClaimer
+        onlyWhitelisted
         onlyAddedBefore(periodStart)
         returns(bool)
     {
@@ -190,7 +192,7 @@ contract UBI is AbstractUBI {
      * @return The reserve divided by the amount of registered claimers
      */
     function distributionFormula(uint256 reserve, address /*user*/) internal returns(uint256) {
-        uint claimers = identity.getClaimerCount();
+        uint claimers = identity.getWhitelistedCount();
         return reserve.div(claimers);
     }
 

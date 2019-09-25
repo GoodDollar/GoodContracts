@@ -8,6 +8,7 @@ const ControllerCreatorGoodDollar = artifacts.require(
   "./ControllerCreatorGoodDollar.sol"
 );
 const GoodDollar = artifacts.require("./GoodDollar.sol");
+const Reputation = artifacts.require("./Reputation.sol");
 
 const Avatar = artifacts.require("./Avatar.sol");
 const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
@@ -59,6 +60,7 @@ module.exports = async function(deployer, network) {
       initTokenInWei,
       initRepInWei
     });
+
     await daoCreator.forgeOrg(
       tokenName,
       tokenSymbol,
@@ -69,19 +71,28 @@ module.exports = async function(deployer, network) {
       initTokenInWei,
       initRepInWei
     );
+
     const avatar = await Avatar.at(await daoCreator.avatar());
     const controller = await Controller.at(await avatar.owner());
     const token = await GoodDollar.at(await avatar.nativeToken());
+    const reputation = await Reputation.at(await avatar.nativeReputation());
 
+    //Set avatar for schemes
     await identity.setAvatar(avatar.address);
     await feeFormula.setAvatar(avatar.address);
+
+    //Set fee recipient, add minters and admin
+    await token.setFeeRecipient(avatar.address, avatar.address);
+    await token.addMinter(avatar.address);
+    await token.addMinter(controller.address);
+    await token.renounceMinter();
+    await identity.addIdentityAdmin(avatar.address, avatar.address);
+
+    //Transfer ownership to controller
+    await token.transferOwnership(await avatar.owner());
+    await reputation.transferOwnership(await avatar.owner());
     await identity.transferOwnership(await avatar.owner());
     await feeFormula.transferOwnership(await avatar.owner());
-
-    await token.transfer(
-      avatar.address,
-      toGD(networkSettings.founderTokensToAvatar)
-    );
 
     // Schemes
     // Deploy Voting Matching
@@ -125,7 +136,15 @@ module.exports = async function(deployer, network) {
       permissionArray,
       "metaData"
     );
-    await Promise.all(founders.map(f => identity.addClaimer(f)));
+
+    await Promise.all(founders.map(f => identity.addWhitelisted(f)));
+    await identity.addContract(avatar.address);
+    await identity.addContract(await avatar.owner());
+
+    await token.transfer(
+      avatar.address,
+      toGD(networkSettings.founderTokensToAvatar)
+    );
 
     let releasedContracts = {
       GoodDollar: await avatar.nativeToken(),

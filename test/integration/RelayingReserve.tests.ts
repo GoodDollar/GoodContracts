@@ -9,7 +9,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const ReserveRelayer = artifacts.require("ReserveRelayer");
 
-contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver]) => {
+contract("ReserveRelayer - Transferring reserve", ([founder, whitelisted, receiver]) => {
 
 	let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
 	let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
@@ -31,22 +31,22 @@ contract("ReserveRelayer - Transferring reserve", ([founder, claimer, receiver])
 		controller = await ControllerInterface.at(await avatar.owner());
 		absoluteVote = await AbsoluteVote.deployed();
 		token = await GoodDollar.at(await avatar.nativeToken());
-		reserveRelayer = await ReserveRelayer.new(avatar.address, receiver, periodStart, periodEnd);
-		await identity.addClaimer(claimer);
+		reserveRelayer = await ReserveRelayer.new(avatar.address, identity.address, receiver, periodStart, periodEnd);
+		await identity.addWhitelisted(whitelisted);
 	});
 
 	it("should not allow relayer with null address receiver", async () => {
 		const periodStart = (await web3.eth.getBlock('latest')).timestamp + periodOffset;
 		const periodEnd = periodStart + periodOffset;
-		helpers.assertVMException(ReserveRelayer.new(avatar.address, helpers.NULL_ADDRESS, periodStart, periodEnd), "receiver cannot be null address");
+		helpers.assertVMException(ReserveRelayer.new(avatar.address, identity.address, helpers.NULL_ADDRESS, periodStart, periodEnd), "receiver cannot be null address");
 	});
 
 	it("should perform transactions and increase fee reserve", async () => {
 	  const oldReserve = await token.balanceOf(avatar.address);
 
-	  await token.transfer(claimer, helpers.toGD("10"));
-	  await token.transfer(claimer, helpers.toGD("10"));
-	  await token.transfer(claimer, helpers.toGD("10"));
+	  await token.transfer(whitelisted, helpers.toGD("10"));
+	  await token.transfer(whitelisted, helpers.toGD("10"));
+	  await token.transfer(whitelisted, helpers.toGD("10"));
 
 	  // Check that reserve has received fees
 	  const reserve = (await token.balanceOf(avatar.address)) as any;

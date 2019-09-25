@@ -46,6 +46,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
      */
     function transfer(address to, uint256 value)
         public
+        onlyWhitelisted
         onlyNotBlacklisted
         requireNotBlacklisted(to)
         returns (bool)
@@ -86,6 +87,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
         uint256 value
     )
         public
+        requireWhitelisted(from)
         onlyNotBlacklisted
         requireNotBlacklisted(from)
         requireNotBlacklisted(to)
@@ -208,7 +210,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
         internal
         returns (uint256)
     {
-        if (!super.isContract(msg.sender)) {
+        if (!identity.isDAOContract(msg.sender)) {
             uint256 txFees = getFees(value);
             if (account == msg.sender) {
                 super.transfer(_feeRecipient, txFees);

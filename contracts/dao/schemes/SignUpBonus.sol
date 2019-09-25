@@ -6,14 +6,15 @@ import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "../../identity/IdentityGuard.sol";
-import "./ActivePeriod.sol";
-import "./SchemeGuard.sol";
 import "../../token/GoodDollar.sol";
+import "./ActivePeriod.sol";
+import "./FeelessScheme.sol";
+import "./SchemeGuard.sol";
 
 /* @title Sign-Up bonus scheme responsible for minting
  * a given amount to users
  */
-contract SignUpBonus is IdentityGuard, ActivePeriod, SchemeGuard {
+contract SignUpBonus is IdentityGuard, ActivePeriod, FeelessScheme {
     using SafeMath for uint256;
 
     uint256 public maxBonus;
@@ -32,7 +33,7 @@ contract SignUpBonus is IdentityGuard, ActivePeriod, SchemeGuard {
         public
         IdentityGuard(_identity)
         ActivePeriod(now, now * 2)
-        SchemeGuard(_avatar)
+        FeelessScheme(_identity, _avatar)
     {
         initalReserve = _initalReserve;
         maxBonus = _maxBonus;
@@ -40,6 +41,7 @@ contract SignUpBonus is IdentityGuard, ActivePeriod, SchemeGuard {
 
     function start() public onlyRegistered returns(bool) {
         super.start();
+        addRights();
 
         if ( initalReserve > 0) {
             DAOToken token = avatar.nativeToken();
@@ -65,6 +67,7 @@ contract SignUpBonus is IdentityGuard, ActivePeriod, SchemeGuard {
             token.transfer(address(avatar), remainingReserve);
         }
 
+        removeRights();
         super.internalEnd(avatar);
     }
 

@@ -11,7 +11,7 @@ contract IdentityGuardMock is IdentityGuard {
         return true;
     }
 
-    function checkClaimer(address to) public requireClaimer(to) returns (bool) {
+    function checkWhitelisted(address to) public requireWhitelisted(to) returns (bool) {
         return true;
     }
 }

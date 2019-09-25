@@ -9,7 +9,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const InviteUser = artifacts.require("InviteUser");
 
-contract("Integration - awarding invitational bonus", ([founder, claimer, claimer2, nonClaimer]) => {
+contract("Integration - awarding invitational bonus", ([founder, whitelisted, whitelisted2, nonWhitelisted]) => {
 
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
@@ -28,11 +28,11 @@ contract("Integration - awarding invitational bonus", ([founder, claimer, claime
       token = await GoodDollar.at(await avatar.nativeToken());
       inviteUser = await InviteUser.new(avatar.address, identity.address, 5, 3);
 
-      await identity.addClaimer(claimer);
+      await identity.addWhitelisted(whitelisted);
     });
 
     it("should not allow claiming before starting scheme", async () => {
-      await helpers.assertVMException(inviteUser.claimReward({ from: claimer }), "Scheme is not registered")
+      await helpers.assertVMException(inviteUser.claimReward({ from: whitelisted }), "Scheme is not registered")
     })
 
     it("should start InviteUser scheme", async () => {
@@ -50,31 +50,31 @@ contract("Integration - awarding invitational bonus", ([founder, claimer, claime
     });
 
     it("Should invite user", async () => {
-      assert(await inviteUser.inviteUser(claimer2, {from: claimer }));
+      assert(await inviteUser.inviteUser(whitelisted2, {from: whitelisted }));
     });
 
     it("should not allow inviting twice", async () => {
-      await helpers.assertVMException(inviteUser.inviteUser(claimer2, { from: claimer }), "User already invited");
+      await helpers.assertVMException(inviteUser.inviteUser(whitelisted2, { from: whitelisted }), "User already invited");
     });
 
-    it("should not allow inviting registered claimer", async () => {
-      await helpers.assertVMException(inviteUser.inviteUser(claimer), "User already in system");
+    it("should not allow inviting registered whitelisted", async () => {
+      await helpers.assertVMException(inviteUser.inviteUser(whitelisted), "User already in system");
     });
 
-    it("should allow registered claimer to claim", async () => {
-      assert(await inviteUser.claimReward({ from: claimer }));
+    it("should allow registered whitelisted to claim", async () => {
+      assert(await inviteUser.claimReward({ from: whitelisted }));
     });
 
-    it("should not allow claimer to claim twice", async () => {
-      await helpers.assertVMException(inviteUser.claimReward({ from: claimer }), "Cannot claim twice");
+    it("should not allow whitelisted to claim twice", async () => {
+      await helpers.assertVMException(inviteUser.claimReward({ from: whitelisted }), "Cannot claim twice");
     })
 
     it("should allow to claim after registering", async () => {
-      await helpers.assertVMException(inviteUser.claimReward({ from: claimer2 }), "User not in system");
+      await helpers.assertVMException(inviteUser.claimReward({ from: whitelisted2 }), "User not in system");
 
-      await identity.addClaimer(claimer2);
+      await identity.addWhitelisted(whitelisted2);
 
-      assert(await inviteUser.claimReward({ from: claimer2 }));
+      assert(await inviteUser.claimReward({ from: whitelisted2 }));
     })
 
     it("should end InviteUser scheme", async () => {

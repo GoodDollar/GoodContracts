@@ -16,9 +16,10 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     using SafeMath for uint256;
 
     Roles.Role private blacklist;
-    Roles.Role private claimers;
+    Roles.Role private whitelist;
+    Roles.Role private contracts;
 
-    uint256 private claimerCount;
+    uint256 private whitelistedCount;
     mapping(address => uint) dateAdded;
 
     mapping (address => string) public addrToDID;
@@ -27,72 +28,75 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     event BlacklistAdded(address indexed account);
     event BlacklistRemoved(address indexed account);
  
-    event ClaimerAdded(address indexed account);
-    event ClaimerRemoved(address indexed account);
+    event WhitelistedAdded(address indexed account);
+    event WhitelistedRemoved(address indexed account);
+
+    event ContractAdded(address indexed account);
+    event ContractRemoved(address indexed account);
 
     constructor() public SchemeGuard(Avatar(0)) {}
 
-    /* @dev Adds an address as a claimer. Eligble for claiming UBI.
+    /* @dev Adds an address as whitelisted. Eligble for claiming UBI.
      * Can only be called by Identity Administrators.
-     * @param account address to add as a claimer
+     * @param account address to add as whitelisted
      */
-    function addClaimer(address account)
+    function addWhitelisted(address account)
         public
         onlyRegistered
         onlyIdentityAdmin
     {
-        _addClaimer(account);
+        _addWhitelisted(account);
     }
 
-    function addClaimerWithDID(address account, string memory did) 
+    function addWhitelistedWithDID(address account, string memory did) 
         public
         onlyRegistered
         onlyIdentityAdmin 
     {
-        _addClaimer(account);
+        _addWhitelisted(account);
 
         bytes32 pHash = keccak256(bytes(did));
         addrToDID[account] = did;
         didHashToAddress[pHash] = account;
     }
 
-    /* @dev Removes an address as a claimer.
+    /* @dev Removes an address as whitelisted.
      * Can only be called by Identity Administrators.
-     * @param account address to remove as a claimer
+     * @param account address to remove as whitelisted
      */
-    function removeClaimer(address account)
+    function removeWhitelisted(address account)
         public
         onlyRegistered
         onlyIdentityAdmin
     {
-        _removeClaimer(account);
+        _removeWhitelisted(account);
     }
 
-    function renounceClaimer() public {
-        _removeClaimer(msg.sender);
+    function renounceWhitelisted() public {
+        _removeWhitelisted(msg.sender);
     }
 
-    /* @dev Reverts if given address has not been added to claimers
+    /* @dev Reverts if given address has not been added to whitelist
      * @param account the address to check
-     * @return a bool indicating weather the address is present in claimers
+     * @return a bool indicating weather the address is present in whitelist
      */
-    function isClaimer(address account)
+    function isWhitelisted(address account)
         public
         view
         returns (bool)
     {
-        return claimers.has(account);
+        return whitelist.has(account);
     }
 
-    /* @dev Gets the amount of claimers
-     * @return a uint representing the current amount of claimers
+    /* @dev Gets the amount of whitelist
+     * @return a uint representing the current amount of whitelist
      */
-    function getClaimerCount()
+    function getWhitelistedCount()
         public
         view
         returns (uint)
     {
-        return claimerCount;
+        return whitelistedCount;
     }
 
     function wasAdded(address account) public view returns (uint) {
@@ -105,8 +109,8 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         string memory did = addrToDID[msg.sender];
         bytes32 pHash = keccak256(bytes(did));
 
-        _removeClaimer(msg.sender);
-        _addClaimer(account);
+        _removeWhitelisted(msg.sender);
+        _addWhitelisted(account);
 
         addrToDID[account] = did;
         didHashToAddress[pHash] = account;
@@ -138,19 +142,53 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         emit BlacklistRemoved(account);
     }
 
-    function _addClaimer(address account) internal {
-        claimers.add(account);
-        
-        increaseClaimerCount(1);
-        dateAdded[account] = now;
-        
-        emit ClaimerAdded(account);
+    function addContract(address account)
+        public
+        onlyRegistered
+        onlyIdentityAdmin
+    {
+        require(isContract(account), "Given address is not a contract");
+        contracts.add(account);
+        _addWhitelisted(account);
+
+        emit ContractAdded(account);
     }
 
-    function _removeClaimer(address account) internal {
-        claimers.remove(account);
+    function removeContract(address account)
+        public
+        onlyRegistered
+        onlyIdentityAdmin
+    {
+        contracts.remove(account);
+        _removeWhitelisted(account);
+    }
 
-        decreaseClaimerCount(1);
+    function isDAOContract(address account)
+        public
+        view
+        returns (bool)
+    {
+        return contracts.has(account);
+    }
+
+    function _addWhitelisted(address account) internal {
+        whitelist.add(account);
+        
+        if(!isContract(account))
+        {
+            increaseWhitelistedCount(1);
+            dateAdded[account] = now;
+        }
+
+        emit WhitelistedAdded(account);
+    }
+
+    function _removeWhitelisted(address account) internal {
+        whitelist.remove(account);
+
+        if (!isContract(account)) {
+            decreaseWhitelistedCount(1);
+        }
 
         string memory did = addrToDID[account];
         bytes32 pHash = keccak256(bytes(did));
@@ -159,7 +197,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         delete addrToDID[account];
         delete didHashToAddress[pHash];
 
-        emit ClaimerRemoved(account);
+        emit WhitelistedRemoved(account);
     }
 
     /* @dev Reverts if given address has been added to the blacklist
@@ -174,23 +212,35 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         return blacklist.has(account);
     }
 
+    /* @dev Checks to see if given address is a contract
+     */
+    function isContract(address _addr)
+        view
+        internal
+        returns (bool)
+    {
+        uint length;
+        assembly { length := extcodesize(_addr) }
+        return length > 0;
+    }
+
     /* @dev Internal function that increases count of whitelisted users by
      * given amount
      * @param value an uint with which the whitelisted count will increase by
      */
-    function increaseClaimerCount(uint value)
+    function increaseWhitelistedCount(uint value)
         internal
     {
-        claimerCount = claimerCount.add(value);
+        whitelistedCount = whitelistedCount.add(value);
     }
 
     /* @dev Internal function that decreases count of whitelisted users by
      * given amount
      * @param value an uint with which the whitelisted count will increase by
      */
-    function decreaseClaimerCount(uint value)
+    function decreaseWhitelistedCount(uint value)
         internal
     {
-        claimerCount = claimerCount.sub(value);
+        whitelistedCount = whitelistedCount.sub(value);
     }
 }

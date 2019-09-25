@@ -41,7 +41,7 @@ contract ReputationReward is IdentityGuard, SchemeGuard {
      */
     function rewardAddress(address _to)
         internal
-        requireClaimer(_to)
+        requireWhitelisted(_to)
         onlyRegistered
         returns (bool)
     {

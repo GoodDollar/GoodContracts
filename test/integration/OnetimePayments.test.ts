@@ -14,7 +14,7 @@ const DEPOSIT_CODE_HASH = web3.utils.keccak256(DEPOSIT_CODE);
 
 const GASLIMIT = 800000;
 
-contract("Integration - One-Time Payments", ([founder, claimer]) => {
+contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
   
   let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
   let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
@@ -31,15 +31,15 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
     controller = await ControllerInterface.at(await avatar.owner());
     absoluteVote = await AbsoluteVote.deployed();
     token = await GoodDollar.at(await avatar.nativeToken());
-    oneTimePayments = await OneTimePayments.new(avatar.address, GASLIMIT);
+    oneTimePayments = await OneTimePayments.new(avatar.address, identity.address, GASLIMIT);
 
-    await identity.addClaimer(claimer);
+    await identity.addWhitelisted(whitelisted);
   });
 
   it("should not allow One-Time payments before registering", async () => {
-    await token.transfer(claimer, helpers.toGD("10"));
+    await token.transfer(whitelisted, helpers.toGD("10"));
 
-    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer }),
+    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: whitelisted }),
       "Scheme is not registered");
   });
 
@@ -57,6 +57,8 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
     const excecuteProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
 
     assert(excecuteProposalEventExists);
+    await oneTimePayments.start();
+    assert(await identity.isDAOContract(oneTimePayments.address));
   });
 
   it("should not have payment", async () => {
@@ -64,20 +66,20 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
   });
 
   it("should only allow token to deposit", async () => {
-    helpers.assertVMException(oneTimePayments.onTokenTransfer(claimer, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer }), "Only callable by this");
+    helpers.assertVMException(oneTimePayments.onTokenTransfer(whitelisted, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: whitelisted }), "Only callable by this");
   });
 
   it("should deposit successfully", async () => {
-    await token.transfer(claimer, helpers.toGD("300"));
+    await token.transfer(whitelisted, helpers.toGD("300"));
 
-    await token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer });
+    await token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: whitelisted });
 
     assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
   });
 
   it("should not allow to deposit to same hash", async () => {
 
-    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer }), "Hash already in use");
+    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: whitelisted }), "Hash already in use");
   });
 
   it("should have payment", async () => {
@@ -89,7 +91,7 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
   })
 
   it("should withdraw successfully", async () => {
-    await oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000 });
+    await oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000, from: whitelisted });
 
     assert(!(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH)));
   });
@@ -104,15 +106,15 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
 
   it("should only allow creator of deposit to cancel", async () => {
 
-    await token.transfer(claimer, helpers.toGD("300"));
+    await token.transfer(whitelisted, helpers.toGD("300"));
 
-    await token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer });
+    await token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: whitelisted });
 
     assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
 
     await helpers.assertVMException(oneTimePayments.cancel(DEPOSIT_CODE, { gas: 590000, from: founder }), "Can only be called by creator");
 
-    await oneTimePayments.cancel(DEPOSIT_CODE, { gas: 590000, from: claimer});
+    await oneTimePayments.cancel(DEPOSIT_CODE, { gas: 590000, from: whitelisted});
 
     //await helpers.assertVMException(oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000}), "Hash not in use");
   })
@@ -133,10 +135,20 @@ contract("Integration - One-Time Payments", ([founder, claimer]) => {
   });
 
   it("should not allow One-Time payments after registering", async () => {
-    await token.transfer(claimer, helpers.toGD("10"));
+    await token.transfer(whitelisted, helpers.toGD("10"));
 
-    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: claimer }),
+    await helpers.assertVMException(token.transferAndCall(oneTimePayments.address, helpers.toGD("5"), DEPOSIT_CODE_HASH, { from: whitelisted }),
       "Scheme is not registered");
+  });
+
+  it("should remove oneTimePayments from whitelisteds without decrementing amount of whitelisteds", async () => {
+    const oldWhitelistedCount = await identity.getWhitelistedCount();
+
+    await identity.removeWhitelisted(oneTimePayments.address);
+
+    const newWhitelistedCount = await identity.getWhitelistedCount();
+
+    expect(oldWhitelistedCount.toString()).to.be.equal(newWhitelistedCount.toString());
   });
 });
 

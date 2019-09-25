@@ -47,6 +47,7 @@ module.exports = async function(deployer, network) {
   const oneTimePayments = await deployer.deploy(
     OneTimePayments,
     avatar.address,
+    identity.address,
     GASLIMIT
   );
 
@@ -63,6 +64,8 @@ module.exports = async function(deployer, network) {
   let proposalId = transaction.logs[0].args._proposalId;
 
   await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
+
+  await oneTimePayments.start();
 
   let releasedContracts = {
     GoodDollar: await avatar.nativeToken(),

@@ -13,7 +13,7 @@ const IdentityGuardFailMock = artifacts.require("IdentityGuardFailMock");
 const AddAdmin = artifacts.require("AddAdmin");
 const RemoveAdmin = artifacts.require("RemoveAdmin");
 
-contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted2, claimer, outsider]) => {
+contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklisted2, whitelisted, outsider]) => {
 
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
     let dangerIdentity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
@@ -67,36 +67,36 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         await identity.removeBlacklisted(blacklisted);        
     });
 
-    it("should add, check and remove claimer", async () => {
-        await helpers.assertVMException(mock.checkClaimer(claimer), "is not claimer");
+    it("should add, check and remove whitelisted", async () => {
+        await helpers.assertVMException(mock.checkWhitelisted(whitelisted), "is not whitelisted");
 
-        await identity.addClaimer(claimer);
-        assert(await identity.isClaimer(claimer));
+        await identity.addWhitelisted(whitelisted);
+        assert(await identity.isWhitelisted(whitelisted));
 
-        assert(await mock.checkClaimer(claimer));
+        assert(await mock.checkWhitelisted(whitelisted));
 
-        await identity.removeClaimer(claimer);
-        assert(!(await identity.isClaimer(claimer)));
+        await identity.removeWhitelisted(whitelisted);
+        assert(!(await identity.isWhitelisted(whitelisted)));
     });
 
-    it("should increment and decrement claimers when adding claimer", async () => {
-        const oldClaimerCount = await identity.getClaimerCount();
+    it("should increment and decrement whitelisteds when adding whitelisted", async () => {
+        const oldWhitelistedCount = await identity.getWhitelistedCount();
 
-        await identity.addClaimer(claimer);
+        await identity.addWhitelisted(whitelisted);
 
-        const diffClaimerCount = ((await identity.getClaimerCount()) as any).sub(oldClaimerCount);
-        expect(diffClaimerCount.toString()).to.be.equal('1');
+        const diffWhitelistedCount = ((await identity.getWhitelistedCount()) as any).sub(oldWhitelistedCount);
+        expect(diffWhitelistedCount.toString()).to.be.equal('1');
 
-        await identity.removeClaimer(claimer);
+        await identity.removeWhitelisted(whitelisted);
 
-        const claimerCount = (await identity.getClaimerCount());
-        expect(claimerCount.toString()).to.be.equal(oldClaimerCount.toString());
+        const whitelistedCount = (await identity.getWhitelistedCount());
+        expect(whitelistedCount.toString()).to.be.equal(oldWhitelistedCount.toString());
 
     });
 
-    it("should revert when non admin tries to add claimer", async () => {
+    it("should revert when non admin tries to add whitelisted", async () => {
         await helpers.assertVMException(
-            identity.addClaimer(claimer, {from: outsider}),
+            identity.addWhitelisted(whitelisted, {from: outsider}),
             "not IdentityAdmin"
         );
     });
@@ -205,15 +205,15 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         await identity.renounceIdentityAdmin( { from: outsider } )
     });
 
-    it("should revert when adding to claimer twice", async () => {
-        await identity.addClaimer(claimer);
+    it("should revert when adding to whitelisted twice", async () => {
+        await identity.addWhitelisted(whitelisted);
 
         await helpers.assertVMException(
-          identity.addClaimer(claimer),
+          identity.addWhitelisted(whitelisted),
           "VM Exception"
         );
 
-        await identity.removeClaimer(claimer);
+        await identity.removeWhitelisted(whitelisted);
     });
 
     it("should revert when adding to blacklist twice", async () => {
@@ -227,50 +227,50 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
         await identity.removeBlacklisted(blacklisted);
     })
 
-    it("should not increment claimer counter when adding claimer", async () => {
-        await identity.addClaimer(claimer);
-        let claimerCount = await identity.getClaimerCount();
+    it("should not increment whitelisted counter when adding whitelisted", async () => {
+        await identity.addWhitelisted(whitelisted);
+        let whitelistedCount = await identity.getWhitelistedCount();
 
         await helpers.assertVMException(
-          identity.addClaimer(claimer),
+          identity.addWhitelisted(whitelisted),
           "VM Exception"
         );
 
-        let claimerCountNew = await identity.getClaimerCount();
-        expect(claimerCountNew.toString()).to.be.equal(claimerCount.toString());
+        let whitelistedCountNew = await identity.getWhitelistedCount();
+        expect(whitelistedCountNew.toString()).to.be.equal(whitelistedCount.toString());
 
-        await identity.removeClaimer(claimer);
+        await identity.removeWhitelisted(whitelisted);
     });
 
-    it("should renounce claimer", async () => {
-        await identity.addClaimer(claimer);
-        assert(await identity.isClaimer(claimer));
-        await identity.renounceClaimer({ from: claimer });
-        assert(!(await identity.isClaimer(claimer)));
+    it("should renounce whitelisted", async () => {
+        await identity.addWhitelisted(whitelisted);
+        assert(await identity.isWhitelisted(whitelisted));
+        await identity.renounceWhitelisted({ from: whitelisted });
+        assert(!(await identity.isWhitelisted(whitelisted)));
     });
 
     it("should add with did", async () => {
-        await identity.addClaimerWithDID(claimer, 'testString');
+        await identity.addWhitelistedWithDID(whitelisted, 'testString');
 
-        const str = await identity.addrToDID(claimer);
+        const str = await identity.addrToDID(whitelisted);
 
         expect(str).to.be.equal('testString');
     });
 
     it("should not allow transferring account to blacklisted", async () => {
-        await helpers.assertVMException(identity.transferAccount(blacklisted2, {from: claimer}), "Cannot transfer to blacklisted");
+        await helpers.assertVMException(identity.transferAccount(blacklisted2, {from: whitelisted}), "Cannot transfer to blacklisted");
     });
 
     it("should transfer account to new address", async () => {
-        await identity.transferAccount(outsider, { from: claimer });
+        await identity.transferAccount(outsider, { from: whitelisted });
 
-        assert(await identity.isClaimer(outsider));
+        assert(await identity.isWhitelisted(outsider));
         const transferstring = await identity.addrToDID(outsider);
         expect(transferstring).to.be.equal('testString');
     });
 
     it("should not keep did after transferring account", async () => {
-        const emptyString = await identity.addrToDID(claimer);
+        const emptyString = await identity.addrToDID(whitelisted);
 
         expect(emptyString).to.be.equal('');
     })
@@ -283,6 +283,10 @@ contract("Identity - Blacklist and Claimer", ([founder, blacklisted, blacklisted
     it("should allow to set registered identity", async () => {
         assert(await identityGuard.setIdentity(identity.address, avatar.address));
     });
+
+    it("should not allow adding non contract to contracts", async () => {
+        await helpers.assertVMException(identity.addContract(outsider), "Given address is not a contract");
+    })
 });
 
 export {}

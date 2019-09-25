@@ -77,14 +77,18 @@ module.exports = async function(deployer, network) {
     const token = await GoodDollar.at(await avatar.nativeToken());
     const reputation = await Reputation.at(await avatar.nativeReputation());
 
+    //Set avatar for schemes
     await identity.setAvatar(avatar.address);
     await feeFormula.setAvatar(avatar.address);
 
+    //Set fee recipient, add minters and admin
     await token.setFeeRecipient(avatar.address, avatar.address);
     await token.addMinter(avatar.address);
     await token.addMinter(controller.address);
     await token.renounceMinter();
+    await identity.addIdentityAdmin(avatar.address, avatar.address);
 
+    //Transfer ownership to controller
     await token.transferOwnership(await avatar.owner());
     await reputation.transferOwnership(await avatar.owner());
     await identity.transferOwnership(await avatar.owner());

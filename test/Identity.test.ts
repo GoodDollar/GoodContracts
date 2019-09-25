@@ -283,6 +283,10 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
     it("should allow to set registered identity", async () => {
         assert(await identityGuard.setIdentity(identity.address, avatar.address));
     });
+
+    it("should not allow adding non contract to contracts", async () => {
+        await helpers.assertVMException(identity.addContract(outsider), "Given address is not a contract");
+    })
 });
 
 export {}

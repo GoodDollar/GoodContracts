@@ -58,6 +58,7 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
 
     assert(excecuteProposalEventExists);
     await oneTimePayments.start();
+    assert(await identity.isDAOContract(oneTimePayments.address));
   });
 
   it("should not have payment", async () => {
@@ -90,7 +91,7 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
   })
 
   it("should withdraw successfully", async () => {
-    await oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000 });
+    await oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000, from: whitelisted });
 
     assert(!(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH)));
   });

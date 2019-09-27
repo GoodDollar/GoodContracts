@@ -31,7 +31,7 @@ contract RemoveAdmin is SchemeGuard {
     /* @dev starts scheme if within period, gets avatar to remove the
      * address from list of admins and then ends even if still within period
      */
-    function start() onlyRegistered public returns(bool) {
+    function start() onlyRegistered public {
 
         controller.genericCall(
             address(identity),

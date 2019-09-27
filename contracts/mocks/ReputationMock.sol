@@ -17,8 +17,8 @@ contract ReputationMock is ReputationReward, ActivePeriod {
         ActivePeriod(_periodStart, _periodEnd)
     {}
 
-    function start() public returns (bool){
-        require(super.start());
+    function start() public {
+        super.start();
         super.rewardAddress(creator);
         super.rewardAddress(msg.sender);
     }

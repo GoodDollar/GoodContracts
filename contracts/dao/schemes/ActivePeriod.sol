@@ -58,10 +58,9 @@ contract ActivePeriod {
 
     /* @dev Sets scheme to active if inactive and within period
      */
-    function start() public requireInPeriod requireNotActive returns(bool) {
+    function start() public requireInPeriod requireNotActive {
         isActive = true;
         emit SchemeStarted(msg.sender, now);
-        return true;
     }
 
     /* @dev public end function. Calls internalEnd if after period end

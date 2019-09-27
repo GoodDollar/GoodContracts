@@ -33,6 +33,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, FeelessScheme {
     uint public currentDay;
     uint public lastCalc;
 
+    event UBIStarted(uint256 balance, uint time);
     event UBIClaimed(address indexed claimer, uint256 amount);
     event UBIEnded(uint256 claimers, uint256 claimamount);
     /**
@@ -96,8 +97,8 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, FeelessScheme {
      * The claim distribution is then calculated and true is returned
      * to indicate that claiming can be done.
      */
-    function start() public onlyRegistered returns(bool) {
-        require(super.start());
+    function start() public onlyRegistered {
+        super.start();
         addRights();
 
         currentDay = 0;
@@ -115,7 +116,7 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, FeelessScheme {
                 avatar,
                 0);
         }
-        return true;
+        emit UBIStarted(token.balanceOf(address(this)), now);
     }
 
     /**
@@ -199,10 +200,11 @@ contract UBI is AbstractUBI {
     /* @dev starts scheme and calculates dispersion of UBI
      * @returns a bool indicating if scheme has started
      */
-    function start() public returns (bool) {
-        require(super.start());
+    function start() public {
+        super.start();
 
         DAOToken token = avatar.nativeToken();
         claimDistribution = distributionFormula(token.balanceOf(address(this)), address(0));
+
     }    
 }

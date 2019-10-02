@@ -33,7 +33,7 @@ contract ReserveMinter is ActivePeriod, SchemeGuard {
      * the receiver given in the constructor, then ends the scheme regardless
      * of end period
      */
-    function start() onlyRegistered public returns(bool) {
+    function start() onlyRegistered public {
         super.start();
 
         DAOToken token = avatar.nativeToken();

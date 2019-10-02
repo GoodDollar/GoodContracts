@@ -22,6 +22,7 @@ contract SignUpBonus is IdentityGuard, ActivePeriod, FeelessScheme {
 
     mapping(address => uint256) rewarded;
 
+    event SignUpStarted(uint256 balance, uint time);
     event BonusClaimed(address indexed account, uint256 amount);
 
     constructor(
@@ -39,12 +40,13 @@ contract SignUpBonus is IdentityGuard, ActivePeriod, FeelessScheme {
         maxBonus = _maxBonus;
     }
 
-    function start() public onlyRegistered returns(bool) {
+    function start() public onlyRegistered {
         super.start();
         addRights();
 
+        DAOToken token = avatar.nativeToken();
+
         if ( initalReserve > 0) {
-            DAOToken token = avatar.nativeToken();
             uint256 reserve = token.balanceOf(address(avatar));
 
             require(reserve >= initalReserve, "Not enough funds to start");
@@ -56,7 +58,7 @@ contract SignUpBonus is IdentityGuard, ActivePeriod, FeelessScheme {
                 0
             );
         }
-        return true;
+        emit SignUpStarted(token.balanceOf(address(this)), now);
     }
 
     function end(Avatar /*_avatar*/) public onlyIdentityAdmin {

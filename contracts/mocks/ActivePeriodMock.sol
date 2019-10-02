@@ -7,8 +7,8 @@ contract ActivePeriodMock is ActivePeriod {
 
     constructor( uint _periodStart, uint _periodEnd) public ActivePeriod(_periodStart, _periodEnd) {}
 
-    function start() public returns(bool) {
-        require(super.start());
+    function start() public {
+        super.start();
     }
 
     function end(Avatar _avatar) public {

@@ -13,6 +13,7 @@ const Reputation = artifacts.require("./Reputation.sol");
 const Avatar = artifacts.require("./Avatar.sol");
 const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
+const UpgradeScheme = artifacts.require("./UpgradeScheme.sol");
 
 const releaser = require("../scripts/releaser.js");
 
@@ -103,6 +104,10 @@ module.exports = async function(deployer, network) {
       NULL_ADDRESS
     );
 
+    const upgradeScheme = await deployer.deploy(UpgradeScheme);
+    await upgradeScheme.setParameters(voteParametersHash, absoluteVote.address);
+    const upgradeParametersHash = await upgradeScheme.getParametersHash(voteParametersHash, absoluteVote.address);
+
     // Deploy SchemeRegistrar
     const schemeRegistrar = await deployer.deploy(SchemeRegistrar);
     await schemeRegistrar.setParameters(
@@ -123,11 +128,12 @@ module.exports = async function(deployer, network) {
     // Subscribe schemes
     schemesArray = [
       schemeRegistrar.address,
+      upgradeScheme.address,
       identity.address,
       feeFormula.address
     ];
-    paramsArray = [schemeRegisterParams, NULL_HASH, NULL_HASH];
-    permissionArray = ["0x0000001F", "0x0000001F", "0x0000001F"];
+    paramsArray = [schemeRegisterParams, upgradeParametersHash, NULL_HASH, NULL_HASH];
+    permissionArray = ["0x0000001F", "0x0000001F", "0x0000001F", "0x0000001F"];
 
     await daoCreator.setSchemes(
       avatar.address,
@@ -154,6 +160,7 @@ module.exports = async function(deployer, network) {
       Controller: await avatar.owner(),
       AbsoluteVote: await absoluteVote.address,
       SchemeRegistrar: await schemeRegistrar.address,
+      UpgradeScheme: await upgradeScheme.address,
       UBI: NULL_ADDRESS,
       SignupBonus: NULL_ADDRESS,
       OneTimePayments: NULL_ADDRESS,

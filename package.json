@@ -8,7 +8,7 @@
     "start:full": "run-p ganache migrate:full",
     "coverage": "export COVERALLS_REPO_TOKEN='qiXNelh1HXMAsoPah9yRD2yG2WlqrDfLh' && run-s test:generate-typings && run-s test:tsc && scripts/coverage.sh",
     "testscript": "scripts/test.sh",
-    "ganache": "ganache-cli -m \"$MNEMONIC\" -g 1000000 -l 8000000 --port 8545 --networkId 4447 -q",
+    "ganache": "ganache-cli -m \"$MNEMONIC\" -g 1000000 -l 8000000 --port 8545 --networkId 4447 -q --allowUnlimitedContractSize",
     "wait": "wait-on tcp:9545",
     "minimize": "scripts/minimize.sh 'build/contracts'",
     "deploy": "run-s migrate_reset:lite minimize",
@@ -63,6 +63,7 @@
     "@daostack/arc": "0.0.1-rc.18",
     "dotenv": "^6.2.0",
     "solhint": "^2.0.0",
+    "truffle-hdwallet-provider": "^1.0.17",
     "update": "^0.7.4"
   },
   "devDependencies": {
@@ -89,7 +90,6 @@
     "openzeppelin-solidity": "^2.1.2",
     "solidity-coverage": "github:rotcivegaf/solidity-coverage#5875f5b7bc74d447f3312c9c0e9fc7814b482477",
     "truffle": "^5.0.17",
-    "@truffle/hdwallet-provider": "latest",
     "truffle-hdwallet-provider-privkey": "latest",
     "truffle-typings": "^1.0.6",
     "ts-generator": "0.0.8",

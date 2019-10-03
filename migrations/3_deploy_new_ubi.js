@@ -86,6 +86,7 @@ module.exports = async function(deployer, network) {
     Controller: await avatar.owner(),
     AbsoluteVote: await absoluteVote.address,
     SchemeRegistrar: await schemeRegistrar.address,
+    UpgradeScheme: await networkAddresses.UpgradeScheme,
     UBI: await ubi.address,
     SignupBonus: signupaddr,
     OneTimePayments: otpaddr,

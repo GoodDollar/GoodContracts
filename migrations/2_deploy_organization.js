@@ -7,6 +7,7 @@ const DaoCreatorGoodDollar = artifacts.require("./DaoCreatorGoodDollar.sol");
 const ControllerCreatorGoodDollar = artifacts.require(
   "./ControllerCreatorGoodDollar.sol"
 );
+const AddFoundersGoodDollar = artifacts.require("./AddFoundersGoodDollar");
 const GoodDollar = artifacts.require("./GoodDollar.sol");
 const Reputation = artifacts.require("./Reputation.sol");
 
@@ -46,9 +47,14 @@ module.exports = async function(deployer, network) {
     const controllerCreator = await deployer.deploy(
       ControllerCreatorGoodDollar
     );
+    const addFoundersGoodDollar = await deployer.deploy(
+      AddFoundersGoodDollar,
+      controllerCreator.address
+    );
+
     const daoCreator = await deployer.deploy(
       DaoCreatorGoodDollar,
-      controllerCreator.address
+      addFoundersGoodDollar.address
     );
 
     console.log({
@@ -82,10 +88,6 @@ module.exports = async function(deployer, network) {
     await identity.setAvatar(avatar.address);
     await feeFormula.setAvatar(avatar.address);
 
-    //Set fee recipient, add minters and admin
-    await token.setFeeRecipient(avatar.address, avatar.address);
-    await token.addMinter(avatar.address);
-    await token.addMinter(controller.address);
     await token.renounceMinter();
     await identity.addIdentityAdmin(avatar.address, avatar.address);
 

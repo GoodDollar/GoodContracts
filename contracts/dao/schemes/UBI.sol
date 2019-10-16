@@ -30,6 +30,8 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, FeelessScheme {
 
     mapping (uint => Day) claimDay;
 
+    mapping (address => uint) public lastClaimed;
+
     uint public currentDay;
     uint public lastCalc;
 
@@ -159,6 +161,8 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, FeelessScheme {
         claimDay[currentDay].amountOfClaimers = claimDay[currentDay].amountOfClaimers.add(1);
         claimDay[currentDay].claimAmount = claimDay[currentDay].claimAmount.add(claimDistribution);
 
+        lastClaimed[msg.sender] = now;
+        
         emit UBIClaimed(msg.sender, claimDistribution);
         return true;
     }

@@ -9,8 +9,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract FixedUBI is AbstractUBI {
     using SafeMath for uint256;
 
-    mapping (address => uint) lastClaimed;
-
     constructor(
         Avatar _avatar,
         Identity _identity,

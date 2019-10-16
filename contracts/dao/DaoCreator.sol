@@ -13,14 +13,70 @@ import "../dao/schemes/FeeFormula.sol";
  */
 contract ControllerCreatorGoodDollar {
 
-    function create(Avatar _avatar) public returns(address) {
+    function create(Avatar _avatar, address _sender) public returns(address) {
         Controller controller = new Controller(_avatar);
-        controller.registerScheme(msg.sender, bytes32(0), bytes4(0x0000001f), address(_avatar));
+        controller.registerScheme(_sender, bytes32(0), bytes4(0x0000001f), address(_avatar));
         controller.unregisterScheme(address(this), address(_avatar));
         return address(controller);
     }
 }
 
+contract AddFoundersGoodDollar {
+
+    ControllerCreatorGoodDollar private controllerCreatorGoodDollar;
+
+    constructor(ControllerCreatorGoodDollar _controllerCreatorGoodDollar) public {
+        controllerCreatorGoodDollar = _controllerCreatorGoodDollar;
+    }
+
+    /**
+     * @param _founders An array with the addresses of the founders of the organization
+     * @param _foundersTokenAmount An array of amount of tokens that the founders
+     *  receive in the new organization
+     * @param _foundersReputationAmount An array of amount of reputation that the
+     *   founders receive in the new organization
+     */
+    function addFounders(
+        GoodDollar nativeToken,
+        Reputation nativeReputation,
+        address _sender,
+        address[] memory _founders,
+        uint[] memory _foundersTokenAmount,
+        uint[] memory _foundersReputationAmount
+    )
+        public
+        returns(Avatar)
+    {
+        Avatar avatar = new Avatar("GoodDollar", nativeToken, nativeReputation);
+
+        // Mint token and reputation for founders:
+        for (uint256 i = 0; i < _founders.length; i++) {
+            require(_founders[i] != address(0), "Founder cannot be zero address");
+            if (_foundersTokenAmount[i] > 0) {
+                nativeToken.mint(_founders[i], _foundersTokenAmount[i]);
+            }
+            if (_foundersReputationAmount[i] > 0) {
+                nativeReputation.mint(_founders[i], _foundersReputationAmount[i]);
+            }
+        }
+        // Create Controller:
+        ControllerInterface controller = ControllerInterface(controllerCreatorGoodDollar.create(avatar, msg.sender));
+
+        // Set fee recipient and Transfer ownership:
+        nativeToken.setFeeRecipient(address(avatar), avatar);
+
+        avatar.transferOwnership(address(controller));
+        nativeToken.transferOwnership(_sender);
+        nativeReputation.transferOwnership(_sender);
+
+        // Add minters
+        nativeToken.addMinter(_sender);
+        nativeToken.addMinter(address(avatar));
+        nativeToken.addMinter(address(controller));
+        nativeToken.renounceMinter();
+        return(avatar);
+    }
+}
 
 /**
  * @title Genesis Scheme that creates organizations. Taken and modified from @daostack.
@@ -33,10 +89,10 @@ contract DaoCreatorGoodDollar {
     event NewOrg (address _avatar);
     event InitialSchemesSet (address _avatar);
 
-    ControllerCreatorGoodDollar private controllerCreatorGoodDollar;
+    AddFoundersGoodDollar private addFoundersGoodDollar;
 
-    constructor(ControllerCreatorGoodDollar _controllerCreatorGoodDollar) public {
-        controllerCreatorGoodDollar = _controllerCreatorGoodDollar;
+    constructor(AddFoundersGoodDollar _addFoundersGoodDollar) public {
+        addFoundersGoodDollar = _addFoundersGoodDollar;
     }
 
   /**
@@ -139,30 +195,15 @@ contract DaoCreatorGoodDollar {
         require(_founders.length > 0, "Must have at least one founder");
         GoodDollar nativeToken = new GoodDollar(_tokenName, _tokenSymbol, _cap, _formula, _identity, address(0));
         Reputation nativeReputation = new Reputation();
-        avatar = new Avatar("GoodDollar", nativeToken, nativeReputation);
-
-        // Mint token and reputation for founders:
-        for (uint256 i = 0; i < _founders.length; i++) {
-            require(_founders[i] != address(0), "Founder cannot be zero address");
-            if (_foundersTokenAmount[i] > 0) {
-                nativeToken.mint(_founders[i], _foundersTokenAmount[i]);
-            }
-            if (_foundersReputationAmount[i] > 0) {
-                nativeReputation.mint(_founders[i], _foundersReputationAmount[i]);
-            }
-        }
-
-        // Create Controller:
-        ControllerInterface controller = ControllerInterface(controllerCreatorGoodDollar.create(avatar));
 
         // renounce minter
-        nativeToken.addMinter(msg.sender);
+        nativeToken.addMinter(address(addFoundersGoodDollar));
         nativeToken.renounceMinter();
 
-        // Transfer ownership:
-        avatar.transferOwnership(address(controller));
-        nativeToken.transferOwnership(msg.sender);
-        nativeReputation.transferOwnership(msg.sender);
+        nativeToken.transferOwnership(address(addFoundersGoodDollar));
+        nativeReputation.transferOwnership(address(addFoundersGoodDollar));
+
+        avatar = addFoundersGoodDollar.addFounders(nativeToken, nativeReputation, msg.sender, _founders, _foundersTokenAmount, _foundersReputationAmount);
 
         lock = msg.sender;
 

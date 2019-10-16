@@ -3,6 +3,7 @@ import * as helpers from'./helpers';
 const Identity = artifacts.require("Identity");
 const FeeFormula = artifacts.require("FeeFormula");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
+const AddFoundersGoodDollar = artifacts.require("AddFoundersGoodDollar");
 const ControllerCreatorGoodDollar = artifacts.require('./ControllerCreatorGoodDollar.sol');
 const Avatar = artifacts.require("Avatar");
 const GoodDollar = artifacts.require("GoodDollar");
@@ -26,13 +27,15 @@ contract("Dao - Forging organizations, adding founders", ([founder, joiner, stra
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
     let controllerCreator: helpers.ThenArg<ReturnType<typeof ControllerCreatorGoodDollar['new']>>;
+    let addFounders: helpers.ThenArg<ReturnType<typeof AddFoundersGoodDollar['new']>>;
     let daoCreator: helpers.ThenArg<ReturnType<typeof DaoCreatorGoodDollar['new']>>;
     let newDaoCreator: helpers.ThenArg<ReturnType<typeof DaoCreatorGoodDollar['new']>>;
 
     before(async () => {
         controllerCreator = await ControllerCreatorGoodDollar.deployed();
+        addFounders = await AddFoundersGoodDollar.deployed();
         daoCreator = await DaoCreatorGoodDollar.deployed();
-        newDaoCreator = await DaoCreatorGoodDollar.new(controllerCreator.address);
+        newDaoCreator = await DaoCreatorGoodDollar.new(addFounders.address);
         avatar = await Avatar.at(await daoCreator.avatar());
         identity = await Identity.deployed();
         feeFormula = await FeeFormula.deployed();

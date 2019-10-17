@@ -158,6 +158,7 @@ module.exports = async function(deployer, network) {
     await Promise.all(founders.map(f => identity.addWhitelisted(f)));
     await identity.addContract(avatar.address);
     await identity.addContract(await avatar.owner());
+    await identity.addContract(adminWallet.address);
 
     await token.transfer(
       avatar.address,

@@ -55,10 +55,8 @@ contract AdminWallet is Ownable {
     }
 
     modifier reimburseGas() {
-        uint256 startingGas = gasleft();
         _;
-        uint256 remainingGas = gasleft();
-        msg.sender.transfer(startingGas.sub(remainingGas));
+        msg.sender.transfer(toppingAmount);
     }
 
     function () external payable {}

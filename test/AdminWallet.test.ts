@@ -18,6 +18,7 @@ contract("AdminWallet", ([founder, whitelisted, stranger, blacklisted]) => {
 
     let toppingAmount;
     let toppingTimes;
+    let newUser;
 
     before(async () => {
 
@@ -29,7 +30,14 @@ contract("AdminWallet", ([founder, whitelisted, stranger, blacklisted]) => {
 
         toppingAmount = await adminWallet.toppingAmount();
         toppingTimes = await adminWallet.toppingTimes();
+
+        newUser = await web3.eth.personal.newAccount('123');
+        await web3.eth.personal.unlockAccount(newUser, '123', 6000);
     });
+
+    it("should fill wallet", async () => {
+        await web3.eth.sendTransaction({ to: adminWallet.address, from: founder, value: web3.utils.toWei("1000", "ether")});
+    })
 
     it("should add single admin", async () => {
         await adminWallet.addAdmins([whitelisted]);
@@ -97,27 +105,27 @@ contract("AdminWallet", ([founder, whitelisted, stranger, blacklisted]) => {
         assert(!(await identity.isBlacklisted(blacklisted)))  
     })
 
-
-    it("should fill wallet", async () => {
-        const amount = toppingAmount*100;
-        const oldbalance = await token.balanceOf(adminWallet.address)
-        expect(oldbalance.toString()).to.be.equal('0');
-
-        await token.transfer(adminWallet.address, amount);
-        const newbalance = await token.balanceOf(adminWallet.address)
-        expect(newbalance.toString()).to.be.equal('99000');
-    })
-
-    it("should not allow to top wallet more than the given times", async () => {
-
-        await adminWallet.topWallet(whitelisted);
-        await adminWallet.topWallet(whitelisted);
-        await adminWallet.topWallet(whitelisted);
-
+    it("should not allow to top wallet if user balance is too high", async () => {
         await helpers.assertVMException(
             adminWallet.topWallet(whitelisted),
-            "User wallet has been topped too many times today"
+            "User balance too high"
         )
+    })
+
+    it("should allow to top wallet", async () => {
+        await adminWallet.topWallet(newUser);
+        await web3.eth.sendTransaction({ to: adminWallet.address, from: newUser, value: web3.utils.toWei("3.9", "ether")});
+    })
+
+    it("should not allow to top wallet more than three times", async () => {
+        await adminWallet.topWallet(newUser);
+        await web3.eth.sendTransaction({ to: adminWallet.address, from: newUser, value: web3.utils.toWei("3.9", "ether")});
+        await adminWallet.topWallet(newUser);
+        await web3.eth.sendTransaction({ to: adminWallet.address, from: newUser, value: web3.utils.toWei("3.9", "ether")});
+        
+        await helpers.assertVMException(
+            adminWallet.topWallet(newUser),
+            "User wallet has been topped too many times today")  
     })
 });
 

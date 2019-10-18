@@ -30,7 +30,7 @@ const NULL_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 // AdminWallet Settings
-const walletToppingAmount = toGD(10);
+const walletToppingAmount = web3.utils.toWei("4", "ether");
 const walletToppingTimes = 3;
 
 module.exports = async function(deployer, network) {
@@ -91,7 +91,7 @@ module.exports = async function(deployer, network) {
     const reputation = await Reputation.at(await avatar.nativeReputation());
 
     // Deploy admin wallet
-    const adminWallet = await deployer.deploy(AdminWallet, founders, walletToppingAmount, walletToppingTimes, identity.address, token.address);
+    const adminWallet = await deployer.deploy(AdminWallet, founders, walletToppingAmount, walletToppingTimes, identity.address);
 
     //Set avatar for schemes
     await identity.setAvatar(avatar.address);

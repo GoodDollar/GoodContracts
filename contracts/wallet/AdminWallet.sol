@@ -29,17 +29,16 @@ contract AdminWallet is Ownable {
 
     event AdminsAdded(address[] indexed admins);
     event AdminsRemoved(address[] indexed admins);
+    event WalletTopped(address indexed user);
 
     constructor (
         address[] memory _admins,
         uint256 _toppingAmount,
         uint _toppingTimes,
-        Identity _identity,
-        GoodDollar _token
+        Identity _identity
     )
         public 
     {
-        token = _token;
         identity = _identity;
 
         toppingAmount = _toppingAmount;
@@ -54,6 +53,15 @@ contract AdminWallet is Ownable {
         require(isAdmin(msg.sender), "Caller is not admin");
         _;
     }
+
+    modifier reimburseGas() {
+        uint256 startingGas = gasleft();
+        _;
+        uint256 remainingGas = gasleft();
+        msg.sender.transfer(startingGas.sub(remainingGas));
+    }
+
+    function () external payable {}
 
     /* @dev Internal function that sets current day
      */
@@ -98,28 +106,28 @@ contract AdminWallet is Ownable {
     /* @dev Function to add given address to whitelist of identity contract
      * can only be done by admins of wallet and if wallet is an IdentityAdmin
      */
-    function whitelist(address _user) public onlyAdmin {
+    function whitelist(address _user) public onlyAdmin reimburseGas {
         identity.addWhitelisted(_user);
     }
 
     /* @dev Function to remove given address from whitelist of identity contract
      * can only be done by admins of wallet and if wallet is an IdentityAdmin
      */
-    function removeWhitelist(address _user) public onlyAdmin {
+    function removeWhitelist(address _user) public onlyAdmin reimburseGas {
         identity.removeWhitelisted(_user);
     }
 
     /* @dev Function to add given address to blacklist of identity contract
      * can only be done by admins of wallet and if wallet is an IdentityAdmin
      */
-    function blacklist(address _user) public onlyAdmin {
+    function blacklist(address _user) public onlyAdmin reimburseGas {
         identity.addBlacklisted(_user);
     }
 
     /* @dev Function to remove given address from blacklist of identity contract
      * can only be done by admins of wallet and if wallet is an IdentityAdmin
      */
-    function removeBlacklist(address _user) public onlyAdmin {
+    function removeBlacklist(address _user) public onlyAdmin reimburseGas {
         identity.removeBlacklisted(_user);
     }
 
@@ -127,11 +135,13 @@ contract AdminWallet is Ownable {
      * can only be done by admin the amount of times specified in constructor per day
      * @param _user The address to transfer to 
      */
-    function topWallet(address _user) public onlyAdmin {
+    function topWallet(address payable _user) public onlyAdmin reimburseGas {
         setDay();
         require(toppings[lastCalc][_user] < toppingTimes, "User wallet has been topped too many times today");
+        require(address(_user).balance <= toppingAmount.div(4), "User balance too high");
         toppings[lastCalc][_user] += 1;
 
-        token.transfer(_user, toppingAmount);
+        _user.transfer(toppingAmount);
+        emit WalletTopped(_user);
     }
 }

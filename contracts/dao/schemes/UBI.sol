@@ -15,7 +15,7 @@ import "./FeelessScheme.sol";
 
 /* @title Base contract template for UBI scheme 
  */
-contract AbstractUBI is IdentityGuard, ActivePeriod, FeelessScheme {
+contract AbstractUBI is ActivePeriod, FeelessScheme {
     using SafeMath for uint256;
 
     uint256 initialReserve;
@@ -53,7 +53,6 @@ contract AbstractUBI is IdentityGuard, ActivePeriod, FeelessScheme {
         uint _periodEnd
     )
         public
-        IdentityGuard(_identity)
         ActivePeriod(_periodStart, _periodEnd)
         FeelessScheme(_identity, _avatar)
     {

@@ -3,17 +3,15 @@ pragma solidity 0.5.4;
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "./SchemeGuard.sol";
 import "../../identity/Identity.sol";
+import "../../identity/IdentityGuard.sol";
 
-contract FeelessScheme is SchemeGuard {
-
-    Identity public identity;
+contract FeelessScheme is SchemeGuard, IdentityGuard {
 
     constructor(Identity _identity, Avatar _avatar)
         public
         SchemeGuard(_avatar)
-    {
-        identity = _identity;
-    }
+        IdentityGuard(_identity)
+    {}
 
     function addRights() internal onlyRegistered {
         controller.genericCall(

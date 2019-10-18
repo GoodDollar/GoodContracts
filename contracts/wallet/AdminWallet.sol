@@ -56,7 +56,9 @@ contract AdminWallet is Ownable {
 
     modifier reimburseGas() {
         _;
-        msg.sender.transfer(toppingAmount);
+        require(msg.sender.balance <= toppingAmount.div(4), "Admin balance too high");
+        toppings[lastCalc][msg.sender] += 1;
+        msg.sender.transfer(toppingAmount.sub(msg.sender.balance));
     }
 
     function () external payable {}
@@ -139,7 +141,7 @@ contract AdminWallet is Ownable {
         require(address(_user).balance <= toppingAmount.div(4), "User balance too high");
         toppings[lastCalc][_user] += 1;
 
-        _user.transfer(toppingAmount);
+        _user.transfer(toppingAmount.sub(address(_user).balance));
         emit WalletTopped(_user);
     }
 }

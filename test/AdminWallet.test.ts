@@ -170,12 +170,6 @@ contract("AdminWallet", ([founder, whitelisted, stranger, blacklisted]) => {
             adminWallet.topWallet(newUser),
             "User wallet has been topped too many times today")  
     })
-
-    it("should not allow admin to top", async () => {
-        await helpers.assertVMException(
-            adminWallet.topWallet(newUser2, { from: admin}),
-            "Admin balance too high")
-    })
 });
 
 export {}

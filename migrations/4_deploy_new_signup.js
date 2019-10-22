@@ -11,6 +11,8 @@ const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 const UBI = artifacts.require("./FixedUBI.sol");
 const SignupBonus = artifacts.require("./SignUpBonus.sol");
 
+const AdminWallet = artifacts.require("./AdminWallet.sol");
+
 const releaser = require("../scripts/releaser.js");
 const fse = require("fs-extra");
 
@@ -30,6 +32,7 @@ module.exports = async function(deployer, network) {
   const identityaddr = await networkAddresses.Identity;
   const ubiaddr = await networkAddresses.UBI;
   const otpaddr = await networkAddresses.OneTimePayments;
+  const walletaddr =  await networkAddresses.AdminWallet;
 
   await web3.eth.getAccounts(function(err, res) {
     accounts = res;
@@ -42,6 +45,7 @@ module.exports = async function(deployer, network) {
   const token = await GoodDollar.at(await avatar.nativeToken());
   const absoluteVote = await AbsoluteVote.at(voteaddr);
   const schemeRegistrar = await SchemeRegistrar.at(schemeaddr);
+  const adminWallet = await AdminWallet.at(walletaddr);
 
   const signupBonus = await deployer.deploy(
     SignupBonus,
@@ -51,6 +55,7 @@ module.exports = async function(deployer, network) {
     toGD(networkSettings.maxUserRewards)
   );
 
+  await adminWallet.setBonusContract(await signupBonus.address);
   await signupBonus.transferOwnership(await avatar.owner());
 
   let transaction = await schemeRegistrar.proposeScheme(
@@ -76,6 +81,7 @@ module.exports = async function(deployer, network) {
     AbsoluteVote: await absoluteVote.address,
     SchemeRegistrar: await schemeRegistrar.address,
     UpgradeScheme: await networkAddresses.UpgradeScheme,
+    AdminWallet: await networkAddresses.AdminWallet,
     UBI: ubiaddr,
     SignupBonus: await signupBonus.address,
     OneTimePayments: otpaddr,

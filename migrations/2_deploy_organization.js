@@ -174,6 +174,7 @@ module.exports = async function(deployer, network) {
       AbsoluteVote: await absoluteVote.address,
       SchemeRegistrar: await schemeRegistrar.address,
       UpgradeScheme: await upgradeScheme.address,
+      AdminWallet: await adminWallet.address,
       UBI: NULL_ADDRESS,
       SignupBonus: NULL_ADDRESS,
       OneTimePayments: NULL_ADDRESS,

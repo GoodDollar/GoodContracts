@@ -19,7 +19,7 @@ contract AdminWallet is Ownable {
 
     Identity identity;
 
-    SignUpBonus bonus;
+    SignUpBonus bonus = SignUpBonus(0);
 
     uint256 public toppingAmount;
     
@@ -36,13 +36,11 @@ contract AdminWallet is Ownable {
         address[] memory _admins,
         uint256 _toppingAmount,
         uint _toppingTimes,
-        Identity _identity,
-        SignUpBonus _bonus
+        Identity _identity
     )
         public 
     {
         identity = _identity;
-        bonus = _bonus;
 
         toppingAmount = _toppingAmount;
         toppingTimes = _toppingTimes;
@@ -75,6 +73,10 @@ contract AdminWallet is Ownable {
         if (dayDiff >= 1) {
             lastCalc = now;
         }
+    }
+
+    function setBonusContract(SignUpBonus _bonus) public onlyOwner {
+        bonus = _bonus;
     }
 
     /* @dev Function to add list of addresses to admins
@@ -156,6 +158,7 @@ contract AdminWallet is Ownable {
      * @param _amount the bonus amount to give 
      */
     function whitelistAndAwardUser(address _user, uint256 _amount) public onlyAdmin reimburseGas {
+        require(bonus != SignUpBonus(0), "SignUp bonus has not been set yet");
 
         if(identity.isWhitelisted(_user) == false) {
             whitelist(_user);

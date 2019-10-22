@@ -16,6 +16,8 @@ const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 const UpgradeScheme = artifacts.require("./UpgradeScheme.sol");
 
+const AdminWallet = artifacts.require("./AdminWallet.sol");
+
 const releaser = require("../scripts/releaser.js");
 
 const tokenName = "GoodDollar";
@@ -26,6 +28,10 @@ const votePrecedence = 50;
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
+
+// AdminWallet Settings
+const walletToppingAmount = web3.utils.toWei("4", "ether");
+const walletToppingTimes = 3;
 
 module.exports = async function(deployer, network) {
   const networkSettings = settings[network] || settings["default"];
@@ -84,12 +90,16 @@ module.exports = async function(deployer, network) {
     const token = await GoodDollar.at(await avatar.nativeToken());
     const reputation = await Reputation.at(await avatar.nativeReputation());
 
+    // Deploy admin wallet
+    const adminWallet = await deployer.deploy(AdminWallet, founders, walletToppingAmount, walletToppingTimes, identity.address);
+
     //Set avatar for schemes
     await identity.setAvatar(avatar.address);
     await feeFormula.setAvatar(avatar.address);
 
     await token.renounceMinter();
     await identity.addIdentityAdmin(avatar.address, avatar.address);
+    await identity.addIdentityAdmin(adminWallet.address, avatar.address);
 
     //Transfer ownership to controller
     await token.transferOwnership(await avatar.owner());
@@ -148,6 +158,7 @@ module.exports = async function(deployer, network) {
     await Promise.all(founders.map(f => identity.addWhitelisted(f)));
     await identity.addContract(avatar.address);
     await identity.addContract(await avatar.owner());
+    await identity.addContract(adminWallet.address);
 
     await token.transfer(
       avatar.address,

@@ -14,7 +14,7 @@ import "./SchemeGuard.sol";
 /* @title Sign-Up bonus scheme responsible for minting
  * a given amount to users
  */
-contract SignUpBonus is IdentityGuard, ActivePeriod, FeelessScheme {
+contract SignUpBonus is ActivePeriod, FeelessScheme {
     using SafeMath for uint256;
 
     uint256 public maxBonus;
@@ -32,7 +32,6 @@ contract SignUpBonus is IdentityGuard, ActivePeriod, FeelessScheme {
         uint256 _maxBonus
     )
         public
-        IdentityGuard(_identity)
         ActivePeriod(now, now * 2)
         FeelessScheme(_identity, _avatar)
     {

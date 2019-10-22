@@ -1,4 +1,4 @@
-import * as helpers from "../helpers";
+import * as helpers from "./helpers";
 
 const Identity = artifacts.require("Identity");
 const FeeFormula = artifacts.require("FeeFormula");

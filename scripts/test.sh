@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-set -o allexport
-source .env
-set +o allexport
+
 # Exit script as soon as a command fails.
 set -o errexit
 
@@ -17,25 +15,48 @@ cleanup() {
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   ganache_port=8555
-  gas_limit=0xfffffffffff
 else
   ganache_port=8545
-  gas_limit=8000000
 fi
 
 ganache_running() {
   nc -z localhost "$ganache_port"
 }
 
+relayer_running() {
+  nc -z localhost "$relayer_port"
+}
+
 start_ganache() {
+  local accounts=(
+    # 10 accounts with balance 1M ether, needed for high-value tests.
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501200,1000000000000000000000000"
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501201,1000000000000000000000000"
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501202,1000000000000000000000000"
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501203,1000000000000000000000000"
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501204,1000000000000000000000000"
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501205,1000000000000000000000000"
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501206,1000000000000000000000000"
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501207,1000000000000000000000000"
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501208,1000000000000000000000000"
+    --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501209,1000000000000000000000000"
+  )
 
   if [ "$SOLIDITY_COVERAGE" = true ]; then
-    node_modules/.bin/testrpc-sc --gasLimit "$gas_limit" --port "$ganache_port" --quiet &
+    npx ganache-cli-coverage --emitFreeLogs true --allowUnlimitedContractSize true --gasLimit 0xfffffffffffff --port "$ganache_port" "${accounts[@]}" > /dev/null &
   else
-    node_modules/.bin/ganache-cli --gasLimit "$gas_limit" --port "$ganache_port" --quiet &
+    npx ganache-cli --gasLimit 0xfffffffffff --port "$ganache_port" "${accounts[@]}" > /dev/null &
   fi
 
   ganache_pid=$!
+
+  echo "Waiting for ganache to launch on port "$ganache_port"..."
+
+  while ! ganache_running; do
+    sleep 0.1 # wait for 1/10 of the second before check again
+  done
+
+  echo "Ganache launched!"
 }
 
 if ganache_running; then
@@ -45,19 +66,10 @@ else
   start_ganache
 fi
 
-if [ "$SOLC_NIGHTLY" = true ]; then
-  echo "Downloading solc nightly"
-  wget -q https://raw.githubusercontent.com/ethereum/solc-bin/gh-pages/bin/soljson-nightly.js -O /tmp/soljson.js && find . -name soljson.js -exec cp /tmp/soljson.js {} \;
-fi
-
-truffle version
+npx truffle version
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  node_modules/.bin/solidity-coverage -q
-
-  if [ "$CONTINUOUS_INTEGRATION" = true ]; then
-    cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js
-  fi
+  npx solidity-coverage "$@"
 else
-  node_modules/.bin/truffle test "$@"
+  npx truffle test "$@"
 fi

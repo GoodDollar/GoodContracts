@@ -151,17 +151,18 @@ contract AdminWallet is Ownable {
 
     /* @dev Function to whitelist user and also award him pending bonuses, it can be used also later
      * when user is already whitelisted to just award pending bonuses
-     * can only be done by admin the amount of times specified in constructor per day
+     * can only be done by admin
      * @param _user The address to transfer to and whitelist
      * @param _amount the bonus amount to give 
      */
     function whitelistAndAwardUser(address _user, uint256 _amount) public onlyAdmin reimburseGas {
-        if(_amount > 0)
-            bonus.awardUser(_user, _amount);
 
-        if(identity.isWhitelisted(_user) == false)
-        {
+        if(identity.isWhitelisted(_user) == false) {
             whitelist(_user);
+        }
+        
+        if(_amount > 0) {
+            bonus.awardUser(_user, _amount);
         }
     }
 }

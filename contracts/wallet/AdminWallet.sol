@@ -5,8 +5,8 @@ import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-import "../token/GoodDollar.sol";
 import "../identity/Identity.sol";
+import "../dao/schemes/SignUpBonus.sol";
 
 /* @title Admin wallet contract allowing whitelisting and topping up of
  * addresses
@@ -17,8 +17,9 @@ contract AdminWallet is Ownable {
 
     Roles.Role private admins;
 
-    GoodDollar token;
     Identity identity;
+
+    SignUpBonus bonus;
 
     uint256 public toppingAmount;
     
@@ -35,11 +36,13 @@ contract AdminWallet is Ownable {
         address[] memory _admins,
         uint256 _toppingAmount,
         uint _toppingTimes,
-        Identity _identity
+        Identity _identity,
+        SignUpBonus _bonus
     )
         public 
     {
         identity = _identity;
+        bonus = _bonus;
 
         toppingAmount = _toppingAmount;
         toppingTimes = _toppingTimes;
@@ -144,5 +147,21 @@ contract AdminWallet is Ownable {
 
         _user.transfer(toppingAmount.sub(address(_user).balance));
         emit WalletTopped(_user);
+    }
+
+    /* @dev Function to whitelist user and also award him pending bonuses, it can be used also later
+     * when user is already whitelisted to just award pending bonuses
+     * can only be done by admin the amount of times specified in constructor per day
+     * @param _user The address to transfer to and whitelist
+     * @param _amount the bonus amount to give 
+     */
+    function whitelistAndAwardUser(address _user, uint256 _amount) public onlyAdmin reimburseGas {
+        if(_amount > 0)
+            bonus.awardUser(_user, _amount);
+
+        if(identity.isWhitelisted(_user) == false)
+        {
+            whitelist(_user);
+        }
     }
 }

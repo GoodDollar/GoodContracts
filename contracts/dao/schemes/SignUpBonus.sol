@@ -74,9 +74,9 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
 
     function awardUser(address _user, uint256 _amount) public requireActive onlyIdentityAdmin {
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        require(rewarded[_user].add(_amount.sub(token.getFees(_amount))) <= maxBonus, "Cannot award user beyond max");
+        require(rewarded[_user].add(_amount) <= maxBonus, "Cannot award user beyond max");
 
-        rewarded[_user] = rewarded[_user].add(_amount.sub(token.getFees(_amount)));
+        rewarded[_user] = rewarded[_user].add(_amount);
         token.transfer(_user, _amount);
 
         emit BonusClaimed(_user, _amount);

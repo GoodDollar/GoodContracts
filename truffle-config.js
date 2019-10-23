@@ -24,21 +24,21 @@ module.exports = {
     develop: {
       // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
-      port: 8545, // "truffle develop" runs on 9545
+      port: 9545, // "truffle develop" runs on 9545
       network_id: "4447", // Match any network id,
       gas: 8000000
       // from: '0x8ae536FAcb8C89163A0c5A5817Aaa75F65F1bcA6' // should be equal to first address in truffle UI list - address[0]
     },
     ganache: {
       host: "127.0.0.1",
-      port: 8545,
+      port: 9545,
       network_id: "4447", // my "ganache " runs with 6000 network_id - configurable
       gas: 8000000,
       from: "0x9689dc4d84b36efa1f02260a90063ae91ef0cbd8"
     },
     test: {
       host: "127.0.0.1",
-      port: 8545,
+      port: 9545,
       network_id: "*",
       gas: 8000000
     },

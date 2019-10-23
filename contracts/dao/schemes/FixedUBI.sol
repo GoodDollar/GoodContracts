@@ -57,7 +57,7 @@ contract FixedUBI is AbstractUBI {
     function checkEntitlement() public requireActive view returns (uint256) 
     {
         uint claimDays = lastClaimed[msg.sender] < periodStart ?
-            now.sub(periodStart) / 1 days :
+            now.sub(periodStart.sub(1 days)) / 1 days :
             now.sub(lastClaimed[msg.sender]) / 1 days; 
         
         claimDays = claimDays > 7 ? 7 : claimDays;

@@ -36,10 +36,10 @@ module.exports = function(deployer, network, accounts) {
       RedemptionData.address,
       GoodDollarReserve.address
     );
-    if (network === "fuse")
+    if (network === "fuse" || network === "staging") {
       identity.addWhitelistAdmin("0x0aFb8F8B5B581Cd67E8a6e00aC4248A4B6f980E1");
-    if (network === "staging")
-      identity.addWhitelistAdmin("0x0aFb8F8B5B581Cd67E8a6e00aC4248A4B6f980E1");
+      identity.addWhitelistAdmin("0x8158815481A26c4759d167f4e372a384b5521187");
+    }
     identity.addWhitelisted(GoodDollar.address);
     identity.addWhitelisted(GoodDollarReserve.address);
     identity.addWhitelisted(OneTimePaymentLinks.address);

@@ -41,7 +41,7 @@ if [[ $prompt =~ [yY](es)? ]]
 then
     git add build/contracts/*
     git commit -a -m "add: version $2"
-    npm version patch
+    npm version $2
     git push --follow-tags
     npm pack
     npm publish

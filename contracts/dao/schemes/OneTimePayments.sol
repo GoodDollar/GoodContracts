@@ -16,7 +16,7 @@ import "./FeelessScheme.sol";
 contract OneTimePayments is FeelessScheme {
     using SafeMath for uint256;
 
-    uint256 gasLimit;
+    uint256 public gasLimit;
 
     struct Payment {
         bool hasPayment;
@@ -77,7 +77,7 @@ contract OneTimePayments is FeelessScheme {
      * @pram code The string to encode into hash of payment
      */
     function withdraw(string memory code) public onlyRegistered {
-        require(gasleft() < gasLimit, "Cannot exceed gas limit");
+        require(gasleft() <= gasLimit, "Cannot exceed gas limit");
         bytes32 hash = keccak256(abi.encodePacked(code));
         uint256 value = payments[hash].paymentAmount;
         address sender = payments[hash].paymentSender;

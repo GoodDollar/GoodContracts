@@ -1,0 +1,1211 @@
+{
+  "contractName": "AbstractFees",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_avatar",
+          "type": "address"
+        }
+      ],
+      "name": "setAvatar",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "isRegistered",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "isOwner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "name": "getTxFees",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "metadata": "",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "pragma solidity 0.5.4;\n\nimport \"openzeppelin-solidity/contracts/math/SafeMath.sol\";\nimport \"@daostack/arc/contracts/controller/Avatar.sol\";\n\nimport \"./SchemeGuard.sol\";\n\n/* @title Fee formula contract\n * GoodDollar token is always initiated with a given fee formula, \n * whereof getTxFees is the only assumed function\n */\ncontract AbstractFees is SchemeGuard {\n    constructor () public SchemeGuard(Avatar(0)) {}\n\n    function getTxFees(uint256 _value) public view returns (uint256);\n}\n\ncontract FeeFormula is AbstractFees {\n    using SafeMath for uint256;\n\n    /* @dev calculates 1 percentage fee of given value. Must be registered as a scheme.\n     * @param _value the value to calculate fees from\n     * @return the transactional fee for given value\n     */\n    function getTxFees(uint256 _value) public view returns (uint256) {\n        return _value.div(100);\n    }\n}",
+  "sourcePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FeeFormula.sol",
+  "ast": {
+    "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FeeFormula.sol",
+    "exportedSymbols": {
+      "AbstractFees": [
+        928
+      ],
+      "FeeFormula": [
+        947
+      ]
+    },
+    "id": 948,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 906,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".4"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:22:6"
+      },
+      {
+        "absolutePath": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+        "file": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+        "id": 907,
+        "nodeType": "ImportDirective",
+        "scope": 948,
+        "sourceUnit": 13660,
+        "src": "24:59:6",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "@daostack/arc/contracts/controller/Avatar.sol",
+        "file": "@daostack/arc/contracts/controller/Avatar.sol",
+        "id": 908,
+        "nodeType": "ImportDirective",
+        "scope": 948,
+        "sourceUnit": 5243,
+        "src": "84:55:6",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/SchemeGuard.sol",
+        "file": "./SchemeGuard.sol",
+        "id": 909,
+        "nodeType": "ImportDirective",
+        "scope": 948,
+        "sourceUnit": 2331,
+        "src": "141:27:6",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 910,
+              "name": "SchemeGuard",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 2330,
+              "src": "347:11:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_SchemeGuard_$2330",
+                "typeString": "contract SchemeGuard"
+              }
+            },
+            "id": 911,
+            "nodeType": "InheritanceSpecifier",
+            "src": "347:11:6"
+          }
+        ],
+        "contractDependencies": [
+          97,
+          2330,
+          13768
+        ],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": false,
+        "id": 928,
+        "linearizedBaseContracts": [
+          928,
+          2330,
+          97,
+          13768
+        ],
+        "name": "AbstractFees",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": {
+              "id": 919,
+              "nodeType": "Block",
+              "src": "410:2:6",
+              "statements": []
+            },
+            "documentation": null,
+            "id": 920,
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [
+              {
+                "arguments": [
+                  {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "30",
+                        "id": 915,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "406:1:6",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        },
+                        "value": "0"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        }
+                      ],
+                      "id": 914,
+                      "name": "Avatar",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5242,
+                      "src": "399:6:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_type$_t_contract$_Avatar_$5242_$",
+                        "typeString": "type(contract Avatar)"
+                      }
+                    },
+                    "id": 916,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": true,
+                    "kind": "typeConversion",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "399:9:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_Avatar_$5242",
+                      "typeString": "contract Avatar"
+                    }
+                  }
+                ],
+                "id": 917,
+                "modifierName": {
+                  "argumentTypes": null,
+                  "id": 913,
+                  "name": "SchemeGuard",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 2330,
+                  "src": "387:11:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_type$_t_contract$_SchemeGuard_$2330_$",
+                    "typeString": "type(contract SchemeGuard)"
+                  }
+                },
+                "nodeType": "ModifierInvocation",
+                "src": "387:22:6"
+              }
+            ],
+            "name": "",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 912,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "377:2:6"
+            },
+            "returnParameters": {
+              "id": 918,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "410:0:6"
+            },
+            "scope": 928,
+            "src": "365:47:6",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": null,
+            "documentation": null,
+            "id": 927,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getTxFees",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 923,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 922,
+                  "name": "_value",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 927,
+                  "src": "437:14:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 921,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "437:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "436:16:6"
+            },
+            "returnParameters": {
+              "id": 926,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 925,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 927,
+                  "src": "474:7:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 924,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "474:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "473:9:6"
+            },
+            "scope": 928,
+            "src": "418:65:6",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 948,
+        "src": "322:163:6"
+      },
+      {
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 929,
+              "name": "AbstractFees",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 928,
+              "src": "510:12:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_AbstractFees_$928",
+                "typeString": "contract AbstractFees"
+              }
+            },
+            "id": 930,
+            "nodeType": "InheritanceSpecifier",
+            "src": "510:12:6"
+          }
+        ],
+        "contractDependencies": [
+          97,
+          928,
+          2330,
+          13768
+        ],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 947,
+        "linearizedBaseContracts": [
+          947,
+          928,
+          2330,
+          97,
+          13768
+        ],
+        "name": "FeeFormula",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 933,
+            "libraryName": {
+              "contractScope": null,
+              "id": 931,
+              "name": "SafeMath",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 13659,
+              "src": "535:8:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_SafeMath_$13659",
+                "typeString": "library SafeMath"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "529:27:6",
+            "typeName": {
+              "id": 932,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "548:7:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          },
+          {
+            "body": {
+              "id": 945,
+              "nodeType": "Block",
+              "src": "830:39:6",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "313030",
+                        "id": 942,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "858:3:6",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_100_by_1",
+                          "typeString": "int_const 100"
+                        },
+                        "value": "100"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_rational_100_by_1",
+                          "typeString": "int_const 100"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 940,
+                        "name": "_value",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 935,
+                        "src": "847:6:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "id": 941,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "div",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 13590,
+                      "src": "847:10:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
+                        "typeString": "function (uint256,uint256) pure returns (uint256)"
+                      }
+                    },
+                    "id": 943,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "847:15:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 939,
+                  "id": 944,
+                  "nodeType": "Return",
+                  "src": "840:22:6"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 946,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getTxFees",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 936,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 935,
+                  "name": "_value",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 946,
+                  "src": "784:14:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 934,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "784:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "783:16:6"
+            },
+            "returnParameters": {
+              "id": 939,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 938,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 946,
+                  "src": "821:7:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 937,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "821:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "820:9:6"
+            },
+            "scope": 947,
+            "src": "765:104:6",
+            "stateMutability": "view",
+            "superFunction": 927,
+            "visibility": "public"
+          }
+        ],
+        "scope": 948,
+        "src": "487:384:6"
+      }
+    ],
+    "src": "0:871:6"
+  },
+  "legacyAST": {
+    "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FeeFormula.sol",
+    "exportedSymbols": {
+      "AbstractFees": [
+        928
+      ],
+      "FeeFormula": [
+        947
+      ]
+    },
+    "id": 948,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 906,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".4"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:22:6"
+      },
+      {
+        "absolutePath": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+        "file": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+        "id": 907,
+        "nodeType": "ImportDirective",
+        "scope": 948,
+        "sourceUnit": 13660,
+        "src": "24:59:6",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "@daostack/arc/contracts/controller/Avatar.sol",
+        "file": "@daostack/arc/contracts/controller/Avatar.sol",
+        "id": 908,
+        "nodeType": "ImportDirective",
+        "scope": 948,
+        "sourceUnit": 5243,
+        "src": "84:55:6",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/SchemeGuard.sol",
+        "file": "./SchemeGuard.sol",
+        "id": 909,
+        "nodeType": "ImportDirective",
+        "scope": 948,
+        "sourceUnit": 2331,
+        "src": "141:27:6",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 910,
+              "name": "SchemeGuard",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 2330,
+              "src": "347:11:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_SchemeGuard_$2330",
+                "typeString": "contract SchemeGuard"
+              }
+            },
+            "id": 911,
+            "nodeType": "InheritanceSpecifier",
+            "src": "347:11:6"
+          }
+        ],
+        "contractDependencies": [
+          97,
+          2330,
+          13768
+        ],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": false,
+        "id": 928,
+        "linearizedBaseContracts": [
+          928,
+          2330,
+          97,
+          13768
+        ],
+        "name": "AbstractFees",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": {
+              "id": 919,
+              "nodeType": "Block",
+              "src": "410:2:6",
+              "statements": []
+            },
+            "documentation": null,
+            "id": 920,
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [
+              {
+                "arguments": [
+                  {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "30",
+                        "id": 915,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "406:1:6",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        },
+                        "value": "0"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        }
+                      ],
+                      "id": 914,
+                      "name": "Avatar",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 5242,
+                      "src": "399:6:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_type$_t_contract$_Avatar_$5242_$",
+                        "typeString": "type(contract Avatar)"
+                      }
+                    },
+                    "id": 916,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": true,
+                    "kind": "typeConversion",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "399:9:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_Avatar_$5242",
+                      "typeString": "contract Avatar"
+                    }
+                  }
+                ],
+                "id": 917,
+                "modifierName": {
+                  "argumentTypes": null,
+                  "id": 913,
+                  "name": "SchemeGuard",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 2330,
+                  "src": "387:11:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_type$_t_contract$_SchemeGuard_$2330_$",
+                    "typeString": "type(contract SchemeGuard)"
+                  }
+                },
+                "nodeType": "ModifierInvocation",
+                "src": "387:22:6"
+              }
+            ],
+            "name": "",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 912,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "377:2:6"
+            },
+            "returnParameters": {
+              "id": 918,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "410:0:6"
+            },
+            "scope": 928,
+            "src": "365:47:6",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": null,
+            "documentation": null,
+            "id": 927,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getTxFees",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 923,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 922,
+                  "name": "_value",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 927,
+                  "src": "437:14:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 921,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "437:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "436:16:6"
+            },
+            "returnParameters": {
+              "id": 926,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 925,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 927,
+                  "src": "474:7:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 924,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "474:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "473:9:6"
+            },
+            "scope": 928,
+            "src": "418:65:6",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 948,
+        "src": "322:163:6"
+      },
+      {
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 929,
+              "name": "AbstractFees",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 928,
+              "src": "510:12:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_AbstractFees_$928",
+                "typeString": "contract AbstractFees"
+              }
+            },
+            "id": 930,
+            "nodeType": "InheritanceSpecifier",
+            "src": "510:12:6"
+          }
+        ],
+        "contractDependencies": [
+          97,
+          928,
+          2330,
+          13768
+        ],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 947,
+        "linearizedBaseContracts": [
+          947,
+          928,
+          2330,
+          97,
+          13768
+        ],
+        "name": "FeeFormula",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 933,
+            "libraryName": {
+              "contractScope": null,
+              "id": 931,
+              "name": "SafeMath",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 13659,
+              "src": "535:8:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_SafeMath_$13659",
+                "typeString": "library SafeMath"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "529:27:6",
+            "typeName": {
+              "id": 932,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "548:7:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          },
+          {
+            "body": {
+              "id": 945,
+              "nodeType": "Block",
+              "src": "830:39:6",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "313030",
+                        "id": 942,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "858:3:6",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_100_by_1",
+                          "typeString": "int_const 100"
+                        },
+                        "value": "100"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_rational_100_by_1",
+                          "typeString": "int_const 100"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 940,
+                        "name": "_value",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 935,
+                        "src": "847:6:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "id": 941,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "div",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 13590,
+                      "src": "847:10:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
+                        "typeString": "function (uint256,uint256) pure returns (uint256)"
+                      }
+                    },
+                    "id": 943,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "847:15:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 939,
+                  "id": 944,
+                  "nodeType": "Return",
+                  "src": "840:22:6"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 946,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getTxFees",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 936,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 935,
+                  "name": "_value",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 946,
+                  "src": "784:14:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 934,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "784:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "783:16:6"
+            },
+            "returnParameters": {
+              "id": 939,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 938,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 946,
+                  "src": "821:7:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 937,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "821:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "820:9:6"
+            },
+            "scope": 947,
+            "src": "765:104:6",
+            "stateMutability": "view",
+            "superFunction": 927,
+            "visibility": "public"
+          }
+        ],
+        "scope": 948,
+        "src": "487:384:6"
+      }
+    ],
+    "src": "0:871:6"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.4+commit.9549d8ff.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.0.16",
+  "updatedAt": "2019-10-24T08:14:04.898Z",
+  "devdoc": {
+    "methods": {
+      "isOwner()": {
+        "return": "true if `msg.sender` is the owner of the contract."
+      },
+      "owner()": {
+        "return": "the address of the owner."
+      },
+      "renounceOwnership()": {
+        "details": "Allows the current owner to relinquish control of the contract."
+      },
+      "transferOwnership(address)": {
+        "details": "Allows the current owner to transfer control of the contract to a newOwner.",
+        "params": {
+          "newOwner": "The address to transfer ownership to."
+        }
+      }
+    }
+  },
+  "userdoc": {
+    "methods": {
+      "renounceOwnership()": {
+        "notice": "Renouncing to ownership will leave the contract without an owner. It will not be possible to call the functions with the `onlyOwner` modifier anymore."
+      }
+    }
+  }
+}

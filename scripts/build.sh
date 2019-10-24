@@ -4,6 +4,11 @@ set +o allexport
 #exit on any command failure
 set -e
 CHANGES=`git status --porcelain --untracked-files=no -s`
+if [[ -z $1 || -z $2 ]]
+then
+    echo "./build.sh deply <npm version>";
+    exit -1;
+fi
 if [[ $CHANGES ]]
 then 
     echo "Warning git not clean";
@@ -35,7 +40,7 @@ read -p "Are you sure you want to continue to publish a new version to npm? <y/N
 if [[ $prompt =~ [yY](es)? ]]
 then
     git add build/contracts/*
-    git commit -a -m "add: version release"
+    git commit -a -m "add: version $2"
     npm version patch
     git push --follow-tags
     npm pack

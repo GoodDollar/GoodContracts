@@ -24,7 +24,7 @@ contract OneTimePayments is FeelessScheme {
         address paymentSender;
     }
 
-    mapping(bytes32 => Payment) payments;
+    mapping(bytes32 => Payment) public payments;
 
     event PaymentDeposit(address indexed from, bytes32 hash, uint256 amount);
     event PaymentCancel(address indexed from, bytes32 hash, uint256 amount);

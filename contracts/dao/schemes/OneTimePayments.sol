@@ -90,11 +90,11 @@ contract OneTimePayments is FeelessScheme {
      * allows only creator of payment to withdraw
      * @param code The string to encode into hash of payment 
      */
-    function cancel(string memory code) public {
-        bytes32 hash = keccak256(abi.encodePacked(code));
-        uint256 value = payments[hash].paymentAmount;
+    function cancel(bytes32 hash) public {
 
         require(payments[hash].paymentSender == msg.sender, "Can only be called by creator");
+        
+        uint256 value = payments[hash].paymentAmount;
 
         _withdraw(hash, value);
         emit PaymentCancel(msg.sender, hash, value);

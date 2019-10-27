@@ -30,8 +30,8 @@ contract FixedUBI is AbstractUBI {
      */
     function distributionFormula(uint256 amount, address user) internal returns(uint256)
     {
-        if(lastClaimed[user] < periodStart) {
-            lastClaimed[user] = periodStart.sub(1 days);
+        if(lastClaimed[user] == 0) {
+            lastClaimed[user] = identity.dateAdded(user).sub(1 days);
         }
 
         uint claimDays = now.sub(lastClaimed[user]) / 1 days; 
@@ -56,10 +56,11 @@ contract FixedUBI is AbstractUBI {
      */
     function checkEntitlement() public requireActive view returns (uint256) 
     {
-        uint claimDays = lastClaimed[msg.sender] < periodStart ?
-            now.sub(periodStart.sub(1 days)) / 1 days :
-            now.sub(lastClaimed[msg.sender]) / 1 days; 
-        
+        uint lastClaimed = lastClaimed[msg.sender] > 0 ?
+            lastClaimed[msg.sender] :
+            (identity.dateAdded(msg.sender) > 0 ? identity.dateAdded(msg.sender).sub(1 days) : now.sub(1 days));
+
+        uint claimDays = now.sub(lastClaimed) / 1 days;
         claimDays = claimDays > 7 ? 7 : claimDays;
         uint256 claimAmount = claimDistribution;
 

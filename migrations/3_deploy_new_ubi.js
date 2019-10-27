@@ -43,7 +43,7 @@ module.exports = async function(deployer, network) {
   const schemeRegistrar = await SchemeRegistrar.at(schemeaddr);
 
   const now = new Date();
-  const startUBI = (now.getTime() / 1000).toFixed(0);
+  const startUBI = (now.getTime() / 1000 - 1).toFixed(0);
   now.setFullYear(now.getFullYear() + 1);
   const endUBI = (now.getTime() / 1000).toFixed(0);
   console.log({

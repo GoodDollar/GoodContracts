@@ -20,7 +20,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     Roles.Role private contracts;
 
     uint256 private whitelistedCount;
-    mapping(address => uint) dateAdded;
+    mapping(address => uint) public dateAdded;
 
     mapping (address => string) public addrToDID;
     mapping (bytes32 => address) public didHashToAddress;

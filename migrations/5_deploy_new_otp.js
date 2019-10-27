@@ -17,7 +17,7 @@ const fse = require("fs-extra");
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
-const GASLIMIT = 80000;
+const GASLIMIT = 200000;
 
 module.exports = async function(deployer, network) {
   const file = await fse.readFile("releases/deployment.json", "utf8");

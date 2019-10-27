@@ -31,14 +31,14 @@ module.exports = {
     },
     ganache: {
       host: "127.0.0.1",
-      port: 9545,
+      port: 8545,
       network_id: "4447", // my "ganache " runs with 6000 network_id - configurable
       gas: 8000000,
       from: "0x9689dc4d84b36efa1f02260a90063ae91ef0cbd8"
     },
     test: {
       host: "127.0.0.1",
-      port: 9545,
+      port: 8545,
       network_id: "*",
       gas: 8000000
     },

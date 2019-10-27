@@ -34,6 +34,7 @@ contract(
     let ubi: helpers.ThenArg<ReturnType<typeof UBI["new"]>>;
     let reserveUBI: helpers.ThenArg<ReturnType<typeof UBI["new"]>>;
     let fixedUBI: helpers.ThenArg<ReturnType<typeof FixedUBI["new"]>>;
+    let vanillaFixedUBI: helpers.ThenArg<ReturnType<typeof FixedUBI["new"]>>;
     let emptyUBI: helpers.ThenArg<ReturnType<typeof UBI["new"]>>;
     let reserveRelayer: helpers.ThenArg<
       ReturnType<typeof ReserveRelayer["new"]>
@@ -88,6 +89,9 @@ contract(
         periodEnd3,
         helpers.toGD("1")
       );
+
+      vanillaFixedUBI = await FixedUBI.deployed();
+
       reserveRelayer = await ReserveRelayer.new(
         avatar.address,
         identity.address,
@@ -98,6 +102,18 @@ contract(
 
       await identity.addWhitelisted(whitelisted);
       await identity.addWhitelisted(whitelisted4);
+    });
+
+    it("should allow non-whitelisted to checkEntitlement", async () => {
+      const claimAmount = await vanillaFixedUBI.checkEntitlement({
+        from: nonWhitelisted
+      });
+      expect(claimAmount.toString()).to.be.equal(helpers.toGD("1"));
+
+      const claimAmount2 = await vanillaFixedUBI.checkEntitlement({
+        from: whitelisted
+      });
+      expect(claimAmount2.toString()).to.be.equal(helpers.toGD("1"));
     });
 
     it("should end UBI scheme with no remaining reserve", async () => {
@@ -305,7 +321,6 @@ contract(
 
     it("should allow starting fixed claim scheme", async () => {
       assert(await fixedUBI.start());
-      await helpers.increaseTime(periodOffset * 5);
     });
 
     it("should correctly register ReserveRelayer scheme and transfer new fees to fixed UBI", async () => {

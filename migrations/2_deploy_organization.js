@@ -30,11 +30,14 @@ const NULL_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 // AdminWallet Settings
-const walletToppingAmount = web3.utils.toWei("4", "ether");
-const walletToppingTimes = 3;
 
 module.exports = async function(deployer, network) {
   const networkSettings = settings[network] || settings["default"];
+  const walletToppingAmount = web3.utils.toWei(
+    networkSettings.walletToppingAmount,
+    "gwei"
+  );
+  const walletToppingTimes = networkSettings.walletToppingTimes;
   const cap = toGD(networkSettings.cap);
 
   const initRep = networkSettings.reputation;
@@ -91,7 +94,13 @@ module.exports = async function(deployer, network) {
     const reputation = await Reputation.at(await avatar.nativeReputation());
 
     // Deploy admin wallet
-    const adminWallet = await deployer.deploy(AdminWallet, founders, walletToppingAmount, walletToppingTimes, identity.address);
+    const adminWallet = await deployer.deploy(
+      AdminWallet,
+      founders,
+      walletToppingAmount,
+      walletToppingTimes,
+      identity.address
+    );
 
     //Set avatar for schemes
     await identity.setAvatar(avatar.address);
@@ -118,7 +127,10 @@ module.exports = async function(deployer, network) {
 
     const upgradeScheme = await deployer.deploy(UpgradeScheme);
     await upgradeScheme.setParameters(voteParametersHash, absoluteVote.address);
-    const upgradeParametersHash = await upgradeScheme.getParametersHash(voteParametersHash, absoluteVote.address);
+    const upgradeParametersHash = await upgradeScheme.getParametersHash(
+      voteParametersHash,
+      absoluteVote.address
+    );
 
     // Deploy SchemeRegistrar
     const schemeRegistrar = await deployer.deploy(SchemeRegistrar);
@@ -144,7 +156,12 @@ module.exports = async function(deployer, network) {
       identity.address,
       feeFormula.address
     ];
-    paramsArray = [schemeRegisterParams, upgradeParametersHash, NULL_HASH, NULL_HASH];
+    paramsArray = [
+      schemeRegisterParams,
+      upgradeParametersHash,
+      NULL_HASH,
+      NULL_HASH
+    ];
     permissionArray = ["0x0000001F", "0x0000001F", "0x0000001F", "0x0000001F"];
 
     await daoCreator.setSchemes(

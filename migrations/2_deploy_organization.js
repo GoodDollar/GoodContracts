@@ -52,7 +52,10 @@ module.exports = async function(deployer, network) {
     });
     const founders = [accounts[0]];
 
-    const feeFormula = await deployer.deploy(FeeFormula);
+    const feeFormula = await deployer.deploy(
+      FeeFormula,
+      networkSettings.txFeePercentage
+    );
     const controllerCreator = await deployer.deploy(
       ControllerCreatorGoodDollar
     );

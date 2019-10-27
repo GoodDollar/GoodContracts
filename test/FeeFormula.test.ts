@@ -1,4 +1,4 @@
-import * as helpers from './helpers';
+import * as helpers from "./helpers";
 
 const Identity = artifacts.require("Identity");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
@@ -8,58 +8,84 @@ const ControllerInterface = artifacts.require("ControllerInterface");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const AbsoluteVote = artifacts.require("AbsoluteVote");
 const FeeFormula = artifacts.require("FeeFormula");
-const FormulaHolder = artifacts.require("FormulaHolder")
+const FormulaHolder = artifacts.require("FormulaHolder");
 const FormulaHolderMock = artifacts.require("FormulaHolderMock");
 
 contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
+  let identity: helpers.ThenArg<ReturnType<typeof Identity["new"]>>;
+  let avatar: helpers.ThenArg<ReturnType<typeof Avatar["new"]>>;
+  let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote["new"]>>;
+  let token: helpers.ThenArg<ReturnType<typeof GoodDollar["new"]>>;
+  let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula["new"]>>;
+  let newFormula: helpers.ThenArg<ReturnType<typeof FeeFormula["new"]>>;
+  let feeGuard: helpers.ThenArg<ReturnType<typeof FormulaHolder["new"]>>;
 
-	let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
-	let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
-	let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote['new']>>;
-	let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
-	let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
-	let newFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
-	let feeGuard: helpers.ThenArg<ReturnType<typeof FormulaHolder['new']>>;
+  let proposalId: string;
 
-	let proposalId: string;
+  before(async () => {
+    identity = await Identity.deployed();
+    avatar = await Avatar.at(
+      await (await DaoCreatorGoodDollar.deployed()).avatar()
+    );
+    absoluteVote = await AbsoluteVote.deployed();
+    token = await GoodDollar.at(await avatar.nativeToken());
+    feeFormula = await FeeFormula.deployed();
+    newFormula = await FeeFormula.new(0);
+    feeGuard = await FormulaHolder.new(feeFormula.address, { from: founder });
+  });
 
-	before(async () => {
-		identity = await Identity.deployed();
-		avatar = await Avatar.at(await (await DaoCreatorGoodDollar.deployed()).avatar());
-		absoluteVote = await AbsoluteVote.deployed();
-		token = await GoodDollar.at(await avatar.nativeToken());
-		feeFormula = await FeeFormula.deployed();
-		newFormula = await FeeFormula.new();
-		feeGuard = await FormulaHolder.new(feeFormula.address, { from: founder });
-	});
+  it("should not allow FormulaHolder with null formula", async () => {
+    await helpers.assertVMException(
+      FormulaHolderMock.new(),
+      "Supplied formula is null"
+    );
+  });
 
-	it("should not allow FormulaHolder with null formula", async () => {
-		await helpers.assertVMException(FormulaHolderMock.new(), "Supplied formula is null");
-	});
+  it("should be allowed to register new formula", async () => {
+    const schemeRegistrar = await SchemeRegistrar.deployed();
+    const transaction = await schemeRegistrar.proposeScheme(
+      avatar.address,
+      newFormula.address,
+      helpers.NULL_HASH,
+      "0x00000010",
+      helpers.NULL_HASH
+    );
 
-	it("should be allowed to register new formula", async () => {
-		const schemeRegistrar = await SchemeRegistrar.deployed();
-		const transaction = await schemeRegistrar.proposeScheme(avatar.address, newFormula.address, 
-		  helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
+    proposalId = transaction.logs[0].args._proposalId;
 
-		proposalId = transaction.logs[0].args._proposalId;
+    const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
+    const executeProposalEventExists = voteResult.logs.some(
+      e => e.event === "ExecuteProposal"
+    );
 
-		const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
-		const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+    assert(executeProposalEventExists);
 
-		assert(executeProposalEventExists);
+    await newFormula.setAvatar(avatar.address);
+  });
 
-		await newFormula.setAvatar(avatar.address);
-	});
+  it("should not allow stranger to change formula", async () => {
+    await helpers.assertVMException(
+      feeGuard.setFormula(newFormula.address, avatar.address, {
+        from: stranger
+      }),
+      "Only callable by avatar of owner or owner"
+    );
+  });
 
-	it("should not allow stranger to change formula", async () => {
-		await helpers.assertVMException(
-			feeGuard.setFormula(newFormula.address, avatar.address, { from: stranger }),
-			"Only callable by avatar of owner or owner"
-		);
-	});
+  it("should allow owner to set new formula", async () => {
+    assert(
+      await feeGuard.setFormula(newFormula.address, avatar.address, {
+        from: founder
+      })
+    );
+  });
 
-	it("should allow owner to set new formula", async () => {
-		assert(await feeGuard.setFormula(newFormula.address, avatar.address, { from: founder }));
-	});
+  it("should have support 0 tx fee", async () => {
+    expect((await newFormula.getTxFees(1000)).toNumber()).to.be.equal(0);
+  });
+
+  it("should calculate tx fee correctly", async () => {
+    expect((await feeFormula.getTxFees(1000)).toNumber()).to.be.equal(10);
+    expect((await feeFormula.getTxFees(50)).toNumber()).to.be.equal(0);
+  });
 });

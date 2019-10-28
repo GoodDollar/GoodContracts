@@ -39,6 +39,7 @@ fi
 read -p "Are you sure you want to continue to publish a new version to npm? <y/N> " prompt
 if [[ $prompt =~ [yY](es)? ]]
 then
+    ./scripts/minimize.sh
     git add build/contracts/*
     git commit -a -m "add: version $2"
     npm version $2

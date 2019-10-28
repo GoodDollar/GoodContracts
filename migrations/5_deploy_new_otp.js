@@ -1,4 +1,6 @@
 const { toGD } = require("./helpers");
+const settings = require("./deploy-settings.json");
+
 const Identity = artifacts.require("./Identity");
 const Controller = artifacts.require("./Controller.sol");
 const GoodDollar = artifacts.require("./GoodDollar.sol");
@@ -17,9 +19,12 @@ const fse = require("fs-extra");
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
-const GASLIMIT = 80000;
 
 module.exports = async function(deployer, network) {
+  const networkSettings = settings[network] || settings["default"];
+
+  const GASLIMIT = networkSettings.gasLimit;
+
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = await JSON.parse(file);
   const networkAddresses = previousDeployment[network];

@@ -8,12 +8,15 @@ const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const AbsoluteVote = artifacts.require("AbsoluteVote");
 const AdminWallet = artifacts.require("AdminWallet");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
+const SignUpBonus = artifacts.require("SignUpBonus");
 
-contract("AdminWallet", ([founder, whitelisted, stranger, blacklisted]) => {
+contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted]) => {
   let identity: helpers.ThenArg<ReturnType<typeof Identity["new"]>>;
   let avatar: helpers.ThenArg<ReturnType<typeof Avatar["new"]>>;
   let token: helpers.ThenArg<ReturnType<typeof GoodDollar["new"]>>;
   let adminWallet: helpers.ThenArg<ReturnType<typeof AdminWallet["new"]>>;
+  let newWallet: helpers.ThenArg<ReturnType<typeof AdminWallet["new"]>>;
+  let signupBonus: helpers.ThenArg<ReturnType<typeof SignUpBonus["new"]>>;
 
   let toppingAmount;
   let toppingTimes;
@@ -33,6 +36,7 @@ contract("AdminWallet", ([founder, whitelisted, stranger, blacklisted]) => {
   before(async () => {
     identity = await Identity.deployed();
     adminWallet = await AdminWallet.deployed();
+    signupBonus = await SignUpBonus.deployed();
 
     avatar = await Avatar.at(
       await (await DaoCreatorGoodDollar.deployed()).avatar()
@@ -41,6 +45,8 @@ contract("AdminWallet", ([founder, whitelisted, stranger, blacklisted]) => {
 
     toppingTimes = await adminWallet.toppingTimes();
     toppingAmount = await adminWallet.toppingAmount().then(_ => _.toNumber());
+
+    newWallet = await AdminWallet.new([founder], toppingAmount, toppingTimes, identity.address);
 
     newUser = await web3.eth.personal.newAccount("123");
     newUser2 = await web3.eth.personal.newAccount("123");
@@ -225,7 +231,12 @@ contract("AdminWallet", ([founder, whitelisted, stranger, blacklisted]) => {
       from: newUser,
       value: toppingAmount * 0.9
     });
-    await adminWallet.topWallet(newUser, { from: admin3 });
+    await web3.eth.sendTransaction({
+      to: adminWallet.address,
+      from: admin2,
+      value: toppingAmount
+    });
+    await adminWallet.topWallet(newUser, { from: admin2 });
     await web3.eth.sendTransaction({
       to: adminWallet.address,
       from: newUser,
@@ -237,6 +248,23 @@ contract("AdminWallet", ([founder, whitelisted, stranger, blacklisted]) => {
       "User wallet has been topped too many times today"
     );
   });
+
+  it("should not allow whitelisting and awarding before setting signup", async () => {
+    await helpers.assertVMException(
+      newWallet.whitelistAndAwardUser(stranger, 1, { from: founder }),
+      "SignUp bonus has not been set yet"
+    );
+  });
+
+  it("should whitelist user", async () => {
+    assert(!(await identity.isWhitelisted(stranger2)));
+    await adminWallet.whitelistAndAwardUser(stranger2, 0, { from: founder });
+    assert(await identity.isWhitelisted(stranger2));
+  })
+
+  it("should award users without whitelisting", async () => {
+    await adminWallet.whitelistAndAwardUser(stranger2, 5, { from: founder });
+  })
 });
 
 export {};

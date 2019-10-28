@@ -7,7 +7,7 @@ require("ts-node/register");
 // if (process.env.NODE_ENV !== 'production') { // https://codeburst.io/process-env-what-it-is-and-why-when-how-to-use-it-effectively-505d0b2831e7
 require("dotenv").load();
 // }
-const HDWalletProvider = require("truffle-hdwallet-provider");
+echo;
 const PrivateKeyProvider = require("truffle-hdwallet-provider-privkey");
 
 const mnemonic = process.env.MNEMONIC;
@@ -26,7 +26,7 @@ module.exports = {
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
       network_id: "4447", // Match any network id,
-      gas: 8000000
+      gas: 9000000
       // from: '0x8ae536FAcb8C89163A0c5A5817Aaa75F65F1bcA6' // should be equal to first address in truffle UI list - address[0]
     },
     ganache: {

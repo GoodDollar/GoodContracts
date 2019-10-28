@@ -34,6 +34,13 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
     feeGuard = await FormulaHolder.new(feeFormula.address, { from: founder });
   });
 
+  it("should not allow creating a fee formula with incorrect percentage", async () => {
+    await helpers.assertVMException(
+      FeeFormula.new(110),
+      "Percentage should be <100"
+    );
+  })
+
   it("should not allow FormulaHolder with null formula", async () => {
     await helpers.assertVMException(
       FormulaHolderMock.new(),

@@ -1,5 +1,5 @@
 import * as helpers from "./helpers";
-
+const settings = require("../migrations/deploy-settings.json");
 const Identity = artifacts.require("Identity");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
 const Avatar = artifacts.require("Avatar");
@@ -12,7 +12,7 @@ const OneTimePayments = artifacts.require("OneTimePayments");
 const DEPOSIT_CODE = "test";
 const DEPOSIT_CODE_HASH = web3.utils.keccak256(DEPOSIT_CODE);
 
-const GASLIMIT = 200000;
+const GASLIMIT = settings["test"].gasLimit;
 
 contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
   let identity: helpers.ThenArg<ReturnType<typeof Identity["new"]>>;

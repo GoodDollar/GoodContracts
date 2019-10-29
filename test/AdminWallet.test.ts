@@ -80,7 +80,7 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     await web3.eth.sendTransaction({
       to: admin2,
       from: founder,
-      value: web3.utils.toWei("1", "ether")
+      value: toppingAmount
     });
     await web3.eth.sendTransaction({
       to: admin3,
@@ -234,7 +234,7 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     await web3.eth.sendTransaction({
       to: adminWallet.address,
       from: admin2,
-      value: toppingAmount
+      value: toppingAmount * 0.9
     });
     await adminWallet.topWallet(newUser, { from: admin2 });
     await web3.eth.sendTransaction({

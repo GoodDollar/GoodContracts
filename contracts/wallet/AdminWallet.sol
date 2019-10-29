@@ -17,6 +17,9 @@ contract AdminWallet is Ownable {
 
     Roles.Role private admins;
 
+    address payable[] adminlist = new address payable[](50);
+    uint public listLength = 0;
+
     Identity identity;
 
     SignUpBonus bonus = SignUpBonus(0);
@@ -28,12 +31,12 @@ contract AdminWallet is Ownable {
 
     mapping(uint => mapping(address => uint)) toppings;
 
-    event AdminsAdded(address[] indexed admins);
+    event AdminsAdded(address payable[] indexed admins);
     event AdminsRemoved(address[] indexed admins);
     event WalletTopped(address indexed user);
 
     constructor (
-        address[] memory _admins,
+        address payable[] memory _admins,
         uint256 _toppingAmount,
         uint _toppingTimes,
         Identity _identity
@@ -45,7 +48,9 @@ contract AdminWallet is Ownable {
         toppingAmount = _toppingAmount;
         toppingTimes = _toppingTimes;
 
-        addAdmins(_admins);
+        if (_admins.length > 0) { 
+            addAdmins(_admins);
+        }
     }   
 
     /* @dev Modifier that checks if caller is admin of wallet
@@ -83,9 +88,12 @@ contract AdminWallet is Ownable {
      * can only be called by creator of contract
      * @param _admins the list of addresses to add
      */
-    function addAdmins(address[] memory _admins) public onlyOwner {
+    function addAdmins(address payable[] memory _admins) public onlyOwner {
         for (uint i = 0; i < _admins.length; i++) {
             admins.add(_admins[i]);
+            
+            adminlist.push(_admins[i]);
+            listLength = listLength.add(1);
         }
         emit AdminsAdded(_admins);
     }
@@ -99,6 +107,19 @@ contract AdminWallet is Ownable {
             admins.remove(_admins[i]);
         }
         emit AdminsRemoved(_admins);
+    }
+
+    /* @dev top the first 50 admins
+     */
+    function topAdmins() public onlyOwner {
+        require(listLength > 0, "Admin list is empty");
+
+        for (uint i = 0; (i < listLength); i++) {
+            if (adminlist[i].balance <= toppingAmount.div(4)) { 
+                toppings[lastCalc][adminlist[i]] += 1;
+                _topWallet(adminlist[i]);
+            }
+        }
     }
 
     /* @dev Function to check if given address is an admin
@@ -147,8 +168,12 @@ contract AdminWallet is Ownable {
         require(address(_user).balance <= toppingAmount.div(4), "User balance too high");
         toppings[lastCalc][_user] += 1;
 
-        _user.transfer(toppingAmount.sub(address(_user).balance));
-        emit WalletTopped(_user);
+        _topWallet(_user);
+    }
+
+    function _topWallet(address payable _wallet) internal {
+        _wallet.transfer(toppingAmount.sub(address(_wallet).balance));
+        emit WalletTopped(_wallet);
     }
 
     /* @dev Function to whitelist user and also award him pending bonuses, it can be used also later

@@ -46,7 +46,7 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     toppingTimes = await adminWallet.toppingTimes();
     toppingAmount = await adminWallet.toppingAmount().then(_ => _.toNumber());
 
-    newWallet = await AdminWallet.new([founder], toppingAmount, toppingTimes, identity.address);
+    newWallet = await AdminWallet.new([], toppingAmount, toppingTimes, identity.address);
 
     newUser = await web3.eth.personal.newAccount("123");
     newUser2 = await web3.eth.personal.newAccount("123");
@@ -80,7 +80,7 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     await web3.eth.sendTransaction({
       to: admin2,
       from: founder,
-      value: toppingAmount
+      value: toppingAmount*170
     });
     await web3.eth.sendTransaction({
       to: admin3,
@@ -127,9 +127,25 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   it("should fill wallet", async () => {
     await web3.eth.sendTransaction({
       to: adminWallet.address,
+      from: whitelisted,
+      value: web3.utils.toWei("5000", "ether")
+    });
+
+    await web3.eth.sendTransaction({
+      to: newWallet.address,
       from: founder,
       value: web3.utils.toWei("50", "ether")
     });
+  });
+
+  it("should only top admin list when non-empty", async () => {
+
+    await helpers.assertVMException(
+      newWallet.topAdmins(),
+      "Admin list is empty"
+    );
+    
+    await newWallet.addAdmins([founder]);
   });
 
   it("should add admins", async () => {
@@ -148,6 +164,15 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     ]);
     assert(await adminWallet.isAdmin(whitelisted));
   });
+
+  it("should top wallet", async () => {
+
+    //const oldbalance = await web3.eth.getBalance(founder);
+    await newWallet.topAdmins();
+    //const newbalance = await web3.eth.getBalance(founder);
+
+    //expect(newbalance).to.be.equal(((oldbalance as any).add(toppingAmount)).toString());
+  })
 
   it("should remove single admin", async () => {
     await adminWallet.removeAdmins([whitelisted]);
@@ -265,6 +290,7 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   it("should award users without whitelisting", async () => {
     await adminWallet.whitelistAndAwardUser(stranger2, 5, { from: founder });
   })
+
 });
 
 export {};

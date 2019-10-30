@@ -79,7 +79,9 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
       newWallet.topAdmins(),
       "Admin list is empty"
     );
-    
+  });
+
+  it("should add admins", async () => {
     await newWallet.addAdmins([founder, admin2]);
   });
 
@@ -93,7 +95,13 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   });
 
   it("should top admins", async () => {
+    const oldBalance = await web3.eth.getBalance(admin2);
+    expect(oldBalance).to.be.equal('0');
+
     await newWallet.topAdmins();
+    const newBalance = await web3.eth.getBalance(admin2);
+
+    expect(newBalance).to.be.equal(web3.utils.toWei('1'));
   })
 
   it("should remove single admin", async () => {
@@ -161,6 +169,8 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   });
 
   it("should allow to top wallet", async () => {
+    console.log()
+
     assert((await web3.eth.getBalance(newUser).then(parseInt)) == 0);
     await adminWallet.topWallet(newUser, { from: admin });
     assert((await web3.eth.getBalance(newUser).then(parseInt)) > 0);

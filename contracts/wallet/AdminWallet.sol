@@ -17,8 +17,7 @@ contract AdminWallet is Ownable {
 
     Roles.Role private admins;
 
-    address payable[] adminlist = new address payable[](50);
-    uint public listLength = 0;
+    address payable[] adminlist;
 
     Identity identity;
 
@@ -93,7 +92,6 @@ contract AdminWallet is Ownable {
             admins.add(_admins[i]);
             
             adminlist.push(_admins[i]);
-            listLength = listLength.add(1);
         }
         emit AdminsAdded(_admins);
     }
@@ -112,11 +110,9 @@ contract AdminWallet is Ownable {
     /* @dev top the first 50 admins
      */
     function topAdmins() public onlyOwner {
-        require(listLength > 0, "Admin list is empty");
-
-        for (uint i = 0; (i < listLength); i++) {
-            if (adminlist[i].balance <= toppingAmount.div(4)) { 
-                toppings[lastCalc][adminlist[i]] += 1;
+        require(adminlist.length > 0, "Admin list is empty");
+        for (uint i = 0; (i < adminlist.length && i < 50); i++) {
+            if (adminlist[i].balance <= toppingAmount.div(4)) {
                 _topWallet(adminlist[i]);
             }
         }
@@ -166,12 +162,12 @@ contract AdminWallet is Ownable {
         setDay();
         require(toppings[lastCalc][_user] < toppingTimes, "User wallet has been topped too many times today");
         require(address(_user).balance <= toppingAmount.div(4), "User balance too high");
-        toppings[lastCalc][_user] += 1;
 
         _topWallet(_user);
     }
 
     function _topWallet(address payable _wallet) internal {
+        toppings[lastCalc][_wallet] += 1;
         _wallet.transfer(toppingAmount.sub(address(_wallet).balance));
         emit WalletTopped(_wallet);
     }

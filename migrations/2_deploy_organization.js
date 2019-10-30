@@ -35,7 +35,7 @@ module.exports = async function(deployer, network) {
   const networkSettings = settings[network] || settings["default"];
   const walletToppingAmount = web3.utils.toWei(
     networkSettings.walletToppingAmount,
-    "gwei"
+    "ether"
   );
   const walletToppingTimes = networkSettings.walletToppingTimes;
   const cap = toGD(networkSettings.cap);

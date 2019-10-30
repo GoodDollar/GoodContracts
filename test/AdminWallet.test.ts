@@ -10,7 +10,7 @@ const AdminWallet = artifacts.require("AdminWallet");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
 const SignUpBonus = artifacts.require("SignUpBonus");
 
-contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted]) => {
+contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted]) => {
   let identity: helpers.ThenArg<ReturnType<typeof Identity["new"]>>;
   let avatar: helpers.ThenArg<ReturnType<typeof Avatar["new"]>>;
   let token: helpers.ThenArg<ReturnType<typeof GoodDollar["new"]>>;
@@ -24,14 +24,6 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   let newUser2;
   let admin;
   let admin2;
-  let admin3;
-  let admin4;
-  let admin5;
-  let admin6;
-  let admin7;
-  let admin8;
-  let admin9;
-  let admin10;
 
   before(async () => {
     identity = await Identity.deployed();
@@ -44,7 +36,7 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     token = await GoodDollar.at(await avatar.nativeToken());
 
     toppingTimes = await adminWallet.toppingTimes();
-    toppingAmount = await adminWallet.toppingAmount().then(_ => _.toNumber());
+    toppingAmount = await adminWallet.toppingAmount();
 
     newWallet = await AdminWallet.new([], toppingAmount, toppingTimes, identity.address);
 
@@ -52,75 +44,18 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     newUser2 = await web3.eth.personal.newAccount("123");
     admin = await web3.eth.personal.newAccount("123");
     admin2 = await web3.eth.personal.newAccount("123");
-    admin3 = await web3.eth.personal.newAccount("123");
-    admin4 = await web3.eth.personal.newAccount("123");
-    admin5 = await web3.eth.personal.newAccount("123");
-    admin6 = await web3.eth.personal.newAccount("123");
-    admin7 = await web3.eth.personal.newAccount("123");
-    admin8 = await web3.eth.personal.newAccount("123");
-    admin9 = await web3.eth.personal.newAccount("123");
-    admin10 = await web3.eth.personal.newAccount("123");
+
     await web3.eth.personal.unlockAccount(newUser, "123", 6000);
     await web3.eth.personal.unlockAccount(newUser2, "123", 6000);
     await web3.eth.personal.unlockAccount(admin, "123", 6000);
     await web3.eth.personal.unlockAccount(admin2, "123", 6000);
-    await web3.eth.personal.unlockAccount(admin3, "123", 6000);
-    await web3.eth.personal.unlockAccount(admin4, "123", 6000);
-    await web3.eth.personal.unlockAccount(admin5, "123", 6000);
-    await web3.eth.personal.unlockAccount(admin6, "123", 6000);
-    await web3.eth.personal.unlockAccount(admin7, "123", 6000);
-    await web3.eth.personal.unlockAccount(admin8, "123", 6000);
-    await web3.eth.personal.unlockAccount(admin9, "123", 6000);
-    await web3.eth.personal.unlockAccount(admin10, "123", 6000);
+  });
+
+  it("should transfer to admins", async() => {
     await web3.eth.sendTransaction({
       to: admin,
       from: founder,
-      value: web3.utils.toWei("1", "ether")
-    });
-    await web3.eth.sendTransaction({
-      to: admin2,
-      from: founder,
-      value: toppingAmount*170
-    });
-    await web3.eth.sendTransaction({
-      to: admin3,
-      from: founder,
-      value: web3.utils.toWei("1", "ether")
-    });
-    await web3.eth.sendTransaction({
-      to: admin4,
-      from: founder,
-      value: web3.utils.toWei("1", "ether")
-    });
-    await web3.eth.sendTransaction({
-      to: admin5,
-      from: founder,
-      value: web3.utils.toWei("1", "ether")
-    });
-    await web3.eth.sendTransaction({
-      to: admin6,
-      from: founder,
-      value: web3.utils.toWei("1", "ether")
-    });
-    await web3.eth.sendTransaction({
-      to: admin7,
-      from: founder,
-      value: web3.utils.toWei("1", "ether")
-    });
-    await web3.eth.sendTransaction({
-      to: admin8,
-      from: founder,
-      value: web3.utils.toWei("1", "ether")
-    });
-    await web3.eth.sendTransaction({
-      to: admin9,
-      from: founder,
-      value: web3.utils.toWei("1", "ether")
-    });
-    await web3.eth.sendTransaction({
-      to: admin10,
-      from: founder,
-      value: web3.utils.toWei("1", "ether")
+      value: toppingAmount / 4
     });
   });
 
@@ -138,40 +73,27 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     });
   });
 
-  it("should only top admin list when non-empty", async () => {
+  it("should not top admin list when empty", async () => {
 
     await helpers.assertVMException(
       newWallet.topAdmins(),
       "Admin list is empty"
     );
     
-    await newWallet.addAdmins([founder]);
+    await newWallet.addAdmins([founder, admin2]);
   });
 
   it("should add admins", async () => {
     await adminWallet.addAdmins([
       whitelisted,
       admin,
-      admin2,
-      admin3,
-      admin4,
-      admin5,
-      admin6,
-      admin7,
-      admin8,
-      admin9,
-      admin10
+      admin2
     ]);
     assert(await adminWallet.isAdmin(whitelisted));
   });
 
-  it("should top wallet", async () => {
-
-    //const oldbalance = await web3.eth.getBalance(founder);
+  it("should top admins", async () => {
     await newWallet.topAdmins();
-    //const newbalance = await web3.eth.getBalance(founder);
-
-    //expect(newbalance).to.be.equal(((oldbalance as any).add(toppingAmount)).toString());
   })
 
   it("should remove single admin", async () => {
@@ -181,10 +103,10 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
 
   it("should allow admin to whitelist and remove whitelist", async () => {
     assert(!(await identity.isWhitelisted(whitelisted)));
-    await adminWallet.whitelist(whitelisted, { from: admin4 });
+    await adminWallet.whitelist(whitelisted, { from: admin });
 
     assert(await identity.isWhitelisted(whitelisted));
-    await adminWallet.removeWhitelist(whitelisted, { from: admin5 });
+    await adminWallet.removeWhitelist(whitelisted, { from: admin });
     assert(!(await identity.isWhitelisted(whitelisted)));
   });
 
@@ -195,7 +117,7 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
       "Caller is not admin"
     );
     assert(!(await identity.isWhitelisted(whitelisted)));
-    await adminWallet.whitelist(whitelisted, { from: admin6 });
+    await adminWallet.whitelist(whitelisted, { from: admin });
     assert(await identity.isWhitelisted(whitelisted));
     await helpers.assertVMException(
       adminWallet.removeWhitelist(whitelisted, { from: stranger }),
@@ -206,10 +128,10 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
 
   it("should allow admin to blacklist and remove blacklist", async () => {
     assert(!(await identity.isBlacklisted(blacklisted)));
-    await adminWallet.blacklist(blacklisted, { from: admin7 });
+    await adminWallet.blacklist(blacklisted, { from: admin });
 
     assert(await identity.isBlacklisted(blacklisted));
-    await adminWallet.removeBlacklist(blacklisted, { from: admin8 });
+    await adminWallet.removeBlacklist(blacklisted, { from: admin });
     assert(!(await identity.isBlacklisted(blacklisted)));
   });
 
@@ -220,14 +142,14 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
       "Caller is not admin"
     );
     assert(!(await identity.isBlacklisted(blacklisted)));
-    await adminWallet.blacklist(blacklisted, { from: admin9 });
+    await adminWallet.blacklist(blacklisted, { from: admin });
     assert(await identity.isBlacklisted(blacklisted));
     await helpers.assertVMException(
       adminWallet.removeBlacklist(blacklisted, { from: stranger }),
       "Caller is not admin"
     );
     assert(await identity.isBlacklisted(blacklisted));
-    await adminWallet.removeBlacklist(blacklisted, { from: admin10 });
+    await adminWallet.removeBlacklist(blacklisted, { from: admin });
     assert(!(await identity.isBlacklisted(blacklisted)));
   });
 
@@ -250,16 +172,16 @@ contract("AdminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   });
 
   it("should not allow to top wallet more than three times", async () => {
-    await adminWallet.topWallet(newUser, { from: admin2 });
+    await adminWallet.topWallet(newUser, { from: admin });
     await web3.eth.sendTransaction({
       to: adminWallet.address,
       from: newUser,
       value: toppingAmount * 0.9
     });
     await web3.eth.sendTransaction({
-      to: adminWallet.address,
-      from: admin2,
-      value: toppingAmount * 0.9
+      to: admin2,
+      from: founder,
+      value: toppingAmount / 5
     });
     await adminWallet.topWallet(newUser, { from: admin2 });
     await web3.eth.sendTransaction({

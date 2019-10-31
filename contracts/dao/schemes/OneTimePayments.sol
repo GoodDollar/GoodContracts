@@ -5,6 +5,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "./FeelessScheme.sol";
 
+import "../../identity/escrow/Escrow.sol";
+
 /* @title One Time payment scheme
  * Scheme that allows address to deposit tokens for any address to withdraw
  *
@@ -13,7 +15,7 @@ import "./FeelessScheme.sol";
  * copying any transaction before it is confirmed and raising gas price
  * to ensure it is picked up first. 
  */
-contract OneTimePayments is FeelessScheme {
+contract OneTimePayments is FeelessScheme, Escrow {
     using SafeMath for uint256;
 
     uint256 public gasLimit;

@@ -169,8 +169,6 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   });
 
   it("should allow to top wallet", async () => {
-    console.log()
-
     assert((await web3.eth.getBalance(newUser).then(parseInt)) == 0);
     await adminWallet.topWallet(newUser, { from: admin });
     assert((await web3.eth.getBalance(newUser).then(parseInt)) > 0);

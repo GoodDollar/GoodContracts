@@ -15,7 +15,9 @@ const mnemonic = process.env.MNEMONIC;
 const privateKey = process.env.PRIVATE_KEY;
 
 const infura_api = process.env.INFURA_API;
-console.log({ mnemonic, privateKey, infura_api });
+const admin_mnemonic = process.env.ADMIN_MNEMONIC;
+
+console.log({ mnemonic, admin_mnemonic, privateKey, infura_api });
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
@@ -59,14 +61,6 @@ module.exports = {
           10
         );
       },
-      adminProvider: function() {
-        return new HDWalletProvider(
-          admin_mnemonic,
-          "https://mainnet.infura.io/v3/" + infura_api,
-          0,
-          50
-        );
-      },
       network_id: 1,
       skipDryRun: true,
       gas: 8000000,
@@ -79,14 +73,6 @@ module.exports = {
           "https://ropsten.infura.io/v3/" + infura_api,
           0,
           10
-        );
-      },
-      adminProvider: function() {
-        return new HDWalletProvider(
-          admin_mnemonic,
-          "https://ropsten.infura.io/v3/" + infura_api,
-          0,
-          50
         );
       },
       gas: 8000000,
@@ -103,14 +89,6 @@ module.exports = {
           10
         );
       },
-      adminProvider: function() {
-        return new HDWalletProvider(
-          admin_mnemonic,
-          "https://kovan.infura.io/v3/" + infura_api,
-          0,
-          50
-        );
-      },
       network_id: 42,
       gas: 8000000,
       skipDryRun: true,
@@ -120,14 +98,6 @@ module.exports = {
       provider: function() {
         return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
       },
-      adminProvider: function() {
-        return new HDWalletProvider(
-          admin_mnemonic,
-          "https://rpc.fusenet.io/",
-          0,
-          50
-        );
-      },
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,
@@ -136,14 +106,6 @@ module.exports = {
     staging: {
       provider: function() {
         return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
-      },
-      adminProvider: function() {
-        return new HDWalletProvider(
-          admin_mnemonic,
-          "https://rpc.fusenet.io/",
-          0,
-          50
-        );
       },
       network_id: 122,
       gas: 8500000,
@@ -162,14 +124,6 @@ module.exports = {
     production: {
       provider: function() {
         return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
-      },
-      adminProvider: function() {
-        return new HDWalletProvider(
-          admin_mnemonic,
-          "https://rpc.fusenet.io/",
-          0,
-          50
-        );
       },
       network_id: 122,
       gas: 8500000,

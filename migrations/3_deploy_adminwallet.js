@@ -46,9 +46,11 @@ module.exports = async function(deployer, network, provider) {
 		});
 		const admins = accounts;
 
+		await web3.setProvider(provider);
+
 		await adminWallet.addAdmins(admins);
 		await adminWallet.topAdmins();
 
-		await web3.setProvider(provider);
+
 	}
 }

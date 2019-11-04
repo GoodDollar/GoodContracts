@@ -18,6 +18,16 @@ module.exports = async function(deployer, network, provider) {
 
 		let adminProvider;
 
+		await web3.eth.getAccounts(function(err, res) {
+			accounts = res;
+		});
+
+		await web3.eth.sendTransaction({
+		  to: adminWallet.address,
+		  from: accounts[0],
+		  value: web3.utils.toWei("2")
+		});
+
 		switch(network) {
 			case 'mainnet' || 'ropsten' || 'kovan':
 			  adminProvider = await new HDWalletProvider(admin_mnemonic, "https://" + network + ".infura.io/v3/" + infura_api, 0, 50);
@@ -28,16 +38,17 @@ module.exports = async function(deployer, network, provider) {
 			  break;
 			default:
 		}
+
 		await web3.setProvider(adminProvider);
 
 		await web3.eth.getAccounts(function(err, res) {
 			accounts = res;
 		});
-		const admins = [accounts];
+		const admins = accounts;
 
 		await adminWallet.addAdmins(admins);
 		await adminWallet.topAdmins();
 
-		web3.setProvider(provider);
+		await web3.setProvider(provider);
 	}
 }

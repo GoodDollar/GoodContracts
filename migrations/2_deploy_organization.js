@@ -114,7 +114,7 @@ module.exports = async function(deployer, network) {
     await identity.addIdentityAdmin(adminWallet.address);
 
     if (network === "fuse" || network === "staging") {
-      await dentity.addIdentityAdmin(
+      await identity.addIdentityAdmin(
         "0x0aFb8F8B5B581Cd67E8a6e00aC4248A4B6f980E1",
         avatar.address
       );

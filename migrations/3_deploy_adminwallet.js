@@ -14,8 +14,10 @@ module.exports = async function(deployer, network, provider) {
 
 	if( network != 'ganache' && network != 'test'
 		&& network != 'coverage') {
-		const adminWallet = await AdminWallet.deployed();
 
+		const adminWallet = await AdminWallet.deployed();
+		const networkSettings = settings[network] || settings["default"];
+		
 		let adminProvider;
 
 		await web3.eth.getAccounts(function(err, res) {
@@ -25,7 +27,7 @@ module.exports = async function(deployer, network, provider) {
 		await web3.eth.sendTransaction({
 		  to: adminWallet.address,
 		  from: accounts[0],
-		  value: web3.utils.toWei("2")
+		  value: web3.utils.toWei(networkSettings.walletTransfer, networkSettings.walletTransferUnits)
 		});
 
 		switch(network) {

@@ -109,9 +109,9 @@ contract AdminWallet is Ownable {
 
     /* @dev top the first 50 admins
      */
-    function topAdmins() public onlyOwner {
-        require(adminlist.length > 0, "Admin list is empty");
-        for (uint i = 0; (i < adminlist.length && i < 50); i++) {
+    function topAdmins(uint256 startIndex) public onlyOwner {
+        require(adminlist.length > startIndex, "Admin list is empty");
+        for (uint i = startIndex; (i < adminlist.length && i < startIndex + 50); i++) {
             if (adminlist[i].balance <= toppingAmount.div(4)) {
                 _topWallet(adminlist[i]);
             }

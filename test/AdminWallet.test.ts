@@ -76,7 +76,7 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   it("should not top admin list when empty", async () => {
 
     await helpers.assertVMException(
-      newWallet.topAdmins(),
+      newWallet.topAdmins(0),
       "Admin list is empty"
     );
   });
@@ -98,7 +98,7 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     const oldBalance = await web3.eth.getBalance(admin2);
     expect(oldBalance).to.be.equal('0');
 
-    await newWallet.topAdmins();
+    await newWallet.topAdmins(0);
     const newBalance = await web3.eth.getBalance(admin2);
 
     expect(newBalance).to.be.equal(web3.utils.toWei('1'));

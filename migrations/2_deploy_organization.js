@@ -113,6 +113,17 @@ module.exports = async function(deployer, network) {
     await identity.addIdentityAdmin(avatar.address, avatar.address);
     await identity.addIdentityAdmin(adminWallet.address, avatar.address);
 
+    if (network === "fuse" || network === "staging") {
+      await identity.addIdentityAdmin(
+        "0x0aFb8F8B5B581Cd67E8a6e00aC4248A4B6f980E1",
+        avatar.address
+      );
+      await identity.addIdentityAdmin(
+        "0x8158815481A26c4759d167f4e372a384b5521187",
+        avatar.address
+      );
+    }
+
     //Transfer ownership to controller
     await token.transferOwnership(await avatar.owner());
     await reputation.transferOwnership(await avatar.owner());

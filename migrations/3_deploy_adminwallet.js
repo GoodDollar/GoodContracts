@@ -40,7 +40,7 @@ module.exports = async function(deployer, network) {
 
 		web3.setProvider(adminProvider);
 
-		await web3.eth.getAccounts(function(err, res) {
+		const admins = await web3.eth.getAccounts()
 			accounts = res;
 		});
 		const admins = accounts;

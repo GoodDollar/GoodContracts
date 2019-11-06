@@ -7,14 +7,17 @@ require("ts-node/register");
 // if (process.env.NODE_ENV !== 'production') { // https://codeburst.io/process-env-what-it-is-and-why-when-how-to-use-it-effectively-505d0b2831e7
 require("dotenv").load();
 // }
-const HDWalletProvider = require("truffle-hdwallet-provider");
+
 const PrivateKeyProvider = require("truffle-hdwallet-provider-privkey");
+const HDWalletProvider = require("truffle-hdwallet-provider");
 
 const mnemonic = process.env.MNEMONIC;
 const privateKey = process.env.PRIVATE_KEY;
 
 const infura_api = process.env.INFURA_API;
-console.log({ mnemonic, privateKey, infura_api });
+const admin_mnemonic = process.env.ADMIN_MNEMONIC;
+
+console.log({ mnemonic, admin_mnemonic, privateKey, infura_api });
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>

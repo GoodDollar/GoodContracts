@@ -19,20 +19,25 @@ module.exports = async function(deployer, network, accounts) {
     let oldProvider = web3.currentProvider;
     let adminProvider;
 
-    const adminWalletBalance = await web3.eth
+    let adminWalletBalance = await web3.eth
       .getBalance(adminWallet.address)
       .then(parseInt);
     const adminWalletValue = web3.utils.toWei(
       networkSettings.walletTransfer,
       networkSettings.walletTransferUnits
     );
-    console.log({ adminWalletBalance });
-    if (adminWalletBalance <= parseInt(adminWalletValue))
+    console.log({ adminWalletBalance, adminWalletValue });
+    if (adminWalletBalance <= parseInt(adminWalletValue)) {
       await web3.eth.sendTransaction({
         to: adminWallet.address,
         from: accounts[0],
         value: adminWalletValue
       });
+      adminWalletBalance = await web3.eth
+        .getBalance(adminWallet.address)
+        .then(parseInt);
+      console.log("adminwallet balance after top:", { adminWalletBalance });
+    }
 
     if (["mainnet", "ropsten", "kovan"].includes("network")) {
       adminProvider = new HDWalletProvider(
@@ -46,17 +51,19 @@ module.exports = async function(deployer, network, accounts) {
         admin_mnemonic,
         "https://rpc.fusenet.io/",
         0,
-        50
+        10
       );
     }
 
-    console.log({ adminProvider });
-    //web3.setProvider(adminProvider);
     const adminsWeb3 = new Web3(adminProvider);
     const admins = await adminsWeb3.eth.getAccounts();
-    console.log({ admins });
 
-    await adminWallet.addAdmins(admins);
-    await adminWallet.topAdmins(1);
+    await adminWallet
+      .addAdmins(admins)
+      .then(_ => console.log({ admins }))
+      .catch(e => console.log("addAdmin failed:", e));
+    await adminWallet
+      .topAdmins(0)
+      .catch(e => console.log("topAdmins failed:", e));
   }
 };

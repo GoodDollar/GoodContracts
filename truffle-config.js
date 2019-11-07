@@ -29,7 +29,8 @@ module.exports = {
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
       network_id: "4447", // Match any network id,
-      gas: 9000000
+      gas: 9000000,
+      gasPrice: 1000000000 //1 gwei
       // from: '0x8ae536FAcb8C89163A0c5A5817Aaa75F65F1bcA6' // should be equal to first address in truffle UI list - address[0]
     },
     ganache: {

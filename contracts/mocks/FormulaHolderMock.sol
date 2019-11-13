@@ -5,5 +5,7 @@ import "../dao/schemes/FeeFormula.sol";
 
 contract FormulaHolderMock is FormulaHolder {
 
-    constructor() public FormulaHolder(FeeFormula(0)) {}
+    constructor(FeeFormula _formula) public FormulaHolder(_formula) {
+
+    }
 }

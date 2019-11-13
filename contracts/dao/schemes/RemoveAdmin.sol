@@ -35,7 +35,7 @@ contract RemoveAdmin is SchemeGuard {
 
         controller.genericCall(
             address(identity),
-            abi.encodeWithSignature("removeIdentityAdmin(address,address)", admin, address(avatar)),
+            abi.encodeWithSignature("removeIdentityAdmin(address)", admin),
             avatar,
             0);
 

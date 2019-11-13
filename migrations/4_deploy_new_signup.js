@@ -56,7 +56,7 @@ module.exports = async function(deployer, network) {
   );
 
   await adminWallet.setBonusContract(await signupBonus.address);
-  await signupBonus.transferOwnership(await avatar.owner());
+  await signupBonus.transferOwnership(avataraddr);
 
   let transaction = await schemeRegistrar.proposeScheme(
     avatar.address,

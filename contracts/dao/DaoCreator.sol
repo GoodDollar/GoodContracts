@@ -63,11 +63,11 @@ contract AddFoundersGoodDollar {
         ControllerInterface controller = ControllerInterface(controllerCreatorGoodDollar.create(avatar, msg.sender));
 
         // Set fee recipient and Transfer ownership:
-        nativeToken.setFeeRecipient(address(avatar), avatar);
+        nativeToken.setFeeRecipient(address(avatar));
 
         avatar.transferOwnership(address(controller));
-        nativeToken.transferOwnership(_sender);
-        nativeReputation.transferOwnership(_sender);
+        nativeToken.transferOwnership(address(avatar));
+        nativeReputation.transferOwnership(address(controller));
 
         // Add minters
         nativeToken.addMinter(_sender);

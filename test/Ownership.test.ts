@@ -27,11 +27,11 @@ contract("Ownership - transferring ownership to controller", ([founder]) => {
 
 	it("fee formula should have proper owner", async () => {
 		const formulaOwner = await feeFormula.owner();
-		expect(formulaOwner).to.be.equal(controller.address);
+		expect(formulaOwner).to.be.equal(avatar.address);
 	})
 
 	it("identity should have proper owner", async () => {
 		const identityOwner = await identity.owner();
-		expect(identityOwner).to.be.equal(controller.address);
+		expect(identityOwner).to.be.equal(avatar.address);
 	});
 });

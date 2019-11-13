@@ -3,7 +3,6 @@ import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
 
 import "../identity/IdentityGuard.sol";
 import "../dao/schemes/FormulaHolder.sol";
-
 import "./ERC677Token.sol";
 
 
@@ -193,9 +192,9 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
      * @dev Sets the address that receives the transactional fees
      * @param feeRecipient The new address to receive transactional fees
      */
-    function setFeeRecipient(address feeRecipient, Avatar avatar)
+    function setFeeRecipient(address feeRecipient)
         public
-        onlyOwnerOrAvatar(avatar)
+        onlyOwner()
     {
         _feeRecipient = feeRecipient;
     }

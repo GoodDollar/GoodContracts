@@ -4,11 +4,12 @@ import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 
 import "../../identity/Identity.sol";
+import "../../identity/IdentityGuard.sol";
 import "./SchemeGuard.sol";
 
 /* @title Scheme contract responsible for adding given address to identity admins
  */
-contract AddAdmin is SchemeGuard {
+contract AddAdmin is SchemeGuard, IdentityGuard {
 
     Identity public identity;
     address public admin;
@@ -22,6 +23,7 @@ contract AddAdmin is SchemeGuard {
     )
         public
         SchemeGuard(_avatar)
+        IdentityGuard(_identity)
     {
         require(_admin != address(0), "admin cannot be null address");
         identity = _identity;
@@ -35,7 +37,7 @@ contract AddAdmin is SchemeGuard {
 
         controller.genericCall(
             address(identity),
-            abi.encodeWithSignature("addIdentityAdmin(address,address)", admin, address(avatar)),
+            abi.encodeWithSignature("addIdentityAdmin(address)", admin),
             avatar,
             0);
 

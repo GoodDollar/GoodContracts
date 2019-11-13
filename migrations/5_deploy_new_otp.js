@@ -51,7 +51,7 @@ module.exports = async function(deployer, network) {
     GASLIMIT
   );
 
-  await oneTimePayments.transferOwnership(await avatar.owner());
+  await oneTimePayments.transferOwnership(avataraddr);
 
   let transaction = await schemeRegistrar.proposeScheme(
     avatar.address,

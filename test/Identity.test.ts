@@ -7,9 +7,7 @@ const GoodDollar = artifacts.require("GoodDollar");
 const ControllerInterface = artifacts.require("ControllerInterface");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const AbsoluteVote = artifacts.require("AbsoluteVote");
-const IdentityGuard = artifacts.require("IdentityGuard");
 const IdentityGuardMock = artifacts.require("IdentityGuardMock");
-const IdentityGuardFailMock = artifacts.require("IdentityGuardFailMock");
 const AddAdmin = artifacts.require("AddAdmin");
 const RemoveAdmin = artifacts.require("RemoveAdmin");
 
@@ -20,7 +18,7 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
     let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote['new']>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
-    let identityGuard: helpers.ThenArg<ReturnType<typeof IdentityGuard['new']>>;
+    let identityGuard: helpers.ThenArg<ReturnType<typeof IdentityGuardMock['new']>>;
     let mock: helpers.ThenArg<ReturnType <typeof IdentityGuardMock['new']>>;
     let addAdmin: helpers.ThenArg<ReturnType <typeof AddAdmin['new']>>;
     let addAdmin2: helpers.ThenArg<ReturnType <typeof AddAdmin['new']>>;
@@ -36,8 +34,9 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
         token = await GoodDollar.at(await avatar.nativeToken());
         absoluteVote = await AbsoluteVote.deployed();
 
-        identityGuard = await IdentityGuard.new(dangerIdentity.address);
-        await helpers.assertVMException(IdentityGuardFailMock.new(), "Supplied identity is null");
+        identityGuard = await IdentityGuardMock.new(dangerIdentity.address);
+
+        await helpers.assertVMException(IdentityGuardMock.new(helpers.NULL_ADDRESS), "Supplied identity is null");
         mock = await IdentityGuardMock.new(identity.address);
     });
 
@@ -276,12 +275,12 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
     })
 
     it("should not allow setting non-registered identity contract", async () => {
-        await helpers.assertVMException(identityGuard.setIdentity(dangerIdentity.address, avatar.address), "Scheme is not registered");
+        await helpers.assertVMException(identityGuard.setIdentity(dangerIdentity.address), "Scheme is not registered");
         dangerIdentity = await Identity.new();
     });
 
     it("should allow to set registered identity", async () => {
-        assert(await identityGuard.setIdentity(identity.address, avatar.address));
+        assert(await identityGuard.setIdentity(identity.address));
     });
 
     it("should not allow adding non contract to contracts", async () => {

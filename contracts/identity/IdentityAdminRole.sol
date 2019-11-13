@@ -3,10 +3,8 @@ pragma solidity 0.5.4;
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
-import "../dao/AvatarGuard.sol";
-
 /** @title Contract managing the identity admin role */
-contract IdentityAdminRole is AvatarGuard {
+contract IdentityAdminRole is Ownable {
     using Roles for Roles.Role;
 
     event IdentityAdminAdded(address indexed account);
@@ -36,9 +34,9 @@ contract IdentityAdminRole is AvatarGuard {
      * @dev Adds a identity admin account. Is only callable by owner.
      * @param account Address to be added
      */
-    function addIdentityAdmin(address account, Avatar _avatar) 
+    function addIdentityAdmin(address account) 
         public
-        onlyOwnerOrAvatar(_avatar)
+        onlyOwner()
         returns(bool)
     {
         _addIdentityAdmin(account);
@@ -49,9 +47,9 @@ contract IdentityAdminRole is AvatarGuard {
      * @dev Removes a identity admin account. Is only callable by owner.
      * @param account Address to be removed
      */
-    function removeIdentityAdmin(address account, Avatar _avatar) 
+    function removeIdentityAdmin(address account) 
         public
-        onlyOwnerOrAvatar(_avatar)
+        onlyOwner()
         returns (bool)
     {
         _removeIdentityAdmin(account);

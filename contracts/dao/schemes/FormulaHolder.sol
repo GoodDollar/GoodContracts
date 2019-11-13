@@ -1,11 +1,11 @@
 pragma solidity 0.5.4;
 
-import "../AvatarGuard.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./FeeFormula.sol";
 
 /* @title Fee guard contract in charge of setting registered fee formula schemes to contract
  */
-contract FormulaHolder is AvatarGuard {
+contract FormulaHolder is Ownable {
 
     FeeFormula public formula;
 
@@ -22,7 +22,7 @@ contract FormulaHolder is AvatarGuard {
      * @param _formula the new fee formula scheme
      * @param _avatar the avatar to call with
      */
-    function setFormula(FeeFormula _formula, Avatar _avatar) public onlyOwnerOrAvatar(_avatar) {
+    function setFormula(FeeFormula _formula) public onlyOwner() {
         _formula.isRegistered();
         formula = _formula;
     }

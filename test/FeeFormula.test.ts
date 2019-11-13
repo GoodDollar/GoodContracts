@@ -30,11 +30,11 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
 		token = await GoodDollar.at(await avatar.nativeToken());
 		feeFormula = await FeeFormula.deployed();
 		newFormula = await FeeFormula.new();
-		feeGuard = await FormulaHolder.new(feeFormula.address, { from: founder });
+		feeGuard = await FormulaHolderMock.new(feeFormula.address, { from: founder });
 	});
 
 	it("should not allow FormulaHolder with null formula", async () => {
-		await helpers.assertVMException(FormulaHolderMock.new(), "Supplied formula is null");
+		await helpers.assertVMException(FormulaHolderMock.new(helpers.NULL_ADDRESS), "Supplied formula is null");
 	});
 
 	it("should be allowed to register new formula", async () => {
@@ -53,13 +53,12 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
 	});
 
 	it("should not allow stranger to change formula", async () => {
-		await helpers.assertVMException(
-			feeGuard.setFormula(newFormula.address, avatar.address, { from: stranger }),
-			"Only callable by avatar of owner or owner"
+		await helpers.assertVMRevert(
+			feeGuard.setFormula(newFormula.address, { from: stranger })
 		);
 	});
 
 	it("should allow owner to set new formula", async () => {
-		assert(await feeGuard.setFormula(newFormula.address, avatar.address, { from: founder }));
+		assert(await feeGuard.setFormula(newFormula.address, { from: founder }));
 	});
 });

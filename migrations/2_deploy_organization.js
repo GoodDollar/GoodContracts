@@ -98,14 +98,14 @@ module.exports = async function(deployer, network) {
     await feeFormula.setAvatar(avatar.address);
 
     await token.renounceMinter();
-    await identity.addIdentityAdmin(avatar.address, avatar.address);
-    await identity.addIdentityAdmin(adminWallet.address, avatar.address);
+    await identity.addIdentityAdmin(avatar.address);
+    await identity.addIdentityAdmin(adminWallet.address);
 
     //Transfer ownership to controller
-    await token.transferOwnership(await avatar.owner());
-    await reputation.transferOwnership(await avatar.owner());
-    await identity.transferOwnership(await avatar.owner());
-    await feeFormula.transferOwnership(await avatar.owner());
+    //await token.transferOwnership(await avatar.owner());
+    //await reputation.transferOwnership(await avatar.owner());
+    await identity.transferOwnership(await avatar.address /* owner */);
+    await feeFormula.transferOwnership(await avatar.address /* .owner() */);
 
     // Schemes
     // Deploy Voting Matching

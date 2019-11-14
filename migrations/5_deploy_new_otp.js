@@ -20,7 +20,7 @@ const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-module.exports = async function(deployer, network) {
+module.exports = async function(deployer, network, accounts) {
   const networkSettings = settings[network] || settings["default"];
 
   const GASLIMIT = networkSettings.gasLimit;
@@ -35,10 +35,6 @@ module.exports = async function(deployer, network) {
   const identityaddr = await networkAddresses.Identity;
   const ubiaddr = await networkAddresses.UBI;
   const signupaddr = await networkAddresses.SignupBonus;
-
-  await web3.eth.getAccounts(function(err, res) {
-    accounts = res;
-  });
 
   const founders = [accounts[0]];
 

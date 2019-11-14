@@ -23,16 +23,16 @@ then
     export MNEMONIC=$MNEMONIC_STAGING
     echo "deploying to fuse dev"
     export NETWORK='fuse'
-    npm run deploy:full
+    #npm run deploy
     echo "deploying to fuse staging"
     export NETWORK='staging'
-    npm run deploy:full
+    #npm run deploy
     read -p "deploy to production? " prompt
     if [[ $PRIVATE_KEY_PROD && $prompt =~ [yY](es)? ]]
     then
         export PRIVATE_KEY=$PRIVATE_KEY_PROD
         export NETWORK='production'
-        npm run deploy:full
+        npm run deploy
     fi        
     
 fi

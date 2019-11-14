@@ -31,22 +31,22 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
     token = await GoodDollar.at(await avatar.nativeToken());
     feeFormula = await FeeFormula.deployed();
     newFormula = await FeeFormula.new(0);
-    feeGuard = await FormulaHolder.new(feeFormula.address, { from: founder });
+    feeGuard = await FormulaHolderMock.new(feeFormula.address, { from: founder });
   });
 
-	before(async () => {
-		identity = await Identity.deployed();
-		avatar = await Avatar.at(await (await DaoCreatorGoodDollar.deployed()).avatar());
-		absoluteVote = await AbsoluteVote.deployed();
-		token = await GoodDollar.at(await avatar.nativeToken());
-		feeFormula = await FeeFormula.deployed();
-		newFormula = await FeeFormula.new();
-		feeGuard = await FormulaHolderMock.new(feeFormula.address, { from: founder });
-	});
-
-	it("should not allow FormulaHolder with null formula", async () => {
+  it("should not allow FormulaHolder with null formula", async () => {
 		await helpers.assertVMException(FormulaHolderMock.new(helpers.NULL_ADDRESS), "Supplied formula is null");
-	});
+  });
+
+  it("should be allowed to register new formula", async () => {
+    const schemeRegistrar = await SchemeRegistrar.deployed();
+    const transaction = await schemeRegistrar.proposeScheme(
+      avatar.address,
+      newFormula.address,
+      helpers.NULL_HASH,
+      "0x00000010",
+      helpers.NULL_HASH
+    );
 
     proposalId = transaction.logs[0].args._proposalId;
 
@@ -60,15 +60,6 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
     await newFormula.setAvatar(avatar.address);
   });
 
-  it("should not allow stranger to change formula", async () => {
-    await helpers.assertVMException(
-      feeGuard.setFormula(newFormula.address, avatar.address, {
-        from: stranger
-      }),
-      "Only callable by avatar of owner or owner"
-    );
-  });
-
 	it("should not allow stranger to change formula", async () => {
 		await helpers.assertVMRevert(
 			feeGuard.setFormula(newFormula.address, { from: stranger })
@@ -78,4 +69,13 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
 	it("should allow owner to set new formula", async () => {
 		assert(await feeGuard.setFormula(newFormula.address, { from: founder }));
 	});
+
+  it("should have support 0 tx fee", async () => {
+    expect((await newFormula.getTxFees(1000)).toNumber()).to.be.equal(0);
+  });
+
+  it("should calculate tx fee correctly", async () => {
+    expect((await feeFormula.getTxFees(1000)).toNumber()).to.be.equal(10);
+    expect((await feeFormula.getTxFees(50)).toNumber()).to.be.equal(0);
+  });
 });

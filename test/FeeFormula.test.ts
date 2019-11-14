@@ -38,6 +38,11 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
 		await helpers.assertVMException(FormulaHolderMock.new(helpers.NULL_ADDRESS), "Supplied formula is null");
   });
 
+  it("should not allow Fee formula with too high percentage", async () => {
+  		await helpers.assertVMException(FeeFormula.new(110), 
+  			"Percentage should be <100");
+  })
+
   it("should be allowed to register new formula", async () => {
     const schemeRegistrar = await SchemeRegistrar.deployed();
     const transaction = await schemeRegistrar.proposeScheme(

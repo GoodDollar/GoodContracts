@@ -6,7 +6,7 @@ set -e
 CHANGES=`git status --porcelain --untracked-files=no -s`
 if [[ -z $1 || -z $2 ]]
 then
-    echo "./build.sh deply <npm version>";
+    echo "./build.sh deploy/publish <npm version>";
     exit -1;
 fi
 if [[ $CHANGES ]]

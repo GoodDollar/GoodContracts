@@ -53,6 +53,10 @@ contract("Integration - awarding invitational bonus", ([founder, whitelisted, wh
       assert(await inviteUser.inviteUser(whitelisted2, {from: whitelisted }));
     });
 
+    it("Should not be able to invite self", async () => {
+      await helpers.assertVMException(inviteUser.inviteUser(nonWhitelisted, { from: nonWhitelisted }), "Cannot invite self");
+    })
+
     it("should not allow inviting twice", async () => {
       await helpers.assertVMException(inviteUser.inviteUser(whitelisted2, { from: whitelisted }), "User already invited");
     });

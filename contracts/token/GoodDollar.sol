@@ -98,6 +98,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
 
     function transferAndCall(address to, uint value, bytes calldata data)
         external
+        onlyWhitelisted
         onlyNotBlacklisted
         requireNotBlacklisted(to)
         returns (bool)

@@ -55,6 +55,7 @@ contract InviteUser is IdentityGuard, SchemeGuard {
         requireNotAdded(_user)
         returns (bool)
     {
+        require(_user != msg.sender, "Cannot invite self");
         invited[_user] = msg.sender;
 
         return true;

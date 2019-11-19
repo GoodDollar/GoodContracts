@@ -55,11 +55,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         onlyRegistered
         onlyIdentityAdmin 
     {
-        _addWhitelisted(account);
-
-        bytes32 pHash = keccak256(bytes(did));
-        addrToDID[account] = did;
-        didHashToAddress[pHash] = account;
+        _addWhitelistedWithDID(account, did);
     }
 
     /* @dev Removes an address as whitelisted.
@@ -193,6 +189,16 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         }
 
         emit WhitelistedAdded(account);
+    }
+
+    function _addWhitelistedWithDID(address account, string did) internal {
+        bytes32 pHash = keccak256(bytes(did));
+        require(didHashToAddress[pHash] == address(0), "DID already registered");
+
+        addrToDID[account] = did;
+        didHashToAddress[pHash] = account;
+
+        _addWhitelisted(account);
     }
 
     function _removeWhitelisted(address account) internal {

@@ -82,13 +82,11 @@ contract InviteUser is IdentityGuard, SchemeGuard {
 
     function awardUser(address _user) internal {
         if (rewarded[_user].add(reward) > maxBonus) {
-            rewarded[_user] = maxBonus;
             uint256 newReward = maxBonus.sub(rewarded[_user]);
+            rewarded[_user] = maxBonus;
             controller.mintTokens(newReward, _user, address(avatar));
-            
             emit BonusClaimed(_user, newReward);
         }
-        
         else {
             rewarded[_user] = rewarded[_user].add(reward);
             controller.mintTokens(reward, _user, address(avatar));

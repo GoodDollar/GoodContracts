@@ -275,7 +275,7 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
     })
 
     it("should not allow setting non-registered identity contract", async () => {
-        await helpers.assertVMException(identityGuard.setIdentity(dangerIdentity.address), "Scheme is not registered");
+        await helpers.assertVMException(identityGuard.setIdentity(dangerIdentity.address), "Identity is not registered");
         dangerIdentity = await Identity.new();
     });
 

@@ -25,16 +25,14 @@ contract SchemeGuard is Ownable {
     /* @dev checks if scheme is registered
      */
     modifier onlyRegistered() {
-        require(controller.isSchemeRegistered(address(this), address(avatar)),
-         "Scheme is not registered");
+        require(isRegistered(), "Scheme is not registered");
         _;
     }
 
     /* @dev Checks if scheme is not registered
      */
     modifier onlyNotRegistered() {
-        require(!controller.isSchemeRegistered(address(this), address(avatar)),
-         "Scheme is registered");
+        require(!isRegistered(), "Scheme is registered");
         _;
     }
 
@@ -47,8 +45,12 @@ contract SchemeGuard is Ownable {
     }
     /* @dev function to see if an avatar has been set and if scheme is registered
      */
-    function isRegistered() public view {
+    function isRegistered() public view returns(bool) {
         require(avatar != Avatar(0), "Avatar is not set");
-        require(controller.isSchemeRegistered(address(this), address(avatar)), "Scheme is not registered");
+
+        if (!(controller.isSchemeRegistered(address(this), address(avatar)))) {
+            return false;
+        }
+        return true;
     }
 }

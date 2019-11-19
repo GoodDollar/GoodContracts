@@ -33,7 +33,6 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
     mapping (address => uint) public lastClaimed;
 
     uint public currentDay;
-    uint public lastCalc;
 
     event UBIStarted(uint256 balance, uint time);
     event UBIClaimed(address indexed claimer, uint256 amount);
@@ -102,8 +101,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         super.start();
         addRights();
 
-        currentDay = 0;
-        lastCalc = now;
+        currentDay = now.sub(periodStart) / 1 days;
 
         // Transfer the fee reserve to this contract
         DAOToken token = avatar.nativeToken();

@@ -45,10 +45,7 @@ contract FixedUBI is AbstractUBI {
     /* @dev Sets the currentDay variable. Internal function
      */
     function setDay() internal {
-        uint dayDiff = now.sub(lastCalc);
-        lastCalc = now;
-
-        currentDay = currentDay.add(dayDiff / 1 days);
+        currentDay = (now.sub(periodStart)) / 1 days;
     }
 
     /* @dev Checks amount user is eligble to claim for

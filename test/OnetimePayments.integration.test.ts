@@ -220,16 +220,17 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
     );
   });
 
-  it("should remove oneTimePayments from whitelisteds without decrementing amount of whitelisteds", async () => {
-    const oldWhitelistedCount = await identity.getWhitelistedCount();
+  it("should remove oneTimePayments from whitelisted without decrementing amount of whitelisted non contracts", async () => {
+    const oldWhitelistedNonContracts = await identity.getWhitelistedNonContracts();
 
     await identity.removeWhitelisted(oneTimePayments.address);
 
-    const newWhitelistedCount = await identity.getWhitelistedCount();
+    const newWhitelistedNonContracts = await identity.getWhitelistedNonContracts();
 
-    expect(oldWhitelistedCount.toString()).to.be.equal(
-      newWhitelistedCount.toString()
+    expect(oldWhitelistedNonContracts.toString()).to.be.equal(
+           newWhitelistedNonContracts.toString()
     );
+
   });
 });
 

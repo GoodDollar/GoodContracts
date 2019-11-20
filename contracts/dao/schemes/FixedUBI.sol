@@ -13,8 +13,8 @@ contract FixedUBI is AbstractUBI {
         Avatar _avatar,
         Identity _identity,
         uint256 _initialReserve,
-        uint _periodStart,
-        uint _periodEnd,
+        uint256 _periodStart,
+        uint256 _periodEnd,
         uint256 _claimDistribution
     )
         public
@@ -34,7 +34,7 @@ contract FixedUBI is AbstractUBI {
             lastClaimed[user] = identity.dateAdded(user).sub(1 days);
         }
 
-        uint claimDays = now.sub(lastClaimed[user]) / 1 days; 
+        uint256 claimDays = now.sub(lastClaimed[user]) / 1 days; 
         
         claimDays = claimDays > 7 ? 7 : claimDays;
 
@@ -53,11 +53,11 @@ contract FixedUBI is AbstractUBI {
      */
     function checkEntitlement() public requireActive view returns (uint256) 
     {
-        uint lastClaimed = lastClaimed[msg.sender] > 0 ?
+        uint256 lastClaimed = lastClaimed[msg.sender] > 0 ?
             lastClaimed[msg.sender] :
             (identity.dateAdded(msg.sender) > 0 ? identity.dateAdded(msg.sender).sub(1 days) : now.sub(1 days));
 
-        uint claimDays = now.sub(lastClaimed) / 1 days;
+        uint256 claimDays = now.sub(lastClaimed) / 1 days;
         claimDays = claimDays > 7 ? 7 : claimDays;
         uint256 claimAmount = claimDistribution;
 

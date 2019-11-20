@@ -22,7 +22,7 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
 
     mapping(address => uint256) rewarded;
 
-    event SignUpStarted(uint256 balance, uint time);
+    event SignUpStarted(uint256 balance, uint256 time);
     event BonusClaimed(address indexed account, uint256 amount);
 
     constructor(

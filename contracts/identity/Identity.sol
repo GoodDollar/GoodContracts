@@ -22,7 +22,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     uint256 public whitelistedCount = 0;
     uint256 public whitelistedContracts = 0;
 
-    mapping(address => uint) public dateAdded;
+    mapping(address => uint256) public dateAdded;
 
     mapping (address => string) public addrToDID;
     mapping (bytes32 => address) public didHashToAddress;
@@ -86,7 +86,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         return whitelist.has(account);
     }
 
-    function wasAdded(address account) public view returns (uint) {
+    function wasAdded(address account) public view returns (uint256) {
         return dateAdded[account];
     }
 
@@ -221,7 +221,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         internal
         returns (bool)
     {
-        uint length;
+        uint256 length;
         assembly { length := extcodesize(_addr) }
         return length > 0;
     }

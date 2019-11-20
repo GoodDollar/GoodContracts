@@ -9,8 +9,8 @@ contract ReputationMock is ReputationReward, ActivePeriod {
         Avatar _avatar,
         Identity _identity,
         uint256 _reputationReward,
-        uint _periodStart,
-        uint _periodEnd
+        uint256 _periodStart,
+        uint256 _periodEnd
     )
         public
         ReputationReward(_avatar, _identity, _reputationReward)

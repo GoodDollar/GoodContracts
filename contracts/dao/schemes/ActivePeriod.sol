@@ -6,13 +6,13 @@ import "@daostack/arc/contracts/controller/Avatar.sol";
  */
 contract ActivePeriod {
 
-    uint public periodStart;
-    uint public periodEnd;
+    uint256 public periodStart;
+    uint256 public periodEnd;
 
     bool public isActive;
 
-    event SchemeStarted(address indexed by, uint time);
-    event SchemeEnded(address indexed by, uint time);
+    event SchemeStarted(address indexed by, uint256 time);
+    event SchemeEnded(address indexed by, uint256 time);
 
     /* @dev requires scheme to be active 
      */
@@ -47,7 +47,7 @@ contract ActivePeriod {
      * @param _periodStart The time from when the contract can be started
      * @param _periodEnd The time from which the contract can be ended
      */
-    constructor( uint _periodStart, uint _periodEnd) public {
+    constructor( uint256 _periodStart, uint256 _periodEnd) public {
         require(_periodStart < _periodEnd, "start cannot be after nor equal to end");
 
         periodStart = _periodStart;

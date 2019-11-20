@@ -26,8 +26,8 @@ contract ReserveRelayer is ActivePeriod, FeelessScheme {
         Avatar _avatar,
         Identity _identity,
         address _receiver,
-        uint _periodStart,
-        uint _periodEnd
+        uint256 _periodStart,
+        uint256 _periodEnd
     )
         public
         ActivePeriod(_periodStart, _periodEnd)

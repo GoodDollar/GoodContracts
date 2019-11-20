@@ -11,7 +11,7 @@ const IdentityGuardMock = artifacts.require("IdentityGuardMock");
 const AddAdmin = artifacts.require("AddAdmin");
 const RemoveAdmin = artifacts.require("RemoveAdmin");
 
-contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklisted2, whitelisted, outsider]) => {
+contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklisted2, whitelisted, whitelisted2, outsider]) => {
 
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
     let dangerIdentity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
@@ -254,6 +254,10 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
         const str = await identity.addrToDID(whitelisted);
 
         expect(str).to.be.equal('testString');
+    });
+
+    it("should not allow adding with used did", async () => {
+        await helpers.assertVMException(identity.addWhitelistedWithDID(whitelisted2, 'testString'), "DID already registered");
     });
 
     it("should not allow transferring account to blacklisted", async () => {

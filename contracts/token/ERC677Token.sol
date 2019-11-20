@@ -7,12 +7,12 @@ import "@daostack/arc/contracts/controller/DAOToken.sol";
 contract ERC677Token is ERC677, DAOToken {
 
     constructor(
-        string memory name,
-        string memory symbol,
-        uint256 cap
+        string memory _name,
+        string memory _symbol,
+        uint256 _cap
     )
         public
-        DAOToken(name, symbol, cap)
+        DAOToken(_name, _symbol, _cap)
     {
     }
 

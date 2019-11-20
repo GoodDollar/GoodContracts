@@ -9,30 +9,32 @@ import "./ERC677Token.sol";
 /** @title The GoodDollar contract */
 contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
 
-    address _feeRecipient;
+    address feeRecipient;
+
+    // Overrides hardcoded decimal in DAOToken
     uint8 public constant decimals = 2;
 
     /**
-     * @param name The name of the token
-     * @param symbol The symbol of the token
-     * @param cap the cap of the token. no cap if 0
-     * @param identity the identity contract
-     * @param feeRecipient the address that recieves transaction fees
+     * @param _name The name of the token
+     * @param _symbol The symbol of the token
+     * @param _cap the cap of the token. no cap if 0
+     * @param _identity the identity contract
+     * @param _feeRecipient the address that recieves transaction fees
      */
     constructor(
-        string memory name,
-        string memory symbol,
-        uint256 cap,
-        FeeFormula formula,
-        Identity identity,
-        address feeRecipient
+        string memory _name,
+        string memory _symbol,
+        uint256 _cap,
+        FeeFormula _formula,
+        Identity _identity,
+        address _feeRecipient
     )
         public
-        ERC677Token(name, symbol, cap)
-        IdentityGuard(identity)
-        FormulaHolder(formula)
+        ERC677Token(_name, _symbol, _cap)
+        IdentityGuard(_identity)
+        FormulaHolder(_formula)
     {
-        _feeRecipient = feeRecipient;
+        feeRecipient = _feeRecipient;
     }
 
     /**
@@ -191,13 +193,13 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
 
     /**
      * @dev Sets the address that receives the transactional fees
-     * @param feeRecipient The new address to receive transactional fees
+     * @param _feeRecipient The new address to receive transactional fees
      */
-    function setFeeRecipient(address feeRecipient)
+    function setFeeRecipient(address _feeRecipient)
         public
         onlyOwner()
     {
-        _feeRecipient = feeRecipient;
+        feeRecipient = _feeRecipient;
     }
 
     /**
@@ -213,9 +215,9 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
         uint256 txFees = getFees(value);
         if (txFees > 0 && !identity.isDAOContract(msg.sender)) {
             if (account == msg.sender) {
-                super.transfer(_feeRecipient, txFees);
+                super.transfer(feeRecipient, txFees);
             } else {
-                super.transferFrom(account, _feeRecipient, txFees);
+                super.transferFrom(account, feeRecipient, txFees);
             }
             return value.sub(txFees);
         }

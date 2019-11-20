@@ -33,7 +33,7 @@ contract AddAdmin is SchemeGuard, IdentityGuard {
     /* @dev starts scheme if within period, gets avatar to add the
      * address to list of admins and then ends even if still within period
      */
-    function start() onlyRegistered public {
+    function start() public onlyRegistered {
 
         controller.genericCall(
             address(identity),

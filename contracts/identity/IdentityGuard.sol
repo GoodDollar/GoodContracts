@@ -67,7 +67,7 @@ contract IdentityGuard is Ownable{
     /* @dev Allows anyone to set a new identity contract if
      * the given contract has been registered as a scheme
      */
-    function setIdentity(Identity _identity) public onlyOwner() {
+    function setIdentity(Identity _identity) public onlyOwner {
         require(_identity.isRegistered(), "Identity is not registered");
         identity = _identity;
     }

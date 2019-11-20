@@ -41,7 +41,7 @@ contract ReserveRelayer is ActivePeriod, FeelessScheme {
      * the receiver given in the constructor, then ends the scheme regardless
      * of end period
      */
-    function start() onlyRegistered public {
+    function start() public onlyRegistered {
         super.start();
 
         addRights();

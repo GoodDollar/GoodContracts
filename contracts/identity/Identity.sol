@@ -19,8 +19,8 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     Roles.Role private whitelist;
     Roles.Role private contracts;
 
-    uint256 private whitelistedCount = 0;
-    uint256 private whitelistedContracts = 0;
+    uint256 public whitelistedCount = 0;
+    uint256 public whitelistedContracts = 0;
 
     mapping(address => uint) public dateAdded;
 
@@ -84,25 +84,6 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         returns (bool)
     {
         return whitelist.has(account);
-    }
-
-    /* @dev Gets the amount of whitelist
-     * @return a uint representing the current amount of whitelist
-     */
-    function getWhitelistedCount()
-        public
-        view
-        returns (uint)
-    {
-        return whitelistedCount;
-    }
-
-    function getWhitelistedNonContracts()
-        public
-        view
-        returns (uint256)
-    {
-        return whitelistedCount.sub(whitelistedContracts);
     }
 
     function wasAdded(address account) public view returns (uint) {
@@ -180,7 +161,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     function _addWhitelisted(address account) internal {
         whitelist.add(account);
         
-        increaseWhitelistedCount();
+        whitelistedCount += 1;
         dateAdded[account] = now;
 
         if(isContract(account))
@@ -204,7 +185,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     function _removeWhitelisted(address account) internal {
         whitelist.remove(account);
 
-        decreaseWhitelistedCount();
+        whitelistedCount -= 1;
         delete dateAdded[account];
 
         if (isContract(account)) {
@@ -243,25 +224,5 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         uint length;
         assembly { length := extcodesize(_addr) }
         return length > 0;
-    }
-
-    /* @dev Internal function that increases count of whitelisted users by
-     * given amount
-     * @param value an uint with which the whitelisted count will increase by
-     */
-    function increaseWhitelistedCount()
-        internal
-    {
-        whitelistedCount = whitelistedCount.add(1);
-    }
-
-    /* @dev Internal function that decreases count of whitelisted users by
-     * given amount
-     * @param value an uint with which the whitelisted count will increase by
-     */
-    function decreaseWhitelistedCount()
-        internal
-    {
-        whitelistedCount = whitelistedCount.sub(1);
     }
 }

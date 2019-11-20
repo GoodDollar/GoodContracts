@@ -54,7 +54,7 @@ contract IdentityGuard is Ownable{
         _;
     }
 
-    modifier onlyAddedBefore(uint date) {
+    modifier onlyAddedBefore(uint256 date) {
         require(identity.wasAdded(msg.sender) <= date, "Was not added within period");
         _;
     }

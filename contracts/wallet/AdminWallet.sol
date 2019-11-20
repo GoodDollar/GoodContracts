@@ -24,10 +24,10 @@ contract AdminWallet is Ownable {
 
     uint256 public toppingAmount;
     
-    uint public toppingTimes;
-    uint public lastCalc;
+    uint256 public toppingTimes;
+    uint256 public lastCalc;
 
-    mapping(uint => mapping(address => uint)) toppings;
+    mapping(uint256 => mapping(address => uint256)) toppings;
 
     event AdminsAdded(address payable[] indexed admins);
     event AdminsRemoved(address[] indexed admins);
@@ -36,7 +36,7 @@ contract AdminWallet is Ownable {
     constructor (
         address payable[] memory _admins,
         uint256 _toppingAmount,
-        uint _toppingTimes,
+        uint256 _toppingTimes,
         Identity _identity
     )
         public 
@@ -71,7 +71,7 @@ contract AdminWallet is Ownable {
     /* @dev Internal function that sets current day
      */
     function setDay() internal {
-        uint dayDiff = now.sub(lastCalc) / 1 days;
+        uint256 dayDiff = now.sub(lastCalc) / 1 days;
         
         if (dayDiff >= 1) {
             lastCalc = now;
@@ -87,7 +87,7 @@ contract AdminWallet is Ownable {
      * @param _admins the list of addresses to add
      */
     function addAdmins(address payable[] memory _admins) public onlyOwner {
-        for (uint i = 0; i < _admins.length; i++) {
+        for (uint256 i = 0; i < _admins.length; i++) {
             admins.add(_admins[i]);
             
             adminlist.push(_admins[i]);
@@ -100,7 +100,7 @@ contract AdminWallet is Ownable {
      * @param _admins the list of addresses to remove
      */
     function removeAdmins(address[] memory _admins) public onlyOwner {
-        for (uint i = 0; i < _admins.length; i++) {
+        for (uint256 i = 0; i < _admins.length; i++) {
             admins.remove(_admins[i]);
         }
         emit AdminsRemoved(_admins);
@@ -110,7 +110,7 @@ contract AdminWallet is Ownable {
      */
     function topAdmins(uint256 startIndex) public onlyOwner {
         require(adminlist.length > startIndex, "Admin list is empty");
-        for (uint i = startIndex; (i < adminlist.length && i < startIndex + 50); i++) {
+        for (uint256 i = startIndex; (i < adminlist.length && i < startIndex + 50); i++) {
             if (adminlist[i].balance <= toppingAmount.div(4)) {
                 _topWallet(adminlist[i]);
             }

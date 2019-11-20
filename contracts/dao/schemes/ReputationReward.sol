@@ -11,7 +11,7 @@ import "./SchemeGuard.sol";
 contract ReputationReward is IdentityGuard, SchemeGuard {
 
     address public creator;
-    uint public reputationReward;
+    uint256 public reputationReward;
 
     /* @dev Constructor. Checks that given reward amount is above 0
      * @param _avatar The Avatar of the organization
@@ -21,7 +21,7 @@ contract ReputationReward is IdentityGuard, SchemeGuard {
     constructor(
         Avatar _avatar,
         Identity _identity,
-        uint _reputationReward
+        uint256 _reputationReward
     )
         public
         IdentityGuard(_identity)

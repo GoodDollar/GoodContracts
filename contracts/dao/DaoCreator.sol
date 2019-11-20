@@ -41,8 +41,8 @@ contract AddFoundersGoodDollar {
         Reputation nativeReputation,
         address _sender,
         address[] memory _founders,
-        uint[] memory _foundersTokenAmount,
-        uint[] memory _foundersReputationAmount
+        uint256[] memory _foundersTokenAmount,
+        uint256[] memory _foundersReputationAmount
     )
         public
         returns(Avatar)
@@ -114,8 +114,8 @@ contract DaoCreatorGoodDollar {
         FeeFormula _formula,
         Identity _identity,
         address[] calldata _founders,
-        uint[] calldata _foundersTokenAmount,
-        uint[] calldata _foundersReputationAmount
+        uint256[] calldata _foundersTokenAmount,
+        uint256[] calldata _foundersReputationAmount
     )
     external
     returns(address)
@@ -184,8 +184,8 @@ contract DaoCreatorGoodDollar {
         FeeFormula _formula,
         Identity _identity,
         address[] memory _founders,
-        uint[] memory _foundersTokenAmount,
-        uint[] memory _foundersReputationAmount
+        uint256[] memory _foundersTokenAmount,
+        uint256[] memory _foundersReputationAmount
     ) private returns(address)
     {
         // Create Token, Reputation and Avatar:

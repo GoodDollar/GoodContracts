@@ -12,7 +12,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
     address feeRecipient;
 
     // Overrides hardcoded decimal in DAOToken
-    uint8 public constant decimals = 2;
+    uint256 public constant decimals = 2;
 
     /**
      * @param _name The name of the token
@@ -98,7 +98,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
         return super.transferFrom(from, to, bruttoValue);
     }
 
-    function transferAndCall(address to, uint value, bytes calldata data)
+    function transferAndCall(address to, uint256 value, bytes calldata data)
         external
         onlyWhitelisted
         onlyNotBlacklisted

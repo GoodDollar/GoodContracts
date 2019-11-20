@@ -5,7 +5,7 @@ import "@daostack/arc/contracts/controller/Avatar.sol";
 
 contract ActivePeriodMock is ActivePeriod {
 
-    constructor( uint _periodStart, uint _periodEnd) public ActivePeriod(_periodStart, _periodEnd) {}
+    constructor( uint256 _periodStart, uint256 _periodEnd) public ActivePeriod(_periodStart, _periodEnd) {}
 
     function start() public {
         super.start();

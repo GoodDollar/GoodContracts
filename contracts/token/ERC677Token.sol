@@ -49,7 +49,7 @@ contract ERC677Token is ERC677, DAOToken {
         internal
         returns (bool)
     {
-        uint length;
+        uint256 length;
         assembly { length := extcodesize(_addr) }
         return length > 0;
     }

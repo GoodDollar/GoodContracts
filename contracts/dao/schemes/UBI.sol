@@ -28,13 +28,13 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         uint256 claimAmount;
     }
 
-    mapping (uint => Day) claimDay;
+    mapping (uint256 => Day) claimDay;
 
-    mapping (address => uint) public lastClaimed;
+    mapping (address => uint256) public lastClaimed;
 
-    uint public currentDay;
+    uint256 public currentDay;
 
-    event UBIStarted(uint256 balance, uint time);
+    event UBIStarted(uint256 balance, uint256 time);
     event UBIClaimed(address indexed claimer, uint256 amount);
     event UBIEnded(uint256 claimers, uint256 claimamount);
     /**
@@ -48,8 +48,8 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         Avatar _avatar,
         Identity _identity,
         uint256 _initialReserve,
-        uint _periodStart,
-        uint _periodEnd
+        uint256 _periodStart,
+        uint256 _periodEnd
     )
         public
         ActivePeriod(_periodStart, _periodEnd)
@@ -70,7 +70,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
      * @param day the day to get claimer count from, with 0 being the starting day
      * @returns an integer indicating the amount of people who claimed that day
      */
-    function getClaimerCount(uint day) public view returns (uint256) {
+    function getClaimerCount(uint256 day) public view returns (uint256) {
         return claimDay[day].amountOfClaimers;
     }
 
@@ -78,7 +78,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
      * @param day the day to get claimer count from, with 0 being the starting day
      * @returns an integer indicating the amount that has been claimed on the given day
      */
-    function getClaimAmount(uint day) public view returns (uint256) {
+    function getClaimAmount(uint256 day) public view returns (uint256) {
         return claimDay[day].claimAmount;
     }
 
@@ -181,8 +181,8 @@ contract UBI is AbstractUBI {
         Avatar _avatar,
         Identity _identity,
         uint256 _initialReserve,
-        uint _periodStart,
-        uint _periodEnd
+        uint256 _periodStart,
+        uint256 _periodEnd
     )
         public
         AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd)

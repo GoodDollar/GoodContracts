@@ -10,8 +10,6 @@ import "./SchemeGuard.sol";
  */
 contract ReputationReward is IdentityGuard, SchemeGuard {
 
-    Avatar avatar;
-
     address public creator;
     uint public reputationReward;
 

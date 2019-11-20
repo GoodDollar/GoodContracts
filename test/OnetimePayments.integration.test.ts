@@ -221,11 +221,17 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
   });
 
   it("should remove oneTimePayments from whitelisted without decrementing amount of whitelisted non contracts", async () => {
-    const oldWhitelistedNonContracts = await identity.getWhitelistedNonContracts();
+    const oldWhitelisted = await identity.whitelistedCount() as any;
+    const oldWhitelistedContracts = await identity.whitelistedContracts() as any;
+
+    const oldWhitelistedNonContracts = oldWhitelisted.sub(oldWhitelistedContracts);
 
     await identity.removeWhitelisted(oneTimePayments.address);
 
-    const newWhitelistedNonContracts = await identity.getWhitelistedNonContracts();
+    const newWhitelisted = await identity.whitelistedCount() as any;
+    const newWhitelistedContracts = await identity.whitelistedContracts() as any;
+
+    const newWhitelistedNonContracts = newWhitelisted.sub(newWhitelistedContracts);
 
     expect(oldWhitelistedNonContracts.toString()).to.be.equal(
            newWhitelistedNonContracts.toString()

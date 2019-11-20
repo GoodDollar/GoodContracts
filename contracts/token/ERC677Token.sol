@@ -30,7 +30,7 @@ contract ERC677Token is ERC677, DAOToken {
         emit Transfer(msg.sender, _to, _value, _data);
       
         if (isContract(_to)) {
-            require(contractFallback(_to, _value, _data));
+            require(contractFallback(_to, _value, _data), "Contract fallback failed");
         }
         return true;
     }

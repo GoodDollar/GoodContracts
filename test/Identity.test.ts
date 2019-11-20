@@ -79,16 +79,16 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
     });
 
     it("should increment and decrement whitelisteds when adding whitelisted", async () => {
-        const oldWhitelistedCount = await identity.getWhitelistedCount();
+        const oldWhitelistedCount = await identity.whitelistedCount() as any;
 
         await identity.addWhitelisted(whitelisted);
 
-        const diffWhitelistedCount = ((await identity.getWhitelistedCount()) as any).sub(oldWhitelistedCount);
+        const diffWhitelistedCount = ((await identity.whitelistedCount()) as any).sub(oldWhitelistedCount);
         expect(diffWhitelistedCount.toString()).to.be.equal('1');
 
         await identity.removeWhitelisted(whitelisted);
 
-        const whitelistedCount = (await identity.getWhitelistedCount());
+        const whitelistedCount = await identity.whitelistedCount() as any;
         expect(whitelistedCount.toString()).to.be.equal(oldWhitelistedCount.toString());
 
     });
@@ -228,14 +228,14 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
 
     it("should not increment whitelisted counter when adding whitelisted", async () => {
         await identity.addWhitelisted(whitelisted);
-        let whitelistedCount = await identity.getWhitelistedCount();
+        let whitelistedCount = await identity.whitelistedCount;
 
         await helpers.assertVMException(
           identity.addWhitelisted(whitelisted),
           "VM Exception"
         );
 
-        let whitelistedCountNew = await identity.getWhitelistedCount();
+        let whitelistedCountNew = await identity.whitelistedCount;
         expect(whitelistedCountNew.toString()).to.be.equal(whitelistedCount.toString());
 
         await identity.removeWhitelisted(whitelisted);

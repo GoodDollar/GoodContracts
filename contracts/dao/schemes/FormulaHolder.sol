@@ -22,7 +22,7 @@ contract FormulaHolder is Ownable {
      * @param _formula the new fee formula scheme
      * @param _avatar the avatar to call with
      */
-    function setFormula(FeeFormula _formula) public onlyOwner() {
+    function setFormula(FeeFormula _formula) public onlyOwner {
         _formula.isRegistered();
         formula = _formula;
     }

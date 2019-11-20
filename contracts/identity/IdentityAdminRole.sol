@@ -36,7 +36,7 @@ contract IdentityAdminRole is Ownable {
      */
     function addIdentityAdmin(address account) 
         public
-        onlyOwner()
+        onlyOwner
         returns(bool)
     {
         _addIdentityAdmin(account);
@@ -49,7 +49,7 @@ contract IdentityAdminRole is Ownable {
      */
     function removeIdentityAdmin(address account) 
         public
-        onlyOwner()
+        onlyOwner
         returns (bool)
     {
         _removeIdentityAdmin(account);

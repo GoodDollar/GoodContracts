@@ -39,7 +39,7 @@ contract SchemeGuard is Ownable {
     /* @dev Sets a new given avatar and controller for scheme
      * can only be done by owner of scheme
      */
-    function setAvatar(Avatar _avatar) public onlyOwner() {
+    function setAvatar(Avatar _avatar) public onlyOwner {
         avatar = _avatar;
         controller = ControllerInterface(avatar.owner());
     }

@@ -191,7 +191,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         emit WhitelistedAdded(account);
     }
 
-    function _addWhitelistedWithDID(address account, string did) internal {
+    function _addWhitelistedWithDID(address account, string memory did) internal {
         bytes32 pHash = keccak256(bytes(did));
         require(didHashToAddress[pHash] == address(0), "DID already registered");
 

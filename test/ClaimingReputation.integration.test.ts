@@ -45,7 +45,7 @@ contract("Integration - Claiming Reputation", ([founder, whitelisted, whiteliste
     const periodEnd = periodStart + periodOffset;
 
     helpers.assertVMException(ReputationMock.new(avatar.address, identity.address, 0, periodStart, periodEnd, { from: founder }),
-      "reputation reward cannot be equal to or lower than zero");
+      "reputation reward cannot be zero");
   });
 
   it("should correctly propose Rep scheme", async () => {

@@ -197,7 +197,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
      */
     function setFeeRecipient(address _feeRecipient)
         public
-        onlyOwner()
+        onlyOwner
     {
         feeRecipient = _feeRecipient;
     }

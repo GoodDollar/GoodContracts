@@ -51,7 +51,7 @@ contract FixedUBI is AbstractUBI {
     /* @dev Checks amount user is eligble to claim for
      * @returns an uint256 indicating the amount the user can claim for
      */
-    function checkEntitlement() public requireActive view returns (uint256) 
+    function checkEntitlement() public view requireActive returns (uint256) 
     {
         uint256 lastClaimed = lastClaimed[msg.sender] > 0 ?
             lastClaimed[msg.sender] :

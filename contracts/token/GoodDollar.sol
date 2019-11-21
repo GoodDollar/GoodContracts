@@ -122,7 +122,9 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
         returns (bool)
     {
         if (cap > 0)
+        {
             require(totalSupply().add(value) <= cap, "Cannot increase supply beyond cap");
+        }
         super._mint(to, value);
         return true;
     }

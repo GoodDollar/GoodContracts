@@ -149,10 +149,10 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         returns(bool)
     {
         require(!claimDay[currentDay].hasClaimed[msg.sender], "has already claimed");
+        claimDay[currentDay].hasClaimed[msg.sender] = true;
 
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
 
-        claimDay[currentDay].hasClaimed[msg.sender] = true;
         token.transfer(msg.sender, claimDistribution);
 
         claimDay[currentDay].amountOfClaimers = claimDay[currentDay].amountOfClaimers.add(1);

@@ -170,6 +170,8 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
  */
 contract UBI is AbstractUBI {
 
+    uint256 claimers;
+
     /* @dev Constructor. Checks if avatar is a zero address
      * and if periodEnd variable is after periodStart.
      * @param _avatar the avatar contract
@@ -186,7 +188,9 @@ contract UBI is AbstractUBI {
     )
         public
         AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd)
-    {}
+    {
+        claimers = (identity.whitelistedCount()).sub(identity.whitelistedContracts());
+    }
 
     /* @dev function that returns an uint256 that
      * represents the amount each claimer can claim.
@@ -194,7 +198,6 @@ contract UBI is AbstractUBI {
      * @return The reserve divided by the amount of registered claimers
      */
     function distributionFormula(uint256 reserve, address /*user*/) internal returns(uint256) {
-        uint256 claimers = (identity.whitelistedCount()).sub(identity.whitelistedContracts());
         return reserve.div(claimers);
     }
 

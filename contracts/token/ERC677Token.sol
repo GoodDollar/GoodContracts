@@ -26,7 +26,7 @@ contract ERC677Token is ERC677, DAOToken {
         internal
         returns (bool)
     {
-        super.transfer(_to, _value);
+        require(super.transfer(_to, _value), "Transfer failed");
         emit Transfer(msg.sender, _to, _value, _data);
       
         if (isContract(_to)) {

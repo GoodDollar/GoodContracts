@@ -60,6 +60,10 @@ contract(
       controller = await ControllerInterface.at(await avatar.owner());
       absoluteVote = await AbsoluteVote.deployed();
       token = await GoodDollar.at(await avatar.nativeToken());
+
+      await identity.addWhitelisted(whitelisted);
+      await identity.addWhitelisted(whitelisted4);
+
       ubi = await UBI.new(
         avatar.address,
         identity.address,
@@ -100,8 +104,6 @@ contract(
         periodEnd3
       );
 
-      await identity.addWhitelisted(whitelisted);
-      await identity.addWhitelisted(whitelisted4);
     });
 
     it("should allow non-whitelisted to checkEntitlement", async () => {

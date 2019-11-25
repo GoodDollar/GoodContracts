@@ -74,7 +74,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         _removeWhitelisted(msg.sender);
     }
 
-    /* @dev Reverts if given address has not been added to whitelist
+    /* @dev Returns true if given address has been added to whitelist
      * @param account the address to check
      * @return a bool indicating weather the address is present in whitelist
      */
@@ -204,7 +204,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         emit WhitelistedRemoved(account);
     }
 
-    /* @dev Reverts if given address has been added to the blacklist
+    /* @dev Returns true if given address has been added to the blacklist
      * @param account the address to check
      * @return a bool indicating weather the address is present in the blacklist
      */

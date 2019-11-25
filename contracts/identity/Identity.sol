@@ -148,6 +148,8 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     {
         contracts.remove(account);
         _removeWhitelisted(account);
+
+        emit ContractRemoved(account);
     }
 
     function isDAOContract(address account)

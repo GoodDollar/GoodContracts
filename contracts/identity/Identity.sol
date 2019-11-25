@@ -92,6 +92,9 @@ contract Identity is IdentityAdminRole, SchemeGuard {
 
     function transferAccount(address account) public {
         require(!isBlacklisted(account), "Cannot transfer to blacklisted");
+        require(avatar.nativeToken().balanceOf(account) == 0, "Account is already in use");
+
+        require(keccak256(bytes(addrToDID[account])) == keccak256(bytes("")), "address already has DID");
 
         string memory did = addrToDID[msg.sender];
         bytes32 pHash = keccak256(bytes(did));

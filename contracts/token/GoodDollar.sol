@@ -18,6 +18,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
      * @param _name The name of the token
      * @param _symbol The symbol of the token
      * @param _cap the cap of the token. no cap if 0
+     * @param _formula the fee formula contract
      * @param _identity the identity contract
      * @param _feeRecipient the address that recieves transaction fees
      */

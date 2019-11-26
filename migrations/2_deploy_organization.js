@@ -109,6 +109,10 @@ module.exports = async function(deployer, network) {
     await feeFormula.setAvatar(avatar.address);
 
     await token.renounceMinter();
+
+    await identity.addPauser(avatar.address);
+    await identity.addPauser(adminWallet.address);
+
     await identity.addIdentityAdmin(avatar.address);
     await identity.addIdentityAdmin(adminWallet.address);
 

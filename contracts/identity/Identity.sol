@@ -2,6 +2,7 @@ pragma solidity 0.5.4;
 
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 
@@ -11,7 +12,7 @@ import "./IdentityAdminRole.sol";
 /* @title Identity contract responsible for whitelisting
  * and keeping track of amount of whitelisted users
  */
-contract Identity is IdentityAdminRole, SchemeGuard {
+contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
     using Roles for Roles.Role;
     using SafeMath for uint256;
 
@@ -46,6 +47,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         public
         onlyRegistered
         onlyIdentityAdmin
+        whenNotPaused
     {
         _addWhitelisted(account);
     }
@@ -53,7 +55,8 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     function addWhitelistedWithDID(address account, string memory did) 
         public
         onlyRegistered
-        onlyIdentityAdmin 
+        onlyIdentityAdmin
+        whenNotPaused
     {
         _addWhitelistedWithDID(account, did);
     }
@@ -66,11 +69,12 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         public
         onlyRegistered
         onlyIdentityAdmin
+        whenNotPaused
     {
         _removeWhitelisted(account);
     }
 
-    function renounceWhitelisted() public {
+    function renounceWhitelisted() public whenNotPaused {
         _removeWhitelisted(msg.sender);
     }
 
@@ -111,6 +115,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         public
         onlyRegistered
         onlyIdentityAdmin
+        whenNotPaused
     {
         blacklist.add(account);
         emit BlacklistAdded(account);
@@ -124,6 +129,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         public
         onlyRegistered
         onlyIdentityAdmin
+        whenNotPaused
     {
         blacklist.remove(account);
         emit BlacklistRemoved(account);
@@ -133,6 +139,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         public
         onlyRegistered
         onlyIdentityAdmin
+        whenNotPaused
     {
         require(isContract(account), "Given address is not a contract");
         contracts.add(account);
@@ -145,6 +152,7 @@ contract Identity is IdentityAdminRole, SchemeGuard {
         public
         onlyRegistered
         onlyIdentityAdmin
+        whenNotPaused
     {
         contracts.remove(account);
         _removeWhitelisted(account);

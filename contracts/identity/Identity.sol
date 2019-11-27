@@ -94,7 +94,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         return dateAdded[account];
     }
 
-    function transferAccount(address account) public {
+    function transferAccount(address account) public whenNotPaused {
         require(!isBlacklisted(account), "Cannot transfer to blacklisted");
 
         string memory did = addrToDID[msg.sender];

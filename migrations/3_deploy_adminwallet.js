@@ -5,7 +5,6 @@ const settings = require("./deploy-settings.json");
 require("dotenv").load();
 // }
 
-const PrivateKeyProvider = require("truffle-hdwallet-provider-privkey");
 const HDWalletProvider = require("truffle-hdwallet-provider");
 
 const admin_mnemonic = process.env.ADMIN_MNEMONIC;
@@ -16,7 +15,6 @@ module.exports = async function(deployer, network, accounts) {
     const adminWallet = await AdminWallet.deployed();
     const networkSettings = settings[network] || settings["default"];
 
-    let oldProvider = web3.currentProvider;
     let adminProvider;
 
     let adminWalletBalance = await web3.eth

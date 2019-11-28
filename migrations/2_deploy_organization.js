@@ -94,7 +94,6 @@ module.exports = async function(deployer, network) {
     const avatar = await Avatar.at(await daoCreator.avatar());
     const controller = await Controller.at(await avatar.owner());
     const token = await GoodDollar.at(await avatar.nativeToken());
-    const reputation = await Reputation.at(await avatar.nativeReputation());
 
     // Deploy admin wallet
     const adminWallet = await deployer.deploy(

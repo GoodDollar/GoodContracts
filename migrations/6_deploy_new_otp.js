@@ -1,4 +1,3 @@
-const { toGD } = require("./helpers");
 const settings = require("./deploy-settings.json");
 
 const Identity = artifacts.require("./Identity");
@@ -10,7 +9,6 @@ const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 
 const UBI = artifacts.require("./FixedUBI.sol");
-const SignupBonus = artifacts.require("./SignUpBonus.sol");
 const OneTimePayments = artifacts.require("./OneTimePayments.sol");
 
 const releaser = require("../scripts/releaser.js");
@@ -40,8 +38,6 @@ module.exports = async function(deployer, network, accounts) {
 
   const avatar = await Avatar.at(avataraddr);
   const identity = await Identity.at(identityaddr);
-  const controller = await avatar.owner();
-  const token = await GoodDollar.at(await avatar.nativeToken());
   const absoluteVote = await AbsoluteVote.at(voteaddr);
   const schemeRegistrar = await SchemeRegistrar.at(schemeaddr);
 

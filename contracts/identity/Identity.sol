@@ -91,13 +91,19 @@ contract Identity is IdentityAdminRole, SchemeGuard {
     }
 
     function transferAccount(address account) public {
+        ERC20 token = avatar.nativeToken();
         require(!isBlacklisted(account), "Cannot transfer to blacklisted");
+        require(token.balanceOf(account) == 0, "Account is already in use");
+
+        require(keccak256(bytes(addrToDID[account])) == keccak256(bytes("")), "address already has DID");
 
         string memory did = addrToDID[msg.sender];
         bytes32 pHash = keccak256(bytes(did));
 
-        _removeWhitelisted(msg.sender);
         _addWhitelisted(account);
+        uint256 balance = token.balanceOf(msg.sender);
+        token.transferFrom(msg.sender, account, balance);
+        _removeWhitelisted(msg.sender);
 
         addrToDID[account] = did;
         didHashToAddress[pHash] = account;

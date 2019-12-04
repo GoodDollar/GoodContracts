@@ -29,7 +29,6 @@ contract ReputationReward is IdentityGuard, SchemeGuard {
     {
         require(_reputationReward > 0, "reputation reward cannot be zero" );
 
-        avatar = _avatar;
         creator = msg.sender;
         reputationReward = _reputationReward;
     }

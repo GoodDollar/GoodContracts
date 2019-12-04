@@ -99,7 +99,7 @@ module.exports = {
       provider: function() {
         return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
       },
-      network_id: 121,
+      network_id: 122,
       gas: 8500000,
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei
@@ -108,7 +108,7 @@ module.exports = {
       provider: function() {
         return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
       },
-      network_id: 121,
+      network_id: 122,
       gas: 8500000,
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei
@@ -117,7 +117,7 @@ module.exports = {
       provider: function() {
         return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
       },
-      network_id: 121,
+      network_id: 122,
       gas: 8500000,
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei
@@ -126,7 +126,7 @@ module.exports = {
       provider: function() {
         return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
       },
-      network_id: 121,
+      network_id: 122,
       gas: 8500000,
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei

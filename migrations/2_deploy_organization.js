@@ -193,6 +193,7 @@ module.exports = async function(deployer, network) {
     await identity.addContract(avatar.address);
     await identity.addContract(await avatar.owner());
     await identity.addContract(adminWallet.address);
+    await identity.addContract(identity.address);
 
     await token.transfer(
       avatar.address,

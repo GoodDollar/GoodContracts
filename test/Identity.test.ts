@@ -45,7 +45,7 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
         await dangerIdentity.setAvatar(avatar.address);
     })
 
-    it("should blacklist addreess", async () => {
+    it("should blacklist address", async () => {
         await identity.addBlacklisted(blacklisted);
         assert(await identity.isBlacklisted(blacklisted));
 
@@ -258,17 +258,38 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
 
     it("should not allow adding with used did", async () => {
         await helpers.assertVMException(identity.addWhitelistedWithDID(whitelisted2, 'testString'), "DID already registered");
+
     });
 
     it("should not allow transferring account to blacklisted", async () => {
-        await helpers.assertVMException(identity.transferAccount(blacklisted2, {from: whitelisted}), "Cannot transfer to blacklisted");
+        await helpers.assertVMException(identity.transferAccount(blacklisted2, { from: whitelisted }), "Cannot transfer to blacklisted");
     });
 
-    it("should transfer account to new address", async () => {
-        await identity.transferAccount(outsider, { from: whitelisted });
+    it("should not allow transferring account to address with funds", async () => {
+        await token.transfer(outsider, helpers.toGD("1"));
+        await helpers.assertVMException(identity.transferAccount(outsider, { from: whitelisted }), "Account is already in use");
+    })
 
-        assert(await identity.isWhitelisted(outsider));
-        const transferstring = await identity.addrToDID(outsider);
+    it("should not allow transferring account to address with did", async () => {
+        const newUser = await web3.eth.personal.newAccount("123");
+        await web3.eth.personal.unlockAccount(newUser, "123", 6000);
+
+        await identity.addWhitelistedWithDID(newUser, 'testString2');
+
+        await helpers.assertVMException(identity.transferAccount(newUser, { from: whitelisted }), "address already has DID")
+    })
+
+    it("should transfer account to new address", async () => {
+        const newUser2 = await web3.eth.personal.newAccount("123");
+        await web3.eth.personal.unlockAccount(newUser2, "123", 6000);
+
+        const bal = await token.balanceOf(newUser2);
+        expect(bal.toString()).to.be.equal(helpers.toGD("0"));
+
+        await identity.transferAccount(newUser2, { from: whitelisted });
+
+        assert(await identity.isWhitelisted(newUser2));
+        const transferstring = await identity.addrToDID(newUser2);
         expect(transferstring).to.be.equal('testString');
     });
 

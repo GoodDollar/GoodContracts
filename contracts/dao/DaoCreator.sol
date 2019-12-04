@@ -205,6 +205,8 @@ contract DaoCreatorGoodDollar {
 
         avatar = addFoundersGoodDollar.addFounders(nativeToken, nativeReputation, msg.sender, _founders, _foundersTokenAmount, _foundersReputationAmount);
 
+        nativeToken.addPauser(address(avatar));
+
         lock = msg.sender;
 
         emit NewOrg (address(avatar));

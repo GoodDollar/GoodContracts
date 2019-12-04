@@ -4,7 +4,9 @@ import "./ERC677/ERC677.sol";
 import "./ERC677/ERC677Receiver.sol";
 import "@daostack/arc/contracts/controller/DAOToken.sol";
 
-contract ERC677Token is ERC677, DAOToken {
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Pausable.sol";
+
+contract ERC677Token is ERC677, DAOToken, ERC20Pausable {
 
     constructor(
         string memory _name,
@@ -24,9 +26,10 @@ contract ERC677Token is ERC677, DAOToken {
     */
     function _transferAndCall(address _to, uint256 _value, bytes memory _data)
         internal
+        whenNotPaused
         returns (bool)
     {
-        super.transfer(_to, _value);
+        require(super.transfer(_to, _value), "Transfer failed");
         emit Transfer(msg.sender, _to, _value, _data);
       
         if (isContract(_to)) {

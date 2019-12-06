@@ -78,13 +78,9 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         _removeWhitelisted(account);
     }
 
-<<<<<<< HEAD
-    function renounceWhitelisted() public whenNotPaused {
-=======
     /* @dev Renounces message sender from whitelisted
      */
-    function renounceWhitelisted() public {
->>>>>>> fix: add documentation to identity contracts
+    function renounceWhitelisted() public whenNotPaused {
         _removeWhitelisted(msg.sender);
     }
 
@@ -114,7 +110,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      */
     function transferAccount(address account) public whenNotPaused {
         ERC20 token = avatar.nativeToken();
-        
+
         require(!isBlacklisted(account), "Cannot transfer to blacklisted");
         require(token.balanceOf(account) == 0, "Account is already in use");
 

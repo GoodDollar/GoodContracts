@@ -6,6 +6,8 @@ import "@daostack/arc/contracts/controller/DAOToken.sol";
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Pausable.sol";
 
+/* @title ERC677Token contract.
+ */
 contract ERC677Token is ERC677, DAOToken, ERC20Pausable {
 
     constructor(
@@ -23,6 +25,7 @@ contract ERC677Token is ERC677, DAOToken, ERC20Pausable {
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     * @param _data The extra data to be passed to the receiving contract.
+    * @returns true if transfer is successful
     */
     function _transferAndCall(address _to, uint256 _value, bytes memory _data)
         internal
@@ -38,6 +41,9 @@ contract ERC677Token is ERC677, DAOToken, ERC20Pausable {
         return true;
     }
 
+    /* @dev Contract fallback function. Is called if transferAndCall is called
+     * to a contract
+     */
     function contractFallback(address _to, uint256 _value, bytes memory _data)
         private
         returns (bool)
@@ -47,6 +53,10 @@ contract ERC677Token is ERC677, DAOToken, ERC20Pausable {
         return true;
     }
 
+    /* @dev Function to check if given address is a contract
+     * @param _addr Address to check
+     * @returns true if given address is a contract
+     */ 
     function isContract(address _addr)
         view
         internal

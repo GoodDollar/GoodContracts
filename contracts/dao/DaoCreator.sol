@@ -23,6 +23,10 @@ contract ControllerCreatorGoodDollar {
     }
 }
 
+/**
+ * @title Contract for adding founders to the DAO. Seperated from DaoCreator to reduce
+ * contract sizes
+ */
 contract AddFoundersGoodDollar {
 
     ControllerCreatorGoodDollar private controllerCreatorGoodDollar;

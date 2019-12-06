@@ -4,11 +4,19 @@ import "./UBI.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /* @title Fixed amount-per-day UBI scheme allowing multiple claims
- * across a longer period
+ * during a longer period
  */
 contract FixedUBI is AbstractUBI {
     using SafeMath for uint256;
 
+    /* @dev Constructor
+     * @param _avatar The avatar of the DAO
+     * @param _identity The identity contract
+     * @param _initialReserve The initial amount to transfer to this contract
+     * @param _periodStart The time from when the contract can start
+     * @param _periodEnd The time from when the contract can end
+     * @param _claimDistribution The amount to claim per day
+     */
     constructor(
         Avatar _avatar,
         Identity _identity,
@@ -23,10 +31,13 @@ contract FixedUBI is AbstractUBI {
         claimDistribution = _claimDistribution;
     }
 
-    /* @dev the claim calculation formula. Checks to see how many days
-     * the given address can claim for, with 7 being the maximum
+    /* @dev The claim calculation formula. Checks to see how many days
+     * the given address can claim for, with days 7 being the maximum.
+     * If the user has not claimed yet, they will be eligble to claim for
+     * The amount of days they have been whitelisted, up to seven.
      * @param amount the amount per day one can claim
      * @param user the claiming address
+     * @returns the amount of GoodDollar the user can claim
      */
     function distributionFormula(uint256 amount, address user) internal returns(uint256)
     {
@@ -42,14 +53,16 @@ contract FixedUBI is AbstractUBI {
         return amount.mul(claimDays);
     }
 
-    /* @dev Sets the currentDay variable. Internal function
+    /* @dev Sets the currentDay variable to amount of days
+     * since start of contract. Internal function
      */
     function setDay() internal {
         currentDay = (now.sub(periodStart)) / 1 days;
     }
 
-    /* @dev Checks amount user is eligble to claim for
-     * @returns an uint256 indicating the amount the user can claim for
+    /* @dev Checks amount address is eligble to claim for, regardless if they have been
+     * whitelisted or not. If they have not been whitelisted, they are eligble to claim for one day.
+     * @returns The amount of GoodDollar the address can claim.
      */
     function checkEntitlement() public view requireActive returns (uint256) 
     {
@@ -64,8 +77,9 @@ contract FixedUBI is AbstractUBI {
         return claimAmount.mul(claimDays);
     }
 
-    /* @dev Claiming function. Calculates how many days one can claim for and logs
-     * new claim and amount for the day.
+    /* @dev Function for claiming UBI. Requires contract to be active and claimer to be whitelisted.
+     * Calls distributionFormula, calculating the amount the caller can claim, and transfers the amount
+     * to the caller. Emits the address of caller and amount claimed.
      * @returns A bool indicating if UBI was claimed
      */
     function claim()

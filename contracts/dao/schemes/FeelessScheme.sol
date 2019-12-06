@@ -5,14 +5,24 @@ import "./SchemeGuard.sol";
 import "../../identity/Identity.sol";
 import "../../identity/IdentityGuard.sol";
 
+/* @title Contract for letting scheme add itself to identity
+ * to allow transferring GoodDollar without paying fees
+ */
 contract FeelessScheme is SchemeGuard, IdentityGuard {
 
+    /* @dev Constructor
+     * @param _identity The identity contract
+     * @param _avatar The avatar of the DAO
+     */
     constructor(Identity _identity, Avatar _avatar)
         public
         SchemeGuard(_avatar)
         IdentityGuard(_identity)
     {}
 
+    /* @dev Internal function to add contract to identity.
+     * Can only be called if scheme is registered.
+     */
     function addRights() internal onlyRegistered {
         controller.genericCall(
             address(identity),
@@ -21,6 +31,9 @@ contract FeelessScheme is SchemeGuard, IdentityGuard {
             0);
     }
 
+    /* @dev Internal function to remove contract from identity.
+     * Can only be called if scheme is registered.
+     */
     function removeRights() internal onlyRegistered {
         controller.genericCall(
             address(identity),

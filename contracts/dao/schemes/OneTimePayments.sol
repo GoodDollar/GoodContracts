@@ -24,6 +24,11 @@ contract OneTimePayments is FeelessScheme {
     event PaymentCancel(address indexed from, address paymentId, uint256 amount);
     event PaymentWithdraw(address indexed from, address indexed to, address indexed paymentId, uint256 amount);
 
+    /* @dev Constructor
+     * @param _avatar The avatar of the DAO
+     * @param _identity The identity contract
+     * @param _gasLimit The gas limit
+     */
     constructor(
         Avatar _avatar,
         Identity _identity
@@ -32,6 +37,9 @@ contract OneTimePayments is FeelessScheme {
         FeelessScheme(_identity, _avatar)
     { }
     
+    /* @dev Start function. Adds this contract to identity as a feeless scheme.
+     * Can only be called if scheme is registered
+     */
     function start()
         public
         onlyRegistered
@@ -39,8 +47,9 @@ contract OneTimePayments is FeelessScheme {
         addRights();
     }
 
-    /* @dev ERC677 on transfer function. When transferAndCall is called, the non-taxed 
-     * remainder of the transfer is stored in a payment under a hash of the given data.
+    /* @dev ERC677 on token transfer function. When transferAndCall is called on this contract,
+     * this function is called, depositing the payment amount under the hash of the given bytes.
+     * Reverts if hash is already in use. Can only be called by token contract.
      * @param sender the address of the sender
      * @param value the amount to deposit
      * @param data The given paymentId which should be a fresh address of a wallet

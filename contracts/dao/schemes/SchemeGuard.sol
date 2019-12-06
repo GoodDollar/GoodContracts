@@ -4,16 +4,17 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 
-
-
 /* @dev abstract contract for ensuring that schemes have been registered properly
- * Allows setting zero Avatar in scenarios where Avatar hasn't been created yet 
+ * Allows setting zero Avatar in situations where the Avatar hasn't been created yet
  */
 contract SchemeGuard is Ownable {
 
     Avatar avatar;
     ControllerInterface controller = ControllerInterface(0);
 
+    /* @dev Constructor. only sets controller if given avatar is not null.
+     * @param _avatar The avatar of the DAO.
+     */
     constructor(Avatar _avatar) public {
         avatar = _avatar;
 
@@ -22,28 +23,30 @@ contract SchemeGuard is Ownable {
         }
     }
 
-    /* @dev checks if scheme is registered
+    /* @dev modifier to check if scheme is registered
      */
     modifier onlyRegistered() {
         require(isRegistered(), "Scheme is not registered");
         _;
     }
 
-    /* @dev Checks if scheme is not registered
+    /* @dev modifier to check if scheme is not registered
      */
     modifier onlyNotRegistered() {
         require(!isRegistered(), "Scheme is registered");
         _;
     }
 
-    /* @dev Sets a new given avatar and controller for scheme
+    /* @dev Function to set a new avatar and controller for scheme
      * can only be done by owner of scheme
      */
     function setAvatar(Avatar _avatar) public onlyOwner {
         avatar = _avatar;
         controller = ControllerInterface(avatar.owner());
     }
-    /* @dev function to see if an avatar has been set and if scheme is registered
+
+    /* @dev function to see if an avatar has been set and if this scheme is registered
+     * @returns true if scheme is registered
      */
     function isRegistered() public view returns(bool) {
         require(avatar != Avatar(0), "Avatar is not set");

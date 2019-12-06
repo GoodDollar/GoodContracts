@@ -20,16 +20,14 @@ contract IdentityGuard is Ownable{
         identity = _identity;
     }
 
-    /* @dev Modifier that requires the sender
-     * to be not blacklisted
+    /* @dev Modifier that requires the sender to be not blacklisted
      */
     modifier onlyNotBlacklisted() {
         require(!identity.isBlacklisted(msg.sender), "Caller is blacklisted");
         _;
     }
 
-    /* @dev Modifier that requires the given address
-     * to be not blacklisted
+    /* @dev Modifier that requires the given address to be not blacklisted
      * @param _account The address to be checked
      */
     modifier requireNotBlacklisted(address _account) {
@@ -37,16 +35,14 @@ contract IdentityGuard is Ownable{
         _;
     }
 
-    /* @dev Modifier that requires the sender
-     * to be whitelisted
+    /* @dev Modifier that requires the sender to be whitelisted
      */
     modifier onlyWhitelisted() {
         require(identity.isWhitelisted(msg.sender), "is not whitelisted");
         _;
     }
 
-    /* @dev Modifier that requires the given address
-     * to be whitelisted
+    /* @dev Modifier that requires the given address to be whitelisted
      * @param _account the given address
      */
     modifier requireWhitelisted(address _account) {
@@ -54,18 +50,24 @@ contract IdentityGuard is Ownable{
         _;
     }
 
+    /* @dev Modifier that requires the sender to have been whitelisted
+     * before or on the given date
+     * @param date The time sender must have been added before
+     */
     modifier onlyAddedBefore(uint256 date) {
         require(identity.wasAdded(msg.sender) <= date, "Was not added within period");
         _;
     }
 
+    /* @dev Modifier that requires sender to be an identity admin
+     */
     modifier onlyIdentityAdmin() {
         require(identity.isIdentityAdmin(msg.sender), "not IdentityAdmin");
         _;
     }
 
-    /* @dev Allows anyone to set a new identity contract if
-     * the given contract has been registered as a scheme
+    /* @dev Allows owner to set a new identity contract if
+     * the given identity contract has been registered as a scheme
      */
     function setIdentity(Identity _identity) public onlyOwner {
         require(_identity.isRegistered(), "Identity is not registered");

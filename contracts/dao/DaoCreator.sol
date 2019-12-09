@@ -2,8 +2,10 @@ pragma solidity 0.5.4;
 
 import "@daostack/arc/contracts/controller/Controller.sol";
 import "@daostack/arc/contracts/universalSchemes/SchemeRegistrar.sol";
-import "@daostack/infra/contracts/votingMachines/AbsoluteVote.sol";
 import "@daostack/arc/contracts/universalSchemes/UpgradeScheme.sol";
+
+import "@daostack/infra/contracts/votingMachines/AbsoluteVote.sol";
+import "@daostack/infra/contracts/Reputation.sol";
 
 import "../token/GoodDollar.sol";
 import "../identity/IdentityGuard.sol";

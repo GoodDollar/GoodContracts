@@ -46,7 +46,7 @@ contract SchemeGuard is Ownable {
     }
 
     /* @dev function to see if an avatar has been set and if this scheme is registered
-     * @returns true if scheme is registered
+     * @return true if scheme is registered
      */
     function isRegistered() public view returns(bool) {
         require(avatar != Avatar(0), "Avatar is not set");

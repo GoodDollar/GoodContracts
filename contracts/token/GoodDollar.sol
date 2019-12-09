@@ -107,7 +107,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
      * @param to address to transfer to
      * @param value the amount to transfer
      * @param data The data to pass to transferAndCall
-     * @returns a bool indicating if transfer function succeeded
+     * @return a bool indicating if transfer function succeeded
      */
     function transferAndCall(address to, uint256 value, bytes calldata data)
         external

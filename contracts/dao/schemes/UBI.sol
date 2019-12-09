@@ -69,7 +69,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
 
     /* @dev function that gets the amount of people who claimed on the given day
      * @param day the day to get claimer count from, with 0 being the starting day
-     * @returns an integer indicating the amount of people who claimed that day
+     * @return an integer indicating the amount of people who claimed that day
      */
     function getClaimerCount(uint256 day) public view returns (uint256) {
         return claimDay[day].amountOfClaimers;
@@ -77,7 +77,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
 
     /* @dev function that gets the amount that was claimed on the given day
      * @param day the day to get claimer count from, with 0 being the starting day
-     * @returns an integer indicating the amount that has been claimed on the given day
+     * @return an integer indicating the amount that has been claimed on the given day
      */
     function getClaimAmount(uint256 day) public view returns (uint256) {
         return claimDay[day].claimAmount;
@@ -85,7 +85,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
 
     /* @dev function that gets count of claimers and amount claimed for the most recent
      * day where claiming transpired.
-     * @returns the amount of claimers and the amount claimed. 
+     * @return the amount of claimers and the amount claimed. 
      */
     function getDailyStats() public view returns (uint256 count, uint256 amount) {
         return (getClaimerCount(currentDay), getClaimAmount(currentDay));
@@ -142,7 +142,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
     /* @dev UBI claiming function. Can only be called by users that were
      * whitelisted before start of contract
      * Each claimer can only claim once per UBI contract
-     * @returns true if the user claimed successfully
+     * @return true if the user claimed successfully
      */
     function claim() 
         public 

@@ -37,7 +37,7 @@ contract FixedUBI is AbstractUBI {
      * The amount of days they have been whitelisted, up to seven.
      * @param amount the amount per day one can claim
      * @param user the claiming address
-     * @returns the amount of GoodDollar the user can claim
+     * @return the amount of GoodDollar the user can claim
      */
     function distributionFormula(uint256 amount, address user) internal returns(uint256)
     {
@@ -62,7 +62,7 @@ contract FixedUBI is AbstractUBI {
 
     /* @dev Checks amount address is eligble to claim for, regardless if they have been
      * whitelisted or not. If they have not been whitelisted, they are eligble to claim for one day.
-     * @returns The amount of GoodDollar the address can claim.
+     * @return The amount of GoodDollar the address can claim.
      */
     function checkEntitlement() public view requireActive returns (uint256) 
     {
@@ -80,7 +80,7 @@ contract FixedUBI is AbstractUBI {
     /* @dev Function for claiming UBI. Requires contract to be active and claimer to be whitelisted.
      * Calls distributionFormula, calculating the amount the caller can claim, and transfers the amount
      * to the caller. Emits the address of caller and amount claimed.
-     * @returns A bool indicating if UBI was claimed
+     * @return A bool indicating if UBI was claimed
      */
     function claim()
         public

@@ -64,7 +64,7 @@ contract InviteUser is IdentityGuard, SchemeGuard {
     /* @dev Function for inviting a given address. Can only be done if contract
      * is registered and address has not received an invite yet
      * @param _user The address to invite
-     * @returns a bool indicating if the user was invited
+     * @return a bool indicating if the user was invited
      */
     function inviteUser(address _user)
         public
@@ -80,7 +80,7 @@ contract InviteUser is IdentityGuard, SchemeGuard {
 
     /* @dev Function for claiming rewards from entering the system. Can only be called
      * if contract is registered and if address has been added.
-     * @returns a bool indicating if the caller has been rewarded
+     * @return a bool indicating if the caller has been rewarded
      */
     function claimReward()
         public

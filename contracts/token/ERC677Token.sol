@@ -25,7 +25,7 @@ contract ERC677Token is ERC677, DAOToken, ERC20Pausable {
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     * @param _data The extra data to be passed to the receiving contract.
-    * @returns true if transfer is successful
+    * @return true if transfer is successful
     */
     function _transferAndCall(address _to, uint256 _value, bytes memory _data)
         internal
@@ -55,7 +55,7 @@ contract ERC677Token is ERC677, DAOToken, ERC20Pausable {
 
     /* @dev Function to check if given address is a contract
      * @param _addr Address to check
-     * @returns true if given address is a contract
+     * @return true if given address is a contract
      */ 
     function isContract(address _addr)
         view

@@ -39,7 +39,7 @@ contract IdentityAdminRole is Ownable {
     /**
      * @dev Adds a identity admin account. Is only callable by owner.
      * @param account Address to be added
-     * @returns true if successful
+     * @return true if successful
      */
     function addIdentityAdmin(address account) 
         public
@@ -53,7 +53,7 @@ contract IdentityAdminRole is Ownable {
     /**
      * @dev Removes a identity admin account. Is only callable by owner.
      * @param account Address to be removed
-     * @returns true if successful
+     * @return true if successful
      */
     function removeIdentityAdmin(address account) 
         public

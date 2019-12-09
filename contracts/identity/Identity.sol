@@ -98,7 +98,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
 
     /* @dev Function that gives the date the given user was added
      * @param account The address to check
-     * @returns The date the address was added
+     * @return The date the address was added
      */
     function wasAdded(address account) public view returns (uint256) {
         return dateAdded[account];
@@ -189,7 +189,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
 
     /* @dev Function to check if given contract is on list of contracts.
      * @param address to check
-     * @returns a bool indicating if address is on list of contracts
+     * @return a bool indicating if address is on list of contracts
      */
     function isDAOContract(address account)
         public
@@ -266,7 +266,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
     }
 
     /* @dev Function to see if given address is a contract
-     * @returns true if address is a contract
+     * @return true if address is a contract
      */
     function isContract(address _addr)
         view

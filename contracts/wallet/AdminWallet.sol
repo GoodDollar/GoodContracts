@@ -119,7 +119,7 @@ contract AdminWallet is Ownable {
 
     /* @dev Function to check if given address is an admin
      * @param _user the address to check
-     * @returns A bool indicating if user is an admin 
+     * @return A bool indicating if user is an admin 
      */
     function isAdmin(address _user) public view returns(bool) {
         return admins.has(_user);

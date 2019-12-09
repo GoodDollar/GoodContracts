@@ -24,7 +24,7 @@ contract ControllerCreatorGoodDollar {
 }
 
 /**
- * @title Contract for adding founders to the DAO. Seperated from DaoCreator to reduce
+ * @title Contract for adding founders to the DAO. Separated from DaoCreator to reduce
  * contract sizes
  */
 contract AddFoundersGoodDollar {
@@ -142,7 +142,7 @@ contract DaoCreatorGoodDollar {
       * @dev Set initial schemes for the organization.
       * @param _avatar organization avatar (returns from forgeOrg)
       * @param _schemes the schemes to register for the organization
-      * @param _params the schemes's params
+      * @param _params the schemes parameters
       * @param _permissions the schemes permissions.
       * @param _metaData dao meta data hash
       */

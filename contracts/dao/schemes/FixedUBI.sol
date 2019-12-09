@@ -33,7 +33,7 @@ contract FixedUBI is AbstractUBI {
 
     /* @dev The claim calculation formula. Checks to see how many days
      * the given address can claim for, with days 7 being the maximum.
-     * If the user has not claimed yet, they will be eligble to claim for
+     * If the user has not claimed yet, they will be eligible to claim for
      * The amount of days they have been whitelisted, up to seven.
      * @param amount the amount per day one can claim
      * @param user the claiming address
@@ -60,8 +60,8 @@ contract FixedUBI is AbstractUBI {
         currentDay = (now.sub(periodStart)) / 1 days;
     }
 
-    /* @dev Checks amount address is eligble to claim for, regardless if they have been
-     * whitelisted or not. If they have not been whitelisted, they are eligble to claim for one day.
+    /* @dev Checks amount address is eligible to claim for, regardless if they have been
+     * whitelisted or not. If they have not been whitelisted, they are eligible to claim for one day.
      * @return The amount of GoodDollar the address can claim.
      */
     function checkEntitlement() public view requireActive returns (uint256) 

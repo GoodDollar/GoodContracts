@@ -96,7 +96,7 @@ contract AdminWallet is Ownable {
     }
 
     /* @dev Function to remove list of addresses to admins
-     * can only be called byu creator of contract
+     * can only be called by creator of contract
      * @param _admins the list of addresses to remove
      */
     function removeAdmins(address[] memory _admins) public onlyOwner {

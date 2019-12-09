@@ -28,7 +28,7 @@ contract InviteUser is IdentityGuard, SchemeGuard {
      * @param _avatar The avatar of the DAO
      * @param _identity The identity contract of the DAO
      * @param _maxBonus The max bonus addresses can be awarded
-     * @param _reward The reward users recieve per invite
+     * @param _reward The reward users receive per invite
      */
     constructor(
         Avatar _avatar,

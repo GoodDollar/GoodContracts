@@ -13,7 +13,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
 
     address feeRecipient;
 
-    // Overrides hardcoded decimal in DAOToken
+    // Overrides hard-coded decimal in DAOToken
     uint256 public constant decimals = 2;
 
     /**
@@ -23,7 +23,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
      * @param _cap the cap of the token. no cap if 0
      * @param _formula the fee formula contract
      * @param _identity the identity contract
-     * @param _feeRecipient the address that recieves transaction fees
+     * @param _feeRecipient the address that receives transaction fees
      */
     constructor(
         string memory _name,

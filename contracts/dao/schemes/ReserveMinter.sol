@@ -25,6 +25,8 @@ contract ReserveMinter is ActivePeriod, SchemeGuard {
         SchemeGuard(_avatar)
     {
         require(_receiver != address(0), "receiver cannot be null address");
+        require(_amount > 0, "Reserve cannot be zero");
+
         amount = _amount;
         receiver = _receiver;
     }

@@ -29,7 +29,7 @@ contract ERC677Token is ERC677, DAOToken, ERC20Pausable {
         whenNotPaused
         returns (bool)
     {
-        require(super.transfer(_to, _value), "Transfer failed");
+        super.transfer(_to, _value);
         emit Transfer(msg.sender, _to, _value, _data);
       
         if (isContract(_to)) {

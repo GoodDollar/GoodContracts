@@ -9,12 +9,13 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const OneTimePayments = artifacts.require("OneTimePayments");
 
-const DEPOSIT_CODE = "test";
-const DEPOSIT_CODE_HASH = web3.utils.keccak256(DEPOSIT_CODE);
-
 const GASLIMIT = settings["test"].gasLimit;
 
-contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
+contract("Integration - One-Time Payments", ([
+  founder, whitelisted, whitelisted2, 
+  PAYMENT_ID, WRONG_PAYMENT_ID
+]) => {
+
   let identity: helpers.ThenArg<ReturnType<typeof Identity["new"]>>;
   let avatar: helpers.ThenArg<ReturnType<typeof Avatar["new"]>>;
   let controller: helpers.ThenArg<
@@ -28,6 +29,11 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
 
   let proposalId: string;
 
+  const createPaymentSignature = async (address: string, signer: string) => {
+    const message = web3.utils.sha3(address);
+    return fixSignature(await web3.eth.sign(message, signer));
+  }
+
   before(async () => {
     identity = await Identity.deployed();
     avatar = await Avatar.at(
@@ -38,11 +44,11 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
     token = await GoodDollar.at(await avatar.nativeToken());
     oneTimePayments = await OneTimePayments.new(
       avatar.address,
-      identity.address,
-      GASLIMIT
+      identity.address
     );
 
     await identity.addWhitelisted(whitelisted);
+    await identity.addWhitelisted(whitelisted2);
   });
 
   it("should not allow One-Time payments before registering", async () => {
@@ -52,7 +58,7 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
       token.transferAndCall(
         oneTimePayments.address,
         helpers.toGD("5"),
-        DEPOSIT_CODE_HASH,
+        PAYMENT_ID,
         { from: whitelisted }
       ),
       "Scheme is not registered"
@@ -85,7 +91,7 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
   });
 
   it("should not have payment", async () => {
-    assert(!(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH)));
+    assert(!(await oneTimePayments.hasPayment(PAYMENT_ID)));
   });
 
   it("should only allow token to deposit", async () => {
@@ -93,7 +99,7 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
       oneTimePayments.onTokenTransfer(
         whitelisted,
         helpers.toGD("5"),
-        DEPOSIT_CODE_HASH,
+        web3.eth.abi.encodeParameter('address', PAYMENT_ID),
         { from: whitelisted }
       ),
       "Only callable by this"
@@ -106,11 +112,11 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
     await token.transferAndCall(
       oneTimePayments.address,
       helpers.toGD("5"),
-      DEPOSIT_CODE_HASH,
+      web3.eth.abi.encodeParameter('address', PAYMENT_ID),
       { from: whitelisted }
     );
 
-    assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
+    assert(await oneTimePayments.hasPayment(PAYMENT_ID));
   });
 
   it("should not allow to deposit to same hash", async () => {
@@ -118,44 +124,48 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
       token.transferAndCall(
         oneTimePayments.address,
         helpers.toGD("5"),
-        DEPOSIT_CODE_HASH,
+        web3.eth.abi.encodeParameter('address', PAYMENT_ID),
         { from: whitelisted }
       ),
-      "Hash already in use"
+      "paymentId already in use"
     );
   });
 
   it("should have payment", async () => {
-    assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
+    assert(await oneTimePayments.hasPayment(PAYMENT_ID));
   });
 
-  it("should not withdraw due to gas limit", async () => {
+  it("should not withdraw with wrong signature", async () => {
+    const signature = await createPaymentSignature(whitelisted2, WRONG_PAYMENT_ID);
+
     await helpers.assertVMException(
-      oneTimePayments.withdraw(DEPOSIT_CODE, { gas: GASLIMIT + 100000 }),
-      "Cannot exceed gas limit"
+      oneTimePayments.withdraw(PAYMENT_ID, signature, { from: whitelisted2 }),
+      "Signature is not correct"
     );
   });
 
   it("should withdraw successfully", async () => {
-    await oneTimePayments.withdraw(DEPOSIT_CODE, {
-      gas: GASLIMIT,
-      from: whitelisted
-    });
+    const signature = await createPaymentSignature(whitelisted2, PAYMENT_ID);
+    await oneTimePayments.withdraw(PAYMENT_ID, signature, { from: whitelisted2 });
 
-    assert(!(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH)));
+    assert(!(await oneTimePayments.hasPayment(PAYMENT_ID)));
   });
 
   it("should not allow withdraw from unused link", async () => {
+    const signature = await createPaymentSignature(whitelisted2, WRONG_PAYMENT_ID);
+
     await helpers.assertVMException(
-      oneTimePayments.withdraw("test2", { gas: GASLIMIT }),
-      "Hash not in use"
+      oneTimePayments.withdraw(WRONG_PAYMENT_ID, signature, { from: whitelisted2 }),
+      "paymentId not in use"
     );
   });
 
   it("should not allow to withdraw from already withdrawn", async () => {
+    const signature = await createPaymentSignature(whitelisted2, PAYMENT_ID);
+
     await helpers.assertVMException(
-      oneTimePayments.withdraw(DEPOSIT_CODE, { gas: GASLIMIT }),
-      "Hash not in use"
+      oneTimePayments.withdraw(PAYMENT_ID, signature, { from: whitelisted2 }),
+      "paymentId not in use"
     );
   });
 
@@ -165,23 +175,18 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
     await token.transferAndCall(
       oneTimePayments.address,
       helpers.toGD("5"),
-      DEPOSIT_CODE_HASH,
+      web3.eth.abi.encodeParameter('address', PAYMENT_ID),
       { from: whitelisted }
     );
 
-    assert(await oneTimePayments.hasPayment(DEPOSIT_CODE_HASH));
+    assert(await oneTimePayments.hasPayment(PAYMENT_ID));
 
     await helpers.assertVMException(
-      oneTimePayments.cancel(DEPOSIT_CODE_HASH, {
-        gas: GASLIMIT,
-        from: founder
-      }),
+      oneTimePayments.cancel(PAYMENT_ID, { from: founder }),
       "Can only be called by creator"
     );
 
-    await oneTimePayments.cancel(DEPOSIT_CODE_HASH, {
-      from: whitelisted
-    });
+    await oneTimePayments.cancel(PAYMENT_ID, { from: whitelisted });
 
     //await helpers.assertVMException(oneTimePayments.withdraw(DEPOSIT_CODE, { gas: 590000}), "Hash not in use");
   });
@@ -213,7 +218,7 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
       token.transferAndCall(
         oneTimePayments.address,
         helpers.toGD("5"),
-        DEPOSIT_CODE_HASH,
+        web3.eth.abi.encodeParameter('address', PAYMENT_ID),
         { from: whitelisted }
       ),
       "Scheme is not registered"
@@ -239,5 +244,18 @@ contract("Integration - One-Time Payments", ([founder, whitelisted]) => {
 
   });
 });
+
+/* Taken from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/5f92adc2e/test/helpers/sign.js */
+function fixSignature (signature) {
+  // in geth its always 27/28, in ganache its 0/1. Change to 27/28 to prevent
+  // signature malleability if version is 0/1
+  // see https://github.com/ethereum/go-ethereum/blob/v1.8.23/internal/ethapi/api.go#L465
+  let v = parseInt(signature.slice(130, 132), 16);
+  if (v < 27) {
+    v += 27;
+  }
+  const vHex = v.toString(16);
+  return signature.slice(0, 130) + vHex;
+}
 
 export {};

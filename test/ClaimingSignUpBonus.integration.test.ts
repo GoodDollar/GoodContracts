@@ -37,6 +37,13 @@ contract("Integration - rewarding whitelisted bonus", ([founder, whitelisted, wh
       await identity.addWhitelisted(whitelisted2);
     });
 
+    it("should not allow signup with zero max bonus", async () => {
+      await helpers.assertVMException(
+        SignUpBonus.new(avatar.address, identity.address, 0, 0),
+        "Max bonus cannot be zero"
+      )
+    })
+
     it("should not allow awarding before starting scheme", async () => {
       await helpers.assertVMException(signUpBonus.awardUser(whitelisted, 3), "is not active");
     })

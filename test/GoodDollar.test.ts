@@ -33,13 +33,15 @@ contract("GoodDollar", ([founder, whitelisted, outsider]) => {
         await token.transfer(founder, helpers.toGD("100"));
         await token.transfer(outsider, helpers.toGD("10"));
         await identity.addWhitelisted(whitelisted);
-
+        await identity.addWhitelisted(outsider);
     });
 
     it("should fail transfer", async () => {
         let data = "0x0";
 
-        await helpers.assertVMRevert(token.transferAndCall(receiver.address, await token.balanceOf(outsider) , data, { from: outsider }));
+        await helpers.assertVMRevert(
+            token.transferAndCall(receiver.address, await token.balanceOf(outsider) + helpers.toGD("1000") , data, { from: outsider })
+        );
     });
 
     it("should transfer and not call function", async () => {

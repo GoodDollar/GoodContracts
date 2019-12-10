@@ -21,8 +21,6 @@ const NULL_HASH =
 module.exports = async function(deployer, network, accounts) {
   const networkSettings = settings[network] || settings["default"];
 
-  const GASLIMIT = networkSettings.gasLimit;
-
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = await JSON.parse(file);
   const networkAddresses = previousDeployment[network];
@@ -44,8 +42,7 @@ module.exports = async function(deployer, network, accounts) {
   const oneTimePayments = await deployer.deploy(
     OneTimePayments,
     avatar.address,
-    identity.address,
-    GASLIMIT
+    identity.address
   );
 
   await oneTimePayments.transferOwnership(avataraddr);

@@ -36,10 +36,15 @@ contract("ReserveMinter - Minting to reserve", ([founder, whitelisted, receiver]
 	});
 
 	it("should not allow relayer with null address receiver", async () => {
-		const periodStart = (await web3.eth.getBlock('latest')).timestamp + periodOffset;
-		const periodEnd = periodStart + periodOffset;
 		helpers.assertVMException(ReserveMinter.new(avatar.address, helpers.toGD("10"), helpers.NULL_ADDRESS), "receiver cannot be null address");
 	});
+
+	it("should not allow relayer with zero to transfer", async () => {
+		await helpers.assertVMException(
+			ReserveMinter.new(avatar.address, helpers.toGD("0"), receiver),
+			"Reserve cannot be zero"
+		);
+	})
 
 	it("should correctly propose ReserveMinter scheme", async () => {
 		const schemeRegistrar = await SchemeRegistrar.deployed();

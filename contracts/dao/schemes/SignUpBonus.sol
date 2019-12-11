@@ -41,6 +41,8 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
         ActivePeriod(now, now * 2)
         FeelessScheme(_identity, _avatar)
     {
+        require(_maxBonus > 0, "Max bonus cannot be zero");
+
         initalReserve = _initalReserve;
         maxBonus = _maxBonus;
     }

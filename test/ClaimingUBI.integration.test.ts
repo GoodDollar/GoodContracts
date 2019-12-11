@@ -106,6 +106,24 @@ contract(
 
     });
 
+    it("should not allow creating fixed UBI contract with zero distribution", async () => {
+      const periodStart =
+        (await web3.eth.getBlock("latest")).timestamp + periodOffset;
+      const periodEnd = periodStart + periodOffset;
+
+      await helpers.assertVMException(
+        FixedUBI.new(
+          avatar.address,
+          identity.address,
+          helpers.toGD("0"),
+          periodStart,
+          periodEnd,
+          helpers.toGD("0")
+        ),
+        "Distribution cannot be zero"
+      )
+    })
+
     it("should allow non-whitelisted to checkEntitlement", async () => {
       const claimAmount = await vanillaFixedUBI.checkEntitlement({
         from: nonWhitelisted

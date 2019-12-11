@@ -31,6 +31,13 @@ contract("Integration - awarding invitational bonus", ([founder, whitelisted, wh
       await identity.addWhitelisted(whitelisted);
     });
 
+    it("should not allow creating scheme with higher reward than max", async () => {
+      await helpers.assertVMException(
+        InviteUser.new(avatar.address, identity.address, 3, 5),
+        "Reward cannot be greater than max bonus"
+      );
+    })
+
     it("should not allow claiming before starting scheme", async () => {
       await helpers.assertVMException(inviteUser.claimReward({ from: whitelisted }), "Scheme is not registered")
     })

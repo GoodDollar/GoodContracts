@@ -28,6 +28,8 @@ contract FixedUBI is AbstractUBI {
         public
         AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd)
     {
+        require(_claimDistribution > 0, "Distribution cannot be zero");
+
         claimDistribution = _claimDistribution;
     }
 

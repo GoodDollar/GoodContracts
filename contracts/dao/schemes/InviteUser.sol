@@ -40,6 +40,7 @@ contract InviteUser is IdentityGuard, SchemeGuard {
         IdentityGuard(_identity)
         SchemeGuard(_avatar)
     {
+        require(_maxBonus >= _reward, "Reward cannot be greater than max bonus");
         maxBonus = _maxBonus;
         reward = _reward;
     }

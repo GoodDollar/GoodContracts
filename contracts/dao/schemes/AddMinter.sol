@@ -6,12 +6,16 @@ import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 import "../../token/GoodDollar.sol";
 import "./SchemeGuard.sol";
 
-/* @title Scheme for proposing and adding a new minter.
+/* @title Scheme for adding a new minter to minters.
  */
 contract AddMinter is SchemeGuard {
 
     address public minter;
 
+    /* @dev Constructor. Requires the given address to be a valid address
+     * @param _avatar The avatar of the DAO
+     * @param _minter address to grant minter rights
+     */
     constructor(Avatar _avatar, address _minter) 
         public
         SchemeGuard(_avatar) 
@@ -20,8 +24,9 @@ contract AddMinter is SchemeGuard {
         minter = _minter;
     }
 
-    /* @dev Makes controller add the given minter to minters.
-     * can only be done if scheme has been registered.
+    /* @dev Adds the given address to minters if contract is a registered scheme.
+     * After adding minter, self-destructs contract, transferring any remaining
+     * eth to the address of the avatar.
      */
     function addMinter() public onlyRegistered {
         controller.genericCall(

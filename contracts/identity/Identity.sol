@@ -39,7 +39,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
 
     constructor() public SchemeGuard(Avatar(0)) {}
 
-    /* @dev Adds an address as whitelisted. Eligble for claiming UBI.
+    /* @dev Adds an address as whitelisted.
      * Can only be called by Identity Administrators.
      * @param account address to add as whitelisted
      */
@@ -52,6 +52,10 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         _addWhitelisted(account);
     }
 
+    /* @dev Adds an address as whitelisted under a specific ID
+     * @param account The address to add
+     * @param did the ID to add account under
+     */
     function addWhitelistedWithDID(address account, string memory did) 
         public
         onlyRegistered
@@ -74,6 +78,8 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         _removeWhitelisted(account);
     }
 
+    /* @dev Renounces message sender from whitelisted
+     */
     function renounceWhitelisted() public whenNotPaused {
         _removeWhitelisted(msg.sender);
     }
@@ -90,12 +96,21 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         return whitelist.has(account);
     }
 
+    /* @dev Function that gives the date the given user was added
+     * @param account The address to check
+     * @return The date the address was added
+     */
     function wasAdded(address account) public view returns (uint256) {
         return dateAdded[account];
     }
 
+    /* @dev Function to transfer whitelisted privilege to another address
+     * relocates did of sender to give address
+     * @param account The address to transfer to
+     */
     function transferAccount(address account) public whenNotPaused {
         ERC20 token = avatar.nativeToken();
+
         require(!isBlacklisted(account), "Cannot transfer to blacklisted");
         require(token.balanceOf(account) == 0, "Account is already in use");
 
@@ -141,6 +156,9 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         emit BlacklistRemoved(account);
     }
 
+    /* @dev Function to add a Contract to list of contracts
+     * @param account The address to add
+     */
     function addContract(address account)
         public
         onlyRegistered
@@ -154,6 +172,9 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         emit ContractAdded(account);
     }
 
+    /* @dev Function to remove a Contract from list of contracts
+     * @param account The address to add
+     */
     function removeContract(address account)
         public
         onlyRegistered
@@ -166,6 +187,10 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         emit ContractRemoved(account);
     }
 
+    /* @dev Function to check if given contract is on list of contracts.
+     * @param address to check
+     * @return a bool indicating if address is on list of contracts
+     */
     function isDAOContract(address account)
         public
         view
@@ -174,6 +199,9 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         return contracts.has(account);
     }
 
+    /* @dev Internal function to add to whitelisted
+     * @param account the address to add
+     */
     function _addWhitelisted(address account) internal {
         whitelist.add(account);
         
@@ -188,6 +216,10 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         emit WhitelistedAdded(account);
     }
 
+    /* @dev Internal whitelisting with did function.
+     * @param account the address to add
+     * @param did the id to register account under
+     */
     function _addWhitelistedWithDID(address account, string memory did) internal {
         bytes32 pHash = keccak256(bytes(did));
         require(didHashToAddress[pHash] == address(0), "DID already registered");
@@ -198,6 +230,9 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         _addWhitelisted(account);
     }
 
+    /* @dev Internal function to remove from whitelisted
+     * @param account the address to add
+     */
     function _removeWhitelisted(address account) internal {
         whitelist.remove(account);
 
@@ -230,7 +265,8 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         return blacklist.has(account);
     }
 
-    /* @dev Checks to see if given address is a contract
+    /* @dev Function to see if given address is a contract
+     * @return true if address is a contract
      */
     function isContract(address _addr)
         view

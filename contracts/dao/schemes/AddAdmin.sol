@@ -7,14 +7,18 @@ import "../../identity/Identity.sol";
 import "../../identity/IdentityGuard.sol";
 import "./SchemeGuard.sol";
 
-/* @title Scheme contract responsible for adding given address to identity admins
+/* @title Scheme contract responsible for adding address given
+ * in constructor to identity admins.
  */
 contract AddAdmin is SchemeGuard, IdentityGuard {
 
     Identity public identity;
     address public admin;
 
-    /* @dev Constructor. Checks if given address is valid
+    /* @dev Constructor. Requires given address to be a valid address
+     * @param _avatar The avatar of the DAO
+     * @param _identity The identity contract
+     * @param _admin The address to add to admins
      */
     constructor(
         Avatar _avatar,
@@ -30,11 +34,11 @@ contract AddAdmin is SchemeGuard, IdentityGuard {
         admin = _admin;
     }
 
-    /* @dev starts scheme if within period, gets avatar to add the
-     * address to list of admins and then ends even if still within period
+    /* @dev starts scheme if registered by DAO, gets avatar to add the
+     * address to list of identity admins and then self-destructs, sending
+     * all remaining eth to the address of the DAO avatar.
      */
     function start() public onlyRegistered {
-
         controller.genericCall(
             address(identity),
             abi.encodeWithSignature("addIdentityAdmin(address)", admin),

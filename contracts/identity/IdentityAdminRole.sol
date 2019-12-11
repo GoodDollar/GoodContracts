@@ -3,7 +3,9 @@ pragma solidity 0.5.4;
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
-/** @title Contract managing the identity admin role */
+/**
+ * @title Contract managing the identity admin role
+ */
 contract IdentityAdminRole is Ownable {
     using Roles for Roles.Role;
 
@@ -12,10 +14,14 @@ contract IdentityAdminRole is Ownable {
 
     Roles.Role private IdentityAdmins;
 
+    /* @dev constructor. Adds caller as an admin
+     */
     constructor() internal {
         _addIdentityAdmin(msg.sender);
     }
 
+    /* @dev Modifier to check if caller is an admin
+     */
     modifier onlyIdentityAdmin() {
         require(isIdentityAdmin(msg.sender), "not IdentityAdmin");
         _;
@@ -33,6 +39,7 @@ contract IdentityAdminRole is Ownable {
     /**
      * @dev Adds a identity admin account. Is only callable by owner.
      * @param account Address to be added
+     * @return true if successful
      */
     function addIdentityAdmin(address account) 
         public
@@ -46,6 +53,7 @@ contract IdentityAdminRole is Ownable {
     /**
      * @dev Removes a identity admin account. Is only callable by owner.
      * @param account Address to be removed
+     * @return true if successful
      */
     function removeIdentityAdmin(address account) 
         public
@@ -56,18 +64,24 @@ contract IdentityAdminRole is Ownable {
         return true;
     }
 
-    /** @dev Allows a privileged holder to renounce their role */
+    /**
+     * @dev Allows an admin to renounce their role
+     */
     function renounceIdentityAdmin() public {
         _removeIdentityAdmin(msg.sender);
     }
 
-    /** @dev Internal implementation of addIdentityAdmin */
+    /**
+     * @dev Internal implementation of addIdentityAdmin
+     */
     function _addIdentityAdmin(address account) internal {
         IdentityAdmins.add(account);
         emit IdentityAdminAdded(account);
     }
 
-    /** @dev Internal implementation of removeIdentityAdmin */
+    /**
+     * @dev Internal implementation of removeIdentityAdmin
+     */
     function _removeIdentityAdmin(address account) internal {
         IdentityAdmins.remove(account);
         emit IdentityAdminRemoved(account);

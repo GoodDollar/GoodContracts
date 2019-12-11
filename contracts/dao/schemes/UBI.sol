@@ -37,6 +37,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
     event UBIStarted(uint256 balance, uint256 time);
     event UBIClaimed(address indexed claimer, uint256 amount);
     event UBIEnded(uint256 claimers, uint256 claimamount);
+
     /**
      * @dev Constructor. Checks if avatar is a zero address
      * and if periodEnd variable is after periodStart.
@@ -68,7 +69,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
 
     /* @dev function that gets the amount of people who claimed on the given day
      * @param day the day to get claimer count from, with 0 being the starting day
-     * @returns an integer indicating the amount of people who claimed that day
+     * @return an integer indicating the amount of people who claimed that day
      */
     function getClaimerCount(uint256 day) public view returns (uint256) {
         return claimDay[day].amountOfClaimers;
@@ -76,7 +77,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
 
     /* @dev function that gets the amount that was claimed on the given day
      * @param day the day to get claimer count from, with 0 being the starting day
-     * @returns an integer indicating the amount that has been claimed on the given day
+     * @return an integer indicating the amount that has been claimed on the given day
      */
     function getClaimAmount(uint256 day) public view returns (uint256) {
         return claimDay[day].claimAmount;
@@ -84,7 +85,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
 
     /* @dev function that gets count of claimers and amount claimed for the most recent
      * day where claiming transpired.
-     * @returns the amount of claimers and the amount claimed. 
+     * @return the amount of claimers and the amount claimed. 
      */
     function getDailyStats() public view returns (uint256 count, uint256 amount) {
         return (getClaimerCount(currentDay), getClaimAmount(currentDay));
@@ -138,8 +139,10 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         super.end(avatar);
     }
 
-    /* @dev Function that claims UBI to message sender.
+    /* @dev UBI claiming function. Can only be called by users that were
+     * whitelisted before start of contract
      * Each claimer can only claim once per UBI contract
+     * @return true if the user claimed successfully
      */
     function claim() 
         public 
@@ -165,8 +168,8 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
     }
 }
 
-/* @title UBI scheme contract responsible for calculating distribution
- * and performing the distribution itself
+/* @title UBI scheme contract responsible for calculating a distribution
+ * based on amount of whitelisted users
  */
 contract UBI is AbstractUBI {
 
@@ -192,8 +195,9 @@ contract UBI is AbstractUBI {
         claimers = (identity.whitelistedCount()).sub(identity.whitelistedContracts());
     }
 
-    /* @dev function that returns an uint256 that
-     * represents the amount each claimer can claim.
+    /* @dev function that calculated the amount each claimer can claim.
+     * amount to claim is the amount of GoodDollar contract holds
+     * divided by amount of eligible claimers
      * @param reserve the account balance to calculate from
      * @return The reserve divided by the amount of registered claimers
      */
@@ -201,14 +205,12 @@ contract UBI is AbstractUBI {
         return reserve.div(claimers);
     }
 
-    /* @dev starts scheme and calculates dispersion of UBI
-     * @returns a bool indicating if scheme has started
+    /* @dev starts scheme and calculates distribution of UBI
      */
     function start() public {
         super.start();
 
         DAOToken token = avatar.nativeToken();
         claimDistribution = distributionFormula(token.balanceOf(address(this)), address(0));
-
     }    
 }

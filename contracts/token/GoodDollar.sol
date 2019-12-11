@@ -6,21 +6,24 @@ import "../dao/schemes/FormulaHolder.sol";
 import "./ERC677Token.sol";
 
 
-/** @title The GoodDollar contract */
+/**
+ * @title The GoodDollar ERC677 token contract
+ */
 contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
 
     address feeRecipient;
 
-    // Overrides hardcoded decimal in DAOToken
+    // Overrides hard-coded decimal in DAOToken
     uint256 public constant decimals = 2;
 
     /**
+     * @dev constructor
      * @param _name The name of the token
      * @param _symbol The symbol of the token
      * @param _cap the cap of the token. no cap if 0
      * @param _formula the fee formula contract
      * @param _identity the identity contract
-     * @param _feeRecipient the address that recieves transaction fees
+     * @param _feeRecipient the address that receives transaction fees
      */
     constructor(
         string memory _name,
@@ -99,6 +102,13 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
         return super.transferFrom(from, to, bruttoValue);
     }
 
+    /**
+     * @dev Processes transfer fees and calls ERC677Token transferAndCall function
+     * @param to address to transfer to
+     * @param value the amount to transfer
+     * @param data The data to pass to transferAndCall
+     * @return a bool indicating if transfer function succeeded
+     */
     function transferAndCall(address to, uint256 value, bytes calldata data)
         external
         onlyWhitelisted
@@ -195,7 +205,8 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
     }
 
     /**
-     * @dev Sets the address that receives the transactional fees
+     * @dev Sets the address that receives the transactional fees.
+     * can only be called by owner
      * @param _feeRecipient The new address to receive transactional fees
      */
     function setFeeRecipient(address _feeRecipient)
@@ -206,7 +217,7 @@ contract GoodDollar is ERC677Token, IdentityGuard, FormulaHolder, MinterRole {
     }
 
     /**
-     * @dev Sends transactional fees to _feeRecipient address from given address
+     * @dev Sends transactional fees to feeRecipient address from given address
      * @param account The account that sends the fees
      * @param value The amount to subtract fees from
      * @return an uint256 that represents the given value minus the transactional fees

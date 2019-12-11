@@ -8,17 +8,16 @@ import "./FeelessScheme.sol";
 import "./SchemeGuard.sol";
 import "../../identity/Identity.sol";
 
-/* @title Scheme contract responsible relaying fees on forign network to home network.
- * Currently, it is not possible to relay the fees directly to the ubi contract
- * on the home network, as the Token bridge only allows transfers from one address 
- * to the same address on the other network, meaning that contracts with different 
- * addresses are unable to relay funds to each other.
+/* @title Scheme contract responsible for transferring balance of avatar to given receiver
  */
 contract ReserveRelayer is ActivePeriod, FeelessScheme {
 
     address public receiver;
 
-    /* @dev Constructor. Checks if periodEnd variable is after periodStart.
+    /* @dev Constructor. Reverts if receiver is invalid
+     * @param _avatar The avatar of the DAO
+     * @param _identity The identity contract
+     * @param _receiver The address to receive funds
      * @param _periodStart period from when the contract is able to start
      * @param _periodEnd period from when the contract is able to end
      */
@@ -37,9 +36,8 @@ contract ReserveRelayer is ActivePeriod, FeelessScheme {
         receiver = _receiver;
     }
 
-    /* @dev Start function. Transfers the entire reserve from the avatar to
-     * the receiver given in the constructor, then ends the scheme regardless
-     * of end period
+    /* @dev Start function. Transfers the funds of the avatar to
+     * the receiver given in the constructor, then ends the scheme
      */
     function start() public onlyRegistered {
         super.start();

@@ -3,13 +3,13 @@ pragma solidity 0.5.4;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./FeeFormula.sol";
 
-/* @title Fee guard contract in charge of setting registered fee formula schemes to contract
+/* @title Contract in charge of setting registered fee formula schemes to contract
  */
 contract FormulaHolder is Ownable {
 
     FeeFormula public formula;
 
-    /* @dev Constructor. Checks if formula is a zero address
+    /* @dev Constructor. Requires that given formula is a valid contract.
      * @param _formula The fee formula contract.
      */
     constructor(FeeFormula _formula) public {
@@ -17,10 +17,9 @@ contract FormulaHolder is Ownable {
         formula = _formula;
     }
 
-    /* @dev Sets the given fee formula contract. Reverts if formula has not been registered by DAO.
-     * Is only callable by owner or given avatar if contract is owned by controller of avatar
+    /* @dev Sets the given fee formula contract. Is only callable by owner.
+     * Reverts if formula has not been registered by DAO.
      * @param _formula the new fee formula scheme
-     * @param _avatar the avatar to call with
      */
     function setFormula(FeeFormula _formula) public onlyOwner {
         _formula.isRegistered();

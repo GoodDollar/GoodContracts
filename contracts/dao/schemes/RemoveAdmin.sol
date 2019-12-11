@@ -6,14 +6,17 @@ import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 import "../../identity/Identity.sol";
 import "./SchemeGuard.sol";
 
-/* @title Scheme contract responsible for removing given address from identity admins
+/* @title Scheme responsible for removing a given address from identity admins
  */
 contract RemoveAdmin is SchemeGuard {
 
     Identity public identity;
     address public admin;
 
-    /* @dev Constructor. Checks if given address is admin 
+    /* @dev Constructor. Reverts if given address is not an identity admin.
+     * @param _avatar The avatar of the DAO
+     * @param _identity The identity contract
+     * @param _admin The address to remove
      */
     constructor(
         Avatar _avatar,
@@ -28,8 +31,10 @@ contract RemoveAdmin is SchemeGuard {
         admin = _admin;
     }
 
-    /* @dev starts scheme if within period, gets avatar to remove the
-     * address from list of admins and then ends even if still within period
+    /* @dev Starts scheme, removing the address from identity admins.
+     * Can only be called if scheme has been registered by the DAO.
+     * Self-destructs after removing admin, transferring any remaining
+     * ETH on the contract to the address of the avatar of the DAO.
      */
     function start() public onlyRegistered {
 

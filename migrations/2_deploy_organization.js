@@ -213,6 +213,8 @@ module.exports = async function(deployer, network) {
       UBI: NULL_ADDRESS,
       SignupBonus: NULL_ADDRESS,
       OneTimePayments: NULL_ADDRESS,
+      HomeBridge: NULL_ADDRESS,
+      ForeignBridge: NULL_ADDRESS,
       network,
       networkId: parseInt(deployer.network_id)
     };

@@ -29,6 +29,8 @@ module.exports = async function(deployer, network) {
   const identityaddr = await networkAddresses.Identity;
   const signupaddr = await networkAddresses.SignupBonus;
   const otpaddr = await networkAddresses.OneTimePayments;
+  let homeBridgeaddr = await networkAddresses.HomeBridge;
+  let foreignBridgeaddr = await networkAddresses.ForeignBridge;
 
   await web3.eth.getAccounts(function(err, res) {
     accounts = res;
@@ -46,26 +48,67 @@ module.exports = async function(deployer, network) {
 
   if (network == "fuse") {
     factory = await SetHomeBridge.new(avataraddr, "0xb895638fb3870AD5832402a5BcAa64A044687db0");
+
+    await factory.transferOwnership(avataraddr);
+
+    let transaction = await schemeRegistrar.proposeScheme(
+      avatar.address,
+      factory.address,
+      NULL_HASH,
+      "0x00000010",
+      NULL_HASH
+    );
+
+    let proposalId = transaction.logs[0].args._proposalId;
+
+    await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
+
+    let transaction2 = await factory.SetBridge();
+
+    homeBridgeaddr = transaction2.logs[0].args._homeBridge;
   }
   else {
     factory = await SetForeignBridge.new(avataraddr, "0xABBf5D8599B2Eb7b4e1D25a1Fd737FF1987655aD");
+
+    await factory.transferOwnership(avataraddr);
+
+    let transaction = await schemeRegistrar.proposeScheme(
+      avatar.address,
+      factory.address,
+      NULL_HASH,
+      "0x00000010",
+      NULL_HASH
+    );
+
+    let proposalId = transaction.logs[0].args._proposalId;
+
+    await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
+
+    let transaction2 = await factory.SetBridge();
+
+    foreignBridgeaddr = transaction2.logs[0].args._foreignBridge;
   }
 
-  await factory.transferOwnership(avataraddr);
+  let releasedContracts = {
+    GoodDollar: await avatar.nativeToken(),
+    Reputation: await avatar.nativeReputation(),
+    Identity: await identity.address,
+    Avatar: await avatar.address,
+    Controller: await avatar.owner(),
+    AbsoluteVote: await absoluteVote.address,
+    SchemeRegistrar: await schemeRegistrar.address,
+    UpgradeScheme: await networkAddresses.UpgradeScheme,
+    AdminWallet: await networkAddresses.AdminWallet,
+    UBI: await ubi.address,
+    SignupBonus: signupaddr,
+    OneTimePayments: otpaddr,
+    HomeBridge: homeBridgeaddr,
+    ForeignBridge: foreignBridgeaddr,
+    network,
+    networkId: parseInt(deployer.network_id)
+  };
 
-  let transaction = await schemeRegistrar.proposeScheme(
-    avatar.address,
-    factory.address,
-    NULL_HASH,
-    "0x00000010",
-    NULL_HASH
-  );
+  console.log("Rewriting deployment file...\n", { releasedContracts });
+  await releaser(releasedContracts, network);
 
-  let proposalId = transaction.logs[0].args._proposalId;
-
-  await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
-
-  let transaction2 = await factory.SetBridge();
-
-  console.log(transaction2.logs);
 };

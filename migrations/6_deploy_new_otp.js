@@ -31,6 +31,8 @@ module.exports = async function(deployer, network, accounts) {
   const identityaddr = await networkAddresses.Identity;
   const ubiaddr = await networkAddresses.UBI;
   const signupaddr = await networkAddresses.SignupBonus;
+  const homeBridgeaddr = await networkAddresses.HomeBridge;
+  const foreignBridgeaddr = await networkAddresses.ForeignBridge;
 
   const founders = [accounts[0]];
 
@@ -74,6 +76,8 @@ module.exports = async function(deployer, network, accounts) {
     UBI: ubiaddr,
     SignupBonus: signupaddr,
     OneTimePayments: await oneTimePayments.address,
+    HomeBridge: homeBridgeaddr,
+    ForeignBridge: foreignBridgeaddr,
     network,
     networkId: parseInt(deployer.network_id)
   };

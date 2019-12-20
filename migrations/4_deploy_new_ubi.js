@@ -29,6 +29,8 @@ module.exports = async function(deployer, network) {
   const identityaddr = await networkAddresses.Identity;
   const signupaddr = await networkAddresses.SignupBonus;
   const otpaddr = await networkAddresses.OneTimePayments;
+  const homeBridgeaddr = await networkAddresses.HomeBridge;
+  const foreignBridgeaddr = await networkAddresses.ForeignBridge;
 
   await web3.eth.getAccounts(function(err, res) {
     accounts = res;
@@ -91,6 +93,8 @@ module.exports = async function(deployer, network) {
     UBI: await ubi.address,
     SignupBonus: signupaddr,
     OneTimePayments: otpaddr,
+    HomeBridge: homeBridgeaddr,
+    ForeignBridge: foreignBridgeaddr,
     network,
     networkId: parseInt(deployer.network_id)
   };

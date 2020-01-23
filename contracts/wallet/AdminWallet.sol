@@ -24,7 +24,7 @@ contract AdminWallet is Ownable {
     SignUpBonus bonus = SignUpBonus(0);
 
     uint256 public toppingAmount;
-    
+
     uint public toppingTimes;
     uint public lastCalc;
 
@@ -40,17 +40,17 @@ contract AdminWallet is Ownable {
         uint _toppingTimes,
         Identity _identity
     )
-        public 
+        public
     {
         identity = _identity;
 
         toppingAmount = _toppingAmount;
         toppingTimes = _toppingTimes;
 
-        if (_admins.length > 0) { 
+        if (_admins.length > 0) {
             addAdmins(_admins);
         }
-    }   
+    }
 
     /* @dev Modifier that checks if caller is admin of wallet
      */
@@ -61,7 +61,7 @@ contract AdminWallet is Ownable {
 
     modifier reimburseGas() {
         _;
-        if (msg.sender.balance <= toppingAmount.div(4)) { 
+        if (msg.sender.balance <= toppingAmount.div(4)) {
             toppings[lastCalc][msg.sender] += 1;
             msg.sender.transfer(toppingAmount.sub(msg.sender.balance));
         }
@@ -73,7 +73,7 @@ contract AdminWallet is Ownable {
      */
     function setDay() internal {
         uint dayDiff = now.sub(lastCalc) / 1 days;
-        
+
         if (dayDiff >= 1) {
             lastCalc = now;
         }
@@ -90,7 +90,7 @@ contract AdminWallet is Ownable {
     function addAdmins(address payable[] memory _admins) public onlyOwner {
         for (uint i = 0; i < _admins.length; i++) {
             admins.add(_admins[i]);
-            
+
             adminlist.push(_admins[i]);
         }
         emit AdminsAdded(_admins);
@@ -120,7 +120,7 @@ contract AdminWallet is Ownable {
 
     /* @dev Function to check if given address is an admin
      * @param _user the address to check
-     * @returns A bool indicating if user is an admin 
+     * @returns A bool indicating if user is an admin
      */
     function isAdmin(address _user) public view returns(bool) {
         return admins.has(_user);
@@ -129,8 +129,8 @@ contract AdminWallet is Ownable {
     /* @dev Function to add given address to whitelist of identity contract
      * can only be done by admins of wallet and if wallet is an IdentityAdmin
      */
-    function whitelist(address _user) public onlyAdmin reimburseGas {
-        identity.addWhitelisted(_user);
+    function whitelist(address _user, string memory _did) public onlyAdmin reimburseGas {
+        identity.addWhitelistedWithDID(_user, _did);
     }
 
     /* @dev Function to remove given address from whitelist of identity contract
@@ -156,7 +156,7 @@ contract AdminWallet is Ownable {
 
     /* @dev Function to top given address with amount of G$ given in constructor
      * can only be done by admin the amount of times specified in constructor per day
-     * @param _user The address to transfer to 
+     * @param _user The address to transfer to
      */
     function topWallet(address payable _user) public onlyAdmin reimburseGas {
         setDay();
@@ -176,15 +176,16 @@ contract AdminWallet is Ownable {
      * when user is already whitelisted to just award pending bonuses
      * can only be done by admin
      * @param _user The address to transfer to and whitelist
-     * @param _amount the bonus amount to give 
+     * @param _amount the bonus amount to give
+     * @param _did
      */
-    function whitelistAndAwardUser(address _user, uint256 _amount) public onlyAdmin reimburseGas {
+    function whitelistAndAwardUser(address _user, uint256 _amount, string memory _did) public onlyAdmin reimburseGas {
         require(bonus != SignUpBonus(0), "SignUp bonus has not been set yet");
 
         if(identity.isWhitelisted(_user) == false) {
-            whitelist(_user);
+            whitelist(_user, _did);
         }
-        
+
         if(_amount > 0) {
             bonus.awardUser(_user, _amount);
         }

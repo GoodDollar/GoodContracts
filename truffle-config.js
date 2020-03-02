@@ -42,9 +42,10 @@ module.exports = {
     },
     test: {
       host: "127.0.0.1",
-      port: 8545,
-      network_id: "*",
-      gas: 8000000
+      port: 9546,
+      network_id: "4448",
+      gas: 8000000,
+      gasPrice: 1000000000 //1 gwei
     },
     coverage: {
       host: "127.0.0.1",

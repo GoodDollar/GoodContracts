@@ -4,12 +4,10 @@ import "../identity/IdentityGuard.sol";
 import "../dao/schemes/FormulaHolder.sol";
 import "./ERC677BridgeToken.sol";
 
-
 /**
  * @title The GoodDollar ERC677 token contract
  */
 contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
-
     address feeRecipient;
 
     // Overrides hard-coded decimal in DAOToken
@@ -48,13 +46,7 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * transferred
      * @return a boolean that indicates if the operation was successful
      */
-    function transfer(address to, uint256 value)
-        public
-        onlyWhitelisted
-        onlyNotBlacklisted
-        requireNotBlacklisted(to)
-        returns (bool)
-    {
+    function transfer(address to, uint256 value) public returns (bool) {
         uint256 bruttoValue = processFees(msg.sender, value);
         return super.transfer(to, bruttoValue);
     }
@@ -66,15 +58,7 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * @param value The amount of tokens to be spent
      * @return a boolean that indicates if the operation was successful
      */
-    function approve(
-        address spender,
-        uint256 value
-    )
-        public
-        onlyNotBlacklisted
-        requireNotBlacklisted(spender)
-        returns (bool)
-    {
+    function approve(address spender, uint256 value) public returns (bool) {
         return super.approve(spender, value);
     }
 
@@ -85,16 +69,8 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * @param value the amount of tokens to be transferred
      * @return a boolean that indicates if the operation was successful
      */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    )
+    function transferFrom(address from, address to, uint256 value)
         public
-        requireWhitelisted(from)
-        onlyNotBlacklisted
-        requireNotBlacklisted(from)
-        requireNotBlacklisted(to)
         returns (bool)
     {
         uint256 bruttoValue = processFees(from, value);
@@ -110,9 +86,6 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      */
     function transferAndCall(address to, uint256 value, bytes calldata data)
         external
-        onlyWhitelisted
-        onlyNotBlacklisted
-        requireNotBlacklisted(to)
         returns (bool)
     {
         uint256 bruttoValue = processFees(msg.sender, value);
@@ -131,9 +104,11 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
         requireNotBlacklisted(to)
         returns (bool)
     {
-        if (cap > 0)
-        {
-            require(totalSupply().add(value) <= cap, "Cannot increase supply beyond cap");
+        if (cap > 0) {
+            require(
+                totalSupply().add(value) <= cap,
+                "Cannot increase supply beyond cap"
+            );
         }
         super._mint(to, value);
         return true;
@@ -168,8 +143,6 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      */
     function increaseAllowance(address spender, uint256 addedValue)
         public
-        onlyNotBlacklisted
-        requireNotBlacklisted(spender)
         returns (bool)
     {
         return super.increaseAllowance(spender, addedValue);
@@ -183,8 +156,6 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      */
     function decreaseAllowance(address spender, uint256 subtractedValue)
         public
-        onlyNotBlacklisted
-        requireNotBlacklisted(spender)
         returns (bool)
     {
         return super.decreaseAllowance(spender, subtractedValue);
@@ -195,11 +166,7 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * @return an uint256 that represents
      * the current transaction fees
      */
-    function getFees(uint256 value)
-        public
-        view
-        returns (uint256)
-    {
+    function getFees(uint256 value) public view returns (uint256) {
         return formula.getTxFees(value);
     }
 
@@ -208,10 +175,7 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * can only be called by owner
      * @param _feeRecipient The new address to receive transactional fees
      */
-    function setFeeRecipient(address _feeRecipient)
-        public
-        onlyOwner
-    {
+    function setFeeRecipient(address _feeRecipient) public onlyOwner {
         feeRecipient = _feeRecipient;
     }
 

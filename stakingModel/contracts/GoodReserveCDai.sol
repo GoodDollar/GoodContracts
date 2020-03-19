@@ -36,11 +36,17 @@ contract GoodReserveCDai is DSMath, SchemeGuard {
     );
 
     ERC20 dai;
+
     cERC20 cDai;
+
     GoodDollar gooddollar;
+
     GoodMarketMaker public marketMaker;
+
     address public fundManager;
+
     address public avatar;
+
     uint256 public daysFromStart = 0;
 
     modifier onlyFundManager {
@@ -62,16 +68,17 @@ contract GoodReserveCDai is DSMath, SchemeGuard {
         address _gooddollar,
         address _fundManager,
         address _avatar,
-        uint256 _initialPrice
-    ) public SchemeGuard(Avatar(address(0))) {
+        address _marketMaker,
+    ) public SchemeGuard(Avatar(_avatar)) {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
         gooddollar = GoodDollar(_gooddollar);
         avatar = _avatar;
         fundManager = _fundManager;
+        marketMaker = GoodMarketMaker(_marketMaker);
     }
 
-    function setMarketMaker(address _marketMaker) public onlyOwner {
+    function setMarketMaker(address _marketMaker) public onlyAvatar {
         marketMaker = GoodMarketMaker(_marketMaker);
     }
 
@@ -98,11 +105,12 @@ contract GoodReserveCDai is DSMath, SchemeGuard {
         return marketMaker.currentPrice(token);
     }
 
-    /**
+    //TODO: WIP
+    /** 
     * @dev anyone can call this to trigger calculations
     * reserve sends UBI to Avatar and returns interest to FundManager
-    * @param transfered how much was transfered to the reserve for UBIin `interestToken`
-    * @param interest out of total transfered how much is interest that needs to be paied back (some interest might be donated)
+    * @param transfered how much was transfered to the reserve for UBI in `interestToken`
+    * @param interest out of total transfered how much is the interest (in interestToken) that needs to be paid back (some interest might be donated)
     * @return (gdInterest, gdUBI) how much G$ interest was minted and how much G$ UBI was minted
     */
     function mintInterestAndUBI(
@@ -116,16 +124,23 @@ contract GoodReserveCDai is DSMath, SchemeGuard {
         returns (uint256, uint256)
     {
         uint256 price = currentPrice(interestToken);
-        uint256 gdToMint = marketMaker.shouldMint(interestToken, transfered);
+        uint256 gdToMint = marketMaker.calculateToMint(interestToken, transfered);
         uint256 precisionLoss = uint256(
+            //TODO: fix dangerous sub
             ERC20Detailed(address(interestToken)).decimals() -
                 gooddollar.decimals()
         );
         uint256 gdInterest = rdiv(interest, price).div(10**precisionLoss);
         uint256 gdUBI = gdToMint.sub(gdInterest);
         ERC20Mintable(address(gooddollar)).mint(fundManager, gdInterest);
+        //TODO: how do we transfer to bridge, is the fundmanager in charge of that?
         ERC20Mintable(address(gooddollar)).mint(avatar, gdUBI);
         return (gdInterest, gdUBI);
+    }
+
+    //TODO: function to return all funds to avatar
+    function destroy() onlyAvatar {
+
     }
 
 }

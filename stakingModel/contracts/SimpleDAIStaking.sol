@@ -76,13 +76,16 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         require(
             dai.transferFrom(msg.sender, address(this), amount) == true,
             "transferFrom failed, make sure you approved DAI transfer"
-        ); // approve the transfer
+        );
+
+        // approve the transfer to compound dai
         dai.approve(address(cDai), amount);
         uint256 res = cDai.mint(amount); //mint ctokens
 
-        if (res > 0) //make sure no errors, if error return DAI funds
+        if (
+            res > 0
+        ) //cDAI returns >0 if error happened while minting. make sure no errors, if error return DAI funds
         {
-            dai.transfer(msg.sender, amount);
             require(res == 0, "Minting cDai failed, funds returned");
         }
         Staker storage staker = stakers[msg.sender];
@@ -105,12 +108,15 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         uint256 daiWithdraw = staker.stakedDAI;
         staker.stakedDAI = 0; // update balance before transfer to prevent re-entry
         totalStaked -= daiWithdraw;
+        //TODO: handle transfer failure
         dai.transfer(msg.sender, daiWithdraw);
         emit DAIStakeWithdraw(msg.sender, daiWithdraw);
     }
 
     function currentDAIWorth() public view returns (uint256) {
         uint256 er = cDai.exchangeRateStored();
+
+        //TODO: why 1e10? cDai is e8 so we should convert it to e28 like exchange rate
         uint256 daiBalance = rmul(cDai.balanceOf(address(this)) * 1e10, er).div(
             10
         );

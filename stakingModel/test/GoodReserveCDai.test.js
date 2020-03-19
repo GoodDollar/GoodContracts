@@ -33,19 +33,16 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       identity.address,
       NULL_ADDRESS
     );
+    marketMaker = await MarketMaker.new(goodDollar.address);
     goodReserve = await GoodReserve.new(
       dai.address,
       cDAI.address,
       goodDollar.address,
       founder,
       founder,
-      1e4 //1cdai / 1e4
+      marketMaker.address
     );
     goodDollar.addMinter(goodReserve.address);
-    marketMaker = await MarketMaker.new(
-      goodDollar.address,
-      goodReserve.address
-    );
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
   });
 

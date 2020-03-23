@@ -1,3 +1,5 @@
+import * as helpers from "../../test/helpers";
+
 const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
@@ -75,6 +77,110 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
     expect(stakedcDaiBalance.toString()).to.be.equal(
       web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai)
+    );
+  });
+
+  it("should convert user staked DAI to the equal value of cDAI owned by the staking contract", async () => {
+    let stakedDaiBalanceBefore = await dai.balanceOf(simpleStaking.address);
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    await simpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      })
+      .catch(console.log);
+    let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
+    expect(stakedcDaiBalance.toString()).to.be.equal(
+      web3.utils.toWei("19800", "mwei") //8 decimals precision (99 cdai)
+    );
+    let stakedDaiBalanceAfter = await dai.balanceOf(simpleStaking.address);
+    expect(stakedDaiBalanceAfter.toString()).to.be.equal(stakedDaiBalanceBefore.toString());
+  });
+
+  it("should not mint the converted cDAI to the staker", async () => {
+    let stakercDaiBalanceBefore = await cDAI.balanceOf(staker);
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    await simpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      })
+      .catch(console.log);
+    let stakercDaiBalanceAfter = await cDAI.balanceOf(staker);
+    expect(stakercDaiBalanceAfter.toString()).to.be.equal(stakercDaiBalanceBefore.toString());
+  });
+
+  it("should not change the staker DAI balance if the conversion failed", async () => {
+    let fakeDai = await DAIMock.new();
+    let fakecDAI = await cDAIMock.new(fakeDai.address);
+    fakeDai.mint(fakecDAI.address, web3.utils.toWei("100000000", "ether"));
+    let fakeSimpleStaking = await SimpleDAIStaking.new(
+        dai.address,
+        fakecDAI.address,
+        NULL_ADDRESS,
+        founder
+      ); // staking should failed
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    let stakerDaiBalanceBefore = await dai.balanceOf(staker);
+    await helpers.assertVMException(fakeSimpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      }));
+    let stakerDaiBalanceAfter = await dai.balanceOf(staker);
+    expect(stakerDaiBalanceAfter.toString()).to.be.equal(stakerDaiBalanceBefore.toString());
+  });
+
+  it("should not change the totalStaked if the conversion failed", async () => {
+    let fakeDai = await DAIMock.new();
+    let fakecDAI = await cDAIMock.new(fakeDai.address);
+    fakeDai.mint(fakecDAI.address, web3.utils.toWei("100000000", "ether"));
+    let fakeSimpleStaking = await SimpleDAIStaking.new(
+        dai.address,
+        fakecDAI.address,
+        NULL_ADDRESS,
+        founder
+      ); // staking should failed
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    let totalStakedBefore = await fakeSimpleStaking.totalStaked();
+    await helpers.assertVMException(fakeSimpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      }));
+    let totalStakedAfter = await fakeSimpleStaking.totalStaked();
+    expect(totalStakedAfter.toString()).to.be.equal(totalStakedBefore.toString());
+  });
+
+  it("should not update the staker list if the conversion failed", async () => {
+    let fakeDai = await DAIMock.new();
+    let fakecDAI = await cDAIMock.new(fakeDai.address);
+    fakeDai.mint(fakecDAI.address, web3.utils.toWei("100000000", "ether"));
+    let fakeSimpleStaking = await SimpleDAIStaking.new(
+        dai.address,
+        fakecDAI.address,
+        NULL_ADDRESS,
+        founder
+      ); // staking should failed
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    await helpers.assertVMException(fakeSimpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      }));
+    let balance = await fakeSimpleStaking.stakers(staker);
+    expect(balance.stakedDAI.toString()).to.be.equal(
+      web3.utils.toWei("0", "ether") //100 dai
     );
   });
 

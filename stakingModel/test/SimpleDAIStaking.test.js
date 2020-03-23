@@ -1,3 +1,5 @@
+import * as helpers from "../../test/helpers";
+
 const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
@@ -77,6 +79,134 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai)
     );
   });
+
+  it("should not be able to stake 0 dai", async () => {
+    await helpers.assertVMException(simpleStaking
+                                    .stakeDAI(web3.utils.toWei("0", "ether"), {
+                                      from: staker
+                                    }), "You need to stake a positive token amount");
+  });
+
+  it("should be able to stake dai when the allowed dai amount is higher than the staked amount", async () => {
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(simpleStaking.address, web3.utils.toWei("200", "ether"), {
+      from: staker
+    });
+
+    let balanceBefore = await simpleStaking.stakers(staker);
+    let stakedcDaiBalanceBefore = await cDAI.balanceOf(simpleStaking.address);
+
+    await simpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      })
+      .catch(console.log);
+    
+    let balanceAfter = await simpleStaking.stakers(staker);
+    expect((balanceAfter.stakedDAI - balanceBefore.stakedDAI).toString()).to.be.equal(
+      web3.utils.toWei("100", "ether") //100 dai
+    );
+
+    let stakedcDaiBalanceAfter = await cDAI.balanceOf(simpleStaking.address);
+    expect((stakedcDaiBalanceAfter - stakedcDaiBalanceBefore).toString()).to.be.equal(
+      web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai)
+    );
+  });
+
+  it("should not be able to stake when approved dai amount is too low", async () => {
+    let lowWeiAmount = web3.utils.toWei("99", "ether");
+    let weiAmount = web3.utils.toWei("100", "ether");
+
+    dai.mint(staker, weiAmount);
+    dai.approve(simpleStaking.address, lowWeiAmount, {
+      from: staker
+    });
+  
+    await helpers.assertVMException(simpleStaking
+      .stakeDAI(weiAmount, {
+        from: staker
+      }), "You need to approve DAI transfer first");
+  });
+
+  it("should not be able to stake when staker dai balance is too low", async () => {
+    let currentBalance = await dai.balanceOf(staker);
+    let weiAmount = web3.utils.toWei("100", "ether");
+    let approvedAmount = (currentBalance.valueOf() + weiAmount);
+    
+    dai.approve(simpleStaking.address, approvedAmount, {
+      from: staker
+    });
+  
+    await helpers.assertVMException(simpleStaking
+                                    .stakeDAI(approvedAmount, {
+                                      from: staker
+                                    }));
+  });
+
+  it("should emit a DAIStaked event", async () => {
+    const weiAmount = web3.utils.toWei("100", "ether");
+    dai.mint(staker, weiAmount);
+    dai.approve(simpleStaking.address, weiAmount, {
+      from: staker
+    });
+
+    const transaction = await simpleStaking
+                      .stakeDAI(weiAmount, {
+                        from: staker
+                      })
+                      .catch(console.log);
+
+    assert(transaction.logs[0].event === 'DAIStaked');
+    assert.equal(transaction.logs[0].args.daiValue.valueOf(), weiAmount);
+  });
+
+  it("should not emit a DAIStaked event when approved amount is lower than the staked amount", async () => {
+    let lowWeiAmount = web3.utils.toWei("99", "ether");
+    let weiAmount = web3.utils.toWei("100", "ether");
+
+    dai.mint(staker, weiAmount);
+    dai.approve(simpleStaking.address, lowWeiAmount, {
+      from: staker
+    });
+
+    await web3.currentProvider.send( { jsonrpc: "2.0", method: "evm_mine", id: 12345 }, () => {} );
+
+    let blockBefore = await web3.eth.getBlockNumber();
+
+    await helpers.assertVMException(simpleStaking
+                                    .stakeDAI(weiAmount, {
+                                      from: staker
+                                    }));
+    
+    let events = await simpleStaking.getPastEvents( 'DAIStaked', { fromBlock: blockBefore, toBlock: 'latest' } );
+  
+    assert.equal(events.length, 0);
+  });
+
+  it("should not emit a DAIStaked event when the staker dai amount is lower than the approved amount", async () => {
+    let currentBalance = await dai.balanceOf(staker);
+    let weiAmount = web3.utils.toWei("100", "ether");
+    let approvedAmount = (currentBalance.valueOf() + weiAmount);
+    
+    dai.approve(simpleStaking.address, approvedAmount, {
+      from: staker
+    });
+
+    await web3.currentProvider.send( { jsonrpc: "2.0", method: "evm_mine", id: 12345 }, () => {} );
+
+    let blockBefore = await web3.eth.getBlockNumber();
+
+    await helpers.assertVMException(simpleStaking
+                                    .stakeDAI(approvedAmount, {
+                                      from: staker
+                                    }));
+    
+    let events = await simpleStaking.getPastEvents( 'DAIStaked', { fromBlock: blockBefore, toBlock: 'latest' } );
+  
+    assert.equal(events.length, 0);
+  });
+
+// TODO: Add synchronous testing 
 
   it("should mock cdai updated exchange rate", async () => {
     let res = await cDAI.exchangeRateCurrent();

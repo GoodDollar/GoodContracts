@@ -177,7 +177,7 @@ contract AdminWallet is Ownable {
      * can only be done by admin
      * @param _user The address to transfer to and whitelist
      * @param _amount the bonus amount to give
-     * @param _did
+     * @param _did decentralized id of user, pointer to some profile
      */
     function whitelistAndAwardUser(address _user, uint256 _amount, string memory _did) public onlyAdmin reimburseGas {
         require(bonus != SignUpBonus(0), "SignUp bonus has not been set yet");

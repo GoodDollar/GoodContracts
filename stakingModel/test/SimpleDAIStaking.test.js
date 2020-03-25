@@ -201,13 +201,26 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   });
 
   it("should be able to withdraw stake by staker", async () => {
-    await simpleStaking.withdrawStake({
-      from: staker
-    });
-    let daiBalance = await dai.balanceOf(staker);
-    expect(daiBalance.toString()).to.be.equal(web3.utils.toWei("100", "ether"));
-    let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
-    expect(stakedcDaiBalance.toString()).to.not.be.equal("0"); //precision loss, so it wont be exactly 0
+    let stakedcDaiBalanceBefore = await cDAI.balanceOf(simpleStaking.address); // simpleStaking cDAI balance
+    let stakerDaiBalanceBefore = await dai.balanceOf(staker); // staker DAI balance
+    let balanceBefore = await simpleStaking.stakers(staker); // user staked balance in GoodStaking
+    let totalStakedBefore = await simpleStaking.totalStaked(); // total staked in GoodStaking
+    const transaction = await simpleStaking.withdrawStake({
+                          from: staker
+                        });
+    let stakedcDaiBalanceAfter = await cDAI.balanceOf(simpleStaking.address);  // simpleStaking cDAI balance
+    let stakerDaiBalanceAfter = await dai.balanceOf(staker); // staker DAI balance
+    let balanceAfter = await simpleStaking.stakers(staker);  // user staked balance in GoodStaking
+    let totalStakedAfter = await simpleStaking.totalStaked(); // total staked in GoodStaking
+    expect(stakedcDaiBalanceAfter.lt(stakedcDaiBalanceBefore)).to.be.true;
+    expect(stakerDaiBalanceAfter.gt(stakerDaiBalanceBefore)).to.be.true;
+    expect(balanceBefore.stakedDAI.toString()).to.be.equal((stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString());
+    expect((totalStakedBefore - totalStakedAfter).toString()).to.be.equal(balanceBefore.stakedDAI.toString());
+    expect(balanceAfter.stakedDAI.toString()).to.be.equal("0");
+    expect(stakedcDaiBalanceAfter.toString()).to.not.be.equal("0"); //precision loss, so it wont be exactly 0
+    expect(transaction.logs[0].event).to.be.equal("DAIStakeWithdraw");
+    expect(transaction.logs[0].args.staker).to.be.equal(staker);
+    expect(transaction.logs[0].args.daiValue.toString()).to.be.equal((stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString());
   });
 
   it("should not be able to double withdraw stake", async () => {
@@ -238,5 +251,16 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       })
       .catch(e => e);
     expect(error.message).to.have.string("No DAI staked");
+  });
+
+  it("should not be able to change the reserve cDAI balance in case of an error", async () => {
+    let stakedcDaiBalanceBefore = await cDAI.balanceOf(simpleStaking.address);
+    await simpleStaking
+      .withdrawStake({
+        from: founder
+      })
+      .catch(e => e);
+    let stakedcDaiBalanceAfter = await cDAI.balanceOf(simpleStaking.address);
+    expect(stakedcDaiBalanceAfter.toString()).to.be.equal(stakedcDaiBalanceBefore.toString());
   });
 });

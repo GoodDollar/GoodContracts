@@ -1,5 +1,3 @@
-import * as helpers from "../../test/helpers";
-
 const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
@@ -85,10 +83,13 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   });
 
   it("should not be able to stake 0 dai", async () => {
-    await helpers.assertVMException(simpleStaking
-                                    .stakeDAI(web3.utils.toWei("0", "ether"), {
-                                      from: staker
-                                    }), "You need to stake a positive token amount");
+    const error = await simpleStaking
+                        .stakeDAI(web3.utils.toWei("0", "ether"), {
+                          from: staker
+                        }).catch(e => e);
+    expect(error.message).to.have.string(
+      "You need to stake a positive token amount"
+    );
   });
 
   it("should be able to stake dai when the allowed dai amount is higher than the staked amount", async () => {
@@ -125,11 +126,14 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     dai.approve(simpleStaking.address, lowWeiAmount, {
       from: staker
     });
-  
-    await helpers.assertVMException(simpleStaking
-      .stakeDAI(weiAmount, {
-        from: staker
-      }), "You need to approve DAI transfer first");
+
+      const error = await simpleStaking
+                          .stakeDAI(weiAmount, {
+                            from: staker
+                          }).catch(e => e);
+      expect(error.message).to.have.string(
+        "You need to approve DAI transfer first"
+      );
   });
 
   it("should not be able to stake when staker dai balance is too low", async () => {
@@ -140,11 +144,13 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     dai.approve(simpleStaking.address, approvedAmount, {
       from: staker
     });
-  
-    await helpers.assertVMException(simpleStaking
-                                    .stakeDAI(approvedAmount, {
-                                      from: staker
-                                    }));
+
+    const error = await simpleStaking
+                        .stakeDAI(approvedAmount, {
+                          from: staker
+                        }).catch(e => e);
+
+    expect(error.message).not.to.be.empty;
   });
 
   it("should emit a DAIStaked event", async () => {

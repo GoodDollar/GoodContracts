@@ -1,5 +1,3 @@
-import * as helpers from "../../test/helpers";
-
 const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
@@ -115,10 +113,12 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     let stakerDaiBalanceBefore = await dai.balanceOf(staker);
-    await helpers.assertVMException(fakeSimpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
-        from: staker
-      }));
+    const error = await fakeSimpleStaking
+                        .stakeDAI(web3.utils.toWei("100", "ether"), {
+                          from: staker
+                        })
+                        .catch(e => e);
+    expect(error.message).not.to.be.empty;
     let stakerDaiBalanceAfter = await dai.balanceOf(staker);
     expect(stakerDaiBalanceAfter.toString()).to.be.equal(stakerDaiBalanceBefore.toString());
   });
@@ -138,10 +138,12 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     let totalStakedBefore = await fakeSimpleStaking.totalStaked();
-    await helpers.assertVMException(fakeSimpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
-        from: staker
-      }));
+    const error = await fakeSimpleStaking
+                        .stakeDAI(web3.utils.toWei("100", "ether"), {
+                          from: staker
+                        })
+                        .catch(e => e);
+    expect(error.message).not.to.be.empty;
     let totalStakedAfter = await fakeSimpleStaking.totalStaked();
     expect(totalStakedAfter.toString()).to.be.equal(totalStakedBefore.toString());
   });
@@ -160,10 +162,12 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
       from: staker
     });
-    await helpers.assertVMException(fakeSimpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
-        from: staker
-      }));
+    const error = await fakeSimpleStaking
+                        .stakeDAI(web3.utils.toWei("100", "ether"), {
+                          from: staker
+                        })
+                        .catch(e => e);
+    expect(error.message).not.to.be.empty;
     let balance = await fakeSimpleStaking.stakers(staker);
     expect(balance.stakedDAI.toString()).to.be.equal(
       web3.utils.toWei("0", "ether") //100 dai

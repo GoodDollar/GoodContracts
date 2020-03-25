@@ -74,6 +74,10 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     expect(balance.stakedDAI.toString()).to.be.equal(
       web3.utils.toWei("100", "ether") //100 dai
     );
+    let totalStaked = await simpleStaking.totalStaked();
+    expect(totalStaked.toString()).to.be.equal(
+      web3.utils.toWei("100", "ether")
+    );
     let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
     expect(stakedcDaiBalance.toString()).to.be.equal(
       web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai)
@@ -159,54 +163,6 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     assert(transaction.logs[0].event === 'DAIStaked');
     assert.equal(transaction.logs[0].args.daiValue.valueOf(), weiAmount);
   });
-
-  it("should not emit a DAIStaked event when approved amount is lower than the staked amount", async () => {
-    let lowWeiAmount = web3.utils.toWei("99", "ether");
-    let weiAmount = web3.utils.toWei("100", "ether");
-
-    dai.mint(staker, weiAmount);
-    dai.approve(simpleStaking.address, lowWeiAmount, {
-      from: staker
-    });
-
-    await web3.currentProvider.send( { jsonrpc: "2.0", method: "evm_mine", id: 12345 }, () => {} );
-
-    let blockBefore = await web3.eth.getBlockNumber();
-
-    await helpers.assertVMException(simpleStaking
-                                    .stakeDAI(weiAmount, {
-                                      from: staker
-                                    }));
-    
-    let events = await simpleStaking.getPastEvents( 'DAIStaked', { fromBlock: blockBefore, toBlock: 'latest' } );
-  
-    assert.equal(events.length, 0);
-  });
-
-  it("should not emit a DAIStaked event when the staker dai amount is lower than the approved amount", async () => {
-    let currentBalance = await dai.balanceOf(staker);
-    let weiAmount = web3.utils.toWei("100", "ether");
-    let approvedAmount = (currentBalance.valueOf() + weiAmount);
-    
-    dai.approve(simpleStaking.address, approvedAmount, {
-      from: staker
-    });
-
-    await web3.currentProvider.send( { jsonrpc: "2.0", method: "evm_mine", id: 12345 }, () => {} );
-
-    let blockBefore = await web3.eth.getBlockNumber();
-
-    await helpers.assertVMException(simpleStaking
-                                    .stakeDAI(approvedAmount, {
-                                      from: staker
-                                    }));
-    
-    let events = await simpleStaking.getPastEvents( 'DAIStaked', { fromBlock: blockBefore, toBlock: 'latest' } );
-  
-    assert.equal(events.length, 0);
-  });
-
-// TODO: Add synchronous testing 
 
   it("should mock cdai updated exchange rate", async () => {
     let res = await cDAI.exchangeRateCurrent();

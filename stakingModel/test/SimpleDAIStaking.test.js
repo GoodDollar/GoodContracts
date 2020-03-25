@@ -76,12 +76,11 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     );
     let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
     expect(stakedcDaiBalance.toString()).to.be.equal(
-      web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai)
+      web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai because of the exchange rate dai <> cdai)
     );
   });
 
   it("should convert user staked DAI to the equal value of cDAI owned by the staking contract", async () => {
-    let stakedDaiBalanceBefore = await dai.balanceOf(simpleStaking.address);
     dai.mint(staker, web3.utils.toWei("100", "ether"));
     dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
       from: staker
@@ -92,26 +91,13 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       })
       .catch(console.log);
     let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
+    let stakercDaiBalance = await cDAI.balanceOf(staker);
     expect(stakedcDaiBalance.toString()).to.be.equal(
-      web3.utils.toWei("19800", "mwei") //8 decimals precision (99 cdai)
+      web3.utils.toWei("19800", "mwei") //8 decimals precision (198 cdai because the staking contract already has balance of 99 cdai)
     );
-    let stakedDaiBalanceAfter = await dai.balanceOf(simpleStaking.address);
-    expect(stakedDaiBalanceAfter.toString()).to.be.equal(stakedDaiBalanceBefore.toString());
-  });
-
-  it("should not mint the converted cDAI to the staker", async () => {
-    let stakercDaiBalanceBefore = await cDAI.balanceOf(staker);
-    dai.mint(staker, web3.utils.toWei("100", "ether"));
-    dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
-      from: staker
-    });
-    await simpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
-        from: staker
-      })
-      .catch(console.log);
-    let stakercDaiBalanceAfter = await cDAI.balanceOf(staker);
-    expect(stakercDaiBalanceAfter.toString()).to.be.equal(stakercDaiBalanceBefore.toString());
+    let stakedDaiBalance = await dai.balanceOf(simpleStaking.address);
+    expect(stakedDaiBalance.isZero()).to.be.true;
+    expect(stakercDaiBalance.isZero()).to.be.true;
   });
 
   it("should not change the staker DAI balance if the conversion failed", async () => {

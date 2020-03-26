@@ -78,7 +78,103 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     );
     let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
     expect(stakedcDaiBalance.toString()).to.be.equal(
-      web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai)
+      web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai because of the exchange rate dai <> cdai)
+    );
+  });
+
+  it("should convert user staked DAI to the equal value of cDAI owned by the staking contract", async () => {
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    await simpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      })
+      .catch(console.log);
+    let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
+    let stakercDaiBalance = await cDAI.balanceOf(staker);
+    expect(stakedcDaiBalance.toString()).to.be.equal(
+      web3.utils.toWei("19800", "mwei") //8 decimals precision (198 cdai because the staking contract already has balance of 99 cdai)
+    );
+    let stakedDaiBalance = await dai.balanceOf(simpleStaking.address);
+    expect(stakedDaiBalance.isZero()).to.be.true;
+    expect(stakercDaiBalance.isZero()).to.be.true;
+  });
+
+  it("should not change the staker DAI balance if the conversion failed", async () => {
+    let fakeDai = await DAIMock.new();
+    let fakecDAI = await cDAIMock.new(fakeDai.address);
+    fakeDai.mint(fakecDAI.address, web3.utils.toWei("100000000", "ether"));
+    let fakeSimpleStaking = await SimpleDAIStaking.new(
+        dai.address,
+        fakecDAI.address,
+        NULL_ADDRESS,
+        founder
+      ); // staking should failed
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    let stakerDaiBalanceBefore = await dai.balanceOf(staker);
+    const error = await fakeSimpleStaking
+                        .stakeDAI(web3.utils.toWei("100", "ether"), {
+                          from: staker
+                        })
+                        .catch(e => e);
+    expect(error.message).not.to.be.empty;
+    let stakerDaiBalanceAfter = await dai.balanceOf(staker);
+    expect(stakerDaiBalanceAfter.toString()).to.be.equal(stakerDaiBalanceBefore.toString());
+  });
+
+  it("should not change the totalStaked if the conversion failed", async () => {
+    let fakeDai = await DAIMock.new();
+    let fakecDAI = await cDAIMock.new(fakeDai.address);
+    fakeDai.mint(fakecDAI.address, web3.utils.toWei("100000000", "ether"));
+    let fakeSimpleStaking = await SimpleDAIStaking.new(
+        dai.address,
+        fakecDAI.address,
+        NULL_ADDRESS,
+        founder
+      ); // staking should failed
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    let totalStakedBefore = await fakeSimpleStaking.totalStaked();
+    const error = await fakeSimpleStaking
+                        .stakeDAI(web3.utils.toWei("100", "ether"), {
+                          from: staker
+                        })
+                        .catch(e => e);
+    expect(error.message).not.to.be.empty;
+    let totalStakedAfter = await fakeSimpleStaking.totalStaked();
+    expect(totalStakedAfter.toString()).to.be.equal(totalStakedBefore.toString());
+  });
+
+  it("should not update the staker list if the conversion failed", async () => {
+    let fakeDai = await DAIMock.new();
+    let fakecDAI = await cDAIMock.new(fakeDai.address);
+    fakeDai.mint(fakecDAI.address, web3.utils.toWei("100000000", "ether"));
+    let fakeSimpleStaking = await SimpleDAIStaking.new(
+        dai.address,
+        fakecDAI.address,
+        NULL_ADDRESS,
+        founder
+      ); // staking should failed
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    const error = await fakeSimpleStaking
+                        .stakeDAI(web3.utils.toWei("100", "ether"), {
+                          from: staker
+                        })
+                        .catch(e => e);
+    expect(error.message).not.to.be.empty;
+    let balance = await fakeSimpleStaking.stakers(staker);
+    expect(balance.stakedDAI.toString()).to.be.equal(
+      web3.utils.toWei("0", "ether") //100 dai
     );
   });
 

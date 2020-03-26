@@ -70,6 +70,10 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
      */
     function stakeDAI(uint256 amount) public whenNotPaused {
         require(
+            amount > 0,
+            "You need to stake a positive token amount"
+        );
+        require(
             dai.allowance(msg.sender, address(this)) >= amount,
             "You need to approve DAI transfer first"
         );

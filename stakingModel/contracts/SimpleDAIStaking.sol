@@ -36,6 +36,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     event DAIStaked(address indexed staker, uint256 daiValue);
     event DAIStakeWithdraw(address indexed staker, uint256 daiValue);
     event InterestDonated(
+        address recipient,
         uint256 cdaiValue,
         uint256 daiValue,
         uint256 daiPrecisionLoss
@@ -44,8 +45,9 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     ERC20 dai;
     cERC20 cDai;
     address uniswap;
-    uint256 totalStaked = 0;
-    uint256 lastUBICollection = now + 1 days;
+    uint256 public blockInterval;
+    uint256 lastUBICollection;
+    uint256 public totalStaked = 0;
 
     modifier onlyFundManager {
         require(msg.sender == owner(), "Only FundManager can call this method");
@@ -56,11 +58,15 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         address _dai,
         address _cDai,
         address _uniswap,
-        address _fundManager
+        address _fundManager,
+        uint256 _blockInterval
+
     ) public SchemeGuard(Avatar(address(0))) {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
         uniswap = _uniswap;
+        blockInterval = _blockInterval;
+        lastUBICollection = block.number + blockInterval;
         transferOwnership(_fundManager);
     }
 
@@ -94,7 +100,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         }
         Staker storage staker = stakers[msg.sender];
         staker.stakedDAI = staker.stakedDAI + amount;
-        staker.lastStake = block.timestamp;
+        staker.lastStake = block.number;
         totalStaked += amount;
         emit DAIStaked(msg.sender, amount);
     }
@@ -133,32 +139,43 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         returns (uint256, uint256, uint256)
     {
         uint256 er = cDai.exchangeRateStored();
-        uint256 daiGains = rmul(cDai.balanceOf(address(this)) * 1e10, er).div(
-            10
-        ) -
-            totalStaked; //mul by 1e10 to convert cdai precision to dai precision, div to reduce precision from 1e28 of exchange rate to 1e27 that DSMath works on
+        uint256 daiWorth = currentDAIWorth();
+        if (daiWorth < totalStaked) {
+            return (0, 0, 0);
+        }
+        uint256 daiGains = daiWorth - totalStaked;
         uint256 cdaiGains = rdiv(daiGains * 1e10, er); //mul by 1e10 to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
         uint256 precisionLossCDaiRay = cdaiGains % 1e19; //get right most bits not covered by precision of cdai which is only 8 decimals while RAY is 27
-        cdaiGains = cdaiGains.div(1e19); //lower back to 8 decimals
+        if (cdaiGains != 0) {
+            cdaiGains = cdaiGains.div(1e19); //lower back to 8 decimals
+        }
         uint256 precisionLossDai = rmul(precisionLossCDaiRay, er).div(1e10); //div by 1e10 to get results in dai precision 1e18
         return (cdaiGains, daiGains, precisionLossDai);
     }
+
     /**
      * @dev collect gained interest by owner(fundmanager)
+     * @param recipient of cDAI gains
      */
-    function collectUBIInterest()
+    function collectUBIInterest(address recipient)
         public
         onlyFundManager
         returns (uint256, uint256, uint256)
     {
         require(
-            block.timestamp.sub(lastUBICollection) > 23 hours,
-            "Need to wait at least 23 hours between collections"
+            recipient != address(this),
+            "Recipient cannot be the staking contract"
+        ); // otherwise fund manager has to wait for the next interval
+
+        require(
+            block.number.sub(lastUBICollection) > blockInterval,
+            "Need to wait for the next interval"
         );
+
         (uint256 cdaiGains, uint256 daiGains, uint256 precisionLossDai) = currentUBIInterest();
-        cDai.transfer(msg.sender, cdaiGains);
-        lastUBICollection = block.timestamp;
-        emit InterestDonated(cdaiGains, daiGains, precisionLossDai);
+        cDai.transfer(recipient, cdaiGains);
+        lastUBICollection = block.number;
+        emit InterestDonated(recipient, cdaiGains, daiGains, precisionLossDai);
         return (cdaiGains, daiGains, precisionLossDai);
     }
 

@@ -122,15 +122,6 @@ module.exports = {
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei
     },
-    etoro: {
-      provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
-      },
-      network_id: 122,
-      gas: 8500000,
-      skipDryRun: true,
-      gasPrice: 2000000000 //1 gwei
-    },
     production: {
       provider: function() {
         return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");

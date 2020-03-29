@@ -47,7 +47,7 @@ module.exports = async function(deployer, network, accounts) {
     } else {
       adminProvider = new HDWalletProvider(
         admin_mnemonic,
-        "https://rpc.fusenet.io/",
+        "https://rpc.fuse.io/",
         0,
         10
       );

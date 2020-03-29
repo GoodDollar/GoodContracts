@@ -1,4 +1,3 @@
-
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/access/Roles.sol";
@@ -25,23 +24,21 @@ contract AdminWallet is Ownable {
 
     uint256 public toppingAmount;
 
-    uint public toppingTimes;
-    uint public lastCalc;
+    uint256 public toppingTimes;
+    uint256 public lastCalc;
 
-    mapping(uint => mapping(address => uint)) toppings;
+    mapping(uint256 => mapping(address => uint256)) toppings;
 
     event AdminsAdded(address payable[] indexed admins);
     event AdminsRemoved(address[] indexed admins);
     event WalletTopped(address indexed user);
 
-    constructor (
+    constructor(
         address payable[] memory _admins,
         uint256 _toppingAmount,
-        uint _toppingTimes,
+        uint256 _toppingTimes,
         Identity _identity
-    )
-        public
-    {
+    ) public {
         identity = _identity;
 
         toppingAmount = _toppingAmount;
@@ -62,17 +59,16 @@ contract AdminWallet is Ownable {
     modifier reimburseGas() {
         _;
         if (msg.sender.balance <= toppingAmount.div(4)) {
-            toppings[lastCalc][msg.sender] += 1;
             msg.sender.transfer(toppingAmount.sub(msg.sender.balance));
         }
     }
 
-    function () external payable {}
+    function() external payable {}
 
     /* @dev Internal function that sets current day
      */
     function setDay() internal {
-        uint dayDiff = now.sub(lastCalc) / 1 days;
+        uint256 dayDiff = now.sub(lastCalc) / 1 days;
 
         if (dayDiff >= 1) {
             lastCalc = now;
@@ -88,7 +84,7 @@ contract AdminWallet is Ownable {
      * @param _admins the list of addresses to add
      */
     function addAdmins(address payable[] memory _admins) public onlyOwner {
-        for (uint i = 0; i < _admins.length; i++) {
+        for (uint256 i = 0; i < _admins.length; i++) {
             admins.add(_admins[i]);
 
             adminlist.push(_admins[i]);
@@ -101,7 +97,7 @@ contract AdminWallet is Ownable {
      * @param _admins the list of addresses to remove
      */
     function removeAdmins(address[] memory _admins) public onlyOwner {
-        for (uint i = 0; i < _admins.length; i++) {
+        for (uint256 i = 0; i < _admins.length; i++) {
             admins.remove(_admins[i]);
         }
         emit AdminsRemoved(_admins);
@@ -109,9 +105,13 @@ contract AdminWallet is Ownable {
 
     /* @dev top the first 50 admins
      */
-    function topAdmins(uint256 startIndex) public onlyOwner {
+    function topAdmins(uint256 startIndex) public {
         require(adminlist.length > startIndex, "Admin list is empty");
-        for (uint i = startIndex; (i < adminlist.length && i < startIndex + 50); i++) {
+        for (
+            uint256 i = startIndex;
+            (i < adminlist.length && i < startIndex + 50);
+            i++
+        ) {
             if (adminlist[i].balance <= toppingAmount.div(4)) {
                 _topWallet(adminlist[i]);
             }
@@ -122,14 +122,18 @@ contract AdminWallet is Ownable {
      * @param _user the address to check
      * @returns A bool indicating if user is an admin
      */
-    function isAdmin(address _user) public view returns(bool) {
+    function isAdmin(address _user) public view returns (bool) {
         return admins.has(_user);
     }
 
     /* @dev Function to add given address to whitelist of identity contract
      * can only be done by admins of wallet and if wallet is an IdentityAdmin
      */
-    function whitelist(address _user, string memory _did) public onlyAdmin reimburseGas {
+    function whitelist(address _user, string memory _did)
+        public
+        onlyAdmin
+        reimburseGas
+    {
         identity.addWhitelistedWithDID(_user, _did);
     }
 
@@ -160,8 +164,11 @@ contract AdminWallet is Ownable {
      */
     function topWallet(address payable _user) public onlyAdmin reimburseGas {
         setDay();
-        require(toppings[lastCalc][_user] < toppingTimes, "User wallet has been topped too many times today");
-        require(address(_user).balance <= toppingAmount.div(4), "User balance too high");
+        require(
+            toppings[lastCalc][_user] < toppingTimes,
+            "User wallet has been topped too many times today"
+        );
+        if (address(_user).balance >= toppingAmount.div(4)) return;
 
         _topWallet(_user);
     }
@@ -179,14 +186,18 @@ contract AdminWallet is Ownable {
      * @param _amount the bonus amount to give
      * @param _did decentralized id of user, pointer to some profile
      */
-    function whitelistAndAwardUser(address _user, uint256 _amount, string memory _did) public onlyAdmin reimburseGas {
+    function whitelistAndAwardUser(
+        address _user,
+        uint256 _amount,
+        string memory _did
+    ) public onlyAdmin reimburseGas {
         require(bonus != SignUpBonus(0), "SignUp bonus has not been set yet");
 
-        if(identity.isWhitelisted(_user) == false) {
+        if (identity.isWhitelisted(_user) == false) {
             whitelist(_user, _did);
         }
 
-        if(_amount > 0) {
+        if (_amount > 0) {
             bonus.awardUser(_user, _amount);
         }
     }

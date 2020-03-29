@@ -47,9 +47,7 @@ module.exports = async function(deployer, network) {
   const initTokenInWei = [initToken];
 
   deployer.deploy(Identity).then(async identity => {
-    await web3.eth.getAccounts(function(err, res) {
-      accounts = res;
-    });
+    const accounts = await web3.eth.getAccounts();
     const founders = [accounts[0]];
 
     const feeFormula = await deployer.deploy(

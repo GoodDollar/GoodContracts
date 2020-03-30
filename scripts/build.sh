@@ -21,16 +21,21 @@ fi
 if [[  $1 == 'deploy' ]]
 then 
     export MNEMONIC=$MNEMONIC_STAGING
+    export ADMIN_MNEMONIC=$ADMIN_MNEMONIC_STAGING
     echo "deploying to fuse dev"
     export NETWORK='fuse'
     npm run deploy
     echo "deploying to fuse staging"
     export NETWORK='staging'
     npm run deploy
+fi
+if [[  $1 == 'prod' ]]
+then 
     read -p "deploy to production? " prompt
     if [[ $PRIVATE_KEY_PROD && $prompt =~ [yY](es)? ]]
     then
         export PRIVATE_KEY=$PRIVATE_KEY_PROD
+        export ADMIN_MNEMONIC=$ADMIN_MNEMONIC_PRODUCTION
         export NETWORK='production'
         npm run deploy
     fi        

@@ -34,7 +34,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     mapping(address => Staker) public stakers;
 
     event DAIStaked(address indexed staker, uint256 daiValue);
-    event DAIStakeWithdraw(address indexed staker, uint256 daiValue);
+    event DAIStakeWithdraw(address indexed staker, uint256 daiValue, uint256 daiActual);
     event InterestDonated(
         address recipient,
         uint256 cdaiValue,
@@ -118,9 +118,10 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         uint256 daiWithdraw = staker.stakedDAI;
         staker.stakedDAI = 0; // update balance before transfer to prevent re-entry
         totalStaked -= daiWithdraw;
+        uint256 daiActual = dai.balanceOf(address(this));
         //TODO: handle transfer failure
-        dai.transfer(msg.sender, daiWithdraw);
-        emit DAIStakeWithdraw(msg.sender, daiWithdraw);
+        dai.transfer(msg.sender, daiActual);
+        emit DAIStakeWithdraw(msg.sender, daiWithdraw, daiActual);
     }
 
     function currentDAIWorth() public view returns (uint256) {
@@ -146,7 +147,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         uint256 daiGains = daiWorth - totalStaked;
         uint256 cdaiGains = rdiv(daiGains * 1e10, er); //mul by 1e10 to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
         uint256 precisionLossCDaiRay = cdaiGains % 1e19; //get right most bits not covered by precision of cdai which is only 8 decimals while RAY is 27
-        if (cdaiGains != 0) {
+        if (cdaiGains > 0) {
             cdaiGains = cdaiGains.div(1e19); //lower back to 8 decimals
         }
         uint256 precisionLossDai = rmul(precisionLossCDaiRay, er).div(1e10); //div by 1e10 to get results in dai precision 1e18

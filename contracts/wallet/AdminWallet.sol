@@ -209,8 +209,8 @@ contract AdminWallet is Ownable {
         }
     }
 
-    /** 
-     * @dev Function to award user with pending bonuses, 
+    /**
+     * @dev Function to award user with pending bonuses,
      * can only be done by admin
      * @param _user The address to transfer to and whitelist
      * @param _amount the bonus amount to give

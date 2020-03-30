@@ -1,5 +1,5 @@
 # [GoodDollar](https://gooddollar.org) - GoodContracts
-[![CircleCI](https://circleci.com/gh/gooddollar/goodcontracts.svg?style=svg)](https://circleci.com/gh/gooddollar/goodcontracts)
+[![CircleCI](https://circleci.com/gh/GoodDollar/GoodContracts.svg?style=svg)](https://circleci.com/gh/GoodDollar/GoodContracts)
 [![Coverage Status](https://coveralls.io/repos/github/gooddollar/GoodContracts/badge.svg?branch=master&t=dVBxdT)](https://coveralls.io/github/gooddollar/GoodContracts?branch=master)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Gitter](https://badges.gitter.im/GoodDollar/community.svg)](https://gitter.im/GoodDollar/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)

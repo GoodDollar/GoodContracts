@@ -32,6 +32,12 @@ contract AdminWallet is Ownable {
     event AdminsAdded(address payable[] indexed admins);
     event AdminsRemoved(address[] indexed admins);
     event WalletTopped(address indexed user);
+    event GenericCall(
+        address indexed _contract,
+        bytes _data,
+        uint256 _value,
+        bool _success
+    );
 
     constructor(
         address payable[] memory _admins,
@@ -201,5 +207,41 @@ contract AdminWallet is Ownable {
         if (_amount > 0) {
             bonus.awardUser(_user, _amount);
         }
+    }
+
+    /** 
+     * @dev Function to award user with pending bonuses, 
+     * can only be done by admin
+     * @param _user The address to transfer to and whitelist
+     * @param _amount the bonus amount to give
+     */
+    function awardUser(address _user, uint256 _amount)
+        public
+        onlyAdmin
+        reimburseGas
+    {
+        require(bonus != SignUpBonus(0), "SignUp bonus has not been set yet");
+        if (_amount > 0) {
+            bonus.awardUser(_user, _amount);
+        }
+    }
+
+    /**
+    * @dev perform a generic call to an arbitrary contract
+    * @param _contract  the contract's address to call
+    * @param _data ABI-encoded contract call to call `_contract` address.
+    * @param _value value (ETH) to transfer with the transaction
+    * @return bool    success or fail
+    *         bytes - the return bytes of the called contract's function.
+    */
+    function genericCall(address _contract, bytes memory _data, uint256 _value)
+        public
+        onlyAdmin
+        reimburseGas
+        returns (bool success, bytes memory returnValue)
+    {
+        // solhint-disable-next-line avoid-call-value
+        (success, returnValue) = _contract.call.value(_value)(_data);
+        emit GenericCall(_contract, _data, _value, success);
     }
 }

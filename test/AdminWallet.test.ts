@@ -26,6 +26,7 @@ contract(
     let newUser2;
     let admin;
     let admin2;
+    let toWhitelist;
 
     before(async () => {
       identity = await Identity.deployed();
@@ -51,6 +52,7 @@ contract(
       newUser2 = await web3.eth.personal.newAccount("123");
       admin = await web3.eth.personal.newAccount("123");
       admin2 = await web3.eth.personal.newAccount("123");
+      toWhitelist = await web3.eth.personal.newAccount("123");
 
       await web3.eth.personal.unlockAccount(newUser, "123", 6000);
       await web3.eth.personal.unlockAccount(newUser2, "123", 6000);
@@ -104,6 +106,35 @@ contract(
       const newBalance = await web3.eth.getBalance(admin2);
 
       expect(newBalance).to.be.equal(web3.utils.toWei("1"));
+    });
+
+    it("should reimburse gas for admins", async () => {
+      const expectedTopping = await adminWallet
+        .toppingAmount()
+        .then(_ => _.toString());
+      const adminWalletBalance = web3.utils.fromWei(
+        await web3.eth.getBalance(adminWallet.address)
+      );
+      expect(expectedTopping).to.be.equal(web3.utils.toWei("1"));
+      expect(parseInt(adminWalletBalance)).to.be.greaterThan(1);
+      let oldBalance = await web3.eth.getBalance(admin2);
+      let toTransfer =
+        parseInt(oldBalance) - parseInt(web3.utils.toWei("0.2", "ether"));
+      if (toTransfer > 0)
+        await web3.eth.sendTransaction({
+          from: admin2,
+          to: founder,
+          value: toTransfer.toString()
+        });
+      oldBalance = await web3.eth.getBalance(admin2);
+      expect(parseInt(oldBalance)).to.be.lessThan(
+        parseInt(web3.utils.toWei("0.25", "ether"))
+      );
+      await adminWallet.whitelist(toWhitelist, "did:test" + Math.random(), {
+        from: admin2
+      });
+      const newBalance = await web3.eth.getBalance(admin2);
+      expect(parseInt(newBalance)).to.be.gte(parseInt(expectedTopping));
     });
 
     it("should remove single admin", async () => {

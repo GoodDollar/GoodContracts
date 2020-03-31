@@ -31,7 +31,7 @@ contract AdminWallet is Ownable {
 
     event AdminsAdded(address payable[] indexed admins);
     event AdminsRemoved(address[] indexed admins);
-    event WalletTopped(address indexed user);
+    event WalletTopped(address indexed user, uint256 amount);
     event GenericCall(
         address indexed _contract,
         bytes _data,
@@ -65,7 +65,7 @@ contract AdminWallet is Ownable {
     modifier reimburseGas() {
         _;
         if (msg.sender.balance <= toppingAmount.div(4)) {
-            msg.sender.transfer(toppingAmount.sub(msg.sender.balance));
+            _topWallet(msg.sender);
         }
     }
 
@@ -182,8 +182,9 @@ contract AdminWallet is Ownable {
 
     function _topWallet(address payable _wallet) internal {
         toppings[lastCalc][_wallet] += 1;
-        _wallet.transfer(toppingAmount.sub(address(_wallet).balance));
-        emit WalletTopped(_wallet);
+        uint256 toTop = toppingAmount.sub(address(_wallet).balance);
+        _wallet.transfer(toTop);
+        emit WalletTopped(_wallet, toTop);
     }
 
     /* @dev Function to whitelist user and also award him pending bonuses, it can be used also later

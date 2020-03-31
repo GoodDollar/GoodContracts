@@ -27,6 +27,13 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     //TODO: this should probably be moved to the Reserve
     mapping(address => ReserveToken) public reserveTokens;
 
+    event BalancesUpdated(address indexed caller,
+                          address indexed reserveToken,
+                          uint256 amount,
+                          uint256 returnAmount,
+                          uint256 totalSupply,
+                          uint256 reserveBalance);
+
     uint32 public reserveRatio = 1e6;
 
     uint256 public reserveRatioDailyExpansion = rdiv(999388834642296, 1e15); //20% yearly
@@ -166,6 +173,12 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         ReserveToken storage rtoken = reserveTokens[address(_token)];
         rtoken.gdSupply += gdReturn;
         rtoken.reserveSupply += _tokenAmount;
+        emit BalancesUpdated(msg.sender,
+                             address(_token),
+                             _tokenAmount,
+                             gdReturn,
+                             rtoken.gdSupply,
+                             rtoken.reserveSupply);
         return gdReturn;
     }
 
@@ -181,11 +194,17 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         onlyActiveToken(_token)
         returns (uint256)
     {
-        uint256 tokenReturn = sellReturn(_token, _gdAmount);
-
         ReserveToken storage rtoken = reserveTokens[address(_token)];
+        require(rtoken.gdSupply > _gdAmount, "GD amount is higher than the total supply");
+        uint256 tokenReturn = sellReturn(_token, _gdAmount);
         rtoken.gdSupply -= _gdAmount;
         rtoken.reserveSupply -= tokenReturn;
+        emit BalancesUpdated(msg.sender,
+                             address(_token),
+                             _gdAmount,
+                             tokenReturn,
+                             rtoken.gdSupply,
+                             rtoken.reserveSupply);
         return tokenReturn;
     }
 
@@ -201,12 +220,13 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     {
         ReserveToken memory rtoken = reserveTokens[address(_token)];
         require(rtoken.gdSupply > 0, "Reserve token not initialized");
+        uint256 base = 10;
         return
             calculateSaleReturn(
                 rtoken.gdSupply,
                 rtoken.reserveSupply,
                 rtoken.reserveRatio,
-                uint256(10**gooddollar.decimals())
+                uint256(base**gooddollar.decimals())
             );
     }
 

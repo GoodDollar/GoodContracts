@@ -123,6 +123,113 @@ contract(
       );
     });
 
+    it("should be able to update balances based on buy return calculation", async () => {
+      let reserveToken = await marketMaker.reserveTokens(dai.address);
+      let reserveBalanceBefore = reserveToken.reserveSupply;
+      let supplyBefore = reserveToken.gdSupply; 
+      let rrBefore = reserveToken.reserveRatio; 
+      let amount = web3.utils.toWei("1", "ether");
+      let transaction = await marketMaker.buy(
+                          dai.address,
+                          web3.utils.toWei("1", "ether") //1Dai
+                        );
+      reserveToken = await marketMaker.reserveTokens(dai.address);
+      let reserveBalanceAfter = reserveToken.reserveSupply;
+      let supplyAfter = reserveToken.gdSupply; 
+      let rrAfter = reserveToken.reserveRatio; 
+      expect(transaction.logs[0].event).to.be.equal("BalancesUpdated");
+      expect((reserveBalanceAfter - reserveBalanceBefore).toString()).to.be.equal(amount.toString());
+      expect((supplyAfter - supplyBefore).toString()).to.be.equal(transaction.logs[0].args.returnAmount.toString());
+      expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
+    });
+
+    it("should be able to update balances based on sell return calculation", async () => {
+      let reserveToken = await marketMaker.reserveTokens(dai.address);
+      let reserveBalanceBefore = reserveToken.reserveSupply;
+      let supplyBefore = reserveToken.gdSupply; 
+      let rrBefore = reserveToken.reserveRatio; 
+      let amount = 100;
+      let transaction = await marketMaker.sell(
+                          dai.address,
+                          100
+                        );
+      reserveToken = await marketMaker.reserveTokens(dai.address);
+      let reserveBalanceAfter = reserveToken.reserveSupply;
+      let supplyAfter = reserveToken.gdSupply;
+      let rrAfter = reserveToken.reserveRatio;
+      expect(transaction.logs[0].event).to.be.equal("BalancesUpdated");
+      expect((reserveBalanceAfter.add(transaction.logs[0].args.returnAmount)).toString()).to.be.equal(reserveBalanceBefore.toString());
+      expect((supplyBefore - supplyAfter).toString()).to.be.equal(amount.toString());
+      expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
+    });
+
+    it("should be able to buy only by the owner", async () => {
+      let error = await marketMaker.buy(
+                          dai.address,
+                          web3.utils.toWei("1", "ether"), {
+                            from: staker
+                        }).catch(e => e);
+      expect(error.message).not.to.be.empty;
+    });
+
+    it("should be able to sell only by the owner", async () => {
+      let error = await marketMaker.sell(
+                          dai.address,
+                          100, {
+                            from: staker
+                        }).catch(e => e);
+      expect(error.message).not.to.be.empty;
+    });
+
+    it("should be able to buy only with active token", async () => {
+      let reserveToken = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupplyBefore = reserveToken.gdSupply;
+      let reserveSupplyBefore = reserveToken.reserveSupply;
+      let reserveRatioBefore = reserveToken.reserveRatio;
+      await marketMaker.initializeToken(
+        cDAI.address,
+        "0",
+        reserveSupplyBefore.toString(),
+        reserveRatioBefore.toString()
+      );
+      let error = await marketMaker.buy(
+                          cDAI.address,
+                          web3.utils.toWei("1", "ether")
+                        ).catch(e => e);
+      expect(error.message).to.have.string(
+        "Reserve token not initialized"
+      );
+      await marketMaker.initializeToken(
+        cDAI.address,
+        gdSupplyBefore,
+        reserveSupplyBefore.toString(),
+        reserveRatioBefore.toString()
+      );
+    });
+
+    it("should be able to buy only with active token", async () => {
+      let error = await marketMaker.sell(
+                          NULL_ADDRESS,
+                          web3.utils.toWei("1", "ether")
+                        ).catch(e => e);
+      expect(error.message).to.have.string(
+        "Reserve token not initialized"
+      );
+    });
+
+    it("should be able to sell gd only when the amount is lower than the total supply", async () => {
+      let reserveToken = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupply = reserveToken.gdSupply;
+      console.log((gdSupply + 1).toString());
+      let error = await marketMaker.sell(
+                          cDAI.address,
+                          (gdSupply + 1).toString()
+                        ).catch(e => e);
+      expect(error.message).to.have.string(
+        "GD amount is higher than the total supply"
+      );
+    });
+
     xit("should calculate mint UBI correctly for 18 decimals precision", async () => {
       const gdPrice = await marketMaker.currentPrice(dai.address);
       const toMint = await marketMaker.shouldMint(

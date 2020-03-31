@@ -33,8 +33,12 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     //second day RR 99.9388834642296 = 999388
     //3rd day RR 99.9388 * 0.999388834642296 = 998777
 
-    constructor(address _gooddollar) public SchemeGuard(Avatar(0)) {
+    constructor(
+        address _gooddollar,
+        address _owner
+    ) public SchemeGuard(Avatar(0)) {
         gooddollar = ERC20Detailed(_gooddollar);
+        transferOwnership(_owner);
     }
 
     modifier onlyActiveToken(ERC20 _token) {
@@ -105,10 +109,10 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     /**
     @dev calculate the buy return in G$
     @param _token the token buying with
-    @param tokenAmount the amount of tokens sold
+    @param _tokenAmount the amount of tokens sold
     @return number of G$ that will be given in exchange as calculated by the bonding curve
     */
-    function buyReturn(ERC20 _token, uint256 tokenAmount)
+    function buyReturn(ERC20 _token, uint256 _tokenAmount)
         public
         view
         onlyActiveToken(_token)
@@ -120,17 +124,17 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
                 rtoken.gdSupply,
                 rtoken.reserveSupply,
                 rtoken.reserveRatio,
-                tokenAmount
+                _tokenAmount
             );
     }
 
     /**
     @dev calculate the sell return in _token
     @param _token the token buying for G$s
-    @param gdAmount the amount of G$ sold
+    @param _gdAmount the amount of G$ sold
     @return number of tokens that will be given in exchange as calculated by the bonding curve
     */
-    function sellReturn(ERC20 _token, uint256 gdAmount)
+    function sellReturn(ERC20 _token, uint256 _gdAmount)
         public
         view
         onlyActiveToken(_token)
@@ -138,49 +142,49 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     {
         ReserveToken memory rtoken = reserveTokens[address(_token)];
         return
-            calculateSellReturn(
+            calculateSaleReturn(
                 rtoken.gdSupply,
                 rtoken.reserveSupply,
                 rtoken.reserveRatio,
-                gdAmount
+                _gdAmount
             );
     }
 
     /**
     @dev calculate the buy return in G$ and update the bonding curve params
     @param _token the token buying with
-    @param tokenAmount the amount of tokens sold
+    @param _tokenAmount the amount of tokens sold
     @return number of G$ that will be given in exchange as calculated by the bonding curve
     */
-    function buy(ERC20 _token, uint256 tokenAmount)
+    function buy(ERC20 _token, uint256 _tokenAmount)
         public
         onlyOwner
         onlyActiveToken(_token)
         returns (uint256)
     {
-        uint256 gdReturn = buyReturn(_token, tokenAmount);
+        uint256 gdReturn = buyReturn(_token, _tokenAmount);
         ReserveToken storage rtoken = reserveTokens[address(_token)];
         rtoken.gdSupply += gdReturn;
-        rtoken.reserveSupply += tokenAmount;
+        rtoken.reserveSupply += _tokenAmount;
         return gdReturn;
     }
 
     /**
     @dev calculate the sell return in _token and update the bonding curve params
     @param _token the token buying for G$s
-    @param gdAmount the amount of G$ sold
+    @param _gdAmount the amount of G$ sold
     @return number of tokens that will be given in exchange as calculated by the bonding curve
     */
-    function sell(ERC20 _token, uint256 gdSold)
+    function sell(ERC20 _token, uint256 _gdAmount)
         public
         onlyOwner
         onlyActiveToken(_token)
         returns (uint256)
     {
-        uint256 tokenReturn = sellReturn(_token, gdSold);
+        uint256 tokenReturn = sellReturn(_token, _gdAmount);
 
         ReserveToken storage rtoken = reserveTokens[address(_token)];
-        rtoken.gdSupply -= gdBurned;
+        rtoken.gdSupply -= _gdAmount;
         rtoken.reserveSupply -= tokenReturn;
         return tokenReturn;
     }
@@ -210,7 +214,7 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     /**
     @dev calculate how much G$ to mint based on added token supply (from interest)
     and on current reserve ratio, in order to keep G$ price the same at the bonding curve
-    @param token the reserve token
+    @param _token the reserve token
     @param _addTokenSupply amount of token added to supply
     @return how much to mint in order to keep price in bonding curve the same
      */
@@ -229,7 +233,7 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
 
     /**
     @dev update bonding curve based on added supply and new minted amount
-    @param token the reserve token
+    @param _token the reserve token
     @param _addTokenSupply amount of token added to supply
     @return how much to mint in order to keep price in bonding curve the same
      */

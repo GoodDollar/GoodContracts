@@ -33,17 +33,6 @@ contract(
       marketMaker = await MarketMaker.new(goodDollar.address, founder);
     });
 
-    it("should update reserve ratio by yearly rate", async () => {
-      const expansion = await marketMaker.reserveRatioDailyExpansion();
-      expect(expansion.toString()).to.be.equal("999388834642296000000000000");
-      await marketMaker.expandReserveRatio(goodDollar.address);
-      const daytwoRR = await marketMaker.reserveTokens(goodDollar.address);
-      expect(daytwoRR["1"].toString()).to.be.equal("999388");
-      await marketMaker.expandReserveRatio(goodDollar.address);
-      const daythreeRR = await marketMaker.reserveTokens(goodDollar.address);
-      expect(daythreeRR["1"].toString()).to.be.equal("998777");
-    });
-
     it("should initialize token with price", async () => {
       const expansion = await marketMaker.initializeToken(
         cDAI.address,
@@ -60,9 +49,20 @@ contract(
       expect(onecDAIReturn.toNumber() / 100).to.be.equal(10000); //0.0001 cdai is 1 gd, so for 1eth you get 10000 gd (divide by 100 to account for 2 decimals precision)
     });
 
+    it("should update reserve ratio by yearly rate", async () => {
+      const expansion = await marketMaker.reserveRatioDailyExpansion();
+      expect(expansion.toString()).to.be.equal("999388834642296000000000000");
+      await marketMaker.expandReserveRatio(cDAI.address);
+      const daytwoRR = await marketMaker.reserveTokens(cDAI.address);
+      expect(daytwoRR["1"].toString()).to.be.equal("999388");
+      await marketMaker.expandReserveRatio(cDAI.address);
+      const daythreeRR = await marketMaker.reserveTokens(cDAI.address);
+      expect(daythreeRR["1"].toString()).to.be.equal("998777");
+    });
+
     it("should calculate mint UBI correctly for 8 decimals precision", async () => {
       const gdPrice = await marketMaker.currentPrice(cDAI.address);
-      const toMint = await marketMaker.shouldMint(cDAI.address, "100000000");
+      const toMint = await marketMaker.calculateToMint(cDAI.address, "100000000");
       const expectedTotalMinted = 10 ** 8 / gdPrice.toNumber(); //1cdai divided by gd price;
       expect(expectedTotalMinted).to.be.equal(10000); //1k GD since price is 0.0001 cdai for 1 gd
       expect(toMint.toString()).to.be.equal(
@@ -91,16 +91,35 @@ contract(
       );
     });
 
-    it("should calculate sell return", async () => {
-      const oneDAIReturn = await marketMaker.sellReturn(
+    it("should calculate sell return with cDAI", async () => {
+      const gDReturn = await marketMaker.sellReturn(
+        cDAI.address,
+        10 //0.1 gd
+      );
+      let reserveToken = await marketMaker.reserveTokens(cDAI.address);
+      let reserveBalance = reserveToken.reserveSupply.toString();
+      let sellAmount = 10;
+      let supply = reserveToken.gdSupply.toString(); 
+      let rr = reserveToken.reserveRatio.toNumber(); 
+      const expectedReturn = reserveBalance * (1 - (1 - sellAmount / supply) ** (1000000 / rr));
+      expect(gDReturn.toNumber()).to.be.equal(
+        Math.floor(expectedReturn)
+      );
+    });
+
+    it("should calculate sell return with DAI", async () => {
+      const gDReturn = await marketMaker.sellReturn(
         dai.address,
         10 //0.1 gd
       );
-      //bancor formula to calcualte sell return
-      //tokens return = tokensupply * ((1+gdamount/gdsupply)^1/rr -1)
-      const expectedReturn = 1 * ((1 + 1 / 0.0001) ** 0.8 - 1);
-      expect(oneDAIReturn.toNumber() / 100).to.be.equal(
-        Math.floor(expectedReturn * 100) / 100
+      let reserveToken = await marketMaker.reserveTokens(dai.address);
+      let reserveBalance = reserveToken.reserveSupply.toString();
+      let sellAmount = 10;
+      let supply = reserveToken.gdSupply.toString(); 
+      let rr = reserveToken.reserveRatio.toNumber(); 
+      const expectedReturn = reserveBalance * (1 - (1 - sellAmount / supply) ** (1000000 / rr));
+      expect(gDReturn.toNumber()).to.be.equal(
+        Math.floor(expectedReturn)
       );
     });
 

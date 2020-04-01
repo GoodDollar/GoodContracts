@@ -25,7 +25,8 @@ contract AdminWallet is Ownable {
     uint256 public toppingAmount;
 
     uint256 public toppingTimes;
-    uint256 public lastCalc;
+    uint256 public currentDay;
+    uint256 public periodStart;
 
     mapping(uint256 => mapping(address => uint256)) toppings;
 
@@ -49,6 +50,7 @@ contract AdminWallet is Ownable {
 
         toppingAmount = _toppingAmount;
         toppingTimes = _toppingTimes;
+        periodStart = now;
 
         if (_admins.length > 0) {
             addAdmins(_admins);
@@ -74,11 +76,7 @@ contract AdminWallet is Ownable {
     /* @dev Internal function that sets current day
      */
     function setDay() internal {
-        uint256 dayDiff = now.sub(lastCalc) / 1 days;
-
-        if (dayDiff >= 1) {
-            lastCalc = now;
-        }
+        currentDay = (now.sub(periodStart)) / 1 days;
     }
 
     function setBonusContract(SignUpBonus _bonus) public onlyOwner {
@@ -172,7 +170,7 @@ contract AdminWallet is Ownable {
     function topWallet(address payable _user) public onlyAdmin reimburseGas {
         setDay();
         require(
-            toppings[lastCalc][_user] < toppingTimes,
+            toppings[currentDay][_user] < toppingTimes,
             "User wallet has been topped too many times today"
         );
         if (address(_user).balance >= toppingAmount.div(4)) return;
@@ -181,7 +179,7 @@ contract AdminWallet is Ownable {
     }
 
     function _topWallet(address payable _wallet) internal {
-        toppings[lastCalc][_wallet] += 1;
+        toppings[currentDay][_wallet] += 1;
         uint256 toTop = toppingAmount.sub(address(_wallet).balance);
         _wallet.transfer(toTop);
         emit WalletTopped(_wallet, toTop);

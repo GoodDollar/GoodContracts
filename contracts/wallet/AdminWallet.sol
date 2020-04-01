@@ -64,7 +64,7 @@ contract AdminWallet is Ownable {
 
     modifier reimburseGas() {
         _;
-        if (msg.sender.balance <= toppingAmount.div(4)) {
+        if (msg.sender.balance <= toppingAmount.div(4) && isAdmin(msg.sender)) {
             _topWallet(msg.sender);
         }
     }
@@ -111,7 +111,7 @@ contract AdminWallet is Ownable {
 
     /* @dev top the first 50 admins
      */
-    function topAdmins(uint256 startIndex) public {
+    function topAdmins(uint256 startIndex) public reimburseGas {
         require(adminlist.length > startIndex, "Admin list is empty");
         for (
             uint256 i = startIndex;

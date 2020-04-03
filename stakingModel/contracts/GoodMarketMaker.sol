@@ -34,17 +34,28 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
                           uint256 totalSupply,
                           uint256 reserveBalance);
 
+    event ReserveRatioUpdated(address indexed caller,
+                              uint256 nom,
+                              uint256 denom);
+
+    event gdSupplyUpdated(address indexed caller,
+                          address indexed reserveToken,
+                          uint256 oldSupply,
+                          uint256 mint);
+
     uint32 public reserveRatio = 1e6;
 
-    uint256 public reserveRatioDailyExpansion = rdiv(999388834642296, 1e15); //20% yearly
-    //second day RR 99.9388834642296 = 999388
-    //3rd day RR 99.9388 * 0.999388834642296 = 998777
+    uint256 public reserveRatioDailyExpansion;
 
     constructor(
         address _gooddollar,
-        address _owner
-    ) public SchemeGuard(Avatar(0)) {
+        address _owner,
+        uint256 _nom,
+        uint256 _denom,
+        address payable _avatar
+    ) public SchemeGuard(Avatar(_avatar)) {
         gooddollar = ERC20Detailed(_gooddollar);
+        reserveRatioDailyExpansion = rdiv(_nom, _denom);
         transferOwnership(_owner);
     }
 
@@ -65,6 +76,7 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         onlyAvatar
     {
         reserveRatioDailyExpansion = rdiv(_nom, _denom);
+        emit ReserveRatioUpdated(msg.sender, _nom, _denom);
     }
 
     /**
@@ -171,8 +183,8 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     {
         uint256 gdReturn = buyReturn(_token, _tokenAmount);
         ReserveToken storage rtoken = reserveTokens[address(_token)];
-        rtoken.gdSupply += gdReturn;
-        rtoken.reserveSupply += _tokenAmount;
+        rtoken.gdSupply = rtoken.gdSupply.add(gdReturn);
+        rtoken.reserveSupply = rtoken.reserveSupply.add(_tokenAmount);
         emit BalancesUpdated(msg.sender,
                              address(_token),
                              _tokenAmount,
@@ -197,8 +209,8 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         ReserveToken storage rtoken = reserveTokens[address(_token)];
         require(rtoken.gdSupply > _gdAmount, "GD amount is higher than the total supply");
         uint256 tokenReturn = sellReturn(_token, _gdAmount);
-        rtoken.gdSupply -= _gdAmount;
-        rtoken.reserveSupply -= tokenReturn;
+        rtoken.gdSupply = rtoken.gdSupply.sub(_gdAmount);
+        rtoken.reserveSupply = rtoken.reserveSupply.sub(tokenReturn);
         emit BalancesUpdated(msg.sender,
                              address(_token),
                              _gdAmount,
@@ -257,8 +269,16 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     @param _addTokenSupply amount of token added to supply
     @return how much to mint in order to keep price in bonding curve the same
      */
-
-    function mint(ERC20 _token, uint256 _addTokenSupply) public onlyOwner {
-        uint256 tomint = calculateToMint(_token, _addTokenSupply);
+    function mint(ERC20 _token, uint256 _addTokenSupply)
+        public
+        onlyOwner
+        returns (uint256)
+    {
+        uint256 toMint = calculateToMint(_token, _addTokenSupply);
+        ReserveToken storage rtoken = reserveTokens[address(_token)];
+        uint256 oldGdSupply = rtoken.gdSupply;
+        rtoken.gdSupply = oldGdSupply.add(toMint);
+        emit gdSupplyUpdated(msg.sender, address(_token), oldGdSupply, toMint);
+        return toMint;
     }
 }

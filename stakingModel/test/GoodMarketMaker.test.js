@@ -7,18 +7,20 @@ const Identity = artifacts.require("Identity");
 const Formula = artifacts.require("FeeFormula");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
+const avatarMock = artifacts.require("AvatarMock");
 const BN = web3.utils.BN;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract(
   "GoodMarketMaker - calculate gd value at reserve",
   ([founder, staker]) => {
-    let goodDollar, identity, formula, marketMaker, dai, cDAI, bancor;
+    let goodDollar, identity, formula, marketMaker, dai, cDAI, avatar, bancor;
 
     before(async () => {
       dai = await DAIMock.new();
-      [cDAI, identity, formula] = await Promise.all([
+      [cDAI, avatar, identity, formula] = await Promise.all([
         cDAIMock.new(dai.address),
+        avatarMock.new("", NULL_ADDRESS, NULL_ADDRESS),
         Identity.new(),
         Formula.new(0)
       ]);
@@ -30,7 +32,7 @@ contract(
         identity.address,
         NULL_ADDRESS
       );
-      marketMaker = await MarketMaker.new(goodDollar.address, founder);
+      marketMaker = await MarketMaker.new(goodDollar.address, founder, 999388834642296, 1e15, avatar.address);
     });
 
     it("should initialize token with price", async () => {
@@ -62,12 +64,94 @@ contract(
 
     it("should calculate mint UBI correctly for 8 decimals precision", async () => {
       const gdPrice = await marketMaker.currentPrice(cDAI.address);
-      const toMint = await marketMaker.calculateToMint(cDAI.address, "100000000");
+      const toMint = await marketMaker.calculateMintInterest(cDAI.address, "100000000");
       const expectedTotalMinted = 10 ** 8 / gdPrice.toNumber(); //1cdai divided by gd price;
       expect(expectedTotalMinted).to.be.equal(10000); //1k GD since price is 0.0001 cdai for 1 gd
       expect(toMint.toString()).to.be.equal(
         (expectedTotalMinted * 100).toString()
       ); //add 2 decimals precision
+    });
+
+    it("should be able to calculate and update bonding curve gd balance based on oncoming cDAI and the price stays the same", async () => {
+      const priceBefore = await marketMaker.currentPrice(cDAI.address);
+      await marketMaker.mintInterest(
+        cDAI.address,
+        web3.utils.numberToHex(1e8)
+      );
+      let reserveToken = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupply = reserveToken.gdSupply;
+      let reserveSupply = reserveToken.reserveSupply;
+      let reserveRatio = reserveToken.reserveRatio;
+      await marketMaker.initializeToken(
+        cDAI.address,
+        gdSupply.toString(),
+        (reserveSupply.toString()),
+        reserveRatio.toString()
+      );
+      expect((Math.floor((await marketMaker.currentPrice(cDAI.address)) / 100)).toString()).to.be.equal((Math.floor(priceBefore.toNumber() / 100)).toString());
+    });
+
+    it("should be able to update the reserve ratio only by the owner", async () => {
+      let error = await marketMaker.expandReserveRatio(
+                    cDAI.address, {
+                      from: staker
+                    }
+                  ).catch(e => e);
+      expect(error.message).not.to.be.empty;
+    });
+
+    it("should be able to update the bonding curve only by the owner", async () => {
+      let error = await marketMaker.mintInterest(
+                    cDAI.address,
+                    web3.utils.numberToHex(1e8), {
+                      from: staker
+                    }
+                  ).catch(e => e);
+      expect(error.message).not.to.be.empty;
+    });
+
+    it("should be able to update the bonding curve only by the owner", async () => {
+      let error = await marketMaker.mintExpansion(
+                    cDAI.address,
+                    web3.utils.numberToHex(1e8), {
+                      from: staker
+                    }
+                  ).catch(e => e);
+      expect(error.message).not.to.be.empty;
+    });
+
+    it("should be able to calculate minted gd based on expansion of reserve ratio, the price stays the same", async () => {
+      let reserveTokenBefore = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupplyBefore = reserveTokenBefore.gdSupply;
+      let reserveSupplyBefore = reserveTokenBefore.reserveSupply;
+      let reserveRatioBefore = reserveTokenBefore.reserveRatio;
+      const priceBefore = await marketMaker.currentPrice(cDAI.address);
+      const toMint = await marketMaker.calculateMintExpansion(cDAI.address);
+      const newRR = await marketMaker.calculateNewReserveRatio(cDAI.address);
+      expect(reserveRatioBefore.toString()).not.to.be.equal(newRR.toString());
+      await marketMaker.initializeToken(
+        cDAI.address,
+        (gdSupplyBefore.add(new BN(toMint))).toString(),
+        reserveSupplyBefore.toString(),
+        newRR.toString()
+      );
+      const priceAfter = await marketMaker.currentPrice(cDAI.address);
+      expect(priceAfter.toString()).to.be.equal(priceBefore.toString());
+    });
+
+    it("should be able to calculate and update gd supply based on expansion of reserve ratio, the price stays the same", async () => {
+      let reserveTokenBefore = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupplyBefore = reserveTokenBefore.gdSupply;
+      let reserveRatioBefore = reserveTokenBefore.reserveRatio;
+      const priceBefore = await marketMaker.currentPrice(cDAI.address);
+      await marketMaker.mintExpansion(cDAI.address);
+      let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupplyAfter = reserveTokenAfter.gdSupply;
+      let reserveRatioAfter = reserveTokenAfter.reserveRatio;
+      const priceAfter = await marketMaker.currentPrice(cDAI.address);
+      expect(priceAfter.toString()).to.be.equal(priceBefore.toString());
+      expect(gdSupplyBefore.toString()).not.to.be.equal(gdSupplyAfter.toString());
+      expect(reserveRatioBefore.toString()).not.to.be.equal(reserveRatioAfter.toString());
     });
 
     it("should have new return amount when RR is not 100%", async () => {
@@ -220,7 +304,6 @@ contract(
     it("should be able to sell gd only when the amount is lower than the total supply", async () => {
       let reserveToken = await marketMaker.reserveTokens(cDAI.address);
       let gdSupply = reserveToken.gdSupply;
-      console.log((gdSupply + 1).toString());
       let error = await marketMaker.sell(
                           cDAI.address,
                           (gdSupply + 1).toString()
@@ -228,6 +311,85 @@ contract(
       expect(error.message).to.have.string(
         "GD amount is higher than the total supply"
       );
+    });
+
+    it("should set reserve ratio daily expansion", async () => {
+      let denom = new BN(1e15).toString();
+      let currentReserveRatioDailyExpansion = await marketMaker.reserveRatioDailyExpansion();
+      let encodedCall = web3.eth.abi.encodeFunctionCall({
+                          name: 'setReserveRatioDailyExpansion',
+                          type: 'function',
+                          inputs: [{
+                              type: 'uint256',
+                              name: '_nom'
+                          },{
+                              type: 'uint256',
+                              name: '_denom'
+                          }]
+                      }, ['1', denom]);
+      await avatar.genericCall(marketMaker.address, encodedCall, 0);
+      let newReserveRatioDailyExpansion = await marketMaker.reserveRatioDailyExpansion();
+      expect(newReserveRatioDailyExpansion).not.to.be.equal(currentReserveRatioDailyExpansion);
+      encodedCall = web3.eth.abi.encodeFunctionCall({
+                  name: 'setReserveRatioDailyExpansion',
+                  type: 'function',
+                  inputs: [{
+                      type: 'uint256',
+                      name: '_nom'
+                  },{
+                      type: 'uint256',
+                      name: '_denom'
+                  }]
+              }, ['999388834642296', denom]);
+      await avatar.genericCall(marketMaker.address, encodedCall, 0);
+      let reserveRatioDailyExpansion = await marketMaker.reserveRatioDailyExpansion();
+      expect(reserveRatioDailyExpansion).not.to.be.equal(currentReserveRatioDailyExpansion);
+    });
+
+    it("should be able to buy only by the owner", async () => {
+      let error = await marketMaker.setReserveRatioDailyExpansion(1, 1e15).catch(e => e);
+      expect(error.message).to.have.string("only Avatar can call this method");
+    });
+
+    it("should calculate amount of gd to mint based on incoming cDAI without effecting bonding curve price", async () => {
+      const priceBefore = await marketMaker.currentPrice(dai.address);
+      const toMint = await marketMaker.calculateMintInterest(
+        dai.address,
+        web3.utils.numberToHex(1e18), {
+          from: staker
+        }
+      );
+      const totalMinted = 1e18 / priceBefore.toNumber();
+      expect(toMint.toString()).to.be.equal((Math.floor(totalMinted * 100)).toString());
+      const priceAfter = await marketMaker.currentPrice(dai.address);
+      expect(priceBefore.toString()).to.be.equal(priceAfter.toString());
+    });
+
+    it("should not change the reserve ratio", async () => {
+      let reserveTokenBefore = await marketMaker.reserveTokens(cDAI.address);
+      let reserveRatioBefore = reserveTokenBefore.reserveRatio;
+      await marketMaker.calculateNewReserveRatio(cDAI.address);
+      let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
+      let reserveRatioAfter = reserveTokenAfter.reserveRatio;
+      expect(reserveRatioBefore.toString()).to.be.equal(reserveRatioAfter.toString());
+    });
+
+    it("should not change the gd supply", async () => {
+      let reserveTokenBefore = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupplyBefore = reserveTokenBefore.gdSupply;
+      await marketMaker.calculateMintInterest(cDAI.address, "100000000");
+      let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupplyAfter = reserveTokenAfter.gdSupply;
+      expect(gdSupplyAfter.toString()).to.be.equal(gdSupplyBefore.toString());
+    });
+
+    it("should not change the gd supply", async () => {
+      let reserveTokenBefore = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupplyBefore = reserveTokenBefore.gdSupply;
+      await marketMaker.calculateMintExpansion(cDAI.address);
+      let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
+      let gdSupplyAfter = reserveTokenAfter.gdSupply;
+      expect(gdSupplyAfter.toString()).to.be.equal(gdSupplyBefore.toString());
     });
 
     xit("should calculate mint UBI correctly for 18 decimals precision", async () => {

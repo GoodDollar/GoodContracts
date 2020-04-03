@@ -38,8 +38,15 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
                               uint256 nom,
                               uint256 denom);
 
-    event gdSupplyUpdated(address indexed caller,
+    event gdMintInterest(address indexed caller,
+                         address indexed reserveToken,
+                         uint256 addInterest,
+                         uint256 oldSupply,
+                         uint256 mint);
+
+    event gdMintExpansion(address indexed caller,
                           address indexed reserveToken,
+                          uint256 oldReserveRatio,
                           uint256 oldSupply,
                           uint256 mint);
 
@@ -97,7 +104,32 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
             reserveSupply: _tokenSupply,
             reserveRatio: _reserveRatio
         });
+    }
 
+    /**
+    @dev calculate how much decrease the reserve ratio for _token by the
+    reserveRatioDailyExpansion
+    @param _token he token to calculate the reserve ratio for
+    @return the new reserve ratio
+     */
+    function calculateNewReserveRatio(ERC20 _token)
+        public
+        view
+        onlyActiveToken(_token)
+        returns (uint32)
+    {
+        ReserveToken memory reserveToken = reserveTokens[address(_token)];
+        uint32 ratio = reserveToken.reserveRatio;
+        if (ratio == 0) {
+            ratio = 1e6;
+        }
+        return uint32(
+            rmul(
+                uint256(ratio) * 1e21, //expand to e27 precision
+                reserveRatioDailyExpansion
+            )
+                .div(1e21) //return to e6 precision
+        );
     }
 
     /**
@@ -112,16 +144,11 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         returns (uint32)
     {
         ReserveToken storage reserveToken = reserveTokens[address(_token)];
-        if (reserveToken.reserveRatio == 0) {
-            reserveToken.reserveRatio = 1e6;
+        uint32 ratio = reserveToken.reserveRatio;
+        if (ratio == 0) {
+            ratio = 1e6;
         }
-        reserveToken.reserveRatio = uint32(
-            rmul(
-                uint256(reserveToken.reserveRatio) * 1e21, //expand to e27 precision
-                reserveRatioDailyExpansion
-            )
-                .div(1e21) //return to e6 precision
-        );
+        reserveToken.reserveRatio = calculateNewReserveRatio(_token);
         return reserveToken.reserveRatio;
     }
 
@@ -250,7 +277,7 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     @param _addTokenSupply amount of token added to supply
     @return how much to mint in order to keep price in bonding curve the same
      */
-    function calculateToMint(ERC20 _token, uint256 _addTokenSupply)
+    function calculateMintInterest(ERC20 _token, uint256 _addTokenSupply)
         public
         view
         onlyActiveToken(_token)
@@ -269,16 +296,68 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     @param _addTokenSupply amount of token added to supply
     @return how much to mint in order to keep price in bonding curve the same
      */
-    function mint(ERC20 _token, uint256 _addTokenSupply)
+    function mintInterest(ERC20 _token, uint256 _addTokenSupply)
         public
         onlyOwner
         returns (uint256)
     {
-        uint256 toMint = calculateToMint(_token, _addTokenSupply);
-        ReserveToken storage rtoken = reserveTokens[address(_token)];
-        uint256 oldGdSupply = rtoken.gdSupply;
-        rtoken.gdSupply = oldGdSupply.add(toMint);
-        emit gdSupplyUpdated(msg.sender, address(_token), oldGdSupply, toMint);
+        uint256 toMint = calculateMintInterest(_token, _addTokenSupply);
+        ReserveToken storage reserveToken = reserveTokens[address(_token)];
+        uint256 gdSupply = reserveToken.gdSupply;
+        uint256 reserveBalance = reserveToken.reserveSupply;
+        reserveToken.gdSupply = gdSupply.add(toMint);
+        reserveToken.reserveSupply = reserveBalance.add(_addTokenSupply);
+        emit gdMintInterest(msg.sender, address(_token), _addTokenSupply, gdSupply, toMint);
+        return toMint;
+    }
+
+    /**
+    @dev calculate how much G$ to mint based on expansion change (new reserve
+    ratio), in order to keep G$ price the same at the bonding curve
+    @param _token the reserve token
+    @return how much to mint in order to keep price in bonding curve the same
+     */
+    function calculateMintExpansion(ERC20 _token)
+        public
+        view
+        onlyActiveToken(_token)
+        returns (uint256)
+    {
+        ReserveToken memory reserveToken = reserveTokens[address(_token)];
+        uint32 succeedReserveRatio = calculateNewReserveRatio(_token);
+        uint256 reserveDecimalsDiff = uint256(
+                uint256(27)
+                .sub(ERC20Detailed(address(_token)).decimals())
+            );
+        uint256 denom = rmul(
+                uint256(succeedReserveRatio).mul(1e21),
+                currentPrice(_token).mul(10**reserveDecimalsDiff)
+            );
+        uint256 gdDecimalsDiff = uint256(27).sub(uint256(gooddollar.decimals()));
+        uint256 toMint = rdiv(
+                reserveToken.reserveSupply.mul(10**reserveDecimalsDiff),
+                denom
+            ).div(10**gdDecimalsDiff);
+        return toMint.sub(reserveToken.gdSupply);
+    }
+
+    /**
+    @dev update bonding curve based on expansion change and new minted amount
+    @param _token the reserve token
+    @return how much to mint in order to keep price in bonding curve the same
+     */
+    function mintExpansion(ERC20 _token)
+        public
+        onlyOwner
+        returns (uint256)
+    {
+        uint256 toMint = calculateMintExpansion(_token);
+        ReserveToken storage reserveToken = reserveTokens[address(_token)];
+        uint256 gdSupply = reserveToken.gdSupply;
+        uint256 ratio = reserveToken.reserveRatio;
+        reserveToken.gdSupply = gdSupply.add(toMint);
+        expandReserveRatio(_token);
+        emit gdMintExpansion(msg.sender, address(_token), ratio, gdSupply, toMint);
         return toMint;
     }
 }

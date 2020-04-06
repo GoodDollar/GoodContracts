@@ -38,17 +38,17 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
                               uint256 nom,
                               uint256 denom);
 
-    event gdMintInterest(address indexed caller,
+    event InterestMinted(address indexed caller,
                          address indexed reserveToken,
                          uint256 addInterest,
                          uint256 oldSupply,
                          uint256 mint);
 
-    event gdMintExpansion(address indexed caller,
-                          address indexed reserveToken,
-                          uint256 oldReserveRatio,
-                          uint256 oldSupply,
-                          uint256 mint);
+    event UBIExpansionMinted(address indexed caller,
+                             address indexed reserveToken,
+                             uint256 oldReserveRatio,
+                             uint256 oldSupply,
+                             uint256 mint);
 
     uint32 public reserveRatio = 1e6;
 
@@ -73,7 +73,7 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    @dev allow the DAO to change the daily expansion rate, defaults at 20% yearly
+    @dev allow the DAO to change the daily expansion rate
     it is calculated by _nom/_denom with e27 precision
     @param _nom the nominator
     @param _denom the denominator
@@ -259,13 +259,12 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     {
         ReserveToken memory rtoken = reserveTokens[address(_token)];
         require(rtoken.gdSupply > 0, "Reserve token not initialized");
-        uint256 base = 10;
         return
             calculateSaleReturn(
                 rtoken.gdSupply,
                 rtoken.reserveSupply,
                 rtoken.reserveRatio,
-                uint256(base**gooddollar.decimals())
+                (10**uint256(gooddollar.decimals()))
             );
     }
 
@@ -307,13 +306,15 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         uint256 reserveBalance = reserveToken.reserveSupply;
         reserveToken.gdSupply = gdSupply.add(toMint);
         reserveToken.reserveSupply = reserveBalance.add(_addTokenSupply);
-        emit gdMintInterest(msg.sender, address(_token), _addTokenSupply, gdSupply, toMint);
+        emit InterestMinted(msg.sender, address(_token), _addTokenSupply, gdSupply, toMint);
         return toMint;
     }
 
     /**
     @dev calculate how much G$ to mint based on expansion change (new reserve
-    ratio), in order to keep G$ price the same at the bonding curve
+    ratio), in order to keep G$ price the same at the bonding curve. the
+    formula to calculate the gd to mint: gd to mint =
+    (reservebalance / (newreserveratio * currentprice)) - gdsupply
     @param _token the reserve token
     @return how much to mint in order to keep price in bonding curve the same
      */
@@ -324,20 +325,20 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         returns (uint256)
     {
         ReserveToken memory reserveToken = reserveTokens[address(_token)];
-        uint32 succeedReserveRatio = calculateNewReserveRatio(_token);
+        uint32 newReserveRatio = calculateNewReserveRatio(_token); // new reserve ratio
         uint256 reserveDecimalsDiff = uint256(
                 uint256(27)
                 .sub(ERC20Detailed(address(_token)).decimals())
-            );
+            ); // //result is in RAY precision
         uint256 denom = rmul(
-                uint256(succeedReserveRatio).mul(1e21),
+                uint256(newReserveRatio).mul(1e21),
                 currentPrice(_token).mul(10**reserveDecimalsDiff)
-            );
+            ); // (newreserveratio * currentprice) in RAY precision
         uint256 gdDecimalsDiff = uint256(27).sub(uint256(gooddollar.decimals()));
         uint256 toMint = rdiv(
-                reserveToken.reserveSupply.mul(10**reserveDecimalsDiff),
+                reserveToken.reserveSupply.mul(10**reserveDecimalsDiff), // reservebalance in RAY precision
                 denom
-            ).div(10**gdDecimalsDiff);
+            ).div(10**gdDecimalsDiff); // return to gd precision
         return toMint.sub(reserveToken.gdSupply);
     }
 
@@ -357,7 +358,7 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         uint256 ratio = reserveToken.reserveRatio;
         reserveToken.gdSupply = gdSupply.add(toMint);
         expandReserveRatio(_token);
-        emit gdMintExpansion(msg.sender, address(_token), ratio, gdSupply, toMint);
+        emit UBIExpansionMinted(msg.sender, address(_token), ratio, gdSupply, toMint);
         return toMint;
     }
 }

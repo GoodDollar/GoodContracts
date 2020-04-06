@@ -7,6 +7,8 @@ const fse = require("fs-extra");
 
 const BN = web3.utils.BN;
 export const BLOCK_INTERVAL = 2;
+
+// kovan network addresses
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const DAI_ADDRESS  = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 export const cDAI_ADDRESS = "0xe7bc397dbd069fc7d0109c0636d06888bb50668c";

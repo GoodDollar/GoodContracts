@@ -66,7 +66,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         cDai = cERC20(_cDai);
         uniswap = _uniswap;
         blockInterval = _blockInterval;
-        lastUBICollection = block.number + blockInterval;
+        lastUBICollection = block.number;
         transferOwnership(_fundManager);
     }
 
@@ -119,8 +119,11 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         staker.stakedDAI = 0; // update balance before transfer to prevent re-entry
         totalStaked -= daiWithdraw;
         uint256 daiActual = dai.balanceOf(address(this));
+        if (daiActual < daiWithdraw) {
+            daiWithdraw = daiActual;
+        }
         //TODO: handle transfer failure
-        dai.transfer(msg.sender, daiActual);
+        dai.transfer(msg.sender, daiWithdraw);
         emit DAIStakeWithdraw(msg.sender, daiWithdraw, daiActual);
     }
 
@@ -144,10 +147,10 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         if (daiWorth < totalStaked) {
             return (0, 0, 0);
         }
-        uint256 daiGains = daiWorth - totalStaked;
+        uint256 daiGains = daiWorth.sub(totalStaked);
         uint256 cdaiGains = rdiv(daiGains * 1e10, er); //mul by 1e10 to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
         uint256 precisionLossCDaiRay = cdaiGains % 1e19; //get right most bits not covered by precision of cdai which is only 8 decimals while RAY is 27
-        if (cdaiGains > 0) {
+        if (cdaiGains > 0) { // otherwise 0
             cdaiGains = cdaiGains.div(1e19); //lower back to 8 decimals
         }
         uint256 precisionLossDai = rmul(precisionLossCDaiRay, er).div(1e10); //div by 1e10 to get results in dai precision 1e18

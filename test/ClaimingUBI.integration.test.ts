@@ -103,7 +103,6 @@ contract(
         periodEnd2,
         periodEnd3
       );
-
     });
 
     it("should not allow creating fixed UBI contract with zero distribution", async () => {
@@ -121,8 +120,8 @@ contract(
           helpers.toGD("0")
         ),
         "Distribution cannot be zero"
-      )
-    })
+      );
+    });
 
     it("should allow non-whitelisted to checkEntitlement", async () => {
       const claimAmount = await vanillaFixedUBI.checkEntitlement({
@@ -391,7 +390,7 @@ contract(
       );
     });
 
-    it("should not allow to claim for more than seven days", async () => {
+    it("should not allow to claim for more than one day", async () => {
       await helpers.increaseTime(periodOffset * 5000);
       await token.burn(await token.balanceOf(whitelisted3), {
         from: whitelisted3
@@ -409,7 +408,7 @@ contract(
 
       const newBalancewhitelisted3 = await token.balanceOf(whitelisted3);
 
-      const maxValue = helpers.toGD("7") as any;
+      const maxValue = helpers.toGD("1") as any;
       expect(newBalancewhitelisted3.toString()).to.be.equal(
         maxValue.toString()
       );
@@ -421,7 +420,7 @@ contract(
     it("should get daily stats", async () => {
       const res = await fixedUBI.getDailyStats();
 
-      const maxValue = helpers.toGD("7") as any;
+      const maxValue = helpers.toGD("1") as any;
 
       expect(res[0].toString()).to.be.equal("1");
       expect(res[1].toString()).to.be.equal(maxValue.toString());

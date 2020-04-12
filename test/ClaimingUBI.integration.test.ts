@@ -401,7 +401,7 @@ contract(
       const claimAmount = await fixedUBI.checkEntitlement({
         from: whitelisted3
       });
-      expect(claimAmount.toString()).to.be.equal(helpers.toGD("7"));
+      expect(claimAmount.toString()).to.be.equal(helpers.toGD("1"));
 
       const now = (await web3.eth.getBlock("latest")).timestamp;
       await fixedUBI.claim({ from: whitelisted3 });

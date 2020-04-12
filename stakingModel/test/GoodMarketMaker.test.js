@@ -234,6 +234,27 @@ contract(
       expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
     });
 
+    it("should be able to update balances based on sell with deduction return calculation", async () => {
+      let reserveToken = await marketMaker.reserveTokens(dai.address);
+      let reserveBalanceBefore = reserveToken.reserveSupply;
+      let supplyBefore = reserveToken.gdSupply; 
+      let rrBefore = reserveToken.reserveRatio; 
+      let amount = 100;
+      let transaction = await marketMaker.sellWithDeduction(
+                          dai.address,
+                          100,
+                          80
+                        );
+      reserveToken = await marketMaker.reserveTokens(dai.address);
+      let reserveBalanceAfter = reserveToken.reserveSupply;
+      let supplyAfter = reserveToken.gdSupply;
+      let rrAfter = reserveToken.reserveRatio;
+      expect(transaction.logs[0].event).to.be.equal("BalancesUpdated");
+      expect((reserveBalanceAfter.add(transaction.logs[0].args.returnAmount)).toString()).to.be.equal(reserveBalanceBefore.toString());
+      expect((supplyBefore - supplyAfter).toString()).to.be.equal(amount.toString());
+      expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
+    });
+
     it("should not be able to calculate the buy return in gd and update the bonding curve params by a non-owner account", async () => {
       let error = await marketMaker.buy(
                           dai.address,

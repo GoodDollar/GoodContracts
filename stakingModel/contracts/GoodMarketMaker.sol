@@ -248,6 +248,33 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
+    @dev calculate the sell return with deduction in _token and update the bonding curve params
+    @param _token the token buying for G$s
+    @param _gdAmount the amount of G$ sold
+    @return number of tokens that will be given in exchange as calculated by the bonding curve
+    */
+    function sellWithDeduction(ERC20 _token, uint256 _gdAmount, uint256 _deductedGdAmount)
+        public
+        onlyOwner
+        onlyActiveToken(_token)
+        returns (uint256)
+    {
+        require(_gdAmount >= _deductedGdAmount, "GD amount is lower than the deducted amount");
+        ReserveToken storage rtoken = reserveTokens[address(_token)];
+        require(rtoken.gdSupply > _gdAmount, "GD amount is higher than the total supply");
+        uint256 tokenReturn = sellReturn(_token, _deductedGdAmount);
+        rtoken.gdSupply = rtoken.gdSupply.sub(_gdAmount);
+        rtoken.reserveSupply = rtoken.reserveSupply.sub(tokenReturn);
+        emit BalancesUpdated(msg.sender,
+                             address(_token),
+                             _deductedGdAmount,
+                             tokenReturn,
+                             rtoken.gdSupply,
+                             rtoken.reserveSupply);
+        return tokenReturn;
+    }
+
+    /**
     @dev current price of G$ in `token` currently only cDAI is supported
     @return price of G$
      */

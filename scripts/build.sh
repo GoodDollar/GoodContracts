@@ -18,7 +18,7 @@ then
     echo "Error MNEMONIC missing no env?";
     exit -1;
 fi
-if [[  $1 == 'deploy' ]]
+if [[  $1 == 'deploy' ]] || [[ $1 == 'all' ]]
 then 
     export MNEMONIC=$MNEMONIC_STAGING
     export ADMIN_MNEMONIC=$ADMIN_MNEMONIC_STAGING
@@ -29,7 +29,7 @@ then
     export NETWORK='staging'
     npm run deploy
 fi
-if [[  $1 == 'prod' ]]
+if [[  $1 == 'prod' ]] || [[  $1 == 'all' ]]
 then 
     read -p "deploy to production? " prompt
     if [[ $PRIVATE_KEY_PROD && $prompt =~ [yY](es)? ]]

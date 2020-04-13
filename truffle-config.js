@@ -132,7 +132,7 @@ module.exports = {
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,
-      gasPrice: 2000000000 //1 gwei
+      gasPrice: 1000000000 //1 gwei
     }
   },
   mocha: {

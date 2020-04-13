@@ -42,9 +42,9 @@ module.exports = async function(deployer, network) {
 
   const initRep = networkSettings.reputation;
   const initRepInWei = [initRep];
-  let initToken = toGD(networkSettings.foundersTokens);
+  let initToken = toGD(networkSettings.avatarTokens);
 
-  const initTokenInWei = [initToken];
+  const initTokenInWei = initToken;
 
   deployer.deploy(Identity).then(async identity => {
     const accounts = await web3.eth.getAccounts();
@@ -105,6 +105,11 @@ module.exports = async function(deployer, network) {
     //Set avatar for schemes
     await identity.setAvatar(avatar.address);
     await feeFormula.setAvatar(avatar.address);
+
+    //for testing we give founders some tokens
+    if (network === "test") {
+      await Promise.all(founders.map(f => token.mint(f, initTokenInWei)));
+    }
 
     await token.renounceMinter();
 
@@ -181,11 +186,6 @@ module.exports = async function(deployer, network) {
     await identity.addContract(await avatar.owner());
     await identity.addContract(adminWallet.address);
     await identity.addContract(identity.address);
-
-    await token.transfer(
-      avatar.address,
-      toGD(networkSettings.founderTokensToAvatar)
-    );
 
     let releasedContracts = {
       GoodDollar: await avatar.nativeToken(),

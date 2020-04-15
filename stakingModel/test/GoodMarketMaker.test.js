@@ -81,6 +81,15 @@ contract(
       expect((Math.floor((await marketMaker.currentPrice(cDAI.address)) / 100)).toString()).to.be.equal((Math.floor(priceBefore.toNumber() / 100)).toString());
     });
 
+    it("should mint 0 gd tokens if the add token supply is 0", async () => {
+      const transaction = await marketMaker.mintInterest(
+                            cDAI.address,
+                            "0"
+                          );
+      expect(transaction.logs[0].event).to.be.equal("InterestMinted");
+      expect(transaction.logs[0].args.mint.toString()).to.be.equal("0");
+    });
+
     it("should be able to update the reserve ratio only by the owner", async () => {
       let error = await marketMaker.expandReserveRatio(
                     cDAI.address, {
@@ -234,13 +243,13 @@ contract(
       expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
     });
 
-    it("should be able to update balances based on sell with deduction return calculation", async () => {
+    it("should be able to update balances based on sell with contribution return calculation", async () => {
       let reserveToken = await marketMaker.reserveTokens(dai.address);
       let reserveBalanceBefore = reserveToken.reserveSupply;
       let supplyBefore = reserveToken.gdSupply; 
       let rrBefore = reserveToken.reserveRatio; 
       let amount = 100;
-      let transaction = await marketMaker.sellWithDeduction(
+      let transaction = await marketMaker.sellWithContribution(
                           dai.address,
                           100,
                           80
@@ -354,7 +363,7 @@ contract(
       expect(reserveRatioDailyExpansion).not.to.be.equal(currentReserveRatioDailyExpansion);
     });
 
-    it("should be able to buy only by the owner", async () => {
+    it("should be able to set the reserve ratio daily expansion only by the owner", async () => {
       let error = await marketMaker.setReserveRatioDailyExpansion(1, 1e15).catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
     });

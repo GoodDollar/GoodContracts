@@ -248,26 +248,26 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    @dev calculate the sell return with deduction in _token and update the bonding curve params
+    @dev calculate the sell return with contribution in _token and update the bonding curve params
     @param _token the token buying for G$s
     @param _gdAmount the amount of G$ sold
     @return number of tokens that will be given in exchange as calculated by the bonding curve
     */
-    function sellWithDeduction(ERC20 _token, uint256 _gdAmount, uint256 _deductedGdAmount)
+    function sellWithContribution(ERC20 _token, uint256 _gdAmount, uint256 _contributionGdAmount)
         public
         onlyOwner
         onlyActiveToken(_token)
         returns (uint256)
     {
-        require(_gdAmount >= _deductedGdAmount, "GD amount is lower than the deducted amount");
+        require(_gdAmount >= _contributionGdAmount, "GD amount is lower than the contribution amount");
         ReserveToken storage rtoken = reserveTokens[address(_token)];
         require(rtoken.gdSupply > _gdAmount, "GD amount is higher than the total supply");
-        uint256 tokenReturn = sellReturn(_token, _deductedGdAmount);
+        uint256 tokenReturn = sellReturn(_token, _contributionGdAmount);
         rtoken.gdSupply = rtoken.gdSupply.sub(_gdAmount);
         rtoken.reserveSupply = rtoken.reserveSupply.sub(tokenReturn);
         emit BalancesUpdated(msg.sender,
                              address(_token),
-                             _deductedGdAmount,
+                             _contributionGdAmount,
                              tokenReturn,
                              rtoken.gdSupply,
                              rtoken.reserveSupply);
@@ -295,10 +295,12 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
             );
     }
 
-    //TODO: need real calculation
+    //TODO: need real calculation and tests
     /**
     @dev calculate how much G$ to mint based on added token supply (from interest)
     and on current reserve ratio, in order to keep G$ price the same at the bonding curve
+    formula to calculate the gd to mint: gd to mint =
+    addreservebalance * (gdsupply / (reservebalance * reserveratio))
     @param _token the reserve token
     @param _addTokenSupply amount of token added to supply
     @return how much to mint in order to keep price in bonding curve the same

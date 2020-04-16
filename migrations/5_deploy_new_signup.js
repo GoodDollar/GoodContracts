@@ -32,7 +32,7 @@ module.exports = async function(deployer, network) {
   const identityaddr = await networkAddresses.Identity;
   const ubiaddr = await networkAddresses.UBI;
   const otpaddr = await networkAddresses.OneTimePayments;
-  const walletaddr =  await networkAddresses.AdminWallet;
+  const walletaddr = await networkAddresses.AdminWallet;
 
   await web3.eth.getAccounts(function(err, res) {
     accounts = res;

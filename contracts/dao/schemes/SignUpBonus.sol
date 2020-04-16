@@ -11,6 +11,7 @@ import "./ActivePeriod.sol";
 import "./FeelessScheme.sol";
 import "./SchemeGuard.sol";
 
+
 /* @title Sign-Up bonus scheme responsible for minting
  * a given amount to users
  */
@@ -22,7 +23,7 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
 
     mapping(address => uint256) rewarded;
 
-    event SignUpStarted(uint256 balance, uint time);
+    event SignUpStarted(uint256 balance, uint256 time);
     event BonusClaimed(address indexed account, uint256 amount);
 
     constructor(
@@ -30,11 +31,7 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
         Identity _identity,
         uint256 _initalReserve,
         uint256 _maxBonus
-    )
-        public
-        ActivePeriod(now, now * 2)
-        FeelessScheme(_identity, _avatar)
-    {
+    ) public ActivePeriod(now, now * 2) FeelessScheme(_identity, _avatar) {
         initalReserve = _initalReserve;
         maxBonus = _maxBonus;
     }
@@ -45,14 +42,14 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
 
         DAOToken token = avatar.nativeToken();
 
-        if ( initalReserve > 0) {
-            uint256 reserve = token.balanceOf(address(avatar));
-
-            require(reserve >= initalReserve, "Not enough funds to start");
-
+        if (initalReserve > 0) {
             controller.genericCall(
                 address(token),
-                abi.encodeWithSignature("transfer(address,uint256)", address(this), initalReserve),
+                abi.encodeWithSignature(
+                    "mint(address,uint256)",
+                    address(this),
+                    initalReserve
+                ),
                 avatar,
                 0
             );
@@ -60,7 +57,9 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
         emit SignUpStarted(token.balanceOf(address(this)), now);
     }
 
-    function end(Avatar /*_avatar*/) public onlyIdentityAdmin {
+    function end(
+        Avatar /*_avatar*/
+    ) public onlyIdentityAdmin {
         DAOToken token = avatar.nativeToken();
 
         uint256 remainingReserve = token.balanceOf(address(this));
@@ -72,13 +71,20 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
         super.internalEnd(avatar);
     }
 
-    function awardUser(address _user, uint256 _amount) public requireActive onlyIdentityAdmin {
+    function awardUser(address _user, uint256 _amount)
+        public
+        requireActive
+        onlyIdentityAdmin
+    {
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        require(rewarded[_user].add(_amount) <= maxBonus, "Cannot award user beyond max");
+        require(
+            rewarded[_user].add(_amount) <= maxBonus,
+            "Cannot award user beyond max"
+        );
 
         rewarded[_user] = rewarded[_user].add(_amount);
         token.transfer(_user, _amount);
 
         emit BonusClaimed(_user, _amount);
     }
- }
+}

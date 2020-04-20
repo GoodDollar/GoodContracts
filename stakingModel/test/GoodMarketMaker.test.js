@@ -82,12 +82,11 @@ contract(
     });
 
     it("should mint 0 gd tokens if the add token supply is 0", async () => {
-      const transaction = await marketMaker.mintInterest(
+      const error = await marketMaker.mintInterest(
                             cDAI.address,
                             "0"
-                          );
-      expect(transaction.logs[0].event).to.be.equal("InterestMinted");
-      expect(transaction.logs[0].args.mint.toString()).to.be.equal("0");
+                          ).catch(e => e);
+      expect(error.message).to.have.string("added supply must be above 0");
     });
 
     it("should be able to update the reserve ratio only by the owner", async () => {

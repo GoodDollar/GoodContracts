@@ -4,8 +4,10 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../../contracts/dao/schemes/SchemeGuard.sol";
+import "../../contracts/dao/schemes/ActivePeriod.sol";
 import "../../contracts/DSMath.sol";
 import "../../contracts/token/GoodDollar.sol";
 
@@ -24,16 +26,8 @@ interface cERC20 {
 /**
 @title Reserve based on cDAI and dynamic reserve ratio market maker
 */
-contract GoodReserveCDai is DSMath, SchemeGuard {
+contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
     using SafeMath for uint256;
-
-    event UBIMinted(
-        uint256 indexed day,
-        uint256 cDaiValue,
-        uint256 daiValue,
-        uint256 gdInterest,
-        uint256 gdUBI
-    );
 
     ERC20 dai;
 
@@ -43,11 +37,13 @@ contract GoodReserveCDai is DSMath, SchemeGuard {
 
     GoodMarketMaker public marketMaker;
 
+    Avatar public avatar;
+
     address public fundManager;
 
-    address public avatar;
-
     uint256 public daysFromStart = 0;
+
+    uint256 public sellContributionRatio;
 
     modifier onlyFundManager {
         require(
@@ -62,20 +58,61 @@ contract GoodReserveCDai is DSMath, SchemeGuard {
         _;
     }
 
+    event UBIMinted(
+        uint256 indexed day,
+        uint256 cDaiValue,
+        uint256 daiValue,
+        uint256 gdInterest,
+        uint256 gdUBI
+    );
+
+    event TokenPurchased(address indexed caller,
+                             address indexed reserveToken,
+                             uint256 reserveAmount,
+                             uint256 minReturn,
+                             uint256 actualReturn);
+
+    event TokenSold(address indexed caller,
+                             address indexed reserveToken,
+                             uint256 gdAmount,
+                             uint256 contributionAmount,
+                             uint256 minReturn,
+                             uint256 actualReturn);
+
+    event SellContributionRatioUpdated(address indexed caller,
+                                       uint256 nom,
+                                       uint256 denom);
+
+    event GDInterestAndExpansionMinted(address indexed caller,
+                                       address indexed interestCollector,
+                                       address indexed ubiCollector,
+                                       uint256 gdInterestMinted,
+                                       uint256 gdExpansionMinted,
+                                       uint256 gdInterestTransferred,
+                                       uint256 gdUbiTransferred);
+
     constructor(
         address _dai,
         address _cDai,
         address _gooddollar,
         address _fundManager,
-        address _avatar,
+        Avatar _avatar,
         address _marketMaker,
-    ) public SchemeGuard(Avatar(_avatar)) {
+        uint256 _nom,
+        uint256 _denom
+    )
+        public
+        SchemeGuard(_avatar)
+        ActivePeriod(now, now * 2)
+    {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
         gooddollar = GoodDollar(_gooddollar);
         avatar = _avatar;
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
+        sellContributionRatio = rdiv(_nom, _denom);
+        super.start();
     }
 
     function setMarketMaker(address _marketMaker) public onlyAvatar {
@@ -83,19 +120,95 @@ contract GoodReserveCDai is DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Buy G$ from the marketMaker
-    * currently only cDAI is supported
+    @dev allow the DAO to change the sell contribution rate
+    it is calculated by _nom/_denom with e27 precision
+    @param _nom the nominator
+    @param _denom the denominator
     */
-    function buy(ERC20 buyWith, uint256 tokenAmount, uint256 maxPrice)
+    function setSellContributionRatio(uint256 _nom, uint256 _denom)
         public
-        payable
-    {}
+        onlyAvatar
+    {
+        sellContributionRatio = rdiv(_nom, _denom);
+        emit SellContributionRatioUpdated(msg.sender, _nom, _denom);
+    }
 
     /**
-    * @dev Sell G$ to the marketMaker
-    * currently only cDai is supported
+    * @dev buy G$ from buyWith and update the bonding curve params. buy occurs only if
+    * the G$ return is above the given minimum. it is possible to buy only with cDAI
+    * and when the contract is set to active. MUST call to `buyWith` `approve` prior
+    * this buying action to allow this contract to accomplish the conversion.
+    * @param tokenAmount how much `buyWith` tokens convert to G$ tokens
+    * @param minReturn the minimum allowed return in G$ tokens
+    * @return (gdReturn) how much G$ tokens were transferred
     */
-    function sell(ERC20 sellTo, uint256 gdAmount, uint256 minPrice) public {}
+    function buy(ERC20 buyWith, uint256 tokenAmount, uint256 minReturn)
+        public
+        requireActive
+        onlyCDai(buyWith)
+        returns (uint256)
+    {
+        require(
+            buyWith.allowance(msg.sender, address(this)) >= tokenAmount,
+            "You need to approve cDAI transfer first"
+        );
+        require(
+            buyWith.transferFrom(msg.sender, address(this), tokenAmount) == true,
+            "transferFrom failed, make sure you approved cDAI transfer"
+        );
+        uint256 gdReturn = marketMaker.buy(buyWith, tokenAmount);
+        require(gdReturn >= minReturn, "GD return must be above the minReturn");
+        ERC20Mintable(address(gooddollar)).mint(msg.sender, gdReturn);
+        emit TokenPurchased(msg.sender, address(buyWith), tokenAmount, minReturn, gdReturn);
+        return gdReturn;
+    }
+
+    /**
+    * @dev calculate the contribution amount during the sell action. there is a
+    * `sellContributionRatio` percent contribution
+    * @return (contributionAmount) the contribution amount for sell
+    */
+    function calculateSellContribution(uint256 gdAmount)
+        public
+        view
+        returns (uint256)
+    {
+
+        uint256 decimalsDiff = uint256(27).sub(uint256(gooddollar.decimals()));
+        uint256 contribution =
+        rmul(
+                gdAmount.mul(10**decimalsDiff), // expand to e27 precision
+                sellContributionRatio
+            )
+                .div(10**decimalsDiff); // return to e2 precision
+        require(gdAmount > contribution, "Calculation error");
+        return gdAmount.sub(contribution);
+    }
+
+    /**
+    * @dev sell G$ to sellTo and update the bonding curve params. sell occurs only if the
+    * token return is above the given minimum. notice that there is a contribution
+    * amount from the given G$ that stays in the reserve. it is possible to sell only to
+    * cDAI and when the contract is set to active. MUST call to G$ `approve` prior this
+    * selling action to allow this contract to accomplish the conversion.
+    * @param gdAmount how much G$ tokens convert to `sellTo` tokens
+    * @param minReturn the minimum allowed return in `sellTo` tokens
+    * @return (tokenReturn) how much `sellTo` tokens were transferred
+    */
+    function sell(ERC20 sellTo, uint256 gdAmount, uint256 minReturn)
+        public
+        requireActive
+        onlyCDai(sellTo)
+        returns (uint256)
+    {
+        ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
+        uint256 contributionAmount = calculateSellContribution(gdAmount);
+        uint256 tokenReturn = marketMaker.sellWithContribution(sellTo, gdAmount, contributionAmount);
+        require(tokenReturn >= minReturn, "Token return must be above the minReturn");
+        require(sellTo.transfer(msg.sender, tokenReturn) == true, "Transfer failed");
+        emit TokenSold(msg.sender, address(sellTo), gdAmount, contributionAmount, minReturn, tokenReturn);
+        return tokenReturn;
+    }
 
     /**
     @dev current price of G$ in `token` currently only cDAI is supported
@@ -106,7 +219,7 @@ contract GoodReserveCDai is DSMath, SchemeGuard {
     }
 
     //TODO: WIP
-    /** 
+    /**
     * @dev anyone can call this to trigger calculations
     * reserve sends UBI to Avatar and returns interest to FundManager
     * @param transfered how much was transfered to the reserve for UBI in `interestToken`
@@ -119,28 +232,50 @@ contract GoodReserveCDai is DSMath, SchemeGuard {
         uint256 interest
     )
         public
+        requireActive
         onlyCDai(interestToken)
         onlyFundManager
         returns (uint256, uint256)
     {
         uint256 price = currentPrice(interestToken);
-        uint256 gdToMint = marketMaker.calculateToMint(interestToken, transfered);
-        uint256 precisionLoss = uint256(
-            //TODO: fix dangerous sub
-            ERC20Detailed(address(interestToken)).decimals() -
-                gooddollar.decimals()
-        );
+        uint256 gdInterestToMint = marketMaker.mintInterest(interestToken, transfered);
+        uint256 precisionLoss = uint256(27).sub(uint256(gooddollar.decimals()));
         uint256 gdInterest = rdiv(interest, price).div(10**precisionLoss);
-        uint256 gdUBI = gdToMint.sub(gdInterest);
+        uint256 gdExpansionToMint = marketMaker.mintExpansion(interestToken);
+        uint256 gdUBI = gdInterestToMint.sub(gdInterest);
+        gdUBI = gdUBI.add(gdExpansionToMint);
         ERC20Mintable(address(gooddollar)).mint(fundManager, gdInterest);
         //TODO: how do we transfer to bridge, is the fundmanager in charge of that?
-        ERC20Mintable(address(gooddollar)).mint(avatar, gdUBI);
+        ERC20Mintable(address(gooddollar)).mint(address(avatar), gdUBI);
+        emit GDInterestAndExpansionMinted(
+            msg.sender,
+            address(fundManager),
+            address(avatar),
+            gdInterestToMint,
+            gdExpansionToMint,
+            gdInterest,
+            gdUBI
+        );
         return (gdInterest, gdUBI);
     }
 
-    //TODO: function to return all funds to avatar
-    function destroy() onlyAvatar {
-
+    /**
+    * @dev making the contract inactive after it has transferred the cDAI funds to `_avatar`
+    * and has transferred the market maker ownership to `_avatar`. inactive
+    * means that buy / sell / mintInterestAndUBI actions will no longer be active. only the
+    * avatar can destroy the contract.
+    * @param _avatar destination avatar address for cDAI funds, ether funds and new marketmaker owner
+    */
+    function end(Avatar _avatar)
+        public
+        onlyAvatar
+    {
+        uint256 remainingReserve = cDai.balanceOf(address(this));
+        if (remainingReserve > 0) {
+            cDai.transfer(address(_avatar), remainingReserve);
+        }
+        require(cDai.balanceOf(address(this)) == 0, "Funds transfer has failed");
+        marketMaker.transferOwnership(address(_avatar));
+        super.internalEnd(_avatar);
     }
-
 }

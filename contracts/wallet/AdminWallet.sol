@@ -260,4 +260,11 @@ contract AdminWallet is Ownable {
         (success, returnValue) = _contract.call.value(_value)(_data);
         emit GenericCall(_contract, _data, _value, success);
     }
+
+    /**
+     * @dev destroy wallet and return funds to owner
+     */
+    function destroy() public onlyOwner {
+        selfdestruct(address(owner()));
+    }
 }

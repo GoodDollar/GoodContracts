@@ -265,6 +265,6 @@ contract AdminWallet is Ownable {
      * @dev destroy wallet and return funds to owner
      */
     function destroy() public onlyOwner {
-        selfdestruct(address(owner()));
+        selfdestruct(msg.sender);
     }
 }

@@ -21,7 +21,7 @@ const AdminWallet = artifacts.require("./AdminWallet.sol");
 const releaser = require("../scripts/releaser.js");
 
 const tokenName = "GoodDollar";
-const tokenSymbol = "GDD";
+const tokenSymbol = "G$";
 
 // initial preliminary constants
 const votePrecedence = 50;

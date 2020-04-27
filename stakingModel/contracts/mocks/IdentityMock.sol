@@ -11,4 +11,10 @@ contract IdentityMock is Identity {
     {
         _addWhitelisted(account);
     }
+
+    function removeWhitelisted(address account)
+        public
+    {
+        _removeWhitelisted(account);
+    }
 }

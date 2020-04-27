@@ -10,6 +10,8 @@ contract UBIScheme is AbstractUBI {
 
     uint256 public dailyUbi = 0; // result of distribution formula
 
+    uint256 public iterationGasLimit = 300000; // limits the gas for each iteration at `fishingPool` and in `distribute`
+
     uint256 public activeUsersCount = 0;
 
     uint256 public lastWithdrawDay = 0;
@@ -30,6 +32,7 @@ contract UBIScheme is AbstractUBI {
     event WithdrawFromDao(address caller, uint256 prevBalance, uint256 newBalance);
     // on the first claim the user is activate. from the second claim the user may recieves tokens
     event AddedToPending(address account, uint256 lastClaimed);
+    event AlreadyClaimed(address account, uint256 lastClaimed);
     event UBIFished(address caller, address fished_account, uint256 claimAmount);
     event UBIDistributed(address caller, uint256 numOfClaimers, uint256 actualClaimed);
 
@@ -175,6 +178,7 @@ contract UBIScheme is AbstractUBI {
             lastClaimed[account] = now; // marks last claimed as today
             emit AddedToPending(account, lastClaimed[account]);
         }
+        emit AlreadyClaimed(account, lastClaimed[account]);
         return false;
     }
 
@@ -234,7 +238,8 @@ contract UBIScheme is AbstractUBI {
         requireActive
         returns (bool)
     {
-        for(uint256 i = 0; i < accounts.length && i < 5; ++i) {
+        require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
+        for(uint256 i = 0; i < accounts.length && i < activeUsersCount; ++i) {
             fish(accounts[i]);
         }
         return true;
@@ -250,8 +255,7 @@ contract UBIScheme is AbstractUBI {
         requireActive
         returns (bool)
     {
-        require(accounts.length < gasleft().div(300000), "exceeds of gas limitations"); // TODO
-
+        require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
         uint256 claimers = 0;
         for(uint256 i = 0; i < accounts.length && i < activeUsersCount; ++i) {
             if(identity.isWhitelisted(accounts[i]) && _claim(accounts[i])) {

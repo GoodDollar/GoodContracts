@@ -18,10 +18,10 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   let cDAI;
   let simpleStaking;
 
-  before(async () => {
+  before(async function() {
     let network = process.env.NETWORK;
     if(network === 'test' || network === 'develop'){
-      throw new Error("wrong network settings");
+      this.skip();
     }
     dai = await DAIMock.at(DAI_ADDRESS);
     cDAI = await cDAIMock.at(cDAI_ADDRESS);

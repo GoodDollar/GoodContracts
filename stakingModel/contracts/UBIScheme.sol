@@ -8,32 +8,58 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract UBIScheme is AbstractUBI {
     using SafeMath for uint256;
 
-    uint256 public dailyUbi = 0; // result of distribution formula
+    // result of distribution formula
+    uint256 public dailyUbi = 0;
 
-    uint256 public iterationGasLimit = 300000; // limits the gas for each iteration at `fishingPool` and in `distribute`
+    // limits the gas for each iteration at `fishMulti`
+    // and in `distribute`
+    uint256 public iterationGasLimit = 300000;
 
+    // tracking the active users number. it changes when
+    // a new user claim for the first time or when a user
+    // has been fished
     uint256 public activeUsersCount = 0;
 
+    // tracking last withdraw day. withdraw occures on
+    // the first daily claim or the first daily fish only
     uint256 public lastWithdrawDay = 0;
 
+    // limits the iterations number of multiple claim.
     uint256 public maxDistributeAddresses;
 
-    uint256 public maxInactiveDays; // after those days the user can be fished (see `fish` notes)
+    // after those days the user can be fished
+    // (see `fish` notes)
+    uint256 public maxInactiveDays;
 
     struct Funds {
-        bool hasWithdrawn; // marks if the funds for a specific day has withdrawn
-        uint256 openAmount; // the sum of the balance that the contract had before the withdraw and the balance after
+        // marks if the funds for a specific day has
+        // withdrawn
+        bool hasWithdrawn;
+        // the sum of the balance that the contract
+        // had before the withdraw and the balance after
+        uint256 openAmount;
     }
 
+    // tracking the daily withdraws and the actual amount
+    // at the begining of the trading day.
     mapping (uint256 => Funds) public dailyFunds;
 
-    mapping (address => bool) public fishedUsersAddresses; // marks users that have been fished to avoid of double fishing
+    // marks users that have been fished to avoid of
+    // double fishing
+    mapping (address => bool) public fishedUsersAddresses;
 
+    // emits when a withdraw has been succeded
     event WithdrawFromDao(address caller, uint256 prevBalance, uint256 newBalance);
-    // on the first claim the user is activate. from the second claim the user may recieves tokens
+    // tracking users who claimed for the first time or
+    // were inactive. on the first claim the user is
+    // activate. from the second claim the user may recieves tokens.
     event AddedToPending(address account, uint256 lastClaimed);
+    // emits when a user tries to claim more than one time a day
     event AlreadyClaimed(address account, uint256 lastClaimed);
+    // emits when a fish has been succeded
     event UBIFished(address caller, address fished_account, uint256 claimAmount);
+    // emits at distribute. tracks the claim requests that have
+    // been accomplished
     event UBIDistributed(address caller, uint256 numOfClaimers, uint256 actualClaimed);
 
     /* @dev Constructor
@@ -233,13 +259,13 @@ contract UBIScheme is AbstractUBI {
      * @param accounts to fish
      * @return A bool indicating if all the UBIs were fished
      */
-    function fishingPool(address[] memory accounts)
+    function fishMulti(address[] memory accounts)
         public
         requireActive
         returns (bool)
     {
         require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
-        for(uint256 i = 0; i < accounts.length && i < activeUsersCount; ++i) {
+        for(uint256 i = 0; i < accounts.length; ++i) {
             fish(accounts[i]);
         }
         return true;
@@ -257,7 +283,7 @@ contract UBIScheme is AbstractUBI {
     {
         require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
         uint256 claimers = 0;
-        for(uint256 i = 0; i < accounts.length && i < activeUsersCount; ++i) {
+        for(uint256 i = 0; i < accounts.length; ++i) {
             if(identity.isWhitelisted(accounts[i]) && _claim(accounts[i])) {
                     claimers = claimers.add(1);
             }

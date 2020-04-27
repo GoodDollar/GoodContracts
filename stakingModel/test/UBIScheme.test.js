@@ -78,7 +78,7 @@ contract(
   });
   
   it("should not be able to execute fish when start has not been executed yet", async () => {
-    let error = await ubi.fishingPool([NULL_ADDRESS]).catch(e => e);
+    let error = await ubi.fishMulti([NULL_ADDRESS]).catch(e => e);
     expect(error.message).to.have.string("is not active");
   });
   
@@ -251,7 +251,7 @@ contract(
     await goodDollar.mint(avatar.address, "20");
     await increaseTime(MAX_INACTIVE_DAYS * ONE_DAY);
     let claimer4BalanceBefore = await goodDollar.balanceOf(claimer4);
-    let tx = await ubi.fishingPool([claimer2, claimer3], { from: claimer4 });
+    let tx = await ubi.fishMulti([claimer2, claimer3], { from: claimer4 });
     let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
     let dailyUbi = await ubi.dailyUbi();
     expect(tx.logs[1].event).to.be.equal("UBIFished");
@@ -363,8 +363,8 @@ contract(
     expect(error.message).to.have.string('exceeds of gas limitations');
   });
   
-  it("should not be able to iterate over more than the allowed number of accounts in fishingPool", async () => {
-    let error = await ubi.fishingPool([claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
+  it("should not be able to iterate over more than the allowed number of accounts in fishMulti", async () => {
+    let error = await ubi.fishMulti([claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
                                       claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
                                       claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
                                       ]).catch(e => e);

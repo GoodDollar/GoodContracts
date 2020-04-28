@@ -20,7 +20,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
 
   before(async function() {
     let network = process.env.NETWORK;
-    if(network === 'test' || network === 'develop'){
+    if(network !== 'kovan'){
       this.skip();
     }
     dai = await DAIMock.at(DAI_ADDRESS);

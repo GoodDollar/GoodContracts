@@ -49,18 +49,18 @@ contract UBIScheme is AbstractUBI {
     mapping (address => bool) public fishedUsersAddresses;
 
     // emits when a withdraw has been succeded
-    event WithdrawFromDao(address caller, uint256 prevBalance, uint256 newBalance);
+    event WithdrawFromDao(address indexed caller, uint256 prevBalance, uint256 newBalance);
     // tracking users who claimed for the first time or
     // were inactive. on the first claim the user is
     // activate. from the second claim the user may recieves tokens.
-    event AddedToPending(address account, uint256 lastClaimed);
+    event AddedToPending(address indexed account, uint256 lastClaimed);
     // emits when a user tries to claim more than one time a day
-    event AlreadyClaimed(address account, uint256 lastClaimed);
+    event AlreadyClaimed(address indexed account, uint256 lastClaimed);
     // emits when a fish has been succeded
-    event UBIFished(address caller, address fished_account, uint256 claimAmount);
+    event UBIFished(address indexed caller, address indexed fished_account, uint256 claimAmount);
     // emits at distribute. tracks the claim requests that have
     // been accomplished
-    event UBIDistributed(address caller, uint256 numOfClaimers, uint256 actualClaimed);
+    event UBIDistributed(address indexed caller, uint256 numOfClaimers, uint256 actualClaimed);
 
     /* @dev Constructor
      * @param _avatar The avatar of the DAO

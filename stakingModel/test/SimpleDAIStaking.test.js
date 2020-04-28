@@ -4,7 +4,13 @@ const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 
 const BN = web3.utils.BN;
+export const BLOCK_INTERVAL = 5;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+async function evm_mine(blocks) {
+  for (let i=0; i<blocks; ++i)
+    await web3.currentProvider.send( { jsonrpc: "2.0", method: "evm_mine", id: 123 }, () => {} );
+}
 
 contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   let dai;
@@ -19,7 +25,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       dai.address,
       cDAI.address,
       NULL_ADDRESS,
-      founder
+      founder,
+      BLOCK_INTERVAL
     );
   });
 
@@ -82,6 +89,29 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     );
   });
 
+  it("should be able to withdraw stake by staker", async () => {
+    let stakedcDaiBalanceBefore = await cDAI.balanceOf(simpleStaking.address); // simpleStaking cDAI balance
+    let stakerDaiBalanceBefore = await dai.balanceOf(staker); // staker DAI balance
+    let balanceBefore = await simpleStaking.stakers(staker); // user staked balance in GoodStaking
+    let totalStakedBefore = await simpleStaking.totalStaked(); // total staked in GoodStaking
+    const transaction = await simpleStaking.withdrawStake({
+                          from: staker
+                        });
+    let stakedcDaiBalanceAfter = await cDAI.balanceOf(simpleStaking.address);  // simpleStaking cDAI balance
+    let stakerDaiBalanceAfter = await dai.balanceOf(staker); // staker DAI balance
+    let balanceAfter = await simpleStaking.stakers(staker);  // user staked balance in GoodStaking
+    let totalStakedAfter = await simpleStaking.totalStaked(); // total staked in GoodStaking
+    expect(stakedcDaiBalanceAfter.lt(stakedcDaiBalanceBefore)).to.be.true;
+    expect(stakerDaiBalanceAfter.gt(stakerDaiBalanceBefore)).to.be.true;
+    expect(balanceBefore.stakedDAI.toString()).to.be.equal((stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString());
+    expect((totalStakedBefore - totalStakedAfter).toString()).to.be.equal(balanceBefore.stakedDAI.toString());
+    expect(balanceAfter.stakedDAI.toString()).to.be.equal("0");
+    expect(stakedcDaiBalanceAfter.toString()).to.be.equal("0");
+    expect(transaction.logs[0].event).to.be.equal("DAIStakeWithdraw");
+    expect(transaction.logs[0].args.staker).to.be.equal(staker);
+    expect(transaction.logs[0].args.daiValue.toString()).to.be.equal((stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString());
+  });
+
   it("should convert user staked DAI to the equal value of cDAI owned by the staking contract", async () => {
     dai.mint(staker, web3.utils.toWei("100", "ether"));
     dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
@@ -95,11 +125,14 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
     let stakercDaiBalance = await cDAI.balanceOf(staker);
     expect(stakedcDaiBalance.toString()).to.be.equal(
-      web3.utils.toWei("19800", "mwei") //8 decimals precision (198 cdai because the staking contract already has balance of 99 cdai)
+      web3.utils.toWei("9900", "mwei") //8 decimals precision
     );
     let stakedDaiBalance = await dai.balanceOf(simpleStaking.address);
     expect(stakedDaiBalance.isZero()).to.be.true;
     expect(stakercDaiBalance.isZero()).to.be.true;
+    await simpleStaking.withdrawStake({
+      from: staker
+    });
   });
 
   it("should not change the staker DAI balance if the conversion failed", async () => {
@@ -110,7 +143,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
         dai.address,
         fakecDAI.address,
         NULL_ADDRESS,
-        founder
+        founder,
+        BLOCK_INTERVAL
       ); // staking should failed
     dai.mint(staker, web3.utils.toWei("100", "ether"));
     dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
@@ -135,7 +169,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
         dai.address,
         fakecDAI.address,
         NULL_ADDRESS,
-        founder
+        founder,
+        BLOCK_INTERVAL
       ); // staking should failed
     dai.mint(staker, web3.utils.toWei("100", "ether"));
     dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
@@ -160,7 +195,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
         dai.address,
         fakecDAI.address,
         NULL_ADDRESS,
-        founder
+        founder,
+        BLOCK_INTERVAL
       ); // staking should failed
     dai.mint(staker, web3.utils.toWei("100", "ether"));
     dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
@@ -212,6 +248,10 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     expect((stakedcDaiBalanceAfter - stakedcDaiBalanceBefore).toString()).to.be.equal(
       web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai)
     );
+
+    await simpleStaking.withdrawStake({
+      from: staker
+    });
   });
 
   it("should not be able to stake when approved dai amount is too low", async () => {
@@ -264,65 +304,107 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
 
     assert(transaction.logs[0].event === 'DAIStaked');
     assert.equal(transaction.logs[0].args.daiValue.valueOf(), weiAmount);
+
+    await simpleStaking.withdrawStake({
+      from: staker
+    });
+  });
+
+  it("should not withdraw interest to owner if cDAI value is lower than the staked", async () => {
+    const weiAmount = web3.utils.toWei("1000", "ether");
+    dai.mint(staker, weiAmount);
+    dai.approve(simpleStaking.address, weiAmount, {
+      from: staker
+    });
+    await simpleStaking
+          .stakeDAI(weiAmount, {
+            from: staker
+          })
+          .catch(console.log);
+    const gains = await simpleStaking.currentUBIInterest();
+    const cdaiGains = gains["0"];
+    const precisionLossDai = gains["2"].toString(); //last 10 decimals since cdai is only 8 decimals while dai is 18
+    const fundBalanceBefore = await cDAI.balanceOf(founder);
+    await evm_mine(BLOCK_INTERVAL);
+    const res = await simpleStaking.collectUBIInterest(founder);
+    const fundBalanceAfter = await cDAI.balanceOf(founder);
+    expect(cdaiGains.toString()).to.be.equal("0");
+    expect(precisionLossDai.toString()).to.be.equal("0");
+    expect(fundBalanceAfter.toString()).to.be.equal(fundBalanceBefore.toString());
+    await simpleStaking.withdrawStake({
+      from: staker
+    });
   });
 
   it("should mock cdai updated exchange rate", async () => {
-    let res = await cDAI.exchangeRateCurrent();
+    await cDAI.exchangeRateCurrent();
     let rate = await cDAI.exchangeRateStored();
     expect(rate.toString()).to.be.equal("10201010101010101010101010101");
   });
 
   it("should report interest gains", async () => {
+    dai.mint(staker, web3.utils.toWei("400", "ether"));
+    dai.approve(simpleStaking.address, web3.utils.toWei("400", "ether"), {
+      from: staker
+    });
+    await simpleStaking
+      .stakeDAI(web3.utils.toWei("400", "ether"), {
+        from: staker
+      })
+      .catch(console.log);
+    await cDAI.exchangeRateCurrent();
     const gains = await simpleStaking.currentUBIInterest();
     const cdaiGains = gains["0"];
     const precisionLossDai = gains["2"];
-    expect(cdaiGains.toString()).to.be.equal("97049212"); //8 decimals precision
-    expect(precisionLossDai.toString()).to.be.equal("8092929292"); //10 decimals precision lost
+    expect(cdaiGains.toString()).to.be.equal("380659786"); //8 decimals precision
+    expect(precisionLossDai.toString()).to.be.equal("5733333332"); //10 decimals precision lost
+    await simpleStaking.withdrawStake({
+      from: staker
+    });
   });
 
   it("should withdraw interest to owner", async () => {
+    const totalStaked = await simpleStaking.totalStaked();
+    dai.mint(staker, web3.utils.toWei("100", "ether"));
+    dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    await simpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      })
+      .catch(console.log);
     const gains = await simpleStaking.currentUBIInterest();
     const cdaiGains = gains["0"];
     const precisionLossDai = gains["2"].toString(); //last 10 decimals since cdai is only 8 decimals while dai is 18
-    const res = await simpleStaking.collectUBIInterest();
+    const res = await simpleStaking.collectUBIInterest(founder);
     const fundBalance = await cDAI.balanceOf(founder);
     const fundDaiWorth = await simpleStaking.currentDAIWorth();
-
+    const fundDaiWorth11 = await simpleStaking.currentDAIWorth();
     expect(cdaiGains.toString()).to.be.equal(fundBalance.toString());
     expect(fundDaiWorth.toString()).to.be.equal(
       //10 gwei = 10 decimals + precisionLoss = 20 decimals = 100 ether of DAI
       web3.utils.toWei("10", "gwei") + precisionLossDai
     );
+    await simpleStaking.withdrawStake({
+      from: staker
+    });
   });
 
-  it("should not withdraw again in less than 23 hours", async () => {
-    const error = await simpleStaking.collectUBIInterest().catch(e => e);
+  it("should withdraw only by fundmanager", async () => {
+    const error = await simpleStaking.collectUBIInterest(founder, {
+      from: staker
+    }).catch(e => e);
     expect(error.message).to.have.string(
-      "Need to wait at least 23 hours between collections"
+      "Only FundManager can call this method"
     );
   });
 
-  it("should be able to withdraw stake by staker", async () => {
-    let stakedcDaiBalanceBefore = await cDAI.balanceOf(simpleStaking.address); // simpleStaking cDAI balance
-    let stakerDaiBalanceBefore = await dai.balanceOf(staker); // staker DAI balance
-    let balanceBefore = await simpleStaking.stakers(staker); // user staked balance in GoodStaking
-    let totalStakedBefore = await simpleStaking.totalStaked(); // total staked in GoodStaking
-    const transaction = await simpleStaking.withdrawStake({
-                          from: staker
-                        });
-    let stakedcDaiBalanceAfter = await cDAI.balanceOf(simpleStaking.address);  // simpleStaking cDAI balance
-    let stakerDaiBalanceAfter = await dai.balanceOf(staker); // staker DAI balance
-    let balanceAfter = await simpleStaking.stakers(staker);  // user staked balance in GoodStaking
-    let totalStakedAfter = await simpleStaking.totalStaked(); // total staked in GoodStaking
-    expect(stakedcDaiBalanceAfter.lt(stakedcDaiBalanceBefore)).to.be.true;
-    expect(stakerDaiBalanceAfter.gt(stakerDaiBalanceBefore)).to.be.true;
-    expect(balanceBefore.stakedDAI.toString()).to.be.equal((stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString());
-    expect((totalStakedBefore - totalStakedAfter).toString()).to.be.equal(balanceBefore.stakedDAI.toString());
-    expect(balanceAfter.stakedDAI.toString()).to.be.equal("0");
-    expect(stakedcDaiBalanceAfter.toString()).to.not.be.equal("0"); //precision loss, so it wont be exactly 0
-    expect(transaction.logs[0].event).to.be.equal("DAIStakeWithdraw");
-    expect(transaction.logs[0].args.staker).to.be.equal(staker);
-    expect(transaction.logs[0].args.daiValue.toString()).to.be.equal((stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString());
+  it("should be able to be called once per withdrawInterval", async () => {
+    const error = await simpleStaking.collectUBIInterest(founder).catch(e => e);
+    expect(error.message).to.have.string(
+      "Need to wait for the next interval"
+    );
   });
 
   it("should not be able to double withdraw stake", async () => {
@@ -364,5 +446,58 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       .catch(e => e);
     let stakedcDaiBalanceAfter = await cDAI.balanceOf(simpleStaking.address);
     expect(stakedcDaiBalanceAfter.toString()).to.be.equal(stakedcDaiBalanceBefore.toString());
+  });
+
+  it("should be able to withdraw stake by staker and precision loss should not be equal to 0", async () => {
+    const weiAmount = web3.utils.toWei("100", "ether");
+    dai.mint(staker, weiAmount);
+    dai.approve(simpleStaking.address, weiAmount, {
+      from: staker
+    });
+    await simpleStaking
+          .stakeDAI(weiAmount, {
+            from: staker
+          })
+          .catch(console.log);
+    let stakedcDaiBalanceBefore = await cDAI.balanceOf(simpleStaking.address); // simpleStaking cDAI balance
+    const transaction = await simpleStaking.withdrawStake({
+                          from: staker
+                        });
+    let stakedcDaiBalanceAfter = await cDAI.balanceOf(simpleStaking.address);  // simpleStaking cDAI balance
+    expect(stakedcDaiBalanceAfter.lt(stakedcDaiBalanceBefore)).to.be.true;
+    expect(stakedcDaiBalanceAfter.toString()).to.not.be.equal("0"); //precision loss, so it wont be exactly 0
+  });
+
+  it("should withdraw interest to recipient specified by the owner", async () => {
+    const weiAmount = web3.utils.toWei("100", "ether");
+    dai.mint(staker, weiAmount);
+    dai.approve(simpleStaking.address, weiAmount, {
+      from: staker
+    });
+    await simpleStaking
+          .stakeDAI(weiAmount, {
+            from: staker
+          })
+          .catch(console.log);
+    const gains = await simpleStaking.currentUBIInterest();
+    const cdaiGains = gains["0"];
+    const precisionLossDai = gains["2"].toString(); //last 10 decimals since cdai is only 8 decimals while dai is 18
+    await evm_mine(BLOCK_INTERVAL);
+    const res = await simpleStaking.collectUBIInterest(staker);
+    const fundBalance = await cDAI.balanceOf(staker);
+    const fundDaiWorth = await simpleStaking.currentDAIWorth();
+    expect(cdaiGains.toString()).to.be.equal(fundBalance.toString());
+    expect(fundDaiWorth.toString()).to.be.equal(
+      // 10 gwei = 10 decimals + precisionLoss = 20 decimals = 100 ether of DAI
+      web3.utils.toWei("10", "gwei") + precisionLossDai
+    );
+  });
+
+  it("should not withdraw interest if the recipient specified by the owner is the staking contract", async () => {
+    await evm_mine(BLOCK_INTERVAL);
+    const error = await simpleStaking.collectUBIInterest(simpleStaking.address).catch(e => e);
+    expect(error.message).to.have.string(
+      "Recipient cannot be the staking contract"
+    );
   });
 });

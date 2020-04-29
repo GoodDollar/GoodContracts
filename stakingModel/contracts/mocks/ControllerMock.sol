@@ -1,0 +1,17 @@
+pragma solidity 0.5.4;
+
+import "@daostack/arc/contracts/controller/Controller.sol";
+
+contract ControllerMock is Controller {
+
+    constructor(Avatar _avatar)
+        public
+        Controller(_avatar) {}
+
+    function genericCall(address _contract, bytes calldata _data, Avatar _avatar, uint256 _value)
+        external
+        returns (bool, bytes memory)
+    {
+        return avatar.genericCall(_contract, _data, _value);
+    }
+}

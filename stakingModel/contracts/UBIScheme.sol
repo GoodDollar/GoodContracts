@@ -183,7 +183,7 @@ contract UBIScheme is AbstractUBI {
         uint256 newDistribution = distributionFormula(0, account);
 
         // active user which has not claimed today yet, ie user last claimed < today
-        if(isActiveUser(account) &&
+        if(isRegistered(account) && !fishedUsersAddresses[account] &&
             ((lastClaimed[account].sub(periodStart)) / 1 days) < currentDay) {
             lastClaimed[account] = now;
             claimDay[currentDay].hasClaimed[account] = true;
@@ -196,15 +196,15 @@ contract UBIScheme is AbstractUBI {
             emit UBIClaimed(account, newDistribution);
             return true;
         }
-        if(!isActiveUser(account)) { // inactive or unregistered user
-            if(!isRegistered(account) || fishedUsersAddresses[account]) { // a unregistered or fished user
-                activeUsersCount = activeUsersCount.add(1);
-                fishedUsersAddresses[account] = false;
-            }
+        else if(!isRegistered(account) || fishedUsersAddresses[account]) { // a unregistered or fished user
+            activeUsersCount = activeUsersCount.add(1);
+            fishedUsersAddresses[account] = false;
             lastClaimed[account] = now; // marks last claimed as today
             emit AddedToPending(account, lastClaimed[account]);
         }
-        emit AlreadyClaimed(account, lastClaimed[account]);
+        else {
+            emit AlreadyClaimed(account, lastClaimed[account]);
+        }
         return false;
     }
 

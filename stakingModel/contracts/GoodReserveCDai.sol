@@ -23,6 +23,10 @@ interface cERC20 {
 
 }
 
+interface ContributionCalculation {
+    function calculateContribution(uint256 gdAmount) external view returns (uint256);
+}
+
 /**
 @title Reserve based on cDAI and dynamic reserve ratio market maker
 */
@@ -44,6 +48,8 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
     uint256 public daysFromStart = 0;
 
     uint256 public sellContributionRatio;
+
+    ContributionCalculation public contribution;
 
     modifier onlyFundManager {
         require(
@@ -79,9 +85,9 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
                              uint256 minReturn,
                              uint256 actualReturn);
 
-    event SellContributionRatioUpdated(address indexed caller,
-                                       uint256 nom,
-                                       uint256 denom);
+    event ContributionAddressUpdated(address indexed caller,
+                                     address prevAddress,
+                                     address newAddress);
 
     event GDInterestAndExpansionMinted(address indexed caller,
                                        address indexed interestCollector,
@@ -98,8 +104,7 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         address _fundManager,
         Avatar _avatar,
         address _marketMaker,
-        uint256 _nom,
-        uint256 _denom
+        ContributionCalculation _contribution
     )
         public
         SchemeGuard(_avatar)
@@ -111,7 +116,7 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         avatar = _avatar;
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
-        sellContributionRatio = rdiv(_nom, _denom);
+        contribution = _contribution;
         super.start();
     }
 
@@ -120,17 +125,16 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
     }
 
     /**
-    @dev allow the DAO to change the sell contribution rate
-    it is calculated by _nom/_denom with e27 precision
-    @param _nom the nominator
-    @param _denom the denominator
+    @dev allow the DAO to change the contribution formula contract
+    @param _contribution address of the new contribution contract
     */
-    function setSellContributionRatio(uint256 _nom, uint256 _denom)
+    function setContributionAddress(address _contribution)
         public
         onlyAvatar
     {
-        sellContributionRatio = rdiv(_nom, _denom);
-        emit SellContributionRatioUpdated(msg.sender, _nom, _denom);
+        address prevAddress = address(contribution);
+        contribution = ContributionCalculation(_contribution);
+        emit ContributionAddressUpdated(msg.sender, prevAddress, _contribution);
     }
 
     /**
@@ -202,7 +206,7 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         returns (uint256)
     {
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
-        uint256 contributionAmount = calculateSellContribution(gdAmount);
+        uint256 contributionAmount = contribution.calculateContribution(gdAmount);
         uint256 tokenReturn = marketMaker.sellWithContribution(sellTo, gdAmount, contributionAmount);
         require(tokenReturn >= minReturn, "Token return must be above the minReturn");
         require(sellTo.transfer(msg.sender, tokenReturn) == true, "Transfer failed");

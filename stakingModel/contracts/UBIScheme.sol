@@ -76,8 +76,6 @@ contract UBIScheme is AbstractUBI {
     // were inactive. on the first claim the user is
     // activate. from the second claim the user may recieves tokens.
     event AddedToPending(address indexed account, uint256 lastClaimed);
-    // emits when a user tries to claim more than one time a day
-    event AlreadyClaimed(address indexed account, uint256 lastClaimed);
     // emits when a fish has been succeded
     event UBIFished(address indexed caller, address indexed fished_account, uint256 claimAmount);
     // emits at distribute. tracks the claim requests that have
@@ -239,9 +237,6 @@ contract UBIScheme is AbstractUBI {
             pendingUserAddresses.push(account);
             pendingUserClaims[account] = PendingUser({day: currentDay.add(1), isEligible: true});
             emit AddedToPending(account, lastClaimed[account]);
-        }
-        else {
-            emit AlreadyClaimed(account, lastClaimed[account]);
         }
         return false;
     }

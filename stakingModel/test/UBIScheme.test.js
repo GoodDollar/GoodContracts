@@ -188,9 +188,8 @@ contract(
     await ubi.distribute(0,10);
     let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
     let dailyUbi = await ubi.dailyUbi();
-    let transaction = await ubi.claim({ from: claimer4 }).catch(e => e);
+    await ubi.claim({ from: claimer4 }).catch(e => e);
     expect(claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()).to.be.equal(dailyUbi.toNumber());
-    expect(transaction.logs[0].event).to.be.equal("AlreadyClaimed");
   });
 
   it("should not be able to fish an active user", async () => {
@@ -371,3 +370,4 @@ contract(
     expect(error.message).to.have.string('exceeds of gas limitations');
   });
 });
+

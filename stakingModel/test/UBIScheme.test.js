@@ -83,7 +83,7 @@ contract(
   });
   
   it("should not be able to execute fish when start has not been executed yet", async () => {
-    let error = await ubi.distribute([NULL_ADDRESS]).catch(e => e);
+    let error = await ubi.distribute(0,1).catch(e => e);
     expect(error.message).to.have.string("is not active");
   });
   
@@ -156,7 +156,15 @@ contract(
     await ubi.claim({ from: claimer3 });
     await increaseTime(ONE_DAY);
     let claimer3BalanceBefore = await goodDollar.balanceOf(claimer3);
-    await ubi.distribute([claimer3]);
+    await ubi.distribute(0,3);
+    let claimer3BalanceAfter = await goodDollar.balanceOf(claimer3);
+    let dailyUbi = await ubi.dailyUbi();
+    expect(claimer3BalanceAfter.toNumber() - claimer3BalanceBefore.toNumber()).to.be.equal(dailyUbi.toNumber());
+  });
+
+  it("should be able to claim for second time for a new user", async () => {
+    let claimer3BalanceBefore = await goodDollar.balanceOf(claimer3);
+    await ubi.claim({ from: claimer3 });
     let claimer3BalanceAfter = await goodDollar.balanceOf(claimer3);
     let dailyUbi = await ubi.dailyUbi();
     expect(claimer3BalanceAfter.toNumber() - claimer3BalanceBefore.toNumber()).to.be.equal(dailyUbi.toNumber());
@@ -166,18 +174,18 @@ contract(
     await identity.addWhitelisted(claimer4);
     let claimer3BalanceBefore = await goodDollar.balanceOf(claimer3);
     let claimer4BalanceBefore = await goodDollar.balanceOf(claimer4);
-    await ubi.distribute([claimer3, claimer4]);
+    await ubi.distribute(0,10);
     let claimer3BalanceAfter = await goodDollar.balanceOf(claimer3);
     let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
     expect(claimer3BalanceAfter.toNumber()).to.be.equal(claimer3BalanceBefore.toNumber());
     expect(claimer4BalanceAfter.toNumber()).to.be.equal(claimer4BalanceBefore.toNumber());
   });
 
-  it("should not be able to execute claim after the user received tokens since distribute had been executed", async () => {
+  it("should not be able to execute claim after the user received tokens because of distribute had been executed", async () => {
+    await ubi.claim({ from: claimer4 });
+    await increaseTime(2*ONE_DAY);
     let claimer4BalanceBefore = await goodDollar.balanceOf(claimer4);
-    await ubi.claim({ from: claimer4 })
-    await increaseTime(ONE_DAY);
-    await ubi.distribute([claimer4]);
+    await ubi.distribute(0,10);
     let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
     let dailyUbi = await ubi.dailyUbi();
     let transaction = await ubi.claim({ from: claimer4 }).catch(e => e);
@@ -211,7 +219,7 @@ contract(
     let claimer4Balance1 = await goodDollar.balanceOf(claimer4);
     await ubi.claim({ from: claimer4 })
     let claimer4Balance2 = await goodDollar.balanceOf(claimer4);
-    await ubi.distribute([claimer4]);
+    await ubi.distribute(0,20);
     let dailyUbi = await ubi.dailyUbi();
     let claimer4Balance3 = await goodDollar.balanceOf(claimer4);
     expect(claimer4Balance2.toNumber() - claimer4Balance1.toNumber()).to.be.equal(dailyUbi.toNumber());
@@ -322,7 +330,7 @@ contract(
     await goodDollar.mint(avatar.address, "20");
     await increaseTime(ONE_DAY);
     let claimer4Balance1 = await goodDollar.balanceOf(claimer2);
-    let transaction = await ubi.distribute([claimer2]);
+    let transaction = await ubi.distribute(6, 7);
     let claimer4Balance2 = await goodDollar.balanceOf(claimer2);
     let dailyUbi = await ubi.dailyUbi();
     expect(claimer4Balance2.toNumber() - claimer4Balance1.toNumber()).to.be.equal(dailyUbi.toNumber());
@@ -355,14 +363,6 @@ contract(
     expect(((ubiBalance.add(avatarBalance)).div(activeUsersCount)).toNumber()).to.be.equal(dailyUbi.toNumber());
   });
   
-  it("should not be able to iterate over more than the allowed number of accounts in distribute", async () => {
-    let error = await ubi.distribute([claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
-                                      claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
-                                      claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
-                                      ]).catch(e => e);
-    expect(error.message).to.have.string('exceeds of gas limitations');
-  });
-  
   it("should not be able to iterate over more than the allowed number of accounts in fishMulti", async () => {
     let error = await ubi.fishMulti([claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
                                       claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
@@ -371,4 +371,3 @@ contract(
     expect(error.message).to.have.string('exceeds of gas limitations');
   });
 });
-

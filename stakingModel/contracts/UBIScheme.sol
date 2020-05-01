@@ -20,6 +20,10 @@ contract UBIScheme is AbstractUBI {
     // has been fished
     uint256 public activeUsersCount = 0;
 
+    // tracking the activated users number of the previous
+    // day.
+    uint256 public prevDayActivatedCount = 0;
+
     // tracking last withdraw day. withdraw occures on
     // the first daily claim or the first daily fish only
     uint256 public lastWithdrawDay = 0;
@@ -39,6 +43,24 @@ contract UBIScheme is AbstractUBI {
         // had before the withdraw and the balance after
         uint256 openAmount;
     }
+
+    struct PendingUser {
+        // the day which the user might claim
+        // the reward
+        uint256 day;
+        // marks if the funds for a specific user
+        // has distributed
+        bool isEligible;
+    }
+
+    // array of addresses of the pending users
+    address[] public pendingUserAddresses;
+
+    // marks a user when he has the right to claim an
+    // activation reward. valid only for the activations of
+    // the previous day
+    mapping (address => PendingUser) public pendingUserClaims;
+
 
     // tracking the daily withdraws and the actual amount
     // at the begining of the trading day.
@@ -120,7 +142,8 @@ contract UBIScheme is AbstractUBI {
             _withdrawFromDao();
             DAOToken token = avatar.nativeToken();
             uint256 currentBalance = token.balanceOf(address(this));
-            dailyUbi = currentBalance.div(activeUsersCount);
+            dailyUbi = currentBalance.div(activeUsersCount.add(prevDayActivatedCount));
+            prevDayActivatedCount = 0;
         }
         return dailyUbi;
     }
@@ -153,8 +176,8 @@ contract UBIScheme is AbstractUBI {
      */
     function isActiveUser(address account) public view requireActive returns (bool)
     {
-        uint256 lastClaimed = lastClaimed[account];
         if(isRegistered(account)) {
+            uint256 lastClaimed = lastClaimed[account];
             uint256 lastClaimedDay = (lastClaimed.sub(periodStart)) / 1 days;
             if (currentDay.sub(lastClaimedDay) < maxInactiveDays) { // active user
                 return true;
@@ -182,24 +205,39 @@ contract UBIScheme is AbstractUBI {
         // within the calculation.
         uint256 newDistribution = distributionFormula(0, account);
 
+        // pending user might claims tokens twice in the first day
+        if(pendingUserClaims[account].isEligible && pendingUserClaims[account].day == currentDay) {
+            PendingUser memory user = pendingUserClaims[account];
+            user.isEligible = false;
+            pendingUserClaims[account] = user;
+            GoodDollar token = GoodDollar(address(avatar.nativeToken()));
+            token.transfer(account, newDistribution);
+            emit UBIClaimed(account, newDistribution);
+            return true;
+        }
         // active user which has not claimed today yet, ie user last claimed < today
-        if(isRegistered(account) && !fishedUsersAddresses[account] &&
+        else if(isRegistered(account) && !fishedUsersAddresses[account] &&
             ((lastClaimed[account].sub(periodStart)) / 1 days) < currentDay) {
             lastClaimed[account] = now;
             claimDay[currentDay].hasClaimed[account] = true;
-            GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-            token.transfer(account, newDistribution);
             Day memory day = claimDay[currentDay];
             day.amountOfClaimers = day.amountOfClaimers.add(1);
             day.claimAmount = day.claimAmount.add(newDistribution);
             claimDay[currentDay] = day;
+            GoodDollar token = GoodDollar(address(avatar.nativeToken()));
+            token.transfer(account, newDistribution);
             emit UBIClaimed(account, newDistribution);
             return true;
         }
         else if(!isRegistered(account) || fishedUsersAddresses[account]) { // a unregistered or fished user
             activeUsersCount = activeUsersCount.add(1);
+            prevDayActivatedCount = prevDayActivatedCount.add(1);
             fishedUsersAddresses[account] = false;
-            lastClaimed[account] = now; // marks last claimed as today
+            // marks last claimed as today
+            lastClaimed[account] = now;
+            // adds the user to the pending list
+            pendingUserAddresses.push(account);
+            pendingUserClaims[account] = PendingUser({day: currentDay.add(1), isEligible: true});
             emit AddedToPending(account, lastClaimed[account]);
         }
         else {
@@ -246,11 +284,11 @@ contract UBIScheme is AbstractUBI {
         uint256 newDistribution = distributionFormula(0, account);
         activeUsersCount = activeUsersCount.sub(1);
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        token.transfer(msg.sender, newDistribution);
         Day memory day = claimDay[currentDay];
         day.amountOfClaimers = day.amountOfClaimers.add(1);
         day.claimAmount = day.claimAmount.add(newDistribution);
         claimDay[currentDay] = day;
+        token.transfer(msg.sender, newDistribution);
         emit UBIFished(msg.sender, account, newDistribution);
         return true;
     }
@@ -266,29 +304,44 @@ contract UBIScheme is AbstractUBI {
     {
         require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
         for(uint256 i = 0; i < accounts.length; ++i) {
-            fish(accounts[i]);
+            if(isRegistered(accounts[i]) && !isActiveUser(accounts[i]) && !fishedUsersAddresses[accounts[i]]) {
+                fish(accounts[i]);
+            }
         }
         return true;
     }
 
+    /* @dev executes `fish` with multiple addresses
+     * @param accounts to fish
+     * @return A bool indicating if all the UBIs were fished
+     */
+    function getlen()
+        public
+        view
+        returns (uint256)
+    {
+        return pendingUserAddresses.length;
+    }
+
     /* @dev Function for automate claiming UBI for users. Emits the caller address and the
      * given list length and the actual number of claimers.
-     * @param accounts - claimers account list
+     * @param _start - start index of the pending list
+     * @param _end - end index of the pending list
      * @return A bool indicating if UBI was claimed
      */
-    function distribute(address[] memory accounts)
+    function distribute(uint256 _start, uint256 _end)
         public
         requireActive
         returns (bool)
     {
-        require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
+        require(_end.sub(_start).add(1) < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
         uint256 claimers = 0;
-        for(uint256 i = 0; i < accounts.length; ++i) {
-            if(identity.isWhitelisted(accounts[i]) && _claim(accounts[i])) {
-                    claimers = claimers.add(1);
+        for(uint256 i = _start; i <= _end && i < pendingUserAddresses.length; ++i) {
+            if(identity.isWhitelisted(pendingUserAddresses[i]) && _claim(pendingUserAddresses[i])) {
+                claimers = claimers.add(1);
             }
         }
-        emit UBIDistributed(msg.sender, accounts.length, claimers);
+        emit UBIDistributed(msg.sender, _end.sub(_start).add(1), claimers);
         return true;
     }
 }

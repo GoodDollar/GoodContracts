@@ -61,7 +61,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
   });
 
-  it("should set marketmaker by avatar", async () => {
+  it("should set marketmaker in the reserve by avatar", async () => {
     let encodedCall = web3.eth.abi.encodeFunctionCall({
       name: 'setMarketMaker',
       type: 'function',
@@ -70,9 +70,37 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_marketMaker'
       }]
     }, [marketMaker.address]);
-    await avatar.genericCall(marketMaker.address, encodedCall, 0);
+    await avatar.genericCall(goodReserve.address, encodedCall, 0);
     const newMM = await goodReserve.marketMaker();
     expect(newMM.toString()).to.be.equal(marketMaker.address);
+  });
+
+  it("should set marketmaker in the contribution by avatar", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'setMarketMaker',
+      type: 'function',
+      inputs: [{
+          type: 'address',
+          name: '_marketMaker'
+      }]
+    }, [marketMaker.address]);
+    await avatar.genericCall(contribution.address, encodedCall, 0);
+    const newMM = await contribution.marketMaker();
+    expect(newMM.toString()).to.be.equal(marketMaker.address);
+  });
+
+  it("should set reserve in the contribution by avatar", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'setReserve',
+      type: 'function',
+      inputs: [{
+          type: 'address',
+          name: '_reserve'
+      }]
+    }, [goodReserve.address]);
+    await avatar.genericCall(contribution.address, encodedCall, 0);
+    const newReserve = await contribution.reserve();
+    expect(newReserve.toString()).to.be.equal(goodReserve.address);
   });
 
   it("should initialize token with price", async () => {
@@ -413,7 +441,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
   it("should calculate the sell contribution", async () => {
     let nom = new BN(2e14).toString();
     let denom = new BN(1e15).toString();
-    let actual = await contribution.calculateContribution(1e4);
+    let actual = await contribution.calculateContribution(cDAI.address, 1e4);
     expect(actual.toString()).to.be.equal((1e4 - 1e4 * nom / denom).toString());
   });
 

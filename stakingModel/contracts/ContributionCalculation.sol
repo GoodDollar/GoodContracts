@@ -2,6 +2,8 @@ pragma solidity 0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../../contracts/dao/schemes/SchemeGuard.sol";
+import "./GoodMarketMaker.sol";
+import "./GoodReserveCDai.sol";
 import "../../contracts/DSMath.sol";
 import "../../contracts/token/GoodDollar.sol";
 
@@ -10,7 +12,9 @@ import "../../contracts/token/GoodDollar.sol";
 contract ContributionCalculation is DSMath, SchemeGuard {
     using SafeMath for uint256;
 
-    GoodDollar gooddollar;
+    GoodDollar public gooddollar;
+    GoodMarketMaker public marketMaker;
+    GoodReserveCDai public reserve;
     uint256 public sellContributionRatio;
 
     event SellContributionRatioUpdated(address indexed caller,
@@ -28,6 +32,22 @@ contract ContributionCalculation is DSMath, SchemeGuard {
     {
         gooddollar = GoodDollar(_gooddollar);
         sellContributionRatio = rdiv(_nom, _denom);
+    }
+
+    /**
+     * @dev sets the marketMaker
+     * @param _marketMaker contract
+     */
+    function setMarketMaker(GoodMarketMaker _marketMaker) public onlyAvatar {
+        marketMaker = _marketMaker;
+    }
+
+    /**
+     * @dev sets the reserve
+     * @param _reserve contract
+     */
+    function setReserve(GoodReserveCDai _reserve) public onlyAvatar {
+        reserve = _reserve;
     }
 
     /**
@@ -49,7 +69,7 @@ contract ContributionCalculation is DSMath, SchemeGuard {
     * `sellContributionRatio` percent contribution
     * @return (contributionAmount) the contribution amount for sell
     */
-    function calculateContribution(uint256 gdAmount)
+    function calculateContribution(ERC20 token, uint256 gdAmount)
         external
         view
         returns (uint256)

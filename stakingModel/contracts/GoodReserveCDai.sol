@@ -24,7 +24,8 @@ interface cERC20 {
 }
 
 interface ContributionCalculation {
-    function calculateContribution(uint256 gdAmount) external view returns (uint256);
+    function calculateContribution(ERC20 token, uint256 gdAmount) external view returns (uint256);
+
 }
 
 /**
@@ -120,6 +121,10 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         super.start();
     }
 
+    /**
+    @dev allow the DAO to change the market maker contract
+    @param _marketMaker address of the new contract
+    */
     function setMarketMaker(address _marketMaker) public onlyAvatar {
         marketMaker = GoodMarketMaker(_marketMaker);
     }
@@ -168,28 +173,6 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
     }
 
     /**
-    * @dev calculate the contribution amount during the sell action. there is a
-    * `sellContributionRatio` percent contribution
-    * @return (contributionAmount) the contribution amount for sell
-    */
-    function calculateSellContribution(uint256 gdAmount)
-        public
-        view
-        returns (uint256)
-    {
-
-        uint256 decimalsDiff = uint256(27).sub(uint256(gooddollar.decimals()));
-        uint256 contribution =
-        rmul(
-                gdAmount.mul(10**decimalsDiff), // expand to e27 precision
-                sellContributionRatio
-            )
-                .div(10**decimalsDiff); // return to e2 precision
-        require(gdAmount > contribution, "Calculation error");
-        return gdAmount.sub(contribution);
-    }
-
-    /**
     * @dev sell G$ to sellTo and update the bonding curve params. sell occurs only if the
     * token return is above the given minimum. notice that there is a contribution
     * amount from the given G$ that stays in the reserve. it is possible to sell only to
@@ -206,7 +189,7 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         returns (uint256)
     {
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
-        uint256 contributionAmount = contribution.calculateContribution(gdAmount);
+        uint256 contributionAmount = contribution.calculateContribution(sellTo, gdAmount);
         uint256 tokenReturn = marketMaker.sellWithContribution(sellTo, gdAmount, contributionAmount);
         require(tokenReturn >= minReturn, "Token return must be above the minReturn");
         require(sellTo.transfer(msg.sender, tokenReturn) == true, "Transfer failed");

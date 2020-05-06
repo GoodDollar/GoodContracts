@@ -13,8 +13,6 @@ contract ContributionCalculation is DSMath, SchemeGuard {
     using SafeMath for uint256;
 
     GoodDollar public gooddollar;
-    GoodMarketMaker public marketMaker;
-    GoodReserveCDai public reserve;
     uint256 public sellContributionRatio;
 
     event SellContributionRatioUpdated(address indexed caller,
@@ -32,22 +30,6 @@ contract ContributionCalculation is DSMath, SchemeGuard {
     {
         gooddollar = GoodDollar(_gooddollar);
         sellContributionRatio = rdiv(_nom, _denom);
-    }
-
-    /**
-     * @dev sets the marketMaker
-     * @param _marketMaker contract
-     */
-    function setMarketMaker(GoodMarketMaker _marketMaker) public onlyAvatar {
-        marketMaker = _marketMaker;
-    }
-
-    /**
-     * @dev sets the reserve
-     * @param _reserve contract
-     */
-    function setReserve(GoodReserveCDai _reserve) public onlyAvatar {
-        reserve = _reserve;
     }
 
     /**
@@ -69,7 +51,7 @@ contract ContributionCalculation is DSMath, SchemeGuard {
     * `sellContributionRatio` percent contribution
     * @return (contributionAmount) the contribution amount for sell
     */
-    function calculateContribution(ERC20 token, uint256 gdAmount)
+    function calculateContribution(address _marketMaker, address _reserve, ERC20 _token, uint256 _gdAmount)
         external
         view
         returns (uint256)
@@ -77,11 +59,11 @@ contract ContributionCalculation is DSMath, SchemeGuard {
         uint256 decimalsDiff = uint256(27).sub(uint256(gooddollar.decimals()));
         uint256 contribution =
         rmul(
-                gdAmount.mul(10**decimalsDiff), // expand to e27 precision
+                _gdAmount.mul(10**decimalsDiff), // expand to e27 precision
                 sellContributionRatio
             )
                 .div(10**decimalsDiff); // return to e2 precision
-        require(gdAmount > contribution, "Calculation error");
-        return gdAmount.sub(contribution);
+        require(_gdAmount > contribution, "Calculation error");
+        return _gdAmount.sub(contribution);
     }
  }

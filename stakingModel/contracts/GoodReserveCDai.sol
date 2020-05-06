@@ -24,7 +24,7 @@ interface cERC20 {
 }
 
 interface ContributionCalculation {
-    function calculateContribution(ERC20 token, uint256 gdAmount) external view returns (uint256);
+    function calculateContribution(address _marketMaker, address _reserve, ERC20 _token, uint256 _gdAmount) external view returns (uint256);
 
 }
 
@@ -201,7 +201,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         returns (uint256)
     {
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
-        uint256 contributionAmount = contribution.calculateContribution(sellTo, gdAmount);
+        uint256 contributionAmount = contribution.calculateContribution(address(marketMaker), address(this), sellTo, gdAmount);
         uint256 tokenReturn = marketMaker.sellWithContribution(sellTo, gdAmount, contributionAmount);
         require(tokenReturn >= minReturn, "Token return must be above the minReturn");
         require(sellTo.transfer(msg.sender, tokenReturn) == true, "Transfer failed");

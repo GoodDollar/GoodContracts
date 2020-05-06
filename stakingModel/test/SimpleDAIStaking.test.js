@@ -2,6 +2,10 @@ const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
+const Formula = artifacts.require("FeeFormula");
+const Identity = artifacts.require("IdentityMock");
+const avatarMock = artifacts.require("AvatarMock");
+const ControllerMock = artifacts.require("ControllerMock");
 
 const BN = web3.utils.BN;
 export const BLOCK_INTERVAL = 5;
@@ -16,17 +20,37 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   let dai;
   let cDAI;
   let simpleStaking;
+  let formula;
+  let goodDollar;
+  let identity;
+  let avatar;
+  let controller;
 
   before(async () => {
     dai = await DAIMock.new();
     cDAI = await cDAIMock.new(dai.address);
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
+    identity = await Identity.new();
+    formula = await Formula.new(0);
+    goodDollar = await GoodDollar.new(
+      "GoodDollar",
+      "GDD",
+      "0",
+      formula.address,
+      identity.address,
+      NULL_ADDRESS
+    );
+    avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
+    controller = await ControllerMock.new(avatar.address);
+    await avatar.transferOwnership(controller.address);
     simpleStaking = await SimpleDAIStaking.new(
       dai.address,
       cDAI.address,
       NULL_ADDRESS,
       founder,
-      BLOCK_INTERVAL
+      BLOCK_INTERVAL,
+      avatar.address,
+      identity.address
     );
   });
 
@@ -144,7 +168,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
         fakecDAI.address,
         NULL_ADDRESS,
         founder,
-        BLOCK_INTERVAL
+        BLOCK_INTERVAL,
+        avatar.address,
+        identity.address
       ); // staking should failed
     dai.mint(staker, web3.utils.toWei("100", "ether"));
     dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
@@ -170,7 +196,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
         fakecDAI.address,
         NULL_ADDRESS,
         founder,
-        BLOCK_INTERVAL
+        BLOCK_INTERVAL,
+        avatar.address,
+        identity.address
       ); // staking should failed
     dai.mint(staker, web3.utils.toWei("100", "ether"));
     dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
@@ -196,7 +224,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
         fakecDAI.address,
         NULL_ADDRESS,
         founder,
-        BLOCK_INTERVAL
+        BLOCK_INTERVAL,
+        avatar.address,
+        identity.address
       ); // staking should failed
     dai.mint(staker, web3.utils.toWei("100", "ether"));
     dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {

@@ -4,7 +4,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
-import "../../contracts/dao/schemes/SchemeGuard.sol";
+import "../../contracts/dao/schemes/FeelessScheme.sol";
+import "../../contracts/dao/schemes/ActivePeriod.sol";
 import "../../contracts/DSMath.sol";
 
 interface cERC20 {
@@ -23,7 +24,7 @@ interface cERC20 {
 * or withdraw their stake in DAI
 * the contracts buy cDai and can transfer the daily interest to the owner (DAO)
 */
-contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
+contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
     struct Staker {
@@ -59,15 +60,33 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         address _cDai,
         address _uniswap,
         address _fundManager,
-        uint256 _blockInterval
+        uint256 _blockInterval,
+        Avatar _avatar,
+        Identity _identity
 
-    ) public SchemeGuard(Avatar(address(0))) {
+    )
+        public
+        FeelessScheme(_identity, _avatar)
+        ActivePeriod(now, now * 2)
+    {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
         uniswap = _uniswap;
         blockInterval = _blockInterval;
         lastUBICollection = block.number;
+        start();
         transferOwnership(_fundManager);
+    }
+
+    /* @dev Start function. Adds this contract to identity as a feeless scheme.
+     * Can only be called if scheme is registered
+     */
+    function start()
+        public
+        onlyRegistered
+    {
+        addRights();
+        super.start();
     }
 
     /**

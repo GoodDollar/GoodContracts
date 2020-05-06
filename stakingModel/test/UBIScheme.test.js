@@ -162,7 +162,7 @@ contract(
     expect(claimer3BalanceAfter.toNumber() - claimer3BalanceBefore.toNumber()).to.be.equal(dailyUbi.toNumber());
   });
 
-  it("should be able to claim for second time for a new user", async () => {
+  it("should be able to claim after being activated and getting auto claim (in previous test case) ", async () => {
     let claimer3BalanceBefore = await goodDollar.balanceOf(claimer3);
     await ubi.claim({ from: claimer3 });
     let claimer3BalanceAfter = await goodDollar.balanceOf(claimer3);

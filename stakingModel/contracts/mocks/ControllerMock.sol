@@ -14,4 +14,8 @@ contract ControllerMock is Controller {
     {
         return avatar.genericCall(_contract, _data, _value);
     }
+
+    function isSchemeRegistered(address _scheme, address _avatar) external view returns(bool) {
+        return true;
+    }
 }

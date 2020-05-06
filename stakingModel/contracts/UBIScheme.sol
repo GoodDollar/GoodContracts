@@ -184,6 +184,24 @@ contract UBIScheme is AbstractUBI {
         return false;
     }
 
+    /* @dev Transfers `amount` dao tokens to `account`. updates stats
+     * and emits an events.
+     * @param account the account which recieves the funds
+     * @param amount the amount to transfer
+     */
+    function _transferClaimedTokens(address account, uint256 amount)
+        private
+        requireActive
+    {
+        Day memory day = claimDay[currentDay];
+        day.amountOfClaimers = day.amountOfClaimers.add(1);
+        day.claimAmount = day.claimAmount.add(amount);
+        claimDay[currentDay] = day;
+        GoodDollar token = GoodDollar(address(avatar.nativeToken()));
+        token.transfer(account, amount);
+        emit UBIClaimed(account, amount);
+    }
+
     /* @dev Function for claiming UBI. Requires contract to be active. Calls distributionFormula,
      * calculating the amount the account can claim, and transfers the amount to the account.
      * Emits the address of account and amount claimed.
@@ -203,33 +221,16 @@ contract UBIScheme is AbstractUBI {
         // within the calculation.
         uint256 newDistribution = distributionFormula(0, account);
 
-        // pending user might claims tokens twice in the first day
-        if(pendingUserClaims[account].isEligible && pendingUserClaims[account].day == currentDay) {
-            PendingUser memory user = pendingUserClaims[account];
-            user.isEligible = false;
-            pendingUserClaims[account] = user;
-            GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-            token.transfer(account, newDistribution);
-            emit UBIClaimed(account, newDistribution);
-            return true;
-        }
         // active user which has not claimed today yet, ie user last claimed < today
-        else if(isRegistered(account) && !fishedUsersAddresses[account] &&
+        if(isRegistered(account) && !fishedUsersAddresses[account] &&
             ((lastClaimed[account].sub(periodStart)) / 1 days) < currentDay) {
             lastClaimed[account] = now;
             claimDay[currentDay].hasClaimed[account] = true;
-            Day memory day = claimDay[currentDay];
-            day.amountOfClaimers = day.amountOfClaimers.add(1);
-            day.claimAmount = day.claimAmount.add(newDistribution);
-            claimDay[currentDay] = day;
-            GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-            token.transfer(account, newDistribution);
-            emit UBIClaimed(account, newDistribution);
+            _transferClaimedTokens(account, newDistribution);
             return true;
         }
         else if(!isRegistered(account) || fishedUsersAddresses[account]) { // a unregistered or fished user
             activeUsersCount = activeUsersCount.add(1);
-            prevDayActivatedCount = prevDayActivatedCount.add(1);
             fishedUsersAddresses[account] = false;
             // marks last claimed as today
             lastClaimed[account] = now;
@@ -306,18 +307,6 @@ contract UBIScheme is AbstractUBI {
         return true;
     }
 
-    /* @dev executes `fish` with multiple addresses
-     * @param accounts to fish
-     * @return A bool indicating if all the UBIs were fished
-     */
-    function getlen()
-        public
-        view
-        returns (uint256)
-    {
-        return pendingUserAddresses.length;
-    }
-
     /* @dev Function for automate claiming UBI for users. Emits the caller address and the
      * given list length and the actual number of claimers.
      * @param _start - start index of the pending list
@@ -331,8 +320,18 @@ contract UBIScheme is AbstractUBI {
     {
         require(_end.sub(_start).add(1) < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
         uint256 claimers = 0;
+        setDay();
         for(uint256 i = _start; i <= _end && i < pendingUserAddresses.length; ++i) {
-            if(identity.isWhitelisted(pendingUserAddresses[i]) && _claim(pendingUserAddresses[i])) {
+            address account = pendingUserAddresses[i];
+            uint256 newDistribution = distributionFormula(0, account);
+            // pending user might claims tokens twice in the first day
+            if(identity.isWhitelisted(account) &&
+            pendingUserClaims[account].isEligible &&
+            pendingUserClaims[account].day == currentDay) {
+                PendingUser memory user = pendingUserClaims[account];
+                user.isEligible = false;
+                pendingUserClaims[account] = user;
+                _transferClaimedTokens(account, newDistribution);
                 claimers = claimers.add(1);
             }
         }

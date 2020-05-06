@@ -3,7 +3,7 @@ pragma solidity 0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
-import "../../contracts/dao/schemes/SchemeGuard.sol";
+import "../../contracts/dao/schemes/FeelessScheme.sol";
 import "../../contracts/dao/schemes/ActivePeriod.sol";
 import "./GoodReserveCDai.sol";
 
@@ -17,7 +17,7 @@ interface StakingContract {
 * contract
 * cDAI support only
 */
-contract GoodFundManager is SchemeGuard, ActivePeriod {
+contract GoodFundManager is FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
     ERC20 cDai;
@@ -43,13 +43,25 @@ contract GoodFundManager is SchemeGuard, ActivePeriod {
 
     constructor(
         address _cDai,
-        Avatar _avatar
+        Avatar _avatar,
+        Identity _identity
     )
         public
-        SchemeGuard(_avatar)
+        FeelessScheme(_identity, _avatar)
         ActivePeriod(now, now * 2)
         {
         cDai = ERC20(_cDai);
+        start();
+    }
+
+    /* @dev Start function. Adds this contract to identity as a feeless scheme.
+     * Can only be called if scheme is registered
+     */
+    function start()
+        public
+        onlyRegistered
+    {
+        addRights();
         super.start();
     }
 

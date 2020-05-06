@@ -35,7 +35,7 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
     avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
     controller = await ControllerMock.new(avatar.address);
     await avatar.transferOwnership(controller.address);
-    goodFundManager = await GoodFundsManager.new(cDAI.address, avatar.address);
+    goodFundManager = await GoodFundsManager.new(cDAI.address, avatar.address, identity.address);
     simpleStaking = await SimpleDAIStaking.new(
       dai.address,
       cDAI.address,
@@ -56,6 +56,7 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
       goodDollar.address,
       goodFundManager.address,
       avatar.address,
+      identity.address,
       marketMaker.address,
       contribution.address
     );

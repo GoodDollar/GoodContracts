@@ -9,13 +9,14 @@ const Identity = artifacts.require("IdentityMock");
 const Formula = artifacts.require("FeeFormula");
 const avatarMock = artifacts.require("AvatarMock");
 const ControllerMock = artifacts.require("ControllerMock");
+const ContributionCalculation = artifacts.require("ContributionCalculation1");
 
 const BN = web3.utils.BN;
-export const BLOCK_INTERVAL = 5;
+export const BLOCK_INTERVAL = 2;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract("GoodFundManager - transfer interest from the staking contract to the reserve contract", ([founder, staker]) => {
-  let dai, cDAI, marketMaker, goodReserve, simpleStaking, goodFundManager, goodDollar, identity, formula, avatar, controller;
+  let dai, cDAI, marketMaker, goodReserve, simpleStaking, goodFundManager, goodDollar, identity, formula, avatar, controller, contribution;
 
   before(async () => {
     dai = await DAIMock.new();
@@ -43,6 +44,12 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
       BLOCK_INTERVAL
     );
     marketMaker = await MarketMaker.new(goodDollar.address, founder, 999388834642296, 1e15, avatar.address);
+    contribution = await ContributionCalculation.new(
+      avatar.address,
+      goodDollar.address,
+      0,
+      1e15
+    );
     goodReserve = await GoodReserve.new(
       dai.address,
       cDAI.address,
@@ -50,8 +57,7 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
       goodFundManager.address,
       avatar.address,
       marketMaker.address,
-      0,
-      1e15
+      contribution.address
     );
     await marketMaker.initializeToken(
       cDAI.address,
@@ -64,7 +70,7 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
   });
 
   it("should not transfer before reserve has been set", async () => {
-    let error = await goodFundManager.transferUBIInterest(simpleStaking.address).catch(e => e);
+    let error = await goodFundManager.transferInterest(simpleStaking.address).catch(e => e);
     expect(error.message).to.have.string("reserve has not initialized");
   });
 
@@ -111,25 +117,20 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
     );
   });
 
-  it("should not be able to transfer 0 cdai to the reserve", async () => {
-    let error = await goodFundManager.transferUBIInterest(simpleStaking.address).catch(e => e);
-    expect(error.message).to.have.string("added supply must be above 0");
-  });
-
   it("should transfer ubi interest to the reserve and recieves minted gd back to the staking contract", async () => {
     await cDAI.exchangeRateCurrent();
     const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
     let gains = await simpleStaking.currentUBIInterest();
     let cdaiGains = gains["0"];
     let reserveCDaiBalanceBefore = await cDAI.balanceOf(goodReserve.address);
-    let tx = await goodFundManager.transferUBIInterest(simpleStaking.address);
+    let tx = await goodFundManager.transferInterest(simpleStaking.address);
     let reserveCDaiBalanceAfter = await cDAI.balanceOf(goodReserve.address);
     let stakingGDBalance = await goodDollar.balanceOf(simpleStaking.address);
     const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
     expect(stakingGDBalance.toString()).to.be.equal("970492");
     expect(reserveCDaiBalanceAfter.sub(reserveCDaiBalanceBefore).toString()).to.be.equal(cdaiGains.toString());
     expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
-    expect(tx.logs[0].event).to.be.equal("UBITransferred");
+    expect(tx.logs[0].event).to.be.equal("FundsTransferred");
   });
 
   it("should not be able to destroy the contract if the caller is not the dao", async () => {

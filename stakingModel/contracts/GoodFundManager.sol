@@ -28,11 +28,12 @@ contract GoodFundManager is SchemeGuard, ActivePeriod {
     // mapping (uint256 => Funds) public dailyFunds;
 
 
-    event UBITransferred(address indexed caller,
-                        address indexed staking,
-                        address indexed reserve,
-                        uint256 cdaiGains,
-                        uint256 gdMinted);
+    event FundsTransferred(address indexed caller,
+                           address indexed staking,
+                           address indexed reserve,
+                           uint256 cdaiGains,
+                           uint256 gdInterest,
+                           uint256 gdUBI);
 
 
     modifier reserveHasInitialized {
@@ -67,7 +68,7 @@ contract GoodFundManager is SchemeGuard, ActivePeriod {
      * @param staking contract that implements `collectUBIInterest` and transfer cdai to
      * a given address.
      */
-    function transferUBIInterest(StakingContract staking)
+    function transferInterest(StakingContract staking)
         public
         requireActive
         onlyRegistered
@@ -79,12 +80,19 @@ contract GoodFundManager is SchemeGuard, ActivePeriod {
         staking.collectUBIInterest(address(reserve));
         // finds the actual transferred cdai
         uint256 actualCDaiGains = cDai.balanceOf(address(reserve)).sub(currentBalance);
-        // mints gd while the interest amount is equal to the transferred amount
-        (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(cDai, actualCDaiGains, actualCDaiGains);
-        // transfers the minted tokens to the given staking contract
-        GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        token.transfer(address(staking), gdInterest);
-        emit UBITransferred(msg.sender, address(staking), address(reserve), actualCDaiGains, gdInterest);
+        if(actualCDaiGains > 0) {
+            // mints gd while the interest amount is equal to the transferred amount
+            (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(cDai, actualCDaiGains, actualCDaiGains);
+            // transfers the minted tokens to the given staking contract
+            GoodDollar token = GoodDollar(address(avatar.nativeToken()));
+            token.transfer(address(staking), gdInterest);
+            emit FundsTransferred(msg.sender,
+                                  address(staking),
+                                  address(reserve),
+                                  actualCDaiGains,
+                                  gdInterest,
+                                  gdUBI);
+        }
     }
 
     /**

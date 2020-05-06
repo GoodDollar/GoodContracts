@@ -6,7 +6,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
-import "../../contracts/dao/schemes/SchemeGuard.sol";
+import "../../contracts/dao/schemes/FeelessScheme.sol";
 import "../../contracts/dao/schemes/ActivePeriod.sol";
 import "../../contracts/DSMath.sol";
 import "../../contracts/token/GoodDollar.sol";
@@ -31,7 +31,7 @@ interface ContributionCalculation {
 /**
 @title Reserve based on cDAI and dynamic reserve ratio market maker
 */
-contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
+contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
     ERC20 dai;
@@ -104,11 +104,12 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         address _gooddollar,
         address _fundManager,
         Avatar _avatar,
+        Identity _identity,
         address _marketMaker,
         ContributionCalculation _contribution
     )
         public
-        SchemeGuard(_avatar)
+        FeelessScheme(_identity, _avatar)
         ActivePeriod(now, now * 2)
     {
         dai = ERC20(_dai);
@@ -118,6 +119,17 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
         contribution = _contribution;
+        start();
+    }
+   
+    /* @dev Start function. Adds this contract to identity as a feeless scheme.
+     * Can only be called if scheme is registered
+     */
+    function start()
+        public
+        onlyRegistered
+    {
+        addRights();
         super.start();
     }
 

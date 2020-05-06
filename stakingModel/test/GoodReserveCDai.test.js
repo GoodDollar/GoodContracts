@@ -7,9 +7,10 @@ const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 const avatarMock = artifacts.require("AvatarMock");
+const ControllerMock = artifacts.require("ControllerMock");
 const Identity = artifacts.require("Identity");
 const Formula = artifacts.require("FeeFormula");
-const ContributionCalculation = artifacts.require("ContributionCalculation");
+const ContributionCalculation = artifacts.require("ContributionCalculation1");
 
 const BN = web3.utils.BN;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -18,7 +19,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
   let dai;
   let cDAI;
   let goodReserve;
-  let goodDollar, avatar, identity, formula, marketMaker, contribution;
+  let goodDollar, avatar, identity, formula, marketMaker, contribution, controller;
 
   before(async () => {
     dai = await DAIMock.new();
@@ -28,6 +29,8 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       Identity.new(),
       Formula.new(0)
     ]);
+    controller = await ControllerMock.new(avatar.address);
+    await avatar.transferOwnership(controller.address);
     goodDollar = await GoodDollar.new(
       "GoodDollar",
       "GDD",
@@ -55,13 +58,14 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       goodDollar.address,
       founder,
       avatar.address,
+      identity.address,
       marketMaker.address,
       contribution.address
     );
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
   });
 
-  it("should set marketmaker in the reserve by avatar", async () => {
+it("should set marketmaker in the reserve by avatar", async () => {
     let encodedCall = web3.eth.abi.encodeFunctionCall({
       name: 'setMarketMaker',
       type: 'function',
@@ -70,7 +74,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_marketMaker'
       }]
     }, [marketMaker.address]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     const newMM = await goodReserve.marketMaker();
     expect(newMM.toString()).to.be.equal(marketMaker.address);
   });
@@ -84,7 +88,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_marketMaker'
       }]
     }, [marketMaker.address]);
-    await avatar.genericCall(contribution.address, encodedCall, 0);
+    await controller.genericCall(contribution.address, encodedCall, avatar.address, 0);
     const newMM = await contribution.marketMaker();
     expect(newMM.toString()).to.be.equal(marketMaker.address);
   });
@@ -98,7 +102,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_reserve'
       }]
     }, [goodReserve.address]);
-    await avatar.genericCall(contribution.address, encodedCall, 0);
+    await controller.genericCall(contribution.address, encodedCall, avatar.address, 0);
     const newReserve = await contribution.reserve();
     expect(newReserve.toString()).to.be.equal(goodReserve.address);
   });
@@ -397,7 +401,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
         name: '_denom'
     }]
     }, [nom, denom]);
-    await avatar.genericCall(contribution.address, encodedCall, 0);
+    await controller.genericCall(contribution.address, encodedCall, avatar.address, 0);
     const newRatio = await contribution.sellContributionRatio();
     expect(newRatio.toString()).to.be.equal("200000000000000000000000000");
   });
@@ -422,7 +426,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_contribution'
       }]
     }, [NULL_ADDRESS]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let newAddress = await goodReserve.contribution();
     expect(newAddress).to.be.equal(NULL_ADDRESS);
     encodedCall = web3.eth.abi.encodeFunctionCall({
@@ -433,7 +437,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_contribution'
       }]
     }, [currentAddress]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     newAddress = await goodReserve.contribution();
     expect(newAddress).to.be.equal(currentAddress);
   });
@@ -571,7 +575,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_avatar'
       }]
     }, [NULL_ADDRESS]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
     let isActive = await goodReserve.isActive();
@@ -593,7 +597,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_avatar'
       }]
     }, [avatar.address]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
     let code = await web3.eth.getCode(goodReserve.address);
@@ -615,7 +619,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_avatar'
       }]
     }, [avatar.address]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
     let newMMOwner = await marketMaker.owner();

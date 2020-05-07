@@ -328,9 +328,8 @@ contract UBIScheme is AbstractUBI {
             if(identity.isWhitelisted(account) &&
             pendingUserClaims[account].isEligible &&
             pendingUserClaims[account].day == currentDay) {
-                PendingUser memory user = pendingUserClaims[account];
+                PendingUser storage user = pendingUserClaims[account];
                 user.isEligible = false;
-                pendingUserClaims[account] = user;
                 _transferClaimedTokens(account, newDistribution);
                 claimers = claimers.add(1);
             }

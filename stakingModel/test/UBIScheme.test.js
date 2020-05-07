@@ -181,7 +181,7 @@ contract(
     expect(claimer4BalanceAfter.toNumber()).to.be.equal(claimer4BalanceBefore.toNumber());
   });
 
-  it("should be able to execute successfully claim after the user had received tokens as a result of distribute which had been executed", async () => {
+  it("should be able to claim the daily tokens at the same day which distribute has been executed and the user was in the distribution list", async () => {
     await ubi.claim({ from: claimer4 });
     await increaseTime(ONE_DAY);
     let claimer4Balance1 = await goodDollar.balanceOf(claimer4);

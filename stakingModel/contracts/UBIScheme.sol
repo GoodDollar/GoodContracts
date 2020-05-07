@@ -185,21 +185,23 @@ contract UBIScheme is AbstractUBI {
     }
 
     /* @dev Transfers `amount` dao tokens to `account`. updates stats
-     * and emits an events.
+     * and emits an event in case of claimed.
      * @param account the account which recieves the funds
      * @param amount the amount to transfer
+     * @param isClaimed true for claimed
      */
-    function _transferClaimedTokens(address account, uint256 amount)
+    function _transferTokens(address account, uint256 amount, bool isClaimed)
         private
         requireActive
     {
-        Day memory day = claimDay[currentDay];
+        Day storage day = claimDay[currentDay];
         day.amountOfClaimers = day.amountOfClaimers.add(1);
         day.claimAmount = day.claimAmount.add(amount);
-        claimDay[currentDay] = day;
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
         token.transfer(account, amount);
-        emit UBIClaimed(account, amount);
+        if(isClaimed) {
+            emit UBIClaimed(account, amount);
+        }
     }
 
     /* @dev Function for claiming UBI. Requires contract to be active. Calls distributionFormula,
@@ -226,7 +228,7 @@ contract UBIScheme is AbstractUBI {
             ((lastClaimed[account].sub(periodStart)) / 1 days) < currentDay) {
             lastClaimed[account] = now;
             claimDay[currentDay].hasClaimed[account] = true;
-            _transferClaimedTokens(account, newDistribution);
+            _transferTokens(account, newDistribution, true);
             return true;
         }
         else if(!isRegistered(account) || fishedUsersAddresses[account]) { // a unregistered or fished user
@@ -279,12 +281,7 @@ contract UBIScheme is AbstractUBI {
         // that the fisher is the first to make the calculation today
         uint256 newDistribution = distributionFormula(0, account);
         activeUsersCount = activeUsersCount.sub(1);
-        GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        Day memory day = claimDay[currentDay];
-        day.amountOfClaimers = day.amountOfClaimers.add(1);
-        day.claimAmount = day.claimAmount.add(newDistribution);
-        claimDay[currentDay] = day;
-        token.transfer(msg.sender, newDistribution);
+        _transferTokens(msg.sender, newDistribution, false);
         emit UBIFished(msg.sender, account, newDistribution);
         return true;
     }
@@ -330,7 +327,7 @@ contract UBIScheme is AbstractUBI {
             pendingUserClaims[account].day == currentDay) {
                 PendingUser storage user = pendingUserClaims[account];
                 user.isEligible = false;
-                _transferClaimedTokens(account, newDistribution);
+                _transferTokens(account, newDistribution, true);
                 claimers = claimers.add(1);
             }
         }

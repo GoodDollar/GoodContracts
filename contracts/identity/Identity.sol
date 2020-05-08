@@ -9,6 +9,7 @@ import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../dao/schemes/SchemeGuard.sol";
 import "./IdentityAdminRole.sol";
 
+
 /* @title Identity contract responsible for whitelisting
  * and keeping track of amount of whitelisted users
  */
@@ -25,12 +26,12 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
 
     mapping(address => uint256) public dateAdded;
 
-    mapping (address => string) public addrToDID;
-    mapping (bytes32 => address) public didHashToAddress;
+    mapping(address => string) public addrToDID;
+    mapping(bytes32 => address) public didHashToAddress;
 
     event BlacklistAdded(address indexed account);
     event BlacklistRemoved(address indexed account);
- 
+
     event WhitelistedAdded(address indexed account);
     event WhitelistedRemoved(address indexed account);
 
@@ -56,7 +57,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account The address to add
      * @param did the ID to add account under
      */
-    function addWhitelistedWithDID(address account, string memory did) 
+    function addWhitelistedWithDID(address account, string memory did)
         public
         onlyRegistered
         onlyIdentityAdmin
@@ -88,11 +89,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account the address to check
      * @return a bool indicating weather the address is present in whitelist
      */
-    function isWhitelisted(address account)
-        public
-        view
-        returns (bool)
-    {
+    function isWhitelisted(address account) public view returns (bool) {
         return whitelist.has(account);
     }
 
@@ -114,16 +111,18 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         require(!isBlacklisted(account), "Cannot transfer to blacklisted");
         require(token.balanceOf(account) == 0, "Account is already in use");
 
-        require(keccak256(bytes(addrToDID[account])) == keccak256(bytes("")), "address already has DID");
+        require(
+            keccak256(bytes(addrToDID[account])) == keccak256(bytes("")),
+            "address already has DID"
+        );
 
         string memory did = addrToDID[msg.sender];
         bytes32 pHash = keccak256(bytes(did));
 
-        _addWhitelisted(account);
         uint256 balance = token.balanceOf(msg.sender);
         token.transferFrom(msg.sender, account, balance);
         _removeWhitelisted(msg.sender);
-
+        _addWhitelisted(account);
         addrToDID[account] = did;
         didHashToAddress[pHash] = account;
     }
@@ -191,11 +190,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param address to check
      * @return a bool indicating if address is on list of contracts
      */
-    function isDAOContract(address account)
-        public
-        view
-        returns (bool)
-    {
+    function isDAOContract(address account) public view returns (bool) {
         return contracts.has(account);
     }
 
@@ -204,12 +199,11 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      */
     function _addWhitelisted(address account) internal {
         whitelist.add(account);
-        
+
         whitelistedCount += 1;
         dateAdded[account] = now;
 
-        if(isContract(account))
-        {
+        if (isContract(account)) {
             whitelistedContracts += 1;
         }
 
@@ -220,9 +214,14 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account the address to add
      * @param did the id to register account under
      */
-    function _addWhitelistedWithDID(address account, string memory did) internal {
+    function _addWhitelistedWithDID(address account, string memory did)
+        internal
+    {
         bytes32 pHash = keccak256(bytes(did));
-        require(didHashToAddress[pHash] == address(0), "DID already registered");
+        require(
+            didHashToAddress[pHash] == address(0),
+            "DID already registered"
+        );
 
         addrToDID[account] = did;
         didHashToAddress[pHash] = account;
@@ -257,24 +256,18 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account the address to check
      * @return a bool indicating weather the address is present in the blacklist
      */
-    function isBlacklisted(address account)
-        public
-        view
-        returns (bool)
-    {
+    function isBlacklisted(address account) public view returns (bool) {
         return blacklist.has(account);
     }
 
     /* @dev Function to see if given address is a contract
      * @return true if address is a contract
      */
-    function isContract(address _addr)
-        view
-        internal
-        returns (bool)
-    {
+    function isContract(address _addr) internal view returns (bool) {
         uint256 length;
-        assembly { length := extcodesize(_addr) }
+        assembly {
+            length := extcodesize(_addr)
+        }
         return length > 0;
     }
 }

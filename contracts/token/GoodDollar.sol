@@ -46,7 +46,12 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * transferred
      * @return a boolean that indicates if the operation was successful
      */
-    function transfer(address to, uint256 value) public returns (bool) {
+    function transfer(address to, uint256 value)
+        public
+        onlyNotBlacklisted
+        requireNotBlacklisted(to)
+        returns (bool)
+    {
         uint256 bruttoValue = processFees(msg.sender, value);
         return super.transfer(to, bruttoValue);
     }
@@ -58,7 +63,12 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * @param value The amount of tokens to be spent
      * @return a boolean that indicates if the operation was successful
      */
-    function approve(address spender, uint256 value) public returns (bool) {
+    function approve(address spender, uint256 value)
+        public
+        onlyNotBlacklisted
+        requireNotBlacklisted(spender)
+        returns (bool)
+    {
         return super.approve(spender, value);
     }
 
@@ -86,6 +96,8 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      */
     function transferAndCall(address to, uint256 value, bytes calldata data)
         external
+        onlyNotBlacklisted
+        requireNotBlacklisted(to)
         returns (bool)
     {
         uint256 bruttoValue = processFees(msg.sender, value);

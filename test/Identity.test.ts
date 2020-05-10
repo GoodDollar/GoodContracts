@@ -11,7 +11,7 @@ const IdentityGuardMock = artifacts.require("IdentityGuardMock");
 const AddAdmin = artifacts.require("AddAdmin");
 const RemoveAdmin = artifacts.require("RemoveAdmin");
 
-contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklisted2, whitelisted, whitelisted2, outsider]) => {
+contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklisted2, whitelisted, whitelisted2, outsider, authuser]) => {
 
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
     let dangerIdentity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
@@ -107,6 +107,20 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
         );
     });
 
+    it("should revert when non admin tries to set the authentication period", async () => {
+        await helpers.assertVMException(
+            identity.setAuthenticationPeriod(10, {from: outsider}),
+            "not IdentityAdmin"
+        );
+    });
+
+    it("should revert when non admin tries to authentice a user", async () => {
+        await helpers.assertVMException(
+            identity.authenticate(authuser, {from: outsider}),
+            "not IdentityAdmin"
+        );
+    });
+
     it("should not be able to add zero address as identity admin", async() => {
         helpers.assertVMException(
             AddAdmin.new(
@@ -117,6 +131,32 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
             "admin cannot be null address"
         );
     })
+
+    it("should add identity admin", async () => {
+        addAdmin = await AddAdmin.new(
+            avatar.address,
+            identity.address,
+            outsider
+        );
+    });
+
+    it("should set the authentication period", async () => {
+        await identity.setAuthenticationPeriod(10);
+        assert((await identity.authenticationPeriod()).toNumber() == 10);
+    });
+
+    it("should authenticate the user with the correct timestamp", async () => {
+        await identity.authenticate(authuser);
+        let dateAuthenticated1 = await identity.wasAdded(authuser);
+        await identity.authenticate(authuser);
+        let dateAuthenticated2 = await identity.wasAdded(authuser);
+        assert(dateAuthenticated2.toNumber() - dateAuthenticated1.toNumber() > 0);
+    });
+
+    it("should set the authentication period", async () => {
+        await identity.setAuthenticationPeriod(10);
+        assert((await identity.authenticationPeriod()).toNumber() == 10);
+    });
 
     it("should add identity admin", async () => {
         addAdmin = await AddAdmin.new(

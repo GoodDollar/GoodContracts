@@ -26,7 +26,13 @@ contract FixedUBI is AbstractUBI {
         uint256 _claimDistribution
     )
         public
-        AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd)
+        AbstractUBI(
+            _avatar,
+            _identity,
+            _initialReserve,
+            _periodStart,
+            _periodEnd
+        )
     {
         require(_claimDistribution > 0, "Distribution cannot be zero");
 
@@ -41,18 +47,18 @@ contract FixedUBI is AbstractUBI {
      * @param user the claiming address
      * @return the amount of GoodDollar the user can claim
      */
-    function distributionFormula(uint256 amount, address user) internal returns(uint256)
+    function distributionFormula(uint256 amount, address user)
+        internal
+        returns (uint256)
     {
-        if(lastClaimed[user] == 0) {
+        if (lastClaimed[user] == 0) {
             lastClaimed[user] = identity.dateAdded(user).sub(1 days);
         }
 
-        uint256 claimDays = now.sub(lastClaimed[user]) / 1 days; 
-        
-        claimDays = claimDays > 7 ? 7 : claimDays;
+        uint256 claimDays = now.sub(lastClaimed[user]) / 1 days;
 
         require(claimDays >= 1, "Has claimed within a day");
-        return amount.mul(claimDays);
+        return amount;
     }
 
     /* @dev Sets the currentDay variable to amount of days
@@ -66,17 +72,19 @@ contract FixedUBI is AbstractUBI {
      * whitelisted or not. If they have not been whitelisted, they are eligible to claim for one day.
      * @return The amount of GoodDollar the address can claim.
      */
-    function checkEntitlement() public view requireActive returns (uint256) 
-    {
-        uint256 lastClaimed = lastClaimed[msg.sender] > 0 ?
-            lastClaimed[msg.sender] :
-            (identity.dateAdded(msg.sender) > 0 ? identity.dateAdded(msg.sender).sub(1 days) : now.sub(1 days));
+    function checkEntitlement() public view requireActive returns (uint256) {
+        uint256 lastClaimed = lastClaimed[msg.sender] > 0
+            ? lastClaimed[msg.sender]
+            : (
+                identity.dateAdded(msg.sender) > 0
+                    ? identity.dateAdded(msg.sender).sub(1 days)
+                    : now.sub(1 days)
+            );
 
         uint256 claimDays = now.sub(lastClaimed) / 1 days;
-        claimDays = claimDays > 7 ? 7 : claimDays;
-        uint256 claimAmount = claimDistribution;
+        uint256 claimAmount = claimDays >= 1 ? claimDistribution : 0;
 
-        return claimAmount.mul(claimDays);
+        return claimAmount;
     }
 
     /* @dev Function for claiming UBI. Requires contract to be active and claimer to be whitelisted.
@@ -84,13 +92,11 @@ contract FixedUBI is AbstractUBI {
      * to the caller. Emits the address of caller and amount claimed.
      * @return A bool indicating if UBI was claimed
      */
-    function claim()
-        public
-        requireActive
-        onlyWhitelisted
-        returns (bool)
-    {
-        uint256 newDistribution = distributionFormula(claimDistribution, msg.sender);
+    function claim() public requireActive onlyWhitelisted returns (bool) {
+        uint256 newDistribution = distributionFormula(
+            claimDistribution,
+            msg.sender
+        );
         lastClaimed[msg.sender] = now;
         setDay();
 
@@ -98,10 +104,10 @@ contract FixedUBI is AbstractUBI {
         token.transfer(msg.sender, newDistribution);
 
         Day memory day = claimDay[currentDay];
-        
+
         day.amountOfClaimers = day.amountOfClaimers.add(1);
         day.claimAmount = day.claimAmount.add(newDistribution);
-        
+
         claimDay[currentDay] = day;
 
         emit UBIClaimed(msg.sender, newDistribution);

@@ -4,6 +4,7 @@ import "../identity/IdentityGuard.sol";
 import "../dao/schemes/FormulaHolder.sol";
 import "./ERC677BridgeToken.sol";
 
+
 /**
  * @title The GoodDollar ERC677 token contract
  */

@@ -62,7 +62,7 @@ contract("Integration - rewarding whitelisted bonus", ([founder, whitelisted, wh
       assert(executeProposalEventExists);
 
 
-      await token.transfer(avatar.address, helpers.toGD("500"));
+      // await token.transfer(avatar.address, helpers.toGD("500"));
       assert(await signUpBonus.start());
     });
 

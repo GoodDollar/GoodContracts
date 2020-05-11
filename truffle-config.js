@@ -25,6 +25,9 @@ module.exports = {
 
   networks: {
     develop: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "http://localhost:9545/", 0, 10);
+      },
       // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
@@ -97,7 +100,7 @@ module.exports = {
     },
     fuse: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -106,7 +109,7 @@ module.exports = {
     },
     staging: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -115,7 +118,7 @@ module.exports = {
     },
     etoro: {
       provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
+        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
       },
       network_id: 122,
       gas: 8500000,
@@ -124,12 +127,12 @@ module.exports = {
     },
     production: {
       provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
+        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
       },
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,
-      gasPrice: 2000000000 //1 gwei
+      gasPrice: 1000000000 //1 gwei
     }
   },
   mocha: {

@@ -1,6 +1,6 @@
 # [GoodDollar](https://gooddollar.org) - GoodContracts
-![CircleCI](https://circleci.com/gh/etoroxlabs/GoodContracts/tree/master.svg?style=svg&circle-token=fd84c75a2cd12485f1baf71dd073f9b67d16bd0d)
-[![Coverage Status](https://coveralls.io/repos/github/etoroxlabs/GoodContracts/badge.svg?branch=master&t=dVBxdT)](https://coveralls.io/github/etoroxlabs/GoodContracts?branch=master)
+[![CircleCI](https://circleci.com/gh/GoodDollar/GoodContracts.svg?style=svg)](https://circleci.com/gh/GoodDollar/GoodContracts)
+[![Coverage Status](https://coveralls.io/repos/github/GoodDollar/GoodContracts/badge.svg?branch=master&t=dVBxdT)](https://coveralls.io/github/GoodDollar/GoodContracts?branch=master)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Gitter](https://badges.gitter.im/GoodDollar/community.svg)](https://gitter.im/GoodDollar/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 # Contributing

@@ -21,7 +21,7 @@ const AdminWallet = artifacts.require("./AdminWallet.sol");
 const releaser = require("../scripts/releaser.js");
 
 const tokenName = "GoodDollar";
-const tokenSymbol = "GDD";
+const tokenSymbol = "G$";
 
 // initial preliminary constants
 const votePrecedence = 50;
@@ -42,14 +42,12 @@ module.exports = async function(deployer, network) {
 
   const initRep = networkSettings.reputation;
   const initRepInWei = [initRep];
-  let initToken = toGD(networkSettings.foundersTokens);
+  let initToken = toGD(networkSettings.avatarTokens);
 
-  const initTokenInWei = [initToken];
+  const initTokenInWei = initToken;
 
   deployer.deploy(Identity).then(async identity => {
-    await web3.eth.getAccounts(function(err, res) {
-      accounts = res;
-    });
+    const accounts = await web3.eth.getAccounts();
     const founders = [accounts[0]];
 
     const feeFormula = await deployer.deploy(
@@ -108,6 +106,11 @@ module.exports = async function(deployer, network) {
     await identity.setAvatar(avatar.address);
     await feeFormula.setAvatar(avatar.address);
 
+    //for testing we give founders some tokens
+    if (network === "test") {
+      await Promise.all(founders.map(f => token.mint(f, initTokenInWei)));
+    }
+
     await token.renounceMinter();
 
     await identity.addPauser(avatar.address);
@@ -115,17 +118,6 @@ module.exports = async function(deployer, network) {
 
     await identity.addIdentityAdmin(avatar.address);
     await identity.addIdentityAdmin(adminWallet.address);
-
-    if (network === "fuse" || network === "staging") {
-      await identity.addIdentityAdmin(
-        "0x0aFb8F8B5B581Cd67E8a6e00aC4248A4B6f980E1",
-        avatar.address
-      );
-      await identity.addIdentityAdmin(
-        "0x8158815481A26c4759d167f4e372a384b5521187",
-        avatar.address
-      );
-    }
 
     //Transfer ownership to controller
     //await token.transferOwnership(await avatar.owner());
@@ -194,11 +186,6 @@ module.exports = async function(deployer, network) {
     await identity.addContract(await avatar.owner());
     await identity.addContract(adminWallet.address);
     await identity.addContract(identity.address);
-
-    await token.transfer(
-      avatar.address,
-      toGD(networkSettings.founderTokensToAvatar)
-    );
 
     let releasedContracts = {
       GoodDollar: await avatar.nativeToken(),

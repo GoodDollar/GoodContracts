@@ -42,12 +42,12 @@ module.exports = async function(deployer, network, accounts) {
         admin_mnemonic,
         "https://" + network + ".infura.io/v3/" + infura_api,
         0,
-        50
+        10
       );
     } else {
       adminProvider = new HDWalletProvider(
         admin_mnemonic,
-        "https://rpc.fusenet.io/",
+        "https://rpc.fuse.io/",
         0,
         10
       );

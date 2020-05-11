@@ -70,6 +70,7 @@ npx truffle version
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   npx solidity-coverage "$@"
+  cat coverage/lcov.info | npx coveralls
 else
   npx truffle test "$@"
 fi

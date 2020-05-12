@@ -92,12 +92,12 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
                                        uint256 gdUbiTransferred);
 
     constructor(
-        address _dai,
-        address _cDai,
-        address _gooddollar,
+        ERC20 _dai,
+        cERC20 _cDai,
+        GoodDollar _gooddollar,
         address _fundManager,
         Avatar _avatar,
-        address _marketMaker,
+        GoodMarketMaker _marketMaker,
         uint256 _nom,
         uint256 _denom
     )
@@ -105,12 +105,12 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         SchemeGuard(_avatar)
         ActivePeriod(now, now * 2)
     {
-        dai = ERC20(_dai);
-        cDai = cERC20(_cDai);
-        gooddollar = GoodDollar(_gooddollar);
+        dai = _dai;
+        cDai = _cDai;
+        gooddollar = _goodDollar;
         avatar = _avatar;
         fundManager = _fundManager;
-        marketMaker = GoodMarketMaker(_marketMaker);
+        marketMaker = _marketMaker;
         sellContributionRatio = rdiv(_nom, _denom);
         super.start();
     }
@@ -244,9 +244,10 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         uint256 gdExpansionToMint = marketMaker.mintExpansion(interestToken);
         uint256 gdUBI = gdInterestToMint.sub(gdInterest);
         gdUBI = gdUBI.add(gdExpansionToMint);
-        ERC20Mintable(address(gooddollar)).mint(fundManager, gdInterest);
-        //TODO: how do we transfer to bridge, is the fundmanager in charge of that?
-        ERC20Mintable(address(gooddollar)).mint(address(avatar), gdUBI);
+        uint256 toMint = gdUBI.add(gdInterest)
+        if(toMint > 0)
+            ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
+
         emit GDInterestAndExpansionMinted(
             msg.sender,
             address(fundManager),

@@ -23,8 +23,9 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
 
     uint256 public whitelistedCount = 0;
     uint256 public whitelistedContracts = 0;
+    uint256 public authenticationPeriod = 14;
 
-    mapping(address => uint256) public dateAdded;
+    mapping(address => uint256) public dateAuthenticated;
 
     mapping(address => string) public addrToDID;
     mapping(bytes32 => address) public didHashToAddress;
@@ -39,6 +40,32 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
     event ContractRemoved(address indexed account);
 
     constructor() public SchemeGuard(Avatar(0)) {}
+
+    /* @dev Sets a new value for authenticationPeriod.
+     * Can only be called by Identity Administrators.
+     * @param period new value for authenticationPeriod
+     */
+    function setAuthenticationPeriod(uint256 period)
+        public
+        onlyOwner
+        whenNotPaused
+    {
+        authenticationPeriod = period;
+    }
+
+    /* @dev Sets the authentication date of `account`
+     * to the current time.
+     * Can only be called by Identity Administrators.
+     * @param account address to change its auth date
+     */
+    function authenticate(address account)
+        public
+        onlyRegistered
+        onlyIdentityAdmin
+        whenNotPaused
+    {
+        dateAuthenticated[account] = now;
+    }
 
     /* @dev Adds an address as whitelisted.
      * Can only be called by Identity Administrators.
@@ -89,8 +116,9 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account the address to check
      * @return a bool indicating weather the address is present in whitelist
      */
-    function isWhitelisted(address account) public view returns (bool) {
-        return whitelist.has(account);
+    function lastAuthenticated(address account) public view returns (bool) {
+       uint256 daysSinceAuthentication = (now.sub(dateAuthenticated[account])) / 1 days;
+        return (daysSinceAuthentication <= authenticationPeriod);
     }
 
     /* @dev Function that gives the date the given user was added
@@ -98,7 +126,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @return The date the address was added
      */
     function wasAdded(address account) public view returns (uint256) {
-        return dateAdded[account];
+        return dateAuthenticated[account];
     }
 
     /* @dev Function to transfer whitelisted privilege to another address
@@ -201,7 +229,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         whitelist.add(account);
 
         whitelistedCount += 1;
-        dateAdded[account] = now;
+        dateAuthenticated[account] = now;
 
         if (isContract(account)) {
             whitelistedContracts += 1;
@@ -236,7 +264,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         whitelist.remove(account);
 
         whitelistedCount -= 1;
-        delete dateAdded[account];
+        delete dateAuthenticated[account];
 
         if (isContract(account)) {
             whitelistedContracts -= 1;
@@ -245,7 +273,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         string memory did = addrToDID[account];
         bytes32 pHash = keccak256(bytes(did));
 
-        delete dateAdded[account];
+        delete dateAuthenticated[account];
         delete addrToDID[account];
         delete didHashToAddress[pHash];
 

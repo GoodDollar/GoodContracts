@@ -144,28 +144,28 @@ contract(
     });
 
     it("should allow admin to whitelist and remove whitelist", async () => {
-      assert(!(await identity.isWhitelisted(whitelisted)));
+      assert(!(await identity.lastAuthenticated(whitelisted)));
       await adminWallet.whitelist(whitelisted, "did:test", { from: admin });
 
-      assert(await identity.isWhitelisted(whitelisted));
+      assert(await identity.lastAuthenticated(whitelisted));
       await adminWallet.removeWhitelist(whitelisted, { from: admin });
-      assert(!(await identity.isWhitelisted(whitelisted)));
+      assert(!(await identity.lastAuthenticated(whitelisted)));
     });
 
     it("should not allow non-admin to whitelist and remove whitelist", async () => {
-      assert(!(await identity.isWhitelisted(whitelisted)));
+      assert(!(await identity.lastAuthenticated(whitelisted)));
       await helpers.assertVMException(
         adminWallet.whitelist(whitelisted, "did:test", { from: stranger }),
         "Caller is not admin"
       );
-      assert(!(await identity.isWhitelisted(whitelisted)));
+      assert(!(await identity.lastAuthenticated(whitelisted)));
       await adminWallet.whitelist(whitelisted, "did:test", { from: admin });
-      assert(await identity.isWhitelisted(whitelisted));
+      assert(await identity.lastAuthenticated(whitelisted));
       await helpers.assertVMException(
         adminWallet.removeWhitelist(whitelisted, { from: stranger }),
         "Caller is not admin"
       );
-      assert(await identity.isWhitelisted(whitelisted));
+      assert(await identity.lastAuthenticated(whitelisted));
     });
 
     it("should allow admin to blacklist and remove blacklist", async () => {
@@ -249,11 +249,11 @@ contract(
     });
 
     it("should whitelist user", async () => {
-      assert(!(await identity.isWhitelisted(stranger2)));
+      assert(!(await identity.lastAuthenticated(stranger2)));
       await adminWallet.whitelistAndAwardUser(stranger2, 0, "did:test3", {
         from: founder
       });
-      assert(await identity.isWhitelisted(stranger2));
+      assert(await identity.lastAuthenticated(stranger2));
     });
 
     it("should award users without whitelisting", async () => {

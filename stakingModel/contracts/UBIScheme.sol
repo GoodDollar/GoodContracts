@@ -284,7 +284,7 @@ contract UBIScheme is AbstractUBI {
         require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
         uint256 claimers = 0;
         for(uint256 i = 0; i < accounts.length; ++i) {
-            if(identity.isWhitelisted(accounts[i]) && _claim(accounts[i])) {
+            if(identity.lastAuthenticated(accounts[i]) && _claim(accounts[i])) {
                     claimers = claimers.add(1);
             }
         }

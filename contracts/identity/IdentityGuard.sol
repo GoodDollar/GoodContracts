@@ -38,7 +38,7 @@ contract IdentityGuard is Ownable{
     /* @dev Modifier that requires the sender to be whitelisted
      */
     modifier onlyWhitelisted() {
-        require(identity.isWhitelisted(msg.sender), "is not whitelisted");
+        require(identity.lastAuthenticated(msg.sender), "is not whitelisted");
         _;
     }
 
@@ -46,7 +46,7 @@ contract IdentityGuard is Ownable{
      * @param _account the given address
      */
     modifier requireWhitelisted(address _account) {
-        require(identity.isWhitelisted(_account), "is not whitelisted");
+        require(identity.lastAuthenticated(_account), "is not whitelisted");
         _;
     }
 

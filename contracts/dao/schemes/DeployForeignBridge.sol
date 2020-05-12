@@ -14,6 +14,7 @@ contract DeployForeignBridge is SchemeGuard {
     event ForeignBridgeDeployed(
         address indexed _foreignBridge,
         address indexed _foreignValidators,
+        address _foreignToken,
         uint256 _blockNumber
     );
 

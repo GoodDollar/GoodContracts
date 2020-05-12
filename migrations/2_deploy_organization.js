@@ -32,6 +32,7 @@ const NULL_HASH =
 // AdminWallet Settings
 
 module.exports = async function(deployer, network) {
+  const isMainNet = network.indexOf("mainnet") >= 0;
   const networkSettings = settings[network] || settings["default"];
   const walletToppingAmount = web3.utils.toWei(
     networkSettings.walletToppingAmount,
@@ -86,44 +87,59 @@ module.exports = async function(deployer, network) {
       identity.address,
       founders,
       initTokenInWei,
-      initRepInWei
+      initRepInWei,
+      { gas: 8000000 }
     );
 
     const avatar = await Avatar.at(await daoCreator.avatar());
     const controller = await Controller.at(await avatar.owner());
     const token = await GoodDollar.at(await avatar.nativeToken());
 
+    let adminWalletP = Promise.resolve({});
+    if (isMainNet) {
+      console.log("Skipping AdminWallet for mainnet");
+    } else {
+      adminWalletP = deployer.deploy(
+        AdminWallet,
+        founders,
+        walletToppingAmount,
+        walletToppingTimes,
+        identity.address
+      );
+    }
     // Deploy admin wallet
-    const adminWallet = await deployer.deploy(
-      AdminWallet,
-      founders,
-      walletToppingAmount,
-      walletToppingTimes,
-      identity.address
-    );
 
     //Set avatar for schemes
-    await identity.setAvatar(avatar.address);
-    await feeFormula.setAvatar(avatar.address);
+    const [adminWallet, ,] = await Promise.all([
+      adminWalletP,
+      identity.setAvatar(avatar.address),
+      feeFormula.setAvatar(avatar.address)
+    ]);
 
     //for testing we give founders some tokens
     if (network === "test") {
       await Promise.all(founders.map(f => token.mint(f, initTokenInWei)));
     }
 
-    await token.renounceMinter();
+    console.log("setting identity");
+    await Promise.all([
+      identity.addIdentityAdmin(avatar.address),
+      identity.addPauser(avatar.address),
+      adminWallet.address && identity.addIdentityAdmin(adminWallet.address)
+    ]);
+    console.log("transfering ownerships");
 
-    await identity.addPauser(avatar.address);
-    await identity.addPauser(adminWallet.address);
-
-    await identity.addIdentityAdmin(avatar.address);
-    await identity.addIdentityAdmin(adminWallet.address);
+    await Promise.all([
+      identity.transferOwnership(await avatar.address /* owner */),
+      token.renounceMinter(),
+      feeFormula.transferOwnership(await avatar.address /* .owner() */)
+    ]);
 
     //Transfer ownership to controller
     //await token.transferOwnership(await avatar.owner());
     //await reputation.transferOwnership(await avatar.owner());
-    await identity.transferOwnership(await avatar.address /* owner */);
-    await feeFormula.transferOwnership(await avatar.address /* .owner() */);
+
+    console.log("setting up dao voting machine and schemes");
 
     // Schemes
     // Deploy Voting Matching
@@ -181,11 +197,14 @@ module.exports = async function(deployer, network) {
       "metaData"
     );
 
-    await Promise.all(founders.map(f => identity.addWhitelisted(f)));
-    await identity.addContract(avatar.address);
-    await identity.addContract(await avatar.owner());
-    await identity.addContract(adminWallet.address);
-    await identity.addContract(identity.address);
+    console.log("whitelisting contracts and founders...");
+    await Promise.all([
+      ...founders.map(f => identity.addWhitelisted(f)),
+      identity.addContract(avatar.address),
+      identity.addContract(await avatar.owner()),
+      adminWallet.address && identity.addContract(adminWallet.address),
+      identity.addContract(identity.address)
+    ]);
 
     let releasedContracts = {
       GoodDollar: await avatar.nativeToken(),

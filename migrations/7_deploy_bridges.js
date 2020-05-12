@@ -32,17 +32,20 @@ module.exports = async function(deployer, network) {
   const absoluteVote = await AbsoluteVote.at(voteaddr);
   const schemeRegistrar = await SchemeRegistrar.at(schemeaddr);
 
-  let factory;
+  let factory, homeBridgeaddr, foreignBridgeaddr;
 
   //deploy home bridge always on fuse
   if (["fuse", "staging", "production"].includes(network)) {
-    factory = await SetHomeBridge.new(
+    console.log("Deploying home bridge scheme");
+    factory = await deployer.deploy(
+      SetHomeBridge,
       avataraddr,
       "0xb895638fb3870AD5832402a5BcAa64A044687db0"
     );
 
     await factory.transferOwnership(avataraddr);
 
+    console.log("voting home bridge scheme");
     let transaction = await schemeRegistrar.proposeScheme(
       avataraddr,
       factory.address,
@@ -60,13 +63,28 @@ module.exports = async function(deployer, network) {
     const isAlreadyMinter = await gd.isMinter(
       "0xb895638fb3870AD5832402a5BcAa64A044687db0"
     );
+
+    console.log("creating home bridge");
     let transaction2 = await factory.setBridge(isAlreadyMinter === false);
 
-    console.log({ transaction2, logs: transaction2.receipt.rawLogs });
-    homeBridgeaddr = transaction2.logs[0].args._homeBridge;
+    const {
+      _homeBridge,
+      _homeValidators,
+      _token,
+      _blockNumber
+    } = transaction2.logs[0].args;
+    homeBridgeaddr = {
+      _homeBridge,
+      _homeValidators,
+      _token,
+      _blockNumber: _blockNumber.toNumber()
+    };
     //foreign bridge for dev/staging on ropsten and production on ethereum
-  } else if (["fuse-mainnet", "staging-mainnet", "mainnet"].includes(network)) {
-    factory = await SetForeignBridge.new(
+  } else if (network.indexOf("mainnet") >= 0) {
+    console.log("Deploying foreign bridge scheme");
+
+    factory = await deployer.deploy(
+      SetForeignBridge,
       avataraddr,
       network === "mainnet"
         ? "0xaC116929b2baB59D05a1Da99303e7CAEd100ECC9"
@@ -74,6 +92,8 @@ module.exports = async function(deployer, network) {
     );
 
     await factory.transferOwnership(avataraddr);
+
+    console.log("voting foreign bridge scheme");
 
     let transaction = await schemeRegistrar.proposeScheme(
       avataraddr,
@@ -89,16 +109,28 @@ module.exports = async function(deployer, network) {
       founders.map(f => absoluteVote.vote(proposalId, 1, 0, f))
     );
 
+    console.log("creating foreign bridge");
     let transaction2 = await factory.setBridge();
 
-    foreignBridgeaddr = transaction2.logs[0].args._foreignBridge;
+    const {
+      _foreignBridge,
+      _foreignValidators,
+      _foreignToken,
+      _blockNumber
+    } = transaction2.logs[0].args;
+    foreignBridgeaddr = {
+      _foreignBridge,
+      _foreignValidators,
+      _foreignToken,
+      _blockNumber: _blockNumber.toNumber()
+    };
   }
 
   let releasedContracts = {
-    ...networkAddresses,
-    HomeBridge: homeBridgeaddr,
-    ForeignBridge: foreignBridgeaddr
+    ...networkAddresses
   };
+  homeBridgeaddr && (releasedContracts.HomeBridge = homeBridgeaddr);
+  foreignBridgeaddr && (releasedContracts.ForeignBridge = foreignBridgeaddr);
 
   console.log("Rewriting deployment file...\n", { releasedContracts });
   await releaser(releasedContracts, network);

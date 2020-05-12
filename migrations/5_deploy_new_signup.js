@@ -1,16 +1,10 @@
 const { toGD } = require("./helpers");
 const settings = require("./deploy-settings.json");
 const Identity = artifacts.require("./Identity");
-const Controller = artifacts.require("./Controller.sol");
-const GoodDollar = artifacts.require("./GoodDollar.sol");
-
 const Avatar = artifacts.require("./Avatar.sol");
 const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
-
-const UBI = artifacts.require("./FixedUBI.sol");
 const SignupBonus = artifacts.require("./SignUpBonus.sol");
-
 const AdminWallet = artifacts.require("./AdminWallet.sol");
 
 const releaser = require("../scripts/releaser.js");
@@ -21,6 +15,10 @@ const NULL_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
+  if (network.indexOf("mainnet") >= 0) {
+    console.log("Skipping signup bonus for mainnet");
+    return;
+  }
   const networkSettings = settings[network] || settings["default"];
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = await JSON.parse(file);
@@ -30,11 +28,7 @@ module.exports = async function(deployer, network) {
   const voteaddr = await networkAddresses.AbsoluteVote;
   const schemeaddr = await networkAddresses.SchemeRegistrar;
   const identityaddr = await networkAddresses.Identity;
-  const ubiaddr = await networkAddresses.UBI;
-  const otpaddr = await networkAddresses.OneTimePayments;
-  const homeBridgeaddr = await networkAddresses.HomeBridge;
-  const foreignBridgeaddr = await networkAddresses.ForeignBridge;
-  const walletaddr =  await networkAddresses.AdminWallet;
+  const walletaddr = await networkAddresses.AdminWallet;
 
   await web3.eth.getAccounts(function(err, res) {
     accounts = res;
@@ -43,8 +37,6 @@ module.exports = async function(deployer, network) {
 
   const avatar = await Avatar.at(avataraddr);
   const identity = await Identity.at(identityaddr);
-  const controller = await avatar.owner();
-  const token = await GoodDollar.at(await avatar.nativeToken());
   const absoluteVote = await AbsoluteVote.at(voteaddr);
   const schemeRegistrar = await SchemeRegistrar.at(schemeaddr);
   const adminWallet = await AdminWallet.at(walletaddr);
@@ -75,22 +67,8 @@ module.exports = async function(deployer, network) {
   await signupBonus.start();
 
   let releasedContracts = {
-    GoodDollar: await avatar.nativeToken(),
-    Reputation: await avatar.nativeReputation(),
-    Identity: await identity.address,
-    Avatar: await avatar.address,
-    Controller: await avatar.owner(),
-    AbsoluteVote: await absoluteVote.address,
-    SchemeRegistrar: await schemeRegistrar.address,
-    UpgradeScheme: await networkAddresses.UpgradeScheme,
-    AdminWallet: await networkAddresses.AdminWallet,
-    UBI: ubiaddr,
-    SignupBonus: await signupBonus.address,
-    OneTimePayments: otpaddr,
-    HomeBridge: homeBridgeaddr,
-    ForeignBridge: foreignBridgeaddr,
-    network,
-    networkId: parseInt(deployer.network_id)
+    ...networkAddresses,
+    SignupBonus: await signupBonus.address
   };
 
   console.log("Rewriting deployment file...\n", { releasedContracts });

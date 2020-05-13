@@ -76,9 +76,9 @@ contract(
       const reserve = (await token.balanceOf(avatar.address)) as any;
 
       const reserveDiff = reserve.sub(oldReserve);
-      const totalFees = ((await token
+      const totalFees = ((await (token as any) //fix overload issue
         .getFees(helpers.toGD("10"))
-        .then(_ => _[0])) as any).mul(new (web3 as any).utils.BN("3"));
+        .then(_ => _["0"])) as any).mul(new (web3 as any).utils.BN("3"));
       expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
     });
 

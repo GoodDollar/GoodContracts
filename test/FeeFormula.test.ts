@@ -86,7 +86,7 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
     expect(
       (await newFormula
         .getTxFees(1000, founder, stranger)
-        .then(_ => _[0])).toNumber()
+        .then(_ => _["0"])).toNumber()
     ).to.be.equal(0);
   });
 
@@ -94,12 +94,12 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
     expect(
       (await feeFormula
         .getTxFees(1000, stranger, founder)
-        .then(_ => _[0])).toNumber()
+        .then(_ => _["0"])).toNumber()
     ).to.be.equal(10);
     expect(
       (await feeFormula
         .getTxFees(50, stranger, founder)
-        .then(_ => _[0])).toNumber()
+        .then(_ => _["0"])).toNumber()
     ).to.be.equal(0);
   });
 
@@ -107,12 +107,18 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
     expect(
       (await feeFormula
         .getTxFees(1000, founder, stranger)
-        .then(_ => _[0])).toNumber()
+        .then(_ => _["0"])).toNumber()
     ).to.be.equal(10);
     expect(
       (await feeFormula
         .getTxFees(50, founder, stranger)
-        .then(_ => _[0])).toNumber()
+        .then(_ => _["0"])).toNumber()
     ).to.be.equal(0);
+  });
+
+  it("should return boolean in senderPays", async () => {
+    expect(
+      await newFormula.getTxFees(1000, founder, stranger).then(_ => _["1"])
+    ).to.be.equal(false);
   });
 });

@@ -29,7 +29,7 @@ contract("GoodDollar", ([founder, whitelisted, outsider]) => {
         cappedToken = await GoodDollar.new('Test', 'TDD', helpers.toGD('10') , feeFormula.address, identity.address, receiver.address);
         token = await GoodDollar.at(await avatar.nativeToken());
 
-        await token.transfer(whitelisted, helpers.toGD("100"));
+        await token.transfer(whitelisted, helpers.toGD("300"));
         await token.transfer(founder, helpers.toGD("100"));
         await token.transfer(outsider, helpers.toGD("10"));
         await identity.addWhitelisted(whitelisted);
@@ -90,4 +90,31 @@ contract("GoodDollar", ([founder, whitelisted, outsider]) => {
 
         await helpers.assertVMException(cappedToken.mint(founder, helpers.toGD("12")), "Cannot increase supply beyond cap");
     });
+
+    it("should collect transaction fee", async () => {
+        const oldReserve = await token.balanceOf(avatar.address);
+  
+        await token.transfer(founder, helpers.toGD("200"),{from: whitelisted});
+  
+        // Check that reserve has received fees
+        const reserve = (await token.balanceOf(avatar.address)) as any;
+  
+        const reserveDiff = reserve.sub(oldReserve);
+        const totalFees = (await (token as any)
+          .getFees(helpers.toGD("200"))
+          .then(_ => _["0"])) as any;
+        expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
+      });
+
+    it("should get same results from overloaded getFees method", async () => {
+      const totalFees = (await (token as any) //fix overload issue
+        .getFees(helpers.toGD("300"))
+        .then(_ => _["0"])) as any;
+      const totalFees2 = (await token
+        .getFees(helpers.toGD("300"), whitelisted, whitelisted)
+        .then(_ => _["0"])) as any;
+      expect(totalFees2.toNumber()).to.be.gt(0);
+      expect(totalFees2.toString()).to.be.equal(totalFees.toString());
+    });
+  
 });

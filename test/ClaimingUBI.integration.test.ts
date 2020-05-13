@@ -186,16 +186,15 @@ contract(
 
     it("should perform transactions and increase fee reserve", async () => {
       const oldReserve = await token.balanceOf(avatar.address);
-
       await token.transfer(whitelisted, helpers.toGD("300"));
 
       // Check that reserve has received fees
       const reserve = (await token.balanceOf(avatar.address)) as any;
 
       const reserveDiff = reserve.sub(oldReserve);
-      const totalFees = (await token
-        .getFees(helpers.toGD("300"))
-        .then(_ => [0])) as any;
+      const txFee = (await (token as any) //fix overload issue
+        .getFees(helpers.toGD("300"))) as any;
+      const totalFees = txFee["0"];
       expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
     });
 

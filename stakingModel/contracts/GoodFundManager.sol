@@ -22,6 +22,8 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
 
     ERC20 cDai;
     GoodReserveCDai public reserve;
+    uint256 public blockInterval;
+    uint256 public lastTransferred;
 
     // // tracking the daily withdraws and the actual amount
     // // at the begining of the trading day.
@@ -43,6 +45,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
 
     constructor(
         address _cDai,
+        uint256 _blockInterval,
         Avatar _avatar,
         Identity _identity
     )
@@ -51,6 +54,8 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         ActivePeriod(now, now * 2)
         {
         cDai = ERC20(_cDai);
+        blockInterval = _blockInterval;
+        lastTransferred = block.number;
         start();
     }
 
@@ -74,6 +79,14 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     }
 
     /**
+    @dev allow the DAO to change the block interval
+    @param _blockInterval the new value
+    */
+    function setBlockInterval(uint256 _blockInterval) public onlyAvatar {
+        blockInterval = _blockInterval;
+    }
+
+    /**
      * @dev collects ubi interest in cdai from from a given staking and transfer it to
      * the reserve contract. then transfer the given gd which recieved from the reserve
      * back to the staking contract.
@@ -86,12 +99,17 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         onlyRegistered
         reserveHasInitialized
     {
+        require(
+            block.number.sub(lastTransferred) > blockInterval,
+            "Need to wait for the next interval"
+        );
         // cdai balance of the reserve contract
         uint256 currentBalance = cDai.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract
         staking.collectUBIInterest(address(reserve));
         // finds the actual transferred cdai
         uint256 actualCDaiGains = cDai.balanceOf(address(reserve)).sub(currentBalance);
+        lastTransferred = block.number;
         if(actualCDaiGains > 0) {
             // mints gd while the interest amount is equal to the transferred amount
             (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(cDai, actualCDaiGains, actualCDaiGains);
@@ -99,11 +117,11 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             GoodDollar token = GoodDollar(address(avatar.nativeToken()));
             token.transfer(address(staking), gdInterest);
             emit FundsTransferred(msg.sender,
-                                  address(staking),
-                                  address(reserve),
-                                  actualCDaiGains,
-                                  gdInterest,
-                                  gdUBI);
+                                address(staking),
+                                address(reserve),
+                                actualCDaiGains,
+                                gdInterest,
+                                gdUBI);
         }
     }
 

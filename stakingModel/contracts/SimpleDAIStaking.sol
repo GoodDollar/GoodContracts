@@ -71,6 +71,14 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     }
 
     /**
+    @dev allow the DAO to change the block interval
+    @param _blockInterval the new value
+    */
+    function setBlockInterval(uint256 _blockInterval) public onlyAvatar {
+        blockInterval = _blockInterval;
+    }
+
+    /**
      * @dev stake some DAI
      * @param amount of dai to stake
      */

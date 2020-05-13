@@ -116,7 +116,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account the address to check
      * @return a bool indicating weather the address is present in whitelist
      */
-    function lastAuthenticated(address account) public view returns (bool) {
+    function isWhitelisted(address account) public view returns (bool) {
        uint256 daysSinceAuthentication = (now.sub(dateAuthenticated[account])) / 1 days;
         return (daysSinceAuthentication <= authenticationPeriod);
     }
@@ -125,7 +125,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account The address to check
      * @return The date the address was added
      */
-    function wasAdded(address account) public view returns (uint256) {
+    function lastAuthenticated(address account) public view returns (uint256) {
         return dateAuthenticated[account];
     }
 

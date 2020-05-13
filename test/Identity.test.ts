@@ -72,12 +72,12 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
         await helpers.assertVMException(mock.checkWhitelisted(whitelisted), "is not whitelisted");
 
         await identity.addWhitelisted(whitelisted);
-        assert(await identity.lastAuthenticated(whitelisted));
+        assert(await identity.isWhitelisted(whitelisted));
 
         assert(await mock.checkWhitelisted(whitelisted));
 
         await identity.removeWhitelisted(whitelisted);
-        assert(!(await identity.lastAuthenticated(whitelisted)));
+        assert(!(await identity.isWhitelisted(whitelisted)));
     });
 
     it("should increment and decrement whitelisteds when adding whitelisted", async () => {
@@ -144,10 +144,10 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
 
     it("should authenticate the user with the correct timestamp", async () => {
         await identity.authenticate(authuser);
-        let dateAuthenticated1 = await identity.wasAdded(authuser);
+        let dateAuthenticated1 = await identity.lastAuthenticated(authuser);
         await helpers.increaseTime(10);
         await identity.authenticate(authuser);
-        let dateAuthenticated2 = await identity.wasAdded(authuser);
+        let dateAuthenticated2 = await identity.lastAuthenticated(authuser);
         assert(dateAuthenticated2.toNumber() - dateAuthenticated1.toNumber() > 0);
     });
 
@@ -276,9 +276,9 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
 
     it("should renounce whitelisted", async () => {
         await identity.addWhitelisted(whitelisted);
-        assert(await identity.lastAuthenticated(whitelisted));
+        assert(await identity.isWhitelisted(whitelisted));
         await identity.renounceWhitelisted({ from: whitelisted });
-        assert(!(await identity.lastAuthenticated(whitelisted)));
+        assert(!(await identity.isWhitelisted(whitelisted)));
     });
 
     it("should add with did", async () => {
@@ -321,7 +321,7 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
 
         await identity.transferAccount(newUser2, { from: whitelisted });
 
-        assert(await identity.lastAuthenticated(newUser2));
+        assert(await identity.isWhitelisted(newUser2));
         const transferstring = await identity.addrToDID(newUser2);
         expect(transferstring).to.be.equal('testString');
     });

@@ -216,7 +216,7 @@ contract AdminWallet is Ownable {
     ) public onlyAdmin reimburseGas {
         require(bonus != SignUpBonus(0), "SignUp bonus has not been set yet");
 
-        if (identity.lastAuthenticated(_user) == false) {
+        if (identity.isWhitelisted(_user) == false) {
             whitelist(_user, _did);
         }
 

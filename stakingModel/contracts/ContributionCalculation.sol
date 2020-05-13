@@ -51,7 +51,7 @@ contract ContributionCalculation is DSMath, SchemeGuard {
     * `sellContributionRatio` percent contribution
     * @return (contributionAmount) the contribution amount for sell
     */
-    function calculateContribution(address _marketMaker, address _reserve, ERC20 _token, uint256 _gdAmount)
+    function calculateContribution(GoodMarketMaker _marketMaker, GoodReserveCDai _reserve, address _contributer, ERC20 _token, uint256 _gdAmount)
         external
         view
         returns (uint256)

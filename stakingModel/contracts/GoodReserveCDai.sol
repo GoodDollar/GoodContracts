@@ -20,11 +20,10 @@ interface cERC20 {
     function exchangeRateStored() external view returns (uint256);
     function balanceOf(address addr) external view returns (uint256);
     function transfer(address to, uint256 amount) external returns (bool);
-
 }
 
-interface ContributionCalculation {
-    function calculateContribution(address _marketMaker, address _reserve, ERC20 _token, uint256 _gdAmount) external view returns (uint256);
+interface ContributionCalc {
+    function calculateContribution(GoodMarketMaker _marketMaker, GoodReserveCDai _reserve, address _contributer, ERC20 _token, uint256 _gdAmount) external view returns (uint256);
 
 }
 
@@ -50,7 +49,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
 
     uint256 public sellContributionRatio;
 
-    ContributionCalculation public contribution;
+    ContributionCalc public contribution;
 
     modifier onlyFundManager {
         require(
@@ -106,7 +105,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         Avatar _avatar,
         Identity _identity,
         address _marketMaker,
-        ContributionCalculation _contribution
+        ContributionCalc _contribution
     )
         public
         FeelessScheme(_identity, _avatar)
@@ -150,7 +149,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         onlyAvatar
     {
         address prevAddress = address(contribution);
-        contribution = ContributionCalculation(_contribution);
+        contribution = ContributionCalc(_contribution);
         emit ContributionAddressUpdated(msg.sender, prevAddress, _contribution);
     }
 
@@ -201,7 +200,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         returns (uint256)
     {
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
-        uint256 contributionAmount = contribution.calculateContribution(address(marketMaker), address(this), sellTo, gdAmount);
+        uint256 contributionAmount = contribution.calculateContribution(marketMaker, this, msg.sender, sellTo, gdAmount);
         uint256 tokenReturn = marketMaker.sellWithContribution(sellTo, gdAmount, contributionAmount);
         require(tokenReturn >= minReturn, "Token return must be above the minReturn");
         require(sellTo.transfer(msg.sender, tokenReturn) == true, "Transfer failed");

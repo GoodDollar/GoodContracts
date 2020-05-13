@@ -417,7 +417,7 @@ it("should set marketmaker in the reserve by avatar", async () => {
   it("should calculate the sell contribution", async () => {
     let nom = new BN(2e14).toString();
     let denom = new BN(1e15).toString();
-    let actual = await contribution.calculateContribution(marketMaker.address, goodReserve.address, cDAI.address, 1e4);
+    let actual = await contribution.calculateContribution(marketMaker.address, goodReserve.address, founder, cDAI.address, 1e4);
     expect(actual.toString()).to.be.equal((1e4 - 1e4 * nom / denom).toString());
   });
 

@@ -27,7 +27,7 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
         string memory _name,
         string memory _symbol,
         uint256 _cap,
-        FeeFormula _formula,
+        AbstractFees _formula,
         Identity _identity,
         address _feeRecipient
     )

@@ -25,14 +25,11 @@ module.exports = {
 
   networks: {
     develop: {
-      provider: function() {
-        return new HDWalletProvider(mnemonic, "http://localhost:9545/", 0, 10);
-      },
       // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
       network_id: "4447", // Match any network id,
-      gas: 6000000,
+      gas: 9000000,
       gasPrice: 1000000000 //1 gwei
       // from: '0x8ae536FAcb8C89163A0c5A5817Aaa75F65F1bcA6' // should be equal to first address in truffle UI list - address[0]
     },
@@ -70,7 +67,7 @@ module.exports = {
       gas: 8000000,
       gasPrice: 10000000000
     },
-    "fuse-mainnet": {
+    ropsten: {
       provider: function() {
         return new HDWalletProvider(
           mnemonic,
@@ -79,24 +76,8 @@ module.exports = {
           10
         );
       },
-      gas: 6000000,
-      timeoutBlocks: 4000,
-      gasPrice: 2000000000,
-      network_id: 3,
-      skipDryRun: true
-    },
-    "staging-mainnet": {
-      provider: function() {
-        return new HDWalletProvider(
-          mnemonic,
-          "https://ropsten.infura.io/v3/" + infura_api,
-          0,
-          10
-        );
-      },
-      gas: 6000000,
-      timeoutBlocks: 4000,
-      gasPrice: 2000000000,
+      gas: 8000000,
+      gasPrice: 40000000000,
       network_id: 3,
       skipDryRun: true
     },
@@ -116,7 +97,7 @@ module.exports = {
     },
     fuse: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -125,7 +106,7 @@ module.exports = {
     },
     staging: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -134,7 +115,7 @@ module.exports = {
     },
     etoro: {
       provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
+        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
       },
       network_id: 122,
       gas: 8500000,
@@ -143,12 +124,12 @@ module.exports = {
     },
     production: {
       provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
+        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
       },
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,
-      gasPrice: 1000000000 //1 gwei
+      gasPrice: 2000000000 //1 gwei
     }
   },
   mocha: {
@@ -168,4 +149,5 @@ module.exports = {
       }
     }
   }
+  // test_file_extension_regexp: /.*\.test\.(ts|.js)$/
 };

@@ -193,7 +193,9 @@ contract(
       const reserve = (await token.balanceOf(avatar.address)) as any;
 
       const reserveDiff = reserve.sub(oldReserve);
-      const totalFees = (await token.getFees(helpers.toGD("300"))) as any;
+      const totalFees = (await token
+        .getFees(helpers.toGD("300"))
+        .then(_ => [0])) as any;
       expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
     });
 

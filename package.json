@@ -21,7 +21,7 @@
     "deploy:signup": "run-s migrate_reset:signup minimize",
     "test": "export MNEMONIC='glad notable bullet donkey fall dolphin simple size stone evil slogan dinner' && run-s test:generate-typings && run-s test:tsc && run-s testscript",
     "test:wait": "run-s deploy test:ganache",
-    "test:generate-typings": "truffle compile && typechain --target truffle './build/**/*.json'",
+    "test:generate-typings": "rm ./build/contracts/*.min.json && truffle compile && typechain --target truffle './build/**/*.json'",
     "test:tsc": "tsc --noEmit",
     "lint": "solhint --formatter codeframe develop/**/*.sol",
     "test:ganache": "wait-on tcp:9545 && truffle test --network ganache && kill -9 $(lsof -t -i:9545)",

@@ -11,7 +11,7 @@ const IdentityGuardMock = artifacts.require("IdentityGuardMock");
 const AddAdmin = artifacts.require("AddAdmin");
 const RemoveAdmin = artifacts.require("RemoveAdmin");
 
-contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklisted2, whitelisted, whitelisted2, outsider]) => {
+contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklisted2, whitelisted, whitelisted2, outsider, authuser]) => {
 
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
     let dangerIdentity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
@@ -23,6 +23,7 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
     let addAdmin: helpers.ThenArg<ReturnType <typeof AddAdmin['new']>>;
     let addAdmin2: helpers.ThenArg<ReturnType <typeof AddAdmin['new']>>;
     let removeAdmin: helpers.ThenArg<ReturnType <typeof RemoveAdmin['new']>>;
+    let controller: helpers.ThenArg<ReturnType<typeof ControllerInterface['new']>>;
 
     let proposalId: string;
 
@@ -31,6 +32,7 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
         dangerIdentity = await Identity.new();
 
         avatar = await Avatar.at(await (await DaoCreatorGoodDollar.deployed()).avatar());
+        controller = await ControllerInterface.at(await avatar.owner());
         token = await GoodDollar.at(await avatar.nativeToken());
         absoluteVote = await AbsoluteVote.deployed();
 
@@ -107,6 +109,20 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
         );
     });
 
+    it("should revert when non admin tries to set the authentication period", async () => {
+        await helpers.assertVMException(
+            identity.setAuthenticationPeriod(10, {from: outsider}),
+            ""
+        );
+    });
+
+    it("should revert when non admin tries to authentice a user", async () => {
+        await helpers.assertVMException(
+            identity.authenticate(authuser, {from: outsider}),
+            "not IdentityAdmin"
+        );
+    });
+
     it("should not be able to add zero address as identity admin", async() => {
         helpers.assertVMException(
             AddAdmin.new(
@@ -117,6 +133,15 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
             "admin cannot be null address"
         );
     })
+
+    it("should authenticate the user with the correct timestamp", async () => {
+        await identity.authenticate(authuser);
+        let dateAuthenticated1 = await identity.lastAuthenticated(authuser);
+        await helpers.increaseTime(10);
+        await identity.authenticate(authuser);
+        let dateAuthenticated2 = await identity.lastAuthenticated(authuser);
+        assert(dateAuthenticated2.toNumber() - dateAuthenticated1.toNumber() > 0);
+    });
 
     it("should add identity admin", async () => {
         addAdmin = await AddAdmin.new(

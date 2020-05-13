@@ -134,14 +134,6 @@ contract("Identity - Blacklist and whitelist", ([founder, blacklisted, blacklist
         );
     })
 
-    it("should add identity admin", async () => {
-        addAdmin = await AddAdmin.new(
-            avatar.address,
-            identity.address,
-            outsider
-        );
-    });
-
     it("should authenticate the user with the correct timestamp", async () => {
         await identity.authenticate(authuser);
         let dateAuthenticated1 = await identity.lastAuthenticated(authuser);

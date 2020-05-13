@@ -7,8 +7,10 @@ const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 const avatarMock = artifacts.require("AvatarMock");
+const ControllerMock = artifacts.require("ControllerMock");
 const Identity = artifacts.require("Identity");
 const Formula = artifacts.require("FeeFormula");
+const ContributionCalculation = artifacts.require("ContributionCalculation");
 
 const BN = web3.utils.BN;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -17,7 +19,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
   let dai;
   let cDAI;
   let goodReserve;
-  let goodDollar, avatar, identity, formula, marketMaker;
+  let goodDollar, avatar, identity, formula, marketMaker, contribution, controller;
 
   before(async () => {
     dai = await DAIMock.new();
@@ -27,6 +29,8 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       Identity.new(),
       Formula.new(0)
     ]);
+    controller = await ControllerMock.new(avatar.address);
+    await avatar.transferOwnership(controller.address);
     goodDollar = await GoodDollar.new(
       "GoodDollar",
       "GDD",
@@ -42,20 +46,26 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       1e15,
       avatar.address
     );
+    contribution = await ContributionCalculation.new(
+      avatar.address,
+      goodDollar.address,
+      0,
+      1e15
+    );
     goodReserve = await GoodReserve.new(
       dai.address,
       cDAI.address,
       goodDollar.address,
       founder,
       avatar.address,
+      identity.address,
       marketMaker.address,
-      0,
-      1e15
+      contribution.address
     );
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
   });
 
-  it("should set marketmaker by avatar", async () => {
+it("should set marketmaker in the reserve by avatar", async () => {
     let encodedCall = web3.eth.abi.encodeFunctionCall({
       name: 'setMarketMaker',
       type: 'function',
@@ -64,7 +74,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_marketMaker'
       }]
     }, [marketMaker.address]);
-    await avatar.genericCall(marketMaker.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     const newMM = await goodReserve.marketMaker();
     expect(newMM.toString()).to.be.equal(marketMaker.address);
   });
@@ -353,7 +363,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     let nom = new BN(2e14).toString();
     let denom = new BN(1e15).toString();
     let encodedCall = web3.eth.abi.encodeFunctionCall({
-      name: 'setSellContributionRatio',
+      name: 'setContributionRatio',
       type: 'function',
       inputs: [{
           type: 'uint256',
@@ -363,20 +373,51 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
         name: '_denom'
     }]
     }, [nom, denom]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
-    const newRatio = await goodReserve.sellContributionRatio();
+    await controller.genericCall(contribution.address, encodedCall, avatar.address, 0);
+    const newRatio = await contribution.sellContributionRatio();
     expect(newRatio.toString()).to.be.equal("200000000000000000000000000");
   });
 
   it("should not be able to set the sell contribution ratio if not avatar", async () => {
-    let error = await goodReserve.setSellContributionRatio(2e14, 1e15).catch(e => e);
+    let error = await contribution.setContributionRatio(2e14, 1e15).catch(e => e);
     expect(error.message).to.have.string("only Avatar can call this method");
+  });
+
+  it("should not be able to set the contribution contract address if not avatar", async () => {
+    let error = await goodReserve.setContributionAddress(NULL_ADDRESS).catch(e => e);
+    expect(error.message).to.have.string("only Avatar can call this method");
+  });
+
+  it("should set contribution contract address by avatar", async () => {
+    const currentAddress = await goodReserve.contribution();
+    let encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'setContributionAddress',
+      type: 'function',
+      inputs: [{
+          type: 'address',
+          name: '_contribution'
+      }]
+    }, [NULL_ADDRESS]);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
+    let newAddress = await goodReserve.contribution();
+    expect(newAddress).to.be.equal(NULL_ADDRESS);
+    encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'setContributionAddress',
+      type: 'function',
+      inputs: [{
+          type: 'address',
+          name: '_contribution'
+      }]
+    }, [currentAddress]);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
+    newAddress = await goodReserve.contribution();
+    expect(newAddress).to.be.equal(currentAddress);
   });
 
   it("should calculate the sell contribution", async () => {
     let nom = new BN(2e14).toString();
     let denom = new BN(1e15).toString();
-    let actual = await goodReserve.calculateSellContribution(1e4);
+    let actual = await contribution.calculateContribution(marketMaker.address, goodReserve.address, founder, cDAI.address, 1e4);
     expect(actual.toString()).to.be.equal((1e4 - 1e4 * nom / denom).toString());
   });
 
@@ -506,7 +547,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_avatar'
       }]
     }, [NULL_ADDRESS]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
     let isActive = await goodReserve.isActive();
@@ -528,7 +569,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_avatar'
       }]
     }, [avatar.address]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
     let code = await web3.eth.getCode(goodReserve.address);
@@ -550,7 +591,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
           name: '_avatar'
       }]
     }, [avatar.address]);
-    await avatar.genericCall(goodReserve.address, encodedCall, 0);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
     let newMMOwner = await marketMaker.owner();

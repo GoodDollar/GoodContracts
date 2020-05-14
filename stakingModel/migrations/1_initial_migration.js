@@ -1,5 +1,3 @@
-var Migrations = artifacts.require("./Migrations.sol");
-
 module.exports = async (deployer, network) => {
   process.env.NETWORK = network;
   if (network === "tdd") return;

@@ -52,7 +52,7 @@ contract FixedUBI is AbstractUBI {
         returns (uint256)
     {
         if (lastClaimed[user] == 0) {
-            lastClaimed[user] = identity.dateAdded(user).sub(1 days);
+            lastClaimed[user] = identity.dateAuthenticated(user).sub(1 days);
         }
 
         uint256 claimDays = now.sub(lastClaimed[user]) / 1 days;
@@ -76,8 +76,8 @@ contract FixedUBI is AbstractUBI {
         uint256 lastClaimed = lastClaimed[msg.sender] > 0
             ? lastClaimed[msg.sender]
             : (
-                identity.dateAdded(msg.sender) > 0
-                    ? identity.dateAdded(msg.sender).sub(1 days)
+                identity.dateAuthenticated(msg.sender) > 0
+                    ? identity.dateAuthenticated(msg.sender).sub(1 days)
                     : now.sub(1 days)
             );
 

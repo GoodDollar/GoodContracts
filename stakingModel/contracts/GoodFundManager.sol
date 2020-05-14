@@ -26,6 +26,8 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
 
     ERC20 cDai;
     GoodReserveCDai public reserve;
+    uint256 public blockInterval;
+    uint256 public lastTransferred;
 
     // // tracking the daily withdraws and the actual amount
     // // at the begining of the trading day.
@@ -45,12 +47,14 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         _;
     }
 
-    constructor(address _cDai, Avatar _avatar, Identity _identity)
+    constructor(address _cDai, Avatar _avatar, Identity _identity, uint256 _blockInterval)
         public
         FeelessScheme(_identity, _avatar)
         ActivePeriod(now, now * 2)
     {
         cDai = ERC20(_cDai);
+        blockInterval = _blockInterval;
+        lastTransferred = block.number;
     }
 
     /* @dev Start function. Adds this contract to identity as a feeless scheme.
@@ -70,6 +74,14 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     }
 
     /**
+    @dev allow the DAO to change the block interval
+    @param _blockInterval the new value
+    */
+    function setBlockInterval(uint256 _blockInterval) public onlyAvatar {
+        blockInterval = _blockInterval;
+    }
+
+    /**
      * @dev collects ubi interest in cdai from from a given staking and transfer it to
      * the reserve contract. then transfer the given gd which recieved from the reserve
      * back to the staking contract.
@@ -82,12 +94,17 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         onlyRegistered
         reserveHasInitialized
     {
+        require(
+            block.number.sub(lastTransferred) > blockInterval,
+            "Need to wait for the next interval"
+        );
         // cdai balance of the reserve contract
         uint256 currentBalance = cDai.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract
         staking.collectUBIInterest(address(reserve));
         // finds the actual transferred cdai
         uint256 actualCDaiGains = cDai.balanceOf(address(reserve)).sub(currentBalance);
+        lastTransferred = block.number;
         if (actualCDaiGains > 0) {
             // mints gd while the interest amount is equal to the transferred amount
             (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(

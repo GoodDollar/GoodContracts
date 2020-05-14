@@ -62,13 +62,14 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
 
     uint256 public sellContributionRatio;
 
+    uint256 public blockInterval;
+
+    uint256 public lastMinted;
+
     ContributionCalc public contribution;
 
     modifier onlyFundManager {
-        require(
-            msg.sender == fundManager,
-            "Only FundManager can call this method"
-        );
+        require(msg.sender == fundManager, "Only FundManager can call this method");
         _;
     }
 
@@ -126,7 +127,8 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         Avatar _avatar,
         Identity _identity,
         address _marketMaker,
-        ContributionCalc _contribution
+        ContributionCalc _contribution,
+        uint256 _blockInterval
     ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2) {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
@@ -134,6 +136,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         avatar = _avatar;
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
+        blockInterval = _blockInterval;
         contribution = _contribution;
     }
 
@@ -157,6 +160,14 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     */
     function setMarketMaker(address _marketMaker) public onlyAvatar {
         marketMaker = GoodMarketMaker(_marketMaker);
+    }
+
+    /**
+    @dev allow the DAO to change the block interval
+    @param _blockInterval the new value
+    */
+    function setBlockInterval(uint256 _blockInterval) public onlyAvatar {
+        blockInterval = _blockInterval;
     }
 
     /**
@@ -189,8 +200,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
             "You need to approve cDAI transfer first"
         );
         require(
-            buyWith.transferFrom(msg.sender, address(this), tokenAmount) ==
-                true,
+            buyWith.transferFrom(msg.sender, address(this), tokenAmount) == true,
             "transferFrom failed, make sure you approved cDAI transfer"
         );
         uint256 gdReturn = marketMaker.buy(buyWith, tokenAmount);
@@ -235,14 +245,8 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
             gdAmount,
             contributionAmount
         );
-        require(
-            tokenReturn >= minReturn,
-            "Token return must be above the minReturn"
-        );
-        require(
-            sellTo.transfer(msg.sender, tokenReturn) == true,
-            "Transfer failed"
-        );
+        require(tokenReturn >= minReturn, "Token return must be above the minReturn");
+        require(sellTo.transfer(msg.sender, tokenReturn) == true, "Transfer failed");
         emit TokenSold(
             msg.sender,
             address(sellTo),
@@ -270,22 +274,19 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * @param interest out of total transfered how much is the interest (in interestToken) that needs to be paid back (some interest might be donated)
      * @return (gdInterest, gdUBI) how much G$ interest was minted and how much G$ UBI was minted
      */
-    function mintInterestAndUBI(
-        ERC20 interestToken,
-        uint256 transfered,
-        uint256 interest
-    )
+    function mintInterestAndUBI(ERC20 interestToken, uint256 transfered, uint256 interest)
         public
         requireActive
         onlyCDai(interestToken)
         onlyFundManager
         returns (uint256, uint256)
     {
-        uint256 price = currentPrice(interestToken);
-        uint256 gdInterestToMint = marketMaker.mintInterest(
-            interestToken,
-            transfered
+        require(
+            block.number.sub(lastMinted) > blockInterval,
+            "Need to wait for the next interval"
         );
+        uint256 price = currentPrice(interestToken);
+        uint256 gdInterestToMint = marketMaker.mintInterest(interestToken, transfered);
         uint256 precisionLoss = uint256(27).sub(uint256(gooddollar.decimals()));
         uint256 gdInterest = rdiv(interest, price).div(10**precisionLoss);
         uint256 gdExpansionToMint = marketMaker.mintExpansion(interestToken);
@@ -294,6 +295,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         ERC20Mintable(address(gooddollar)).mint(fundManager, gdInterest);
         //TODO: how do we transfer to bridge, is the fundmanager in charge of that?
         ERC20Mintable(address(gooddollar)).mint(address(avatar), gdUBI);
+        lastMinted = block.number;
         emit GDInterestAndExpansionMinted(
             msg.sender,
             address(fundManager),
@@ -318,10 +320,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         if (remainingReserve > 0) {
             cDai.transfer(address(_avatar), remainingReserve);
         }
-        require(
-            cDai.balanceOf(address(this)) == 0,
-            "Funds transfer has failed"
-        );
+        require(cDai.balanceOf(address(this)) == 0, "Funds transfer has failed");
         marketMaker.transferOwnership(address(_avatar));
         gooddollar.renounceMinter();
         super.internalEnd(_avatar);

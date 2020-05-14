@@ -13,6 +13,7 @@ const Formula = artifacts.require("FeeFormula");
 const ContributionCalculation = artifacts.require("ContributionCalculation");
 
 const BN = web3.utils.BN;
+export const BLOCK_INTERVAL = 0;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
@@ -54,7 +55,8 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       avatar.address,
       identity.address,
       marketMaker.address,
-      contribution.address
+      contribution.address,
+      BLOCK_INTERVAL
     );
     await goodReserve.start();
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
@@ -228,6 +230,31 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       })
       .catch(e => e);
     expect(error.message).not.to.be.empty;
+  });
+
+  it("should set block interval by avatar", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'setBlockInterval',
+      type: 'function',
+      inputs: [{
+          type: 'uint256',
+          name: '_blockInterval'
+      }]
+    }, [100]);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
+    const newBI = await goodReserve.blockInterval();
+    expect(newBI.toString()).to.be.equal('100');
+  });
+
+  it("should not mint UBI if not in the interval", async () => {
+    const gdBalanceFundBefore = await goodDollar.balanceOf(founder);
+    const gdBalanceAvatarBefore = await goodDollar.balanceOf(avatar.address);
+    const error = await goodReserve.mintInterestAndUBI(cDAI.address, web3.utils.toWei("10000", "gwei"), "10000").catch(e => e);
+    const gdBalanceFundAfter = await goodDollar.balanceOf(founder);
+    const gdBalanceAvatarAfter = await goodDollar.balanceOf(avatar.address);
+    expect(error.message).to.have.string("wait for the next interval");
+    expect(gdBalanceFundAfter.toString()).to.be.equal(gdBalanceFundBefore.toString());
+    expect(gdBalanceAvatarAfter.toString()).to.be.equal(gdBalanceAvatarBefore.toString());
   });
 
   it("should be able to buy gd with cDAI", async () => {

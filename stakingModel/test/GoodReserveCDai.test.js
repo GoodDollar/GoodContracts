@@ -41,17 +41,11 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     );
     marketMaker = await MarketMaker.new(
       goodDollar.address,
-      founder,
       999388834642296,
       1e15,
       avatar.address
     );
-    contribution = await ContributionCalculation.new(
-      avatar.address,
-      goodDollar.address,
-      0,
-      1e15
-    );
+    contribution = await ContributionCalculation.new(avatar.address, 0, 1e15);
     goodReserve = await GoodReserve.new(
       dai.address,
       cDAI.address,
@@ -62,18 +56,24 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       marketMaker.address,
       contribution.address
     );
+    await goodReserve.start();
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
   });
 
-it("should set marketmaker in the reserve by avatar", async () => {
-    let encodedCall = web3.eth.abi.encodeFunctionCall({
-      name: 'setMarketMaker',
-      type: 'function',
-      inputs: [{
-          type: 'address',
-          name: '_marketMaker'
-      }]
-    }, [marketMaker.address]);
+  it("should set marketmaker in the reserve by avatar", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "setMarketMaker",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_marketMaker"
+          }
+        ]
+      },
+      [marketMaker.address]
+    );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     const newMM = await goodReserve.marketMaker();
     expect(newMM.toString()).to.be.equal(marketMaker.address);
@@ -94,12 +94,12 @@ it("should set marketmaker in the reserve by avatar", async () => {
     );
     expect(onecDAIReturn.toNumber() / 100).to.be.equal(10000); //0.0001 cdai is 1 gd, so for 1eth you get 10000 gd (divide by 100 to account for 2 decimals precision)
   });
-  
+
   it("should returned true for isActive", async () => {
     const isActive = await goodReserve.isActive();
     expect(isActive.toString()).to.be.equal("true");
   });
-  
+
   it("should returned fixed 0.0001 market price", async () => {
     const gdPrice = await goodReserve.currentPrice(cDAI.address);
     const cdaiWorthInGD = gdPrice.mul(new BN("100000000", 10));
@@ -114,18 +114,11 @@ it("should set marketmaker in the reserve by avatar", async () => {
     const toMint = await marketMaker.calculateMintInterest(cDAI.address, "100000000");
     const expectedTotalMinted = 10 ** 8 / gdPrice.toNumber();
     expect(expectedTotalMinted).to.be.equal(10000); //10k GD
-    expect(toMint.toString()).to.be.equal(
-      (expectedTotalMinted * 100).toString()
-    ); //add 2 decimals precision
+    expect(toMint.toString()).to.be.equal((expectedTotalMinted * 100).toString()); //add 2 decimals precision
   });
 
   it("should calculate mint UBI correctly for 18 decimals precision", async () => {
-    await marketMaker.initializeToken(
-      dai.address,
-      "100",
-      "1000000000",
-      "1000000"
-    );
+    await marketMaker.initializeToken(dai.address, "100", "1000000000", "1000000");
     const gdPrice = await marketMaker.currentPrice(dai.address);
     const toMint = await marketMaker.calculateMintInterest(
       dai.address,
@@ -133,9 +126,7 @@ it("should set marketmaker in the reserve by avatar", async () => {
     );
     const expectedTotalMinted = 10 ** 18 / gdPrice.toNumber();
     expect(expectedTotalMinted).to.be.equal(1000000000); //10k GD with 2 decimals
-    expect(toMint.toString()).to.be.equal(
-      (expectedTotalMinted * 100).toString()
-    );
+    expect(toMint.toString()).to.be.equal((expectedTotalMinted * 100).toString());
   });
 
   it("should not be able to buy gd if the minter is not the reserve", async () => {
@@ -144,81 +135,98 @@ it("should set marketmaker in the reserve by avatar", async () => {
     await cDAI.approve(goodReserve.address, amount);
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
-    let error = await goodReserve.buy(
-      cDAI.address,
-      amount,
-      0
-    ).catch(e => e);
+    let error = await goodReserve.buy(cDAI.address, amount, 0).catch(e => e);
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     goodDollar.addMinter(goodReserve.address);
     expect(error.message).not.to.be.empty;
-    expect((gdBalanceAfter).toString()).to.be.equal(gdBalanceBefore.toString());
-    expect((cDAIBalanceAfter).toString()).to.be.equal(cDAIBalanceBefore.toString());
+    expect(gdBalanceAfter.toString()).to.be.equal(gdBalanceBefore.toString());
+    expect(cDAIBalanceAfter.toString()).to.be.equal(cDAIBalanceBefore.toString());
   });
 
   it("should calculate mint UBI correctly for 18 decimals precision and no interest", async () => {
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
-    let supplyBefore = reserveToken.gdSupply; 
+    let supplyBefore = reserveToken.gdSupply;
     const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
-    const tx = await goodReserve.mintInterestAndUBI(cDAI.address, web3.utils.toWei("1", "ether"), "0");
+    const tx = await goodReserve.mintInterestAndUBI(
+      cDAI.address,
+      web3.utils.toWei("1", "ether"),
+      "0"
+    );
     const gdBalanceFund = await goodDollar.balanceOf(founder);
     const gdBalanceAvatar = await goodDollar.balanceOf(avatar.address);
     const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
     reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceAfter = reserveToken.reserveSupply;
     let supplyAfter = reserveToken.gdSupply;
-    let rrAfter = reserveToken.reserveRatio; 
-    expect(supplyAfter.toString()).to.be.equal((tx.logs[0].args.gdInterestMinted.add(tx.logs[0].args.gdExpansionMinted).add(supplyBefore)).toString());
-    expect(reserveBalanceAfter.toString()).to.be.equal((reserveBalanceBefore.toNumber() + 1e18).toString());
+    let rrAfter = reserveToken.reserveRatio;
+    expect(supplyAfter.toString()).to.be.equal(
+      tx.logs[0].args.gdInterestMinted
+        .add(tx.logs[0].args.gdExpansionMinted)
+        .add(supplyBefore)
+        .toString()
+    );
+    expect(reserveBalanceAfter.toString()).to.be.equal(
+      (reserveBalanceBefore.toNumber() + 1e18).toString()
+    );
     expect(rrAfter.toString()).to.be.equal("999388");
     expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
     expect(gdBalanceFund.toString()).to.be.equal("0"); // 1 gd
-    expect(gdBalanceAvatar.toString()).to.be.equal((tx.logs[0].args.gdInterestMinted.add(tx.logs[0].args.gdExpansionMinted)).toString());
+    expect(gdBalanceAvatar.toString()).to.be.equal(
+      tx.logs[0].args.gdInterestMinted.add(tx.logs[0].args.gdExpansionMinted).toString()
+    );
   });
 
   it("should calculate mint UBI correctly for 18 decimals precision and partial interest", async () => {
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
-    let supplyBefore = reserveToken.gdSupply; 
+    let supplyBefore = reserveToken.gdSupply;
     let rrBefore = reserveToken.reserveRatio;
     const gdBalanceFundBefore = await goodDollar.balanceOf(founder);
     const gdBalanceAvatarBefore = await goodDollar.balanceOf(avatar.address);
     const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
-    const tx = await goodReserve.mintInterestAndUBI(cDAI.address, web3.utils.toWei("10000", "gwei"), "10000"); // interest is 0.0001 cDai which equal to 1 gd
+    const tx = await goodReserve.mintInterestAndUBI(
+      cDAI.address,
+      web3.utils.toWei("10000", "gwei"),
+      "10000"
+    ); // interest is 0.0001 cDai which equal to 1 gd
     const gdBalanceFundAfter = await goodDollar.balanceOf(founder);
     const gdBalanceAvatarAfter = await goodDollar.balanceOf(avatar.address);
     const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
     reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceAfter = reserveToken.reserveSupply;
-    let supplyAfter = reserveToken.gdSupply; 
-    let rrAfter = reserveToken.reserveRatio; 
+    let supplyAfter = reserveToken.gdSupply;
+    let rrAfter = reserveToken.reserveRatio;
     let et = new BN(web3.utils.toWei("10000", "gwei"));
-    const toMint = (tx.logs[0].args.gdInterestMinted.add(tx.logs[0].args.gdExpansionMinted));
-    expect(reserveBalanceAfter.toString()).to.be.equal(et.add(reserveBalanceBefore).toString());
-    expect(supplyAfter.toString()).to.be.equal((toMint.add(supplyBefore)).toString());
+    const toMint = tx.logs[0].args.gdInterestMinted.add(
+      tx.logs[0].args.gdExpansionMinted
+    );
+    expect(reserveBalanceAfter.toString()).to.be.equal(
+      et.add(reserveBalanceBefore).toString()
+    );
+    expect(supplyAfter.toString()).to.be.equal(toMint.add(supplyBefore).toString());
     expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
     expect((gdBalanceFundAfter - gdBalanceFundBefore).toString()).to.be.equal("100"); // 1 gd
-    expect((gdBalanceAvatarAfter - gdBalanceAvatarBefore).toString()).to.be.equal((toMint - 100).toString());
+    expect((gdBalanceAvatarAfter - gdBalanceAvatarBefore).toString()).to.be.equal(
+      (toMint - 100).toString()
+    );
     expect(rrAfter.toString()).to.be.equal("998777");
   });
 
   it("should not mint UBI if the reserve is not cDAI", async () => {
-    let error = await goodReserve.mintInterestAndUBI(
-      dai.address, 
-      web3.utils.toWei("1", "ether"), 
-      "0").catch(e => e);
+    let error = await goodReserve
+      .mintInterestAndUBI(dai.address, web3.utils.toWei("1", "ether"), "0")
+      .catch(e => e);
     expect(error.message).not.to.be.empty;
   });
 
   it("should not mint UBI if the caller is not the fund manager", async () => {
-    let error = await goodReserve.mintInterestAndUBI(
-      cDAI.address, 
-      web3.utils.toWei("1", "ether"), 
-      "0", {
+    let error = await goodReserve
+      .mintInterestAndUBI(cDAI.address, web3.utils.toWei("1", "ether"), "0", {
         from: staker
-      }).catch(e => e);
+      })
+      .catch(e => e);
     expect(error.message).not.to.be.empty;
   });
 
@@ -229,44 +237,42 @@ it("should set marketmaker in the reserve by avatar", async () => {
     await cDAI.mint(web3.utils.toWei("100", "ether"));
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
-    let supplyBefore = reserveToken.gdSupply; 
-    let rrBefore = reserveToken.reserveRatio; 
+    let supplyBefore = reserveToken.gdSupply;
+    let rrBefore = reserveToken.reserveRatio;
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveBefore = await cDAI.balanceOf(goodReserve.address);
     const priceBefore = await goodReserve.currentPrice(cDAI.address);
     await cDAI.approve(goodReserve.address, amount);
-    let transaction = await goodReserve.buy(
-                        cDAI.address,
-                        amount,
-                        0
-                      );
+    let transaction = await goodReserve.buy(cDAI.address, amount, 0);
     reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceAfter = reserveToken.reserveSupply;
-    let supplyAfter = reserveToken.gdSupply; 
-    let rrAfter = reserveToken.reserveRatio; 
+    let supplyAfter = reserveToken.gdSupply;
+    let rrAfter = reserveToken.reserveRatio;
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveAfter = await cDAI.balanceOf(goodReserve.address);
     const priceAfter = await goodReserve.currentPrice(cDAI.address);
-    expect((cDAIBalanceReserveAfter - cDAIBalanceReserveBefore).toString()).to.be.equal(amount.toString());
-    expect((reserveBalanceAfter - reserveBalanceBefore).toString()).to.be.equal(amount.toString());
-    expect((supplyAfter.sub(supplyBefore)).toString()).to.be.equal((gdBalanceAfter.sub(gdBalanceBefore)).toString());
-    expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
+    expect((cDAIBalanceReserveAfter - cDAIBalanceReserveBefore).toString()).to.be.equal(
+      amount.toString()
+    );
+    expect((reserveBalanceAfter - reserveBalanceBefore).toString()).to.be.equal(
+      amount.toString()
+    );
+    expect(supplyAfter.sub(supplyBefore).toString()).to.be.equal(
+      gdBalanceAfter.sub(gdBalanceBefore).toString()
+    );
+    expect(rrAfter.toString()).to.be.equal(rrBefore.toString());
     expect(gdBalanceAfter.gt(gdBalanceBefore)).to.be.true;
     expect(cDAIBalanceBefore.gt(cDAIBalanceAfter)).to.be.true;
-    expect((priceAfter).toString()).to.be.equal(priceBefore.toString());
+    expect(priceAfter.toString()).to.be.equal(priceBefore.toString());
     expect(transaction.logs[0].event).to.be.equal("TokenPurchased");
   });
 
   it("should not be able to buy gd with other tokens beside cDAI", async () => {
     let amount = 1e8;
     await dai.approve(goodReserve.address, amount);
-    let error = await goodReserve.buy(
-      dai.address,
-      amount,
-      0
-    ).catch(e => e);
+    let error = await goodReserve.buy(dai.address, amount, 0).catch(e => e);
     expect(error.message).to.have.string("Only cDAI is supported");
   });
 
@@ -275,16 +281,12 @@ it("should set marketmaker in the reserve by avatar", async () => {
     await cDAI.approve(goodReserve.address, "0");
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
-    let error = await goodReserve.buy(
-      cDAI.address,
-      amount,
-      0
-    ).catch(e => e);
+    let error = await goodReserve.buy(cDAI.address, amount, 0).catch(e => e);
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     expect(error.message).to.have.string("You need to approve cDAI transfer first");
-    expect((gdBalanceAfter).toString()).to.be.equal(gdBalanceBefore.toString());
-    expect((cDAIBalanceAfter).toString()).to.be.equal(cDAIBalanceBefore.toString());
+    expect(gdBalanceAfter.toString()).to.be.equal(gdBalanceBefore.toString());
+    expect(cDAIBalanceAfter.toString()).to.be.equal(cDAIBalanceBefore.toString());
   });
 
   it("should not be able to buy gd without enough cDAI funds", async () => {
@@ -294,17 +296,15 @@ it("should set marketmaker in the reserve by avatar", async () => {
     await cDAI.approve(goodReserve.address, amount);
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
-    let error = await goodReserve.buy(
-      cDAI.address,
-      amount,
-      0
-    ).catch(e => e);
+    let error = await goodReserve.buy(cDAI.address, amount, 0).catch(e => e);
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     expect(error.message).not.to.be.empty;
-    expect((gdBalanceAfter).toString()).to.be.equal(gdBalanceBefore.toString());
-    expect((cDAIBalanceAfter).toString()).to.be.equal(cDAIBalanceBefore.toString());
-    await cDAI.transfer(founder, cDAIBalanceBeforeTransfer.toString(), { from: staker });
+    expect(gdBalanceAfter.toString()).to.be.equal(gdBalanceBefore.toString());
+    expect(cDAIBalanceAfter.toString()).to.be.equal(cDAIBalanceBefore.toString());
+    await cDAI.transfer(founder, cDAIBalanceBeforeTransfer.toString(), {
+      from: staker
+    });
   });
 
   it("should not be able to buy gd when the minimum return is higher than the actual return", async () => {
@@ -312,67 +312,69 @@ it("should set marketmaker in the reserve by avatar", async () => {
     await cDAI.approve(goodReserve.address, amount);
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
-    let error = await goodReserve.buy(
-      cDAI.address,
-      amount,
-      2000000
-    ).catch(e => e);
+    let error = await goodReserve.buy(cDAI.address, amount, 2000000).catch(e => e);
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     expect(error.message).to.have.string("GD return must be above the minReturn");
-    expect((gdBalanceAfter).toString()).to.be.equal(gdBalanceBefore.toString());
-    expect((cDAIBalanceAfter).toString()).to.be.equal(cDAIBalanceBefore.toString());
+    expect(gdBalanceAfter.toString()).to.be.equal(gdBalanceBefore.toString());
+    expect(cDAIBalanceAfter.toString()).to.be.equal(cDAIBalanceBefore.toString());
   });
 
   it("should be able to sell gd to cDAI without contribution", async () => {
     let amount = 1e4;
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
-    let supplyBefore = reserveToken.gdSupply; 
-    let rrBefore = reserveToken.reserveRatio; 
+    let supplyBefore = reserveToken.gdSupply;
+    let rrBefore = reserveToken.reserveRatio;
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveBefore = await cDAI.balanceOf(goodReserve.address);
     const priceBefore = await goodReserve.currentPrice(cDAI.address);
     await goodDollar.approve(goodReserve.address, amount);
-    let transaction = await goodReserve.sell(
-                        cDAI.address,
-                        amount,
-                        0
-                      );
+    let transaction = await goodReserve.sell(cDAI.address, amount, 0);
     reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceAfter = reserveToken.reserveSupply;
-    let supplyAfter = reserveToken.gdSupply; 
-    let rrAfter = reserveToken.reserveRatio; 
+    let supplyAfter = reserveToken.gdSupply;
+    let rrAfter = reserveToken.reserveRatio;
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveAfter = await cDAI.balanceOf(goodReserve.address);
     const priceAfter = await goodReserve.currentPrice(cDAI.address);
     expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal("1000000");
-    expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal("1000000");
-    expect((reserveBalanceBefore.sub(reserveBalanceAfter)).toString()).to.be.equal("1000000");
+    expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal(
+      "1000000"
+    );
+    expect(reserveBalanceBefore.sub(reserveBalanceAfter).toString()).to.be.equal(
+      "1000000"
+    );
     expect((supplyBefore - supplyAfter).toString()).to.be.equal(amount.toString());
-    expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
+    expect(rrAfter.toString()).to.be.equal(rrBefore.toString());
     expect(gdBalanceBefore.gt(gdBalanceAfter)).to.be.true;
     expect(cDAIBalanceAfter.gt(cDAIBalanceBefore)).to.be.true;
-    expect((priceAfter).toString()).to.be.equal(priceBefore.toString());
+    expect(priceAfter.toString()).to.be.equal(priceBefore.toString());
     expect(transaction.logs[0].event).to.be.equal("TokenSold");
   });
 
   it("should set sell contribution ratio by avatar", async () => {
     let nom = new BN(2e14).toString();
     let denom = new BN(1e15).toString();
-    let encodedCall = web3.eth.abi.encodeFunctionCall({
-      name: 'setContributionRatio',
-      type: 'function',
-      inputs: [{
-          type: 'uint256',
-          name: '_nom'
-      },{
-        type: 'uint256',
-        name: '_denom'
-    }]
-    }, [nom, denom]);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "setContributionRatio",
+        type: "function",
+        inputs: [
+          {
+            type: "uint256",
+            name: "_nom"
+          },
+          {
+            type: "uint256",
+            name: "_denom"
+          }
+        ]
+      },
+      [nom, denom]
+    );
     await controller.genericCall(contribution.address, encodedCall, avatar.address, 0);
     const newRatio = await contribution.sellContributionRatio();
     expect(newRatio.toString()).to.be.equal("200000000000000000000000000");
@@ -390,25 +392,35 @@ it("should set marketmaker in the reserve by avatar", async () => {
 
   it("should set contribution contract address by avatar", async () => {
     const currentAddress = await goodReserve.contribution();
-    let encodedCall = web3.eth.abi.encodeFunctionCall({
-      name: 'setContributionAddress',
-      type: 'function',
-      inputs: [{
-          type: 'address',
-          name: '_contribution'
-      }]
-    }, [NULL_ADDRESS]);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "setContributionAddress",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_contribution"
+          }
+        ]
+      },
+      [NULL_ADDRESS]
+    );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let newAddress = await goodReserve.contribution();
     expect(newAddress).to.be.equal(NULL_ADDRESS);
-    encodedCall = web3.eth.abi.encodeFunctionCall({
-      name: 'setContributionAddress',
-      type: 'function',
-      inputs: [{
-          type: 'address',
-          name: '_contribution'
-      }]
-    }, [currentAddress]);
+    encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "setContributionAddress",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_contribution"
+          }
+        ]
+      },
+      [currentAddress]
+    );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     newAddress = await goodReserve.contribution();
     expect(newAddress).to.be.equal(currentAddress);
@@ -417,53 +429,55 @@ it("should set marketmaker in the reserve by avatar", async () => {
   it("should calculate the sell contribution", async () => {
     let nom = new BN(2e14).toString();
     let denom = new BN(1e15).toString();
-    let actual = await contribution.calculateContribution(marketMaker.address, goodReserve.address, founder, cDAI.address, 1e4);
-    expect(actual.toString()).to.be.equal((1e4 - 1e4 * nom / denom).toString());
+    let actual = await contribution.calculateContribution(
+      marketMaker.address,
+      goodReserve.address,
+      founder,
+      cDAI.address,
+      1e4
+    );
+    expect(actual.toString()).to.be.equal((1e4 - (1e4 * nom) / denom).toString());
   });
 
   it("should be able to sell gd to cDAI with contribution of 20%", async () => {
     let amount = 1e4;
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
-    let supplyBefore = reserveToken.gdSupply; 
-    let rrBefore = reserveToken.reserveRatio; 
+    let supplyBefore = reserveToken.gdSupply;
+    let rrBefore = reserveToken.reserveRatio;
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveBefore = await cDAI.balanceOf(goodReserve.address);
     const priceBefore = await goodReserve.currentPrice(cDAI.address);
     await goodDollar.approve(goodReserve.address, amount);
-    let transaction = await goodReserve.sell(
-                        cDAI.address,
-                        amount,
-                        0
-                      );
+    let transaction = await goodReserve.sell(cDAI.address, amount, 0);
     reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceAfter = reserveToken.reserveSupply;
-    let supplyAfter = reserveToken.gdSupply; 
-    let rrAfter = reserveToken.reserveRatio; 
+    let supplyAfter = reserveToken.gdSupply;
+    let rrAfter = reserveToken.reserveRatio;
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveAfter = await cDAI.balanceOf(goodReserve.address);
     const priceAfter = await goodReserve.currentPrice(cDAI.address);
     expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal("800000");
-    expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal("800000");
-    expect((reserveBalanceBefore.sub(reserveBalanceAfter)).toString()).to.be.equal("800000");
-    expect((supplyBefore - supplyAfter).toString()).to.be.equal((amount).toString());
-    expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
+    expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal(
+      "800000"
+    );
+    expect(reserveBalanceBefore.sub(reserveBalanceAfter).toString()).to.be.equal(
+      "800000"
+    );
+    expect((supplyBefore - supplyAfter).toString()).to.be.equal(amount.toString());
+    expect(rrAfter.toString()).to.be.equal(rrBefore.toString());
     expect(gdBalanceBefore.gt(gdBalanceAfter)).to.be.true;
     expect(cDAIBalanceAfter.gt(cDAIBalanceBefore)).to.be.true;
-    expect((priceAfter).toString()).to.be.equal(priceBefore.toString());
+    expect(priceAfter.toString()).to.be.equal(priceBefore.toString());
     expect(transaction.logs[0].event).to.be.equal("TokenSold");
   });
 
   it("should not be able to sell gd to other tokens beside cDAI", async () => {
     let amount = 1e8;
     await dai.approve(goodReserve.address, amount);
-    let error = await goodReserve.sell(
-      dai.address,
-      amount,
-      0
-    ).catch(e => e);
+    let error = await goodReserve.sell(dai.address, amount, 0).catch(e => e);
     expect(error.message).to.have.string("Only cDAI is supported");
   });
 
@@ -472,16 +486,12 @@ it("should set marketmaker in the reserve by avatar", async () => {
     await goodDollar.approve(goodReserve.address, "0");
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
-    let error = await goodReserve.sell(
-      cDAI.address,
-      amount,
-      0
-    ).catch(e => e);
+    let error = await goodReserve.sell(cDAI.address, amount, 0).catch(e => e);
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     expect(error.message).not.to.be.empty;
-    expect((gdBalanceAfter).toString()).to.be.equal(gdBalanceBefore.toString());
-    expect((cDAIBalanceAfter).toString()).to.be.equal(cDAIBalanceBefore.toString());
+    expect(gdBalanceAfter.toString()).to.be.equal(gdBalanceBefore.toString());
+    expect(cDAIBalanceAfter.toString()).to.be.equal(cDAIBalanceBefore.toString());
   });
 
   it("should not be able to sell gd without enough gd funds", async () => {
@@ -491,17 +501,15 @@ it("should set marketmaker in the reserve by avatar", async () => {
     await goodDollar.approve(goodReserve.address, amount);
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
-    let error = await goodReserve.sell(
-      cDAI.address,
-      amount,
-      0
-    ).catch(e => e);
+    let error = await goodReserve.sell(cDAI.address, amount, 0).catch(e => e);
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     expect(error.message).not.to.be.empty;
-    expect((gdBalanceAfter).toString()).to.be.equal(gdBalanceBefore.toString());
-    expect((cDAIBalanceAfter).toString()).to.be.equal(cDAIBalanceBefore.toString());
-    await goodDollar.transfer(founder, gdBalanceBeforeTransfer.toString(), { from: staker });
+    expect(gdBalanceAfter.toString()).to.be.equal(gdBalanceBefore.toString());
+    expect(cDAIBalanceAfter.toString()).to.be.equal(cDAIBalanceBefore.toString());
+    await goodDollar.transfer(founder, gdBalanceBeforeTransfer.toString(), {
+      from: staker
+    });
   });
 
   it("should not be able to sell gd when the minimum return is higher than the actual return", async () => {
@@ -509,16 +517,12 @@ it("should set marketmaker in the reserve by avatar", async () => {
     await goodDollar.approve(goodReserve.address, amount);
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
-    let error = await goodReserve.sell(
-      cDAI.address,
-      amount,
-      2000000
-    ).catch(e => e);
+    let error = await goodReserve.sell(cDAI.address, amount, 2000000).catch(e => e);
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     expect(error.message).to.have.string("Token return must be above the minReturn");
-    expect((gdBalanceAfter).toString()).to.be.equal(gdBalanceBefore.toString());
-    expect((cDAIBalanceAfter).toString()).to.be.equal(cDAIBalanceBefore.toString());
+    expect(gdBalanceAfter.toString()).to.be.equal(gdBalanceBefore.toString());
+    expect(cDAIBalanceAfter.toString()).to.be.equal(cDAIBalanceBefore.toString());
   });
 
   it("should not be able to destroy if not avatar", async () => {
@@ -539,14 +543,19 @@ it("should set marketmaker in the reserve by avatar", async () => {
   it("should not destroy the contract if the destination address is invalid", async () => {
     let avatarBalanceBefore = await cDAI.balanceOf(avatar.address);
     let reserveBalanceBefore = await cDAI.balanceOf(goodReserve.address);
-    let encodedCall = web3.eth.abi.encodeFunctionCall({
-      name: 'end',
-      type: 'function',
-      inputs: [{
-          type: 'address',
-          name: '_avatar'
-      }]
-    }, [NULL_ADDRESS]);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "end",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_avatar"
+          }
+        ]
+      },
+      [NULL_ADDRESS]
+    );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
@@ -561,20 +570,27 @@ it("should set marketmaker in the reserve by avatar", async () => {
   it("should destroy the contract and transfer cDAI funds to the given destination and transfer marker maker ownership", async () => {
     let avatarBalanceBefore = await cDAI.balanceOf(avatar.address);
     let reserveBalanceBefore = await cDAI.balanceOf(goodReserve.address);
-    let encodedCall = web3.eth.abi.encodeFunctionCall({
-      name: 'end',
-      type: 'function',
-      inputs: [{
-          type: 'address',
-          name: '_avatar'
-      }]
-    }, [avatar.address]);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "end",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_avatar"
+          }
+        ]
+      },
+      [avatar.address]
+    );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
     let code = await web3.eth.getCode(goodReserve.address);
     let newMMOwner = await marketMaker.owner();
-    expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal(reserveBalanceBefore.toString());
+    expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal(
+      reserveBalanceBefore.toString()
+    );
     expect(reserveBalanceAfter.toString()).to.be.equal("0");
     expect(newMMOwner).to.be.equal(avatar.address);
     expect(code.toString()).to.be.equal("0x");
@@ -583,14 +599,19 @@ it("should set marketmaker in the reserve by avatar", async () => {
   it("should not be able to call destory twice", async () => {
     let avatarBalanceBefore = await cDAI.balanceOf(avatar.address);
     let reserveBalanceBefore = await cDAI.balanceOf(goodReserve.address);
-    let encodedCall = web3.eth.abi.encodeFunctionCall({
-      name: 'end',
-      type: 'function',
-      inputs: [{
-          type: 'address',
-          name: '_avatar'
-      }]
-    }, [avatar.address]);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "end",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_avatar"
+          }
+        ]
+      },
+      [avatar.address]
+    );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);

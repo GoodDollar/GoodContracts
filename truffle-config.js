@@ -32,7 +32,7 @@ module.exports = {
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545
       network_id: "4447", // Match any network id,
-      gas: 9000000,
+      gas: 6000000,
       gasPrice: 1000000000 //1 gwei
       // from: '0x8ae536FAcb8C89163A0c5A5817Aaa75F65F1bcA6' // should be equal to first address in truffle UI list - address[0]
     },
@@ -70,7 +70,7 @@ module.exports = {
       gas: 8000000,
       gasPrice: 10000000000
     },
-    ropsten: {
+    "fuse-mainnet": {
       provider: function() {
         return new HDWalletProvider(
           mnemonic,
@@ -79,8 +79,24 @@ module.exports = {
           10
         );
       },
-      gas: 8000000,
-      gasPrice: 40000000000,
+      gas: 6000000,
+      timeoutBlocks: 4000,
+      gasPrice: 2000000000,
+      network_id: 3,
+      skipDryRun: true
+    },
+    "staging-mainnet": {
+      provider: function() {
+        return new HDWalletProvider(
+          mnemonic,
+          "https://ropsten.infura.io/v3/" + infura_api,
+          0,
+          10
+        );
+      },
+      gas: 6000000,
+      timeoutBlocks: 4000,
+      gasPrice: 2000000000,
       network_id: 3,
       skipDryRun: true
     },

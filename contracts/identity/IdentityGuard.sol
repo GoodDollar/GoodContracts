@@ -55,7 +55,7 @@ contract IdentityGuard is Ownable{
      * @param date The time sender must have been added before
      */
     modifier onlyAddedBefore(uint256 date) {
-        require(identity.wasAdded(msg.sender) <= date, "Was not added within period");
+        require(identity.lastAuthenticated(msg.sender) <= date, "Was not added within period");
         _;
     }
 

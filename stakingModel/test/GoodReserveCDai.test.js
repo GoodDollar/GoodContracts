@@ -174,8 +174,8 @@ it("should set marketmaker in the reserve by avatar", async () => {
     expect(reserveBalanceAfter.toString()).to.be.equal((reserveBalanceBefore.toNumber() + 1e18).toString());
     expect(rrAfter.toString()).to.be.equal("999388");
     expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
-    expect(gdBalanceFund.toString()).to.be.equal("0"); // 1 gd
-    expect(gdBalanceAvatar.toString()).to.be.equal((tx.logs[0].args.gdInterestMinted.add(tx.logs[0].args.gdExpansionMinted)).toString());
+    expect(gdBalanceAvatar.toString()).to.be.equal("0"); // 1 gd
+    expect(gdBalanceFund.toString()).to.be.equal((tx.logs[0].args.gdInterestMinted.add(tx.logs[0].args.gdExpansionMinted)).toString());
   });
 
   it("should calculate mint UBI correctly for 18 decimals precision and partial interest", async () => {
@@ -199,8 +199,8 @@ it("should set marketmaker in the reserve by avatar", async () => {
     expect(reserveBalanceAfter.toString()).to.be.equal(et.add(reserveBalanceBefore).toString());
     expect(supplyAfter.toString()).to.be.equal((toMint.add(supplyBefore)).toString());
     expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
-    expect((gdBalanceFundAfter - gdBalanceFundBefore).toString()).to.be.equal("100"); // 1 gd
-    expect((gdBalanceAvatarAfter - gdBalanceAvatarBefore).toString()).to.be.equal((toMint - 100).toString());
+    expect((gdBalanceAvatarAfter - gdBalanceAvatarBefore).toString()).to.be.equal("0"); // 1 gd
+    expect((gdBalanceFundAfter - gdBalanceFundBefore).toString()).to.be.equal((toMint).toString());
     expect(rrAfter.toString()).to.be.equal("998777");
   });
 

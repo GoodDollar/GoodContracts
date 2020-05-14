@@ -14,7 +14,6 @@ interface StakingContract {
         returns (uint256, uint256, uint256, uint32);
 }
 
-
 /**
  * @title GoodFundManager contract that transfer interest from the staking contract
  * to the reserve contract and transfer the return mintable tokens to the staking
@@ -28,10 +27,6 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     GoodReserveCDai public reserve;
     address public bridgeContract;
     address public homeAvatar;
-
-    // // tracking the daily withdraws and the actual amount
-    // // at the begining of the trading day.
-    // mapping (uint256 => Funds) public dailyFunds;
 
     event FundsTransferred(
         address indexed caller,

@@ -56,14 +56,12 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
 
     constructor(
         address _gooddollar,
-        address _owner,
         uint256 _nom,
         uint256 _denom,
         address payable _avatar
     ) public SchemeGuard(Avatar(_avatar)) {
         gooddollar = ERC20Detailed(_gooddollar);
         reserveRatioDailyExpansion = rdiv(_nom, _denom);
-        transferOwnership(_owner);
     }
 
     modifier onlyActiveToken(ERC20 _token) {

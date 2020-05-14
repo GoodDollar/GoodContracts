@@ -9,7 +9,7 @@ const Identity = artifacts.require("IdentityMock");
 const Formula = artifacts.require("FeeFormula");
 const avatarMock = artifacts.require("AvatarMock");
 const ControllerMock = artifacts.require("ControllerMock");
-const ContributionCalculation = artifacts.require("ContributionCalculation1");
+const ContributionCalculation = artifacts.require("ContributionCalculation");
 
 const BN = web3.utils.BN;
 export const BLOCK_INTERVAL = 2;

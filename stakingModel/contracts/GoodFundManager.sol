@@ -56,7 +56,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         address _homeAvatar
     ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2) {
         cDai = ERC20(_cDai);
-        bridgeContract = _bridgeContracts;
+        bridgeContract = _bridgeContract;
         homeAvatar = _homeAvatar;
         start();
     }
@@ -112,16 +112,16 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         );
 
         // finds the actual transferred cdai
-        uint256 actualCDaiGains = cDai.balanceOf(address(reserve)).sub(
+        uint256 interest = cDai.balanceOf(address(reserve)).sub(
             currentBalance
         );
-        if (actualCDaiGains > 0) {
+        if (interest > 0) {
             uint256 interestDonated = interest.mul(donationRatio).div(1e6);
             uint256 afterDonation = interest.sub(interestDonated);
             // mints gd while the interest amount is equal to the transferred amount
             (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(
                 cDai,
-                actualCDaiGains,
+                interest,
                 afterDonation
             );
             // transfers the minted tokens to the given staking contract
@@ -129,7 +129,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             token.transfer(address(staking), gdInterest);
             //transfer ubi to avatar on sidechain via bridge
             token.transferAndCall(
-                tokenBridge,
+                bridgeContract,
                 gdUBI,
                 bytes32(uint256(homeAvatar))
             );
@@ -137,8 +137,8 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
                 msg.sender,
                 address(staking),
                 address(reserve),
-                actualCDaiGains,
-                donated,
+                interest,
+                interestDonated,
                 gdInterest,
                 gdUBI
             );

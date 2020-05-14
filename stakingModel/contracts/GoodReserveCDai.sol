@@ -107,7 +107,7 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
     {
         dai = _dai;
         cDai = _cDai;
-        gooddollar = _goodDollar;
+        gooddollar = _gooddollar;
         avatar = _avatar;
         fundManager = _fundManager;
         marketMaker = _marketMaker;
@@ -244,7 +244,7 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         uint256 gdExpansionToMint = marketMaker.mintExpansion(interestToken);
         uint256 gdUBI = gdInterestToMint.sub(gdInterest);
         gdUBI = gdUBI.add(gdExpansionToMint);
-        uint256 toMint = gdUBI.add(gdInterest)
+        uint256 toMint = gdUBI.add(gdInterest);
         if(toMint > 0)
             ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
 

@@ -32,7 +32,12 @@ contract(
         identity.address,
         NULL_ADDRESS
       );
-      marketMaker = await MarketMaker.new(goodDollar.address, founder, 999388834642296, 1e15, avatar.address);
+      marketMaker = await MarketMaker.new(
+        goodDollar.address,
+        999388834642296,
+        1e15,
+        avatar.address
+      );
     });
 
     it("should initialize token with price", async () => {
@@ -64,7 +69,10 @@ contract(
 
     it("should calculate mint UBI correctly for 8 decimals precision", async () => {
       const gdPrice = await marketMaker.currentPrice(cDAI.address);
-      const toMint = await marketMaker.calculateMintInterest(cDAI.address, "100000000");
+      const toMint = await marketMaker.calculateMintInterest(
+        cDAI.address,
+        "100000000"
+      );
       const expectedTotalMinted = 10 ** 8 / gdPrice.toNumber(); //1cdai divided by gd price;
       expect(expectedTotalMinted).to.be.equal(10000); //1k GD since price is 0.0001 cdai for 1 gd
       expect(toMint.toString()).to.be.equal(
@@ -74,47 +82,45 @@ contract(
 
     it("should be able to calculate and update bonding curve gd balance based on oncoming cDAI and the price stays the same", async () => {
       const priceBefore = await marketMaker.currentPrice(cDAI.address);
-      await marketMaker.mintInterest(
-        cDAI.address,
-        web3.utils.numberToHex(1e8)
-      );
-      expect((Math.floor((await marketMaker.currentPrice(cDAI.address)) / 100)).toString()).to.be.equal((Math.floor(priceBefore.toNumber() / 100)).toString());
+      await marketMaker.mintInterest(cDAI.address, web3.utils.numberToHex(1e8));
+      expect(
+        Math.floor(
+          (await marketMaker.currentPrice(cDAI.address)) / 100
+        ).toString()
+      ).to.be.equal(Math.floor(priceBefore.toNumber() / 100).toString());
     });
 
     it("should mint 0 gd tokens if the add token supply is 0", async () => {
-      const error = await marketMaker.mintInterest(
-                            cDAI.address,
-                            "0"
-                          ).catch(e => e);
+      const error = await marketMaker
+        .mintInterest(cDAI.address, "0")
+        .catch(e => e);
       expect(error.message).to.have.string("added supply must be above 0");
     });
 
     it("should be able to update the reserve ratio only by the owner", async () => {
-      let error = await marketMaker.expandReserveRatio(
-                    cDAI.address, {
-                      from: staker
-                    }
-                  ).catch(e => e);
+      let error = await marketMaker
+        .expandReserveRatio(cDAI.address, {
+          from: staker
+        })
+        .catch(e => e);
       expect(error.message).not.to.be.empty;
     });
 
     it("should be able to update the bonding curve only by the owner", async () => {
-      let error = await marketMaker.mintInterest(
-                    cDAI.address,
-                    web3.utils.numberToHex(1e8), {
-                      from: staker
-                    }
-                  ).catch(e => e);
+      let error = await marketMaker
+        .mintInterest(cDAI.address, web3.utils.numberToHex(1e8), {
+          from: staker
+        })
+        .catch(e => e);
       expect(error.message).not.to.be.empty;
     });
 
     it("should be able to update the bonding curve only by the owner", async () => {
-      let error = await marketMaker.mintExpansion(
-                    cDAI.address,
-                    web3.utils.numberToHex(1e8), {
-                      from: staker
-                    }
-                  ).catch(e => e);
+      let error = await marketMaker
+        .mintExpansion(cDAI.address, web3.utils.numberToHex(1e8), {
+          from: staker
+        })
+        .catch(e => e);
       expect(error.message).not.to.be.empty;
     });
 
@@ -141,8 +147,12 @@ contract(
       let reserveRatioAfter = reserveTokenAfter.reserveRatio;
       const priceAfter = await marketMaker.currentPrice(cDAI.address);
       expect(priceAfter.toString()).to.be.equal(priceBefore.toString());
-      expect(gdSupplyBefore.toString()).not.to.be.equal(gdSupplyAfter.toString());
-      expect(reserveRatioBefore.toString()).not.to.be.equal(reserveRatioAfter.toString());
+      expect(gdSupplyBefore.toString()).not.to.be.equal(
+        gdSupplyAfter.toString()
+      );
+      expect(reserveRatioBefore.toString()).not.to.be.equal(
+        reserveRatioAfter.toString()
+      );
     });
 
     it("should have new return amount when RR is not 100%", async () => {
@@ -174,14 +184,13 @@ contract(
       let reserveToken = await marketMaker.reserveTokens(cDAI.address);
       let reserveBalance = reserveToken.reserveSupply.toString();
       let sellAmount = 10;
-      let supply = reserveToken.gdSupply.toString(); 
-      let rr = reserveToken.reserveRatio.toNumber(); 
+      let supply = reserveToken.gdSupply.toString();
+      let rr = reserveToken.reserveRatio.toNumber();
       // sell formula (as in calculateSaleReturn):
       // return = reserveBalance * (1 - (1 - sellAmount / supply) ^ (1000000 / reserveRatio))
-      const expectedReturn = reserveBalance * (1 - (1 - sellAmount / supply) ** (1000000 / rr));
-      expect(gDReturn.toNumber()).to.be.equal(
-        Math.floor(expectedReturn)
-      );
+      const expectedReturn =
+        reserveBalance * (1 - (1 - sellAmount / supply) ** (1000000 / rr));
+      expect(gDReturn.toNumber()).to.be.equal(Math.floor(expectedReturn));
     });
 
     it("should calculate sell return with DAI", async () => {
@@ -192,92 +201,104 @@ contract(
       let reserveToken = await marketMaker.reserveTokens(dai.address);
       let reserveBalance = reserveToken.reserveSupply.toString();
       let sellAmount = 10;
-      let supply = reserveToken.gdSupply.toString(); 
+      let supply = reserveToken.gdSupply.toString();
       let rr = reserveToken.reserveRatio.toNumber();
       // sell formula (as in calculateSaleReturn):
       // return = reserveBalance * (1 - (1 - sellAmount / supply) ^ (1000000 / reserveRatio))
-      const expectedReturn = reserveBalance * (1 - (1 - sellAmount / supply) ** (1000000 / rr));
-      expect(gDReturn.toNumber()).to.be.equal(
-        Math.floor(expectedReturn)
-      );
+      const expectedReturn =
+        reserveBalance * (1 - (1 - sellAmount / supply) ** (1000000 / rr));
+      expect(gDReturn.toNumber()).to.be.equal(Math.floor(expectedReturn));
     });
 
     it("should be able to update balances based on buy return calculation", async () => {
       let reserveToken = await marketMaker.reserveTokens(dai.address);
       let reserveBalanceBefore = reserveToken.reserveSupply;
-      let supplyBefore = reserveToken.gdSupply; 
-      let rrBefore = reserveToken.reserveRatio; 
+      let supplyBefore = reserveToken.gdSupply;
+      let rrBefore = reserveToken.reserveRatio;
       let amount = web3.utils.toWei("1", "ether");
       let transaction = await marketMaker.buy(
-                          dai.address,
-                          web3.utils.toWei("1", "ether") //1Dai
-                        );
+        dai.address,
+        web3.utils.toWei("1", "ether") //1Dai
+      );
       reserveToken = await marketMaker.reserveTokens(dai.address);
       let reserveBalanceAfter = reserveToken.reserveSupply;
-      let supplyAfter = reserveToken.gdSupply; 
-      let rrAfter = reserveToken.reserveRatio; 
+      let supplyAfter = reserveToken.gdSupply;
+      let rrAfter = reserveToken.reserveRatio;
       expect(transaction.logs[0].event).to.be.equal("BalancesUpdated");
-      expect((reserveBalanceAfter - reserveBalanceBefore).toString()).to.be.equal(amount.toString());
-      expect((supplyAfter - supplyBefore).toString()).to.be.equal(transaction.logs[0].args.returnAmount.toString());
-      expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
+      expect(
+        (reserveBalanceAfter - reserveBalanceBefore).toString()
+      ).to.be.equal(amount.toString());
+      expect((supplyAfter - supplyBefore).toString()).to.be.equal(
+        transaction.logs[0].args.returnAmount.toString()
+      );
+      expect(rrAfter.toString()).to.be.equal(rrBefore.toString());
     });
 
     it("should be able to update balances based on sell return calculation", async () => {
       let reserveToken = await marketMaker.reserveTokens(dai.address);
       let reserveBalanceBefore = reserveToken.reserveSupply;
-      let supplyBefore = reserveToken.gdSupply; 
-      let rrBefore = reserveToken.reserveRatio; 
+      let supplyBefore = reserveToken.gdSupply;
+      let rrBefore = reserveToken.reserveRatio;
       let amount = 100;
-      let transaction = await marketMaker.sell(
-                          dai.address,
-                          100
-                        );
+      let transaction = await marketMaker.sell(dai.address, 100);
       reserveToken = await marketMaker.reserveTokens(dai.address);
       let reserveBalanceAfter = reserveToken.reserveSupply;
       let supplyAfter = reserveToken.gdSupply;
       let rrAfter = reserveToken.reserveRatio;
       expect(transaction.logs[0].event).to.be.equal("BalancesUpdated");
-      expect((reserveBalanceAfter.add(transaction.logs[0].args.returnAmount)).toString()).to.be.equal(reserveBalanceBefore.toString());
-      expect((supplyBefore - supplyAfter).toString()).to.be.equal(amount.toString());
-      expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
+      expect(
+        reserveBalanceAfter
+          .add(transaction.logs[0].args.returnAmount)
+          .toString()
+      ).to.be.equal(reserveBalanceBefore.toString());
+      expect((supplyBefore - supplyAfter).toString()).to.be.equal(
+        amount.toString()
+      );
+      expect(rrAfter.toString()).to.be.equal(rrBefore.toString());
     });
 
     it("should be able to update balances based on sell with contribution return calculation", async () => {
       let reserveToken = await marketMaker.reserveTokens(dai.address);
       let reserveBalanceBefore = reserveToken.reserveSupply;
-      let supplyBefore = reserveToken.gdSupply; 
-      let rrBefore = reserveToken.reserveRatio; 
+      let supplyBefore = reserveToken.gdSupply;
+      let rrBefore = reserveToken.reserveRatio;
       let amount = 100;
       let transaction = await marketMaker.sellWithContribution(
-                          dai.address,
-                          100,
-                          80
-                        );
+        dai.address,
+        100,
+        80
+      );
       reserveToken = await marketMaker.reserveTokens(dai.address);
       let reserveBalanceAfter = reserveToken.reserveSupply;
       let supplyAfter = reserveToken.gdSupply;
       let rrAfter = reserveToken.reserveRatio;
       expect(transaction.logs[0].event).to.be.equal("BalancesUpdated");
-      expect((reserveBalanceAfter.add(transaction.logs[0].args.returnAmount)).toString()).to.be.equal(reserveBalanceBefore.toString());
-      expect((supplyBefore - supplyAfter).toString()).to.be.equal(amount.toString());
-      expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
+      expect(
+        reserveBalanceAfter
+          .add(transaction.logs[0].args.returnAmount)
+          .toString()
+      ).to.be.equal(reserveBalanceBefore.toString());
+      expect((supplyBefore - supplyAfter).toString()).to.be.equal(
+        amount.toString()
+      );
+      expect(rrAfter.toString()).to.be.equal(rrBefore.toString());
     });
 
     it("should not be able to calculate the buy return in gd and update the bonding curve params by a non-owner account", async () => {
-      let error = await marketMaker.buy(
-                          dai.address,
-                          web3.utils.toWei("1", "ether"), {
-                            from: staker
-                        }).catch(e => e);
+      let error = await marketMaker
+        .buy(dai.address, web3.utils.toWei("1", "ether"), {
+          from: staker
+        })
+        .catch(e => e);
       expect(error.message).not.to.be.empty;
     });
 
     it("should not be able to calculate the sell return in reserve token and update the bonding curve params by a non-owner account", async () => {
-      let error = await marketMaker.sell(
-                          dai.address,
-                          100, {
-                            from: staker
-                        }).catch(e => e);
+      let error = await marketMaker
+        .sell(dai.address, 100, {
+          from: staker
+        })
+        .catch(e => e);
       expect(error.message).not.to.be.empty;
     });
 
@@ -292,13 +313,10 @@ contract(
         reserveSupplyBefore.toString(),
         reserveRatioBefore.toString()
       );
-      let error = await marketMaker.buy(
-                          cDAI.address,
-                          web3.utils.toWei("1", "ether")
-                        ).catch(e => e);
-      expect(error.message).to.have.string(
-        "Reserve token not initialized"
-      );
+      let error = await marketMaker
+        .buy(cDAI.address, web3.utils.toWei("1", "ether"))
+        .catch(e => e);
+      expect(error.message).to.have.string("Reserve token not initialized");
       await marketMaker.initializeToken(
         cDAI.address,
         gdSupplyBefore,
@@ -308,22 +326,18 @@ contract(
     });
 
     it("should be able to buy only with active token", async () => {
-      let error = await marketMaker.sell(
-                          NULL_ADDRESS,
-                          web3.utils.toWei("1", "ether")
-                        ).catch(e => e);
-      expect(error.message).to.have.string(
-        "Reserve token not initialized"
-      );
+      let error = await marketMaker
+        .sell(NULL_ADDRESS, web3.utils.toWei("1", "ether"))
+        .catch(e => e);
+      expect(error.message).to.have.string("Reserve token not initialized");
     });
 
     it("should be able to sell gd only when the amount is lower than the total supply", async () => {
       let reserveToken = await marketMaker.reserveTokens(cDAI.address);
       let gdSupply = reserveToken.gdSupply;
-      let error = await marketMaker.sell(
-                          cDAI.address,
-                          (gdSupply + 1).toString()
-                        ).catch(e => e);
+      let error = await marketMaker
+        .sell(cDAI.address, (gdSupply + 1).toString())
+        .catch(e => e);
       expect(error.message).to.have.string(
         "GD amount is higher than the total supply"
       );
@@ -332,38 +346,56 @@ contract(
     it("should set reserve ratio daily expansion", async () => {
       let denom = new BN(1e15).toString();
       let currentReserveRatioDailyExpansion = await marketMaker.reserveRatioDailyExpansion();
-      let encodedCall = web3.eth.abi.encodeFunctionCall({
-                          name: 'setReserveRatioDailyExpansion',
-                          type: 'function',
-                          inputs: [{
-                              type: 'uint256',
-                              name: '_nom'
-                          },{
-                              type: 'uint256',
-                              name: '_denom'
-                          }]
-                      }, ['1', denom]);
+      let encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "setReserveRatioDailyExpansion",
+          type: "function",
+          inputs: [
+            {
+              type: "uint256",
+              name: "_nom"
+            },
+            {
+              type: "uint256",
+              name: "_denom"
+            }
+          ]
+        },
+        ["1", denom]
+      );
       await avatar.genericCall(marketMaker.address, encodedCall, 0);
       let newReserveRatioDailyExpansion = await marketMaker.reserveRatioDailyExpansion();
-      expect(newReserveRatioDailyExpansion).not.to.be.equal(currentReserveRatioDailyExpansion);
-      encodedCall = web3.eth.abi.encodeFunctionCall({
-                  name: 'setReserveRatioDailyExpansion',
-                  type: 'function',
-                  inputs: [{
-                      type: 'uint256',
-                      name: '_nom'
-                  },{
-                      type: 'uint256',
-                      name: '_denom'
-                  }]
-              }, ['999388834642296', denom]);
+      expect(newReserveRatioDailyExpansion).not.to.be.equal(
+        currentReserveRatioDailyExpansion
+      );
+      encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "setReserveRatioDailyExpansion",
+          type: "function",
+          inputs: [
+            {
+              type: "uint256",
+              name: "_nom"
+            },
+            {
+              type: "uint256",
+              name: "_denom"
+            }
+          ]
+        },
+        ["999388834642296", denom]
+      );
       await avatar.genericCall(marketMaker.address, encodedCall, 0);
       let reserveRatioDailyExpansion = await marketMaker.reserveRatioDailyExpansion();
-      expect(reserveRatioDailyExpansion).not.to.be.equal(currentReserveRatioDailyExpansion);
+      expect(reserveRatioDailyExpansion).not.to.be.equal(
+        currentReserveRatioDailyExpansion
+      );
     });
 
     it("should be able to set the reserve ratio daily expansion only by the owner", async () => {
-      let error = await marketMaker.setReserveRatioDailyExpansion(1, 1e15).catch(e => e);
+      let error = await marketMaker
+        .setReserveRatioDailyExpansion(1, 1e15)
+        .catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
     });
 
@@ -371,12 +403,15 @@ contract(
       const priceBefore = await marketMaker.currentPrice(dai.address);
       const toMint = await marketMaker.calculateMintInterest(
         dai.address,
-        web3.utils.numberToHex(1e18), {
+        web3.utils.numberToHex(1e18),
+        {
           from: staker
         }
       );
       const totalMinted = 1e18 / priceBefore.toNumber();
-      expect(toMint.toString()).to.be.equal((Math.floor(totalMinted * 100)).toString());
+      expect(toMint.toString()).to.be.equal(
+        Math.floor(totalMinted * 100).toString()
+      );
       const priceAfter = await marketMaker.currentPrice(dai.address);
       expect(priceBefore.toString()).to.be.equal(priceAfter.toString());
     });
@@ -387,7 +422,9 @@ contract(
       await marketMaker.calculateNewReserveRatio(cDAI.address);
       let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
       let reserveRatioAfter = reserveTokenAfter.reserveRatio;
-      expect(reserveRatioBefore.toString()).to.be.equal(reserveRatioAfter.toString());
+      expect(reserveRatioBefore.toString()).to.be.equal(
+        reserveRatioAfter.toString()
+      );
     });
 
     it("should not change the gd supply when calculate how much gd to mint based on added token supply from interest", async () => {

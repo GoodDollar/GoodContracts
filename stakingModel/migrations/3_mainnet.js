@@ -35,11 +35,11 @@ module.exports = async function(deployer, network) {
   //TODO: update to bridge with bridge+homeavatar once PR is merged
   let foreignBridgeAddr, daiAddress, cdaiAddress;
   if (network == "test") {
-    const [foreignBridge, dai, cdai] = await Promise.all([
+    const [foreignBridge, dai] = await Promise.all([
       deployer.deploy(BridgeMock),
-      deployer.deploy(DAIMock),
-      deployer.deploy(cDAIMock)
+      deployer.deploy(DAIMock)
     ]);
+    const cdai = await deployer.deploy(cDAIMock, dai.address);
     foreignBridgeAddr = foreignBridge.address;
     daiAddress = dai.address;
     cdaiAddress = cdai.address;

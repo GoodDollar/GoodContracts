@@ -36,7 +36,6 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
     {
         ubi = _ubi;
         claimAmount = _claimAmount;
-        start();
     }
 
     /* @dev Start function. Adds this contract to identity as a feeless scheme.
@@ -54,7 +53,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
      * @dev sets the ubi scheme
      * @param _ubi contract
      */
-    function setUBIScheme(UBIScheme _ubi) public onlyOwner {
+    function setUBIScheme(UBIScheme _ubi) public onlyAvatar {
         ubi = _ubi;
     }
 
@@ -62,7 +61,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
      * @dev sets the claim amount
      * @param _claimAmount the new claim amount
      */
-    function setClaimAmount(uint256 _claimAmount) public onlyOwner {
+    function setClaimAmount(uint256 _claimAmount) public onlyAvatar {
         claimAmount = _claimAmount;
     }
 
@@ -79,7 +78,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
     {
         DAOToken token = avatar.nativeToken();
         uint256 balance = token.balanceOf(address(this));
-        if(balance > claimAmount) {
+        if(balance >= claimAmount) {
             token.transfer(msg.sender, claimAmount);
             return claimAmount;
         }

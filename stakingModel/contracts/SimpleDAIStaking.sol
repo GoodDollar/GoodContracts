@@ -61,7 +61,10 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         address _fundManager,
         uint256 _blockInterval
 
-    ) public SchemeGuard(Avatar(address(0))) {
+    )
+        public
+        SchemeGuard(Avatar(address(0)))
+    {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
         uniswap = _uniswap;

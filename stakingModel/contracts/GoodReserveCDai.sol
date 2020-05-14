@@ -49,6 +49,10 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
 
     uint256 public sellContributionRatio;
 
+    uint256 public blockInterval;
+
+    uint256 public lastMinted;
+
     ContributionCalc public contribution;
 
     modifier onlyFundManager {
@@ -105,7 +109,8 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         Avatar _avatar,
         Identity _identity,
         address _marketMaker,
-        ContributionCalc _contribution
+        ContributionCalc _contribution,
+        uint256 _blockInterval
     )
         public
         FeelessScheme(_identity, _avatar)
@@ -117,6 +122,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         avatar = _avatar;
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
+        blockInterval = _blockInterval;
         contribution = _contribution;
         start();
     }
@@ -138,6 +144,14 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     */
     function setMarketMaker(address _marketMaker) public onlyAvatar {
         marketMaker = GoodMarketMaker(_marketMaker);
+    }
+
+    /**
+    @dev allow the DAO to change the block interval
+    @param _blockInterval the new value
+    */
+    function setBlockInterval(uint256 _blockInterval) public onlyAvatar {
+        blockInterval = _blockInterval;
     }
 
     /**
@@ -235,6 +249,10 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         onlyFundManager
         returns (uint256, uint256)
     {
+        require(
+            block.number.sub(lastMinted) > blockInterval,
+            "Need to wait for the next interval"
+        );
         uint256 price = currentPrice(interestToken);
         uint256 gdInterestToMint = marketMaker.mintInterest(interestToken, transfered);
         uint256 precisionLoss = uint256(27).sub(uint256(gooddollar.decimals()));
@@ -245,6 +263,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         ERC20Mintable(address(gooddollar)).mint(fundManager, gdInterest);
         //TODO: how do we transfer to bridge, is the fundmanager in charge of that?
         ERC20Mintable(address(gooddollar)).mint(address(avatar), gdUBI);
+        lastMinted = block.number;
         emit GDInterestAndExpansionMinted(
             msg.sender,
             address(fundManager),

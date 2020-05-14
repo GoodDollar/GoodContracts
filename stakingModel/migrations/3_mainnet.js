@@ -6,6 +6,8 @@ const MarketMaker = artifacts.require("./GoodMarketMaker.sol");
 const Reserve = artifacts.require("./GoodReserveCDai.sol");
 const Contribution = artifacts.require("./ContributionCalculation.sol");
 const BridgeMock = artifacts.require("./BridgeMock.sol");
+const DAIMock = artifacts.require("./DAIMock.sol");
+const cDAIMock = artifacts.require("./cDAIMock.sol");
 
 const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
@@ -13,8 +15,7 @@ const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 const releaser = require("../../scripts/releaser.js");
 
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-const NULL_HASH =
-  "0x0000000000000000000000000000000000000000000000000000000000000000";
+const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
   if (network.indexOf("mainnet") < 0 && network !== "test") {
@@ -31,17 +32,21 @@ module.exports = async function(deployer, network) {
   const maindao = daoAddresses[network];
   const homedao = daoAddresses[homeNetwork];
 
-  //TODO: mock for test network
-  const daiAddress = networkSettings.daiAddress;
-  const cdaiAddress = networkSettings.cdaiAddress;
-
   //TODO: update to bridge with bridge+homeavatar once PR is merged
-  let foreignBridgeAddr;
+  let foreignBridgeAddr, daiAddress, cdaiAddress;
   if (network == "test") {
-    const foreignBridge = await deployer.deploy(BridgeMock);
+    const [foreignBridge, dai, cdai] = await Promise.all([
+      deployer.deploy(BridgeMock),
+      deployer.deploy(DAIMock),
+      deployer.deploy(cDAIMock)
+    ]);
     foreignBridgeAddr = foreignBridge.address;
+    daiAddress = dai.address;
+    cdaiAddress = cdai.address;
   } else {
     foreignBridgeAddr = maindao.ForeignBridge._foreignBridge;
+    daiAddress = networkSettings.daiAddress;
+    cdaiAddress = networkSettings.cdaiAddress;
   }
   const ubiBridgeRecipient = homedao.UBIScheme;
   const homeAvatar = homedao.Avatar;
@@ -97,10 +102,7 @@ module.exports = async function(deployer, network) {
     marketmaker.address,
     contribcalc.address
   );
-  const [stakingContract, reserve] = await Promise.all([
-    stakingContractP,
-    reserveP
-  ]);
+  const [stakingContract, reserve] = await Promise.all([stakingContractP, reserveP]);
   await marketmaker.transferOwnership(reserve.address);
 
   console.log("proposing reserve and fundmanager to DAO");
@@ -136,7 +138,6 @@ module.exports = async function(deployer, network) {
   console.log("starting...");
   await Promise.all([reserve.start(), fundManager.start()]);
 
-  //TODO: verify isRegistered is used when needed
   let releasedContracts = {
     ...networkAddresses,
     FundManager: fundManager.address,
@@ -144,6 +145,8 @@ module.exports = async function(deployer, network) {
     Reserve: reserve.address,
     MarketMaker: marketmaker.address,
     Contribution: contribcalc.address,
+    DAI: daiAddress,
+    cDAI: cdaiAddress,
     network,
     networkId: parseInt(deployer.network_id)
   };

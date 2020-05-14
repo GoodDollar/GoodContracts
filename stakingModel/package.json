@@ -4,20 +4,22 @@
   "description": "GoodDollar Contracts",
   "scripts": {
     "build": "scripts/build.sh deploy",
-    "start": "run-p ganache deploy",
+    "start": "run-p ganache start:withmain",
+    "start:main": "cd .. && npm run deploy",
+    "start:withmain": "run-s start:main deploy",
     "coverage": "export COVERALLS_REPO_TOKEN='qiXNelh1HXMAsoPah9yRD2yG2WlqrDfLh' && run-s test:generate-typings && run-s test:tsc && run-s coveragescript",
     "coveragescript": "scripts/coverage.sh",
     "ganache": "ganache-cli -m \"$MNEMONIC\" -b 1 -g 1000000 -l 9000000 --port 9545 --networkId 4447 -q",
     "wait": "wait-on tcp:9545",
     "minimize": "scripts/minimize.sh 'build/contracts'",
-    "deploy": "run-s migrate_reset:full minimize",
+    "deploy": "run-s migrate:full minimize",
     "test": "export MNEMONIC='glad notable bullet donkey fall dolphin simple size stone evil slogan dinner' && run-s test:generate-typings && run-s test:tsc && run-s testscript",
     "test:wait": "run-s deploy test:ganache",
     "test:generate-typings": "truffle compile && typechain --target truffle './build/**/*.json'",
     "test:tsc": "tsc --noEmit",
     "lint": "solhint --formatter codeframe develop/**/*.sol",
     "test:ganache": "wait-on tcp:9545 && truffle test --network ganache && kill -9 $(lsof -t -i:9545)",
-    "migrate:full": "truffle migrate --network ${NETWORK-develop}"
+    "migrate:full": "truffle migrate --network ${NETWORK-develop} --reset"
   },
   "files": [
     "build",

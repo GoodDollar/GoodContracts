@@ -22,7 +22,6 @@ module.exports = async function(deployer, network) {
   const networkSettings = settings[network] || settings["default"];
   const homedao = daoAddresses[network];
 
-  console.log({ homedao });
   const ubi = await deployer.deploy(
     UBIScheme,
     homedao.Avatar,
@@ -53,7 +52,7 @@ module.exports = async function(deployer, network) {
     founders.map(f => absoluteVote.vote(proposalId, 1, 0, f))
   );
 
-  console.log("starting...", { votingResults: votingResults[0].logs });
+  console.log("starting...");
 
   await ubi.start();
 

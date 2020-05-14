@@ -54,8 +54,6 @@ contract UBIScheme is AbstractUBI {
     // were inactive. on the first claim the user is
     // activate. from the second claim the user may recieves tokens.
     event AddedToPending(address indexed account, uint256 lastClaimed);
-    // emits when a user tries to claim more than one time a day
-    event AlreadyClaimed(address indexed account, uint256 lastClaimed);
     // emits when a fish has been succeded
     event UBIFished(address indexed caller, address indexed fished_account, uint256 claimAmount);
     // emits at distribute. tracks the claim requests that have
@@ -163,6 +161,26 @@ contract UBIScheme is AbstractUBI {
         return false;
     }
 
+    /* @dev Transfers `amount` dao tokens to `account`. updates stats
+     * and emits an event in case of claimed.
+     * @param account the account which recieves the funds
+     * @param amount the amount to transfer
+     * @param isClaimed true for claimed
+     */
+    function _transferTokens(address account, uint256 amount, bool isClaimed)
+        private
+        requireActive
+    {
+        Day storage day = claimDay[currentDay];
+        day.amountOfClaimers = day.amountOfClaimers.add(1);
+        day.claimAmount = day.claimAmount.add(amount);
+        GoodDollar token = GoodDollar(address(avatar.nativeToken()));
+        token.transfer(account, amount);
+        if(isClaimed) {
+            emit UBIClaimed(account, amount);
+        }
+    }
+
     /* @dev Function for claiming UBI. Requires contract to be active. Calls distributionFormula,
      * calculating the amount the account can claim, and transfers the amount to the account.
      * Emits the address of account and amount claimed.
@@ -187,13 +205,7 @@ contract UBIScheme is AbstractUBI {
             ((lastClaimed[account].sub(periodStart)) / 1 days) < currentDay) {
             lastClaimed[account] = now;
             claimDay[currentDay].hasClaimed[account] = true;
-            GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-            token.transfer(account, newDistribution);
-            Day memory day = claimDay[currentDay];
-            day.amountOfClaimers = day.amountOfClaimers.add(1);
-            day.claimAmount = day.claimAmount.add(newDistribution);
-            claimDay[currentDay] = day;
-            emit UBIClaimed(account, newDistribution);
+            _transferTokens(account, newDistribution, true);
             return true;
         }
         else if(!isRegistered(account) || fishedUsersAddresses[account]) { // a unregistered or fished user
@@ -201,9 +213,6 @@ contract UBIScheme is AbstractUBI {
             fishedUsersAddresses[account] = false;
             lastClaimed[account] = now; // marks last claimed as today
             emit AddedToPending(account, lastClaimed[account]);
-        }
-        else {
-            emit AlreadyClaimed(account, lastClaimed[account]);
         }
         return false;
     }
@@ -245,12 +254,7 @@ contract UBIScheme is AbstractUBI {
         // that the fisher is the first to make the calculation today
         uint256 newDistribution = distributionFormula(0, account);
         activeUsersCount = activeUsersCount.sub(1);
-        GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        token.transfer(msg.sender, newDistribution);
-        Day memory day = claimDay[currentDay];
-        day.amountOfClaimers = day.amountOfClaimers.add(1);
-        day.claimAmount = day.claimAmount.add(newDistribution);
-        claimDay[currentDay] = day;
+        _transferTokens(msg.sender, newDistribution, false);
         emit UBIFished(msg.sender, account, newDistribution);
         return true;
     }
@@ -266,7 +270,9 @@ contract UBIScheme is AbstractUBI {
     {
         require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
         for(uint256 i = 0; i < accounts.length; ++i) {
-            fish(accounts[i]);
+            if(isRegistered(accounts[i]) && !isActiveUser(accounts[i]) && !fishedUsersAddresses[accounts[i]]) {
+                fish(accounts[i]);
+            }
         }
         return true;
     }

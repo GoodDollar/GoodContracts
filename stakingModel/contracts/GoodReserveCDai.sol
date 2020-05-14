@@ -6,7 +6,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
-import "../../contracts/dao/schemes/SchemeGuard.sol";
+import "../../contracts/dao/schemes/FeelessScheme.sol";
 import "../../contracts/dao/schemes/ActivePeriod.sol";
 import "../../contracts/DSMath.sol";
 import "../../contracts/token/GoodDollar.sol";
@@ -20,13 +20,17 @@ interface cERC20 {
     function exchangeRateStored() external view returns (uint256);
     function balanceOf(address addr) external view returns (uint256);
     function transfer(address to, uint256 amount) external returns (bool);
+}
+
+interface ContributionCalc {
+    function calculateContribution(GoodMarketMaker _marketMaker, GoodReserveCDai _reserve, address _contributer, ERC20 _token, uint256 _gdAmount) external view returns (uint256);
 
 }
 
 /**
 @title Reserve based on cDAI and dynamic reserve ratio market maker
 */
-contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
+contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
     ERC20 dai;
@@ -44,6 +48,8 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
     uint256 public daysFromStart = 0;
 
     uint256 public sellContributionRatio;
+
+    ContributionCalc public contribution;
 
     modifier onlyFundManager {
         require(
@@ -79,9 +85,9 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
                              uint256 minReturn,
                              uint256 actualReturn);
 
-    event SellContributionRatioUpdated(address indexed caller,
-                                       uint256 nom,
-                                       uint256 denom);
+    event ContributionAddressUpdated(address indexed caller,
+                                     address prevAddress,
+                                     address newAddress);
 
     event GDInterestAndExpansionMinted(address indexed caller,
                                        address indexed interestCollector,
@@ -97,12 +103,12 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         GoodDollar _gooddollar,
         address _fundManager,
         Avatar _avatar,
-        GoodMarketMaker _marketMaker,
-        uint256 _nom,
-        uint256 _denom
+        Identity _identity,
+        address _marketMaker,
+        ContributionCalc _contribution
     )
         public
-        SchemeGuard(_avatar)
+        FeelessScheme(_identity, _avatar)
         ActivePeriod(now, now * 2)
     {
         dai = _dai;
@@ -110,27 +116,41 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         gooddollar = _gooddollar;
         avatar = _avatar;
         fundManager = _fundManager;
-        marketMaker = _marketMaker;
-        sellContributionRatio = rdiv(_nom, _denom);
+        marketMaker = GoodMarketMaker(_marketMaker);
+        contribution = _contribution;
+        start();
+    }
+
+    /* @dev Start function. Adds this contract to identity as a feeless scheme.
+     * Can only be called if scheme is registered
+     */
+    function start()
+        public
+        onlyRegistered
+    {
+        addRights();
         super.start();
     }
 
+    /**
+    @dev allow the DAO to change the market maker contract
+    @param _marketMaker address of the new contract
+    */
     function setMarketMaker(address _marketMaker) public onlyAvatar {
         marketMaker = GoodMarketMaker(_marketMaker);
     }
 
     /**
-    @dev allow the DAO to change the sell contribution rate
-    it is calculated by _nom/_denom with e27 precision
-    @param _nom the nominator
-    @param _denom the denominator
+    @dev allow the DAO to change the contribution formula contract
+    @param _contribution address of the new contribution contract
     */
-    function setSellContributionRatio(uint256 _nom, uint256 _denom)
+    function setContributionAddress(address _contribution)
         public
         onlyAvatar
     {
-        sellContributionRatio = rdiv(_nom, _denom);
-        emit SellContributionRatioUpdated(msg.sender, _nom, _denom);
+        address prevAddress = address(contribution);
+        contribution = ContributionCalc(_contribution);
+        emit ContributionAddressUpdated(msg.sender, prevAddress, _contribution);
     }
 
     /**
@@ -164,28 +184,6 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
     }
 
     /**
-    * @dev calculate the contribution amount during the sell action. there is a
-    * `sellContributionRatio` percent contribution
-    * @return (contributionAmount) the contribution amount for sell
-    */
-    function calculateSellContribution(uint256 gdAmount)
-        public
-        view
-        returns (uint256)
-    {
-
-        uint256 decimalsDiff = uint256(27).sub(uint256(gooddollar.decimals()));
-        uint256 contribution =
-        rmul(
-                gdAmount.mul(10**decimalsDiff), // expand to e27 precision
-                sellContributionRatio
-            )
-                .div(10**decimalsDiff); // return to e2 precision
-        require(gdAmount > contribution, "Calculation error");
-        return gdAmount.sub(contribution);
-    }
-
-    /**
     * @dev sell G$ to sellTo and update the bonding curve params. sell occurs only if the
     * token return is above the given minimum. notice that there is a contribution
     * amount from the given G$ that stays in the reserve. it is possible to sell only to
@@ -202,7 +200,7 @@ contract GoodReserveCDai is DSMath, SchemeGuard, ActivePeriod {
         returns (uint256)
     {
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
-        uint256 contributionAmount = calculateSellContribution(gdAmount);
+        uint256 contributionAmount = contribution.calculateContribution(marketMaker, this, msg.sender, sellTo, gdAmount);
         uint256 tokenReturn = marketMaker.sellWithContribution(sellTo, gdAmount, contributionAmount);
         require(tokenReturn >= minReturn, "Token return must be above the minReturn");
         require(sellTo.transfer(msg.sender, tokenReturn) == true, "Transfer failed");

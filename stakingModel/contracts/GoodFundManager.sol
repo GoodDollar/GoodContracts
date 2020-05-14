@@ -131,7 +131,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             token.transferAndCall(
                 bridgeContract,
                 gdUBI,
-                bytes32(uint256(homeAvatar))
+                abi.encodePacked(bytes32(uint256(homeAvatar)))
             );
             emit FundsTransferred(
                 msg.sender,

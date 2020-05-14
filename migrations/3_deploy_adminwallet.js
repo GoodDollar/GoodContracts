@@ -11,6 +11,10 @@ const admin_mnemonic = process.env.ADMIN_MNEMONIC;
 const infura_api = process.env.INFURA_API;
 
 module.exports = async function(deployer, network, accounts) {
+  if (network.indexOf("mainnet") >= 0) {
+    console.log("Skipping adminwallet for mainnet");
+    return;
+  }
   if (network != "ganache" && network != "test" && network != "coverage") {
     const adminWallet = await AdminWallet.deployed();
     const networkSettings = settings[network] || settings["default"];

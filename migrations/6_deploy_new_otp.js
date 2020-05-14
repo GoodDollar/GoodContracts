@@ -1,14 +1,9 @@
 const settings = require("./deploy-settings.json");
 
 const Identity = artifacts.require("./Identity");
-const Controller = artifacts.require("./Controller.sol");
-const GoodDollar = artifacts.require("./GoodDollar.sol");
-
 const Avatar = artifacts.require("./Avatar.sol");
 const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
-
-const UBI = artifacts.require("./FixedUBI.sol");
 const OneTimePayments = artifacts.require("./OneTimePayments.sol");
 
 const releaser = require("../scripts/releaser.js");
@@ -19,6 +14,10 @@ const NULL_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network, accounts) {
+  if (network.indexOf("mainnet") >= 0) {
+    console.log("Skipping OTPL for mainnet");
+    return;
+  }
   const networkSettings = settings[network] || settings["default"];
 
   const file = await fse.readFile("releases/deployment.json", "utf8");
@@ -29,8 +28,6 @@ module.exports = async function(deployer, network, accounts) {
   const voteaddr = await networkAddresses.AbsoluteVote;
   const schemeaddr = await networkAddresses.SchemeRegistrar;
   const identityaddr = await networkAddresses.Identity;
-  const ubiaddr = await networkAddresses.UBI;
-  const signupaddr = await networkAddresses.SignupBonus;
 
   const founders = [accounts[0]];
 
@@ -62,20 +59,8 @@ module.exports = async function(deployer, network, accounts) {
   await oneTimePayments.start();
 
   let releasedContracts = {
-    GoodDollar: await avatar.nativeToken(),
-    Reputation: await avatar.nativeReputation(),
-    Identity: await identity.address,
-    Avatar: await avatar.address,
-    Controller: await avatar.owner(),
-    AbsoluteVote: await absoluteVote.address,
-    SchemeRegistrar: await schemeRegistrar.address,
-    UpgradeScheme: await networkAddresses.UpgradeScheme,
-    AdminWallet: await networkAddresses.AdminWallet,
-    UBI: ubiaddr,
-    SignupBonus: signupaddr,
-    OneTimePayments: await oneTimePayments.address,
-    network,
-    networkId: parseInt(deployer.network_id)
+    ...networkAddresses,
+    OneTimePayments: await oneTimePayments.address
   };
 
   console.log("Rewriting deployment file...\n", { releasedContracts });

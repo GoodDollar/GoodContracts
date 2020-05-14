@@ -28,7 +28,7 @@ contract DeployHomeBridge is SchemeGuard {
         factory = _factory;
     }
 
-    /* @dev Adds the factory address to minters, deploys the foreign bridge on
+    /* @dev Adds the factory address to minters, deploys the home bridge on
      * current network, and then self-destructs, transferring any ether on the
      * contract to the avatar. Reverts if scheme is not registered
      */

@@ -31,17 +31,24 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
     token = await GoodDollar.at(await avatar.nativeToken());
     feeFormula = await FeeFormula.deployed();
     newFormula = await FeeFormula.new(0);
-    feeGuard = await FormulaHolderMock.new(feeFormula.address, { from: founder });
+    feeGuard = await FormulaHolderMock.new(feeFormula.address, {
+      from: founder
+    });
   });
 
   it("should not allow FormulaHolder with null formula", async () => {
-		await helpers.assertVMException(FormulaHolderMock.new(helpers.NULL_ADDRESS), "Supplied formula is null");
+    await helpers.assertVMException(
+      FormulaHolderMock.new(helpers.NULL_ADDRESS),
+      "Supplied formula is null"
+    );
   });
 
   it("should not allow Fee formula with too high percentage", async () => {
-  		await helpers.assertVMException(FeeFormula.new(110), 
-  			"Percentage should be <100");
-  })
+    await helpers.assertVMException(
+      FeeFormula.new(110),
+      "Percentage should be <100"
+    );
+  });
 
   it("should be allowed to register new formula", async () => {
     const schemeRegistrar = await SchemeRegistrar.deployed();
@@ -65,22 +72,53 @@ contract("FeeFormula - setting transaction fees", ([founder, stranger]) => {
     await newFormula.setAvatar(avatar.address);
   });
 
-	it("should not allow stranger to change formula", async () => {
-		await helpers.assertVMRevert(
-			feeGuard.setFormula(newFormula.address, { from: stranger })
-		);
-	});
+  it("should not allow stranger to change formula", async () => {
+    await helpers.assertVMRevert(
+      feeGuard.setFormula(newFormula.address, { from: stranger })
+    );
+  });
 
-	it("should allow owner to set new formula", async () => {
-		assert(await feeGuard.setFormula(newFormula.address, { from: founder }));
-	});
+  it("should allow owner to set new formula", async () => {
+    assert(await feeGuard.setFormula(newFormula.address, { from: founder }));
+  });
 
   it("should have support 0 tx fee", async () => {
-    expect((await newFormula.getTxFees(1000)).toNumber()).to.be.equal(0);
+    expect(
+      (await newFormula
+        .getTxFees(1000, founder, stranger)
+        .then(_ => _["0"])).toNumber()
+    ).to.be.equal(0);
   });
 
   it("should calculate tx fee correctly", async () => {
-    expect((await feeFormula.getTxFees(1000)).toNumber()).to.be.equal(10);
-    expect((await feeFormula.getTxFees(50)).toNumber()).to.be.equal(0);
+    expect(
+      (await feeFormula
+        .getTxFees(1000, stranger, founder)
+        .then(_ => _["0"])).toNumber()
+    ).to.be.equal(10);
+    expect(
+      (await feeFormula
+        .getTxFees(50, stranger, founder)
+        .then(_ => _["0"])).toNumber()
+    ).to.be.equal(0);
+  });
+
+  it("should calculate tx fee correctly with sender and recipient", async () => {
+    expect(
+      (await feeFormula
+        .getTxFees(1000, founder, stranger)
+        .then(_ => _["0"])).toNumber()
+    ).to.be.equal(10);
+    expect(
+      (await feeFormula
+        .getTxFees(50, founder, stranger)
+        .then(_ => _["0"])).toNumber()
+    ).to.be.equal(0);
+  });
+
+  it("should return boolean in senderPays", async () => {
+    expect(
+      await newFormula.getTxFees(1000, founder, stranger).then(_ => _["1"])
+    ).to.be.equal(false);
   });
 });

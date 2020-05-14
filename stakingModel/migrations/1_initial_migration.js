@@ -1,7 +1,7 @@
 var Migrations = artifacts.require("./Migrations.sol");
 
-module.exports = function(deployer, network) {
+module.exports = async (deployer, network) => {
   process.env.NETWORK = network;
-  deployer.deploy(Migrations);
+  if (network === "tdd") return;
+  console.log("MAKE SURE TO DEPLOY MAIN PROJECT CONTRACTS FIRST");
 };
- 

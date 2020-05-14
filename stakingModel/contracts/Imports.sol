@@ -7,3 +7,7 @@ import "../../contracts/mocks/cDAIMock.sol";
 import "../../contracts/mocks/AvatarMock.sol";
 import "../../contracts/identity/Identity.sol";
 import "../../contracts/dao/schemes/FeeFormula.sol";
+import "../../contracts/dao/DaoCreator.sol";
+
+
+contract Imports {}

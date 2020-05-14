@@ -91,7 +91,6 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     function transferInterest(StakingContract staking)
         public
         requireActive
-        onlyRegistered
         reserveHasInitialized
     {
         require(

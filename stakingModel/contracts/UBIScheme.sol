@@ -3,50 +3,47 @@ pragma solidity 0.5.4;
 import "../../contracts/dao/schemes/UBI.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /* @title Dynamic amount-per-day UBI scheme allowing claim once a day
  */
 contract UBIScheme is AbstractUBI {
     using SafeMath for uint256;
 
-    // result of distribution formula
+    // result of distribution formula calculated each day
     uint256 public dailyUbi = 0;
 
     // limits the gas for each iteration at `fishMulti`
-    // and in `distribute`
-    uint256 public iterationGasLimit = 300000;
+    uint256 public iterationGasLimit = 150000;
 
     // tracking the active users number. it changes when
     // a new user claim for the first time or when a user
     // has been fished
     uint256 public activeUsersCount = 0;
 
-    // tracking last withdraw day. withdraw occures on
+    // tracking last withdraw day of funds from avatar. withdraw occures on
     // the first daily claim or the first daily fish only
     uint256 public lastWithdrawDay = 0;
 
-    // limits the iterations number of multiple claim.
-    uint256 public maxDistributeAddresses;
-
+    // how long can a user be inactive
     // after those days the user can be fished
     // (see `fish` notes)
     uint256 public maxInactiveDays;
 
     struct Funds {
         // marks if the funds for a specific day has
-        // withdrawn
+        // withdrawn from avatar
         bool hasWithdrawn;
-        // the sum of the balance that the contract
-        // had before the withdraw and the balance after
+        // total GD held after withdrawing
         uint256 openAmount;
     }
 
     // tracking the daily withdraws and the actual amount
     // at the begining of the trading day.
-    mapping (uint256 => Funds) public dailyFunds;
+    mapping(uint256 => Funds) public dailyUBIHistory;
 
-    // marks users that have been fished to avoid of
+    // marks users that have been fished to avoid
     // double fishing
-    mapping (address => bool) public fishedUsersAddresses;
+    mapping(address => bool) public fishedUsersAddresses;
 
     // emits when a withdraw has been succeded
     event WithdrawFromDao(address indexed caller, uint256 prevBalance, uint256 newBalance);
@@ -54,10 +51,13 @@ contract UBIScheme is AbstractUBI {
     // were inactive. on the first claim the user is
     // activate. from the second claim the user may recieves tokens.
     event AddedToPending(address indexed account, uint256 lastClaimed);
+
     // emits when a user tries to claim more than one time a day
     event AlreadyClaimed(address indexed account, uint256 lastClaimed);
-    // emits when a fish has been succeded
-    event UBIFished(address indexed caller, address indexed fished_account, uint256 claimAmount);
+
+    // emits when an inactive suer has been fished, ie removed from active count
+    event InactiveUserFished(address indexed caller, address indexed fished_account, uint256 claimAmount);
+
     // emits at distribute. tracks the claim requests that have
     // been accomplished
     event UBIDistributed(address indexed caller, uint256 numOfClaimers, uint256 actualClaimed);
@@ -65,21 +65,13 @@ contract UBIScheme is AbstractUBI {
     /* @dev Constructor
      * @param _avatar The avatar of the DAO
      * @param _identity The identity contract
-     * @param _initialReserve The initial amount to transfer to this contract
      * @param _periodStart The time from when the contract can start
      * @param _periodEnd The time from when the contract can end
      * @param _maxInactiveDays Days of grace without claiming request
      */
-    constructor(
-        Avatar _avatar,
-        Identity _identity,
-        uint256 _initialReserve,
-        uint256 _periodStart,
-        uint256 _periodEnd,
-        uint256 _maxInactiveDays
-    )
+    constructor(Avatar _avatar, Identity _identity, uint256 _periodStart, uint256 _periodEnd, uint256 _maxInactiveDays)
         public
-        AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd)
+        AbstractUBI(_avatar, _identity, 0, _periodStart, _periodEnd)
     {
         require(_maxInactiveDays > 0, "Max inactive days cannot be zero");
 
@@ -90,8 +82,7 @@ contract UBIScheme is AbstractUBI {
      * Emits event with caller address and last day balance and the
      * updated balance.
      */
-    function _withdrawFromDao() internal
-    {
+    function _withdrawFromDao() internal {
         DAOToken token = avatar.nativeToken();
         uint256 prevBalance = token.balanceOf(address(this));
         uint256 toWithdraw = token.balanceOf(address(avatar));
@@ -99,13 +90,13 @@ contract UBIScheme is AbstractUBI {
             address(token),
             abi.encodeWithSignature("transfer(address,uint256)", address(this), toWithdraw),
             avatar,
-            0);
+            0
+        );
         uint256 newBalance = prevBalance.add(toWithdraw);
         require(newBalance == token.balanceOf(address(this)), "DAO transfer has failed");
-        Funds memory funds = dailyFunds[currentDay];
+        Funds storage funds = dailyUBIHistory[currentDay];
         funds.hasWithdrawn = true;
         funds.openAmount = newBalance;
-        dailyFunds[currentDay] = funds;
         lastWithdrawDay = currentDay;
         emit WithdrawFromDao(msg.sender, prevBalance, newBalance);
     }
@@ -114,9 +105,9 @@ contract UBIScheme is AbstractUBI {
      * the sum of the active users.
      * @return the amount of GoodDollar the user can claim
      */
-    function distributionFormula(uint256 reserve, address user) internal returns(uint256)
-    {
-        if(lastWithdrawDay != currentDay && activeUsersCount > 0) { // once in 24 hrs pulls gd from dao
+    function distributionFormula(uint256 reserve, address user) internal returns (uint256) {
+        if (lastWithdrawDay != currentDay && activeUsersCount > 0) {
+            // once in 24 hrs pulls gd from dao
             _withdrawFromDao();
             DAOToken token = avatar.nativeToken();
             uint256 currentBalance = token.balanceOf(address(this));
@@ -133,12 +124,12 @@ contract UBIScheme is AbstractUBI {
     }
 
     /* @dev Checks if the given account has been owned by a registered user.
-    * @param account to check
+     * @param account to check
      */
-    function isRegistered(address account) public view requireActive returns (bool)
-    {
+    function isRegistered(address account) public view returns (bool) {
         uint256 lastClaimed = lastClaimed[account];
-        if(lastClaimed > 0) { // the sender is not registered
+        if (lastClaimed > 0) {
+            // the sender is not registered
             return true;
         }
         return false;
@@ -151,12 +142,12 @@ contract UBIScheme is AbstractUBI {
      * has not claimed for `maxInactiveDays` is an inactive user.
      * @param account to check
      */
-    function isActiveUser(address account) public view requireActive returns (bool)
-    {
+    function isActiveUser(address account) public view returns (bool) {
         uint256 lastClaimed = lastClaimed[account];
-        if(isRegistered(account)) {
+        if (isRegistered(account)) {
             uint256 lastClaimedDay = (lastClaimed.sub(periodStart)) / 1 days;
-            if (currentDay.sub(lastClaimedDay) < maxInactiveDays) { // active user
+            if (currentDay.sub(lastClaimedDay) < maxInactiveDays) {
+                // active user
                 return true;
             }
         }
@@ -169,11 +160,7 @@ contract UBIScheme is AbstractUBI {
      * @param claimer account
      * @return A bool indicating if UBI was claimed
      */
-    function _claim(address account)
-        private
-        requireActive
-        returns (bool)
-    {
+    function _claim(address account) private returns (bool) {
         setDay();
 
         // calculating the formula up today ie on day 0 there are no active users, on day 1 any user
@@ -183,8 +170,11 @@ contract UBIScheme is AbstractUBI {
         uint256 newDistribution = distributionFormula(0, account);
 
         // active user which has not claimed today yet, ie user last claimed < today
-        if(isRegistered(account) && !fishedUsersAddresses[account] &&
-            ((lastClaimed[account].sub(periodStart)) / 1 days) < currentDay) {
+        if (
+            isRegistered(account) &&
+            !fishedUsersAddresses[account] &&
+            ((lastClaimed[account].sub(periodStart)) / 1 days) < currentDay
+        ) {
             lastClaimed[account] = now;
             claimDay[currentDay].hasClaimed[account] = true;
             GoodDollar token = GoodDollar(address(avatar.nativeToken()));
@@ -195,14 +185,13 @@ contract UBIScheme is AbstractUBI {
             claimDay[currentDay] = day;
             emit UBIClaimed(account, newDistribution);
             return true;
-        }
-        else if(!isRegistered(account) || fishedUsersAddresses[account]) { // a unregistered or fished user
+        } else if (!isRegistered(account) || fishedUsersAddresses[account]) {
+            // a unregistered or fished user
             activeUsersCount = activeUsersCount.add(1);
             fishedUsersAddresses[account] = false;
             lastClaimed[account] = now; // marks last claimed as today
             emit AddedToPending(account, lastClaimed[account]);
-        }
-        else {
+        } else {
             emit AlreadyClaimed(account, lastClaimed[account]);
         }
         return false;
@@ -213,12 +202,7 @@ contract UBIScheme is AbstractUBI {
      * to the caller. Emits the address of caller and amount claimed.
      * @return A bool indicating if UBI was claimed
      */
-    function claim()
-        public
-        requireActive
-        onlyWhitelisted
-        returns (bool)
-    {
+    function claim() public requireActive onlyWhitelisted returns (bool) {
         return _claim(msg.sender);
     }
 
@@ -231,11 +215,7 @@ contract UBIScheme is AbstractUBI {
      * @param account to fish
      * @return A bool indicating if UBI was fished
      */
-    function fish(address account)
-        public
-        requireActive
-        returns (bool)
-    {
+    function fish(address account) public requireActive returns (bool) {
         setDay();
         require(isRegistered(account) && !isActiveUser(account), "is not an inactive user");
         require(!fishedUsersAddresses[account], "already fished");
@@ -251,7 +231,7 @@ contract UBIScheme is AbstractUBI {
         day.amountOfClaimers = day.amountOfClaimers.add(1);
         day.claimAmount = day.claimAmount.add(newDistribution);
         claimDay[currentDay] = day;
-        emit UBIFished(msg.sender, account, newDistribution);
+        emit InactiveUserFished(msg.sender, account, newDistribution);
         return true;
     }
 
@@ -259,13 +239,9 @@ contract UBIScheme is AbstractUBI {
      * @param accounts to fish
      * @return A bool indicating if all the UBIs were fished
      */
-    function fishMulti(address[] memory accounts)
-        public
-        requireActive
-        returns (bool)
-    {
-        require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
-        for(uint256 i = 0; i < accounts.length; ++i) {
+    function fishMulti(address[] memory accounts) public requireActive returns (bool) {
+        for (uint256 i = 0; i < accounts.length; ++i) {
+            if (gasleft() < iterationGasLimit) return false;
             fish(accounts[i]);
         }
         return true;
@@ -276,16 +252,12 @@ contract UBIScheme is AbstractUBI {
      * @param accounts - claimers account list
      * @return A bool indicating if UBI was claimed
      */
-    function distribute(address[] memory accounts)
-        public
-        requireActive
-        returns (bool)
-    {
+    function distribute(address[] memory accounts) public requireActive returns (bool) {
         require(accounts.length < gasleft().div(iterationGasLimit), "exceeds of gas limitations");
         uint256 claimers = 0;
-        for(uint256 i = 0; i < accounts.length; ++i) {
-            if(identity.isWhitelisted(accounts[i]) && _claim(accounts[i])) {
-                    claimers = claimers.add(1);
+        for (uint256 i = 0; i < accounts.length; ++i) {
+            if (identity.isWhitelisted(accounts[i]) && _claim(accounts[i])) {
+                claimers = claimers.add(1);
             }
         }
         emit UBIDistributed(msg.sender, accounts.length, claimers);

@@ -13,8 +13,8 @@ import "./UBIScheme.sol";
 contract FirstClaimPool is FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
-    UBIScheme ubi;
-    uint256 claimAmount;
+    UBIScheme public ubi;
+    uint256 public claimAmount;
 
     modifier onlyUBIScheme {
         require(
@@ -24,8 +24,12 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         _;
     }
 
+    modifier ubiHasInitialized {
+        require(address(ubi) != address(0), "ubi has not initialized");
+        _;
+    }
+
     constructor(
-        UBIScheme _ubi,
         uint256 _claimAmount,
         Avatar _avatar,
         Identity _identity
@@ -34,7 +38,6 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         FeelessScheme(_identity, _avatar)
         ActivePeriod(now, now * 2)
     {
-        ubi = _ubi;
         claimAmount = _claimAmount;
     }
 
@@ -73,13 +76,14 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
     function awardUser(address account)
         public
         requireActive
+        ubiHasInitialized
         onlyUBIScheme
         returns(uint256)
     {
         DAOToken token = avatar.nativeToken();
         uint256 balance = token.balanceOf(address(this));
         if(balance >= claimAmount) {
-            token.transfer(msg.sender, claimAmount);
+            token.transfer(account, claimAmount);
             return claimAmount;
         }
         return 0;
@@ -99,6 +103,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         if (remainingGDReserve > 0) {
             token.transfer(address(_avatar), remainingGDReserve);
         }
+        removeRights();
         super.internalEnd(_avatar);
     }
 }

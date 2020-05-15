@@ -87,11 +87,13 @@ contract UBIScheme is AbstractUBI {
         uint256 _periodStart,
         uint256 _periodEnd,
         uint256 _maxInactiveDays
-    ) public AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd) {
+    )
+        public
+        AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd) {
         require(_maxInactiveDays > 0, "Max inactive days cannot be zero");
 
         maxInactiveDays = _maxInactiveDays;
-        firstClaimPool = _firstClaimPool
+        firstClaimPool = _firstClaimPool;
     }
 
     /* @dev On a daily basis UBIScheme withdraw tokens from GoodDao.
@@ -198,6 +200,22 @@ contract UBIScheme is AbstractUBI {
         }
     }
 
+    /* @dev Checks amount address is eligible to claim for. regardless if they have been
+     * whitelisted or not. In case the user is active, then the current day must be equal
+     * to the actual day, i.e. claim or fish has already been executed today.
+     * @return The amount of GoodDollar the address can claim.
+     */
+    function checkEntitlement() public view requireActive returns (uint256) {
+        if(!isRegistered(msg.sender) || !isActiveUser(msg.sender)) {
+            return firstClaimPool.claimAmount();
+        }
+        require(
+            currentDay == (now.sub(periodStart)) / 1 days,
+            "current day is incorrect"
+        );
+        return dailyUbi;
+    }
+
     /* @dev Function for claiming UBI. Requires contract to be active. Calls distributionFormula,
      * calculating the amount the account can claim, and transfers the amount to the account.
      * Emits the address of account and amount claimed.
@@ -291,5 +309,17 @@ contract UBIScheme is AbstractUBI {
             }
         }
         return true;
+    }
+
+    /**
+    * @dev making the contract inactive after it has transferred funds to `_avatar`
+    * only the avatar can destroy the contract.
+    * @param _avatar destination avatar address for funds
+    */
+    function end(Avatar _avatar)
+        public
+        onlyAvatar
+    {
+        super.end(_avatar);
     }
 }

@@ -8,6 +8,7 @@ const Formula = artifacts.require("FeeFormula");
 const avatarMock = artifacts.require("AvatarMock");
 const UBIMock = artifacts.require("UBISchemeMock");
 const ControllerMock = artifacts.require("ControllerMock");
+const FirstClaimPool = artifacts.require("FirstClaimPoolMock");
 const BN = web3.utils.BN;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -34,7 +35,7 @@ export const increaseTime = async function(duration) {
 contract(
   "UBIScheme",
   ([founder, claimer1, claimer2, claimer3, claimer4, fisherman]) => {
-    let goodDollar, identity, formula, avatar, ubi, controller;
+    let goodDollar, identity, formula, avatar, ubi, controller, firstClaimPool;
 
     before(async () => {
       formula = await Formula.new(0);
@@ -50,21 +51,47 @@ contract(
       avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
       controller = await ControllerMock.new(avatar.address);
       await avatar.transferOwnership(controller.address);
+      firstClaimPool = await FirstClaimPool.new(100, avatar.address, identity.address);
+      await firstClaimPool.start();
     });
 
   it("should not accept 0 inactive days in the constructor", async () => {
-    let error = await UBIMock.new(avatar.address, identity.address, 10, 0, 100, 0).catch(e => e);
+    let error = await UBIMock.new(avatar.address, identity.address, firstClaimPool.address, 10, 0, 100, 0).catch(e => e);
     expect(error.message).to.have.string("Max inactive days cannot be zero");
   });
 
   it("should deploy the ubi", async () => {
     const now = new Date();
     const startUBI = (now.getTime() / 1000 - 1).toFixed(0);
-    now.setFullYear(now.getFullYear() + 1);
+    now.setDate(now.getDate() + 30);
     const endUBI = (now.getTime() / 1000).toFixed(0);
-    ubi = await UBIMock.new(avatar.address, identity.address, 10, startUBI, endUBI, MAX_INACTIVE_DAYS);
+    ubi = await UBIMock.new(avatar.address, identity.address, firstClaimPool.address, 10, startUBI, endUBI, MAX_INACTIVE_DAYS);
     let isActive = await ubi.isActive();
     expect(isActive).to.be.false;
+  });
+
+  it("should not be able to set the claim amount if the sender is not the avatar", async () => {
+    let error = await firstClaimPool.setClaimAmount(200).catch(e => e);
+    expect(error.message).to.have.string("only Avatar");
+  });
+  
+  it("should not be able to set the ubi scheme if the sender is not the avatar", async () => {
+    let error = await firstClaimPool.setUBIScheme(ubi.address).catch(e => e);
+    expect(error.message).to.have.string("only Avatar");
+  });
+  
+  it("should set the ubi scheme by avatar", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'setUBIScheme',
+      type: 'function',
+      inputs: [{
+          type: 'address',
+          name: '_ubi'
+      }]
+    }, [ubi.address]);
+    await controller.genericCall(firstClaimPool.address, encodedCall, avatar.address, 0);
+    const newUbi = await firstClaimPool.ubi();
+    expect(newUbi.toString()).to.be.equal(ubi.address);
   });
 
   it("should not be able to execute claiming when start has not been executed yet", async () => {
@@ -77,16 +104,11 @@ contract(
     expect(error.message).to.have.string("is not active");
   });
   
-  it("should not be able to execute fish when start has not been executed yet", async () => {
+  it("should not be able to execute fishMulti when start has not been executed yet", async () => {
     let error = await ubi.fishMulti([NULL_ADDRESS]).catch(e => e);
     expect(error.message).to.have.string("is not active");
   });
-  
-  it("should not be able to execute fish when start has not been executed yet", async () => {
-    let error = await ubi.distribute([NULL_ADDRESS]).catch(e => e);
-    expect(error.message).to.have.string("is not active");
-  });
-  
+
   it("should start the ubi", async () => {
     await ubi.start();
     let isActive = await ubi.isActive();
@@ -98,16 +120,23 @@ contract(
     expect(error.message).to.have.string("is not whitelisted");
   });
 
-  it("should insert a new user to the pending list on first time execute claim", async () => {
+  it("should award a new user with 0 on first time execute claim if the first claim contract has no balance", async () => {
     await identity.addWhitelisted(claimer1);
-    await identity.addWhitelisted(claimer2);
     let tx = await ubi.claim({ from: claimer1 });
-    let transaction =await ubi.claim({ from: claimer2 });
-    let activeUsersCount = await ubi.activeUsersCount();
     let claimer1Balance = await goodDollar.balanceOf(claimer1);
     expect(claimer1Balance.toNumber()).to.be.equal(0);
+    expect(tx.logs[1].event).to.be.equal("ActivatedUser");
+  });
+
+  it("should award a new user with the award amount on first time execute claim", async () => {
+    await goodDollar.mint(firstClaimPool.address, "10000000");
+    await identity.addWhitelisted(claimer2);
+    let transaction = await ubi.claim({ from: claimer2 });
+    let activeUsersCount = await ubi.activeUsersCount();
+    let claimer2Balance = await goodDollar.balanceOf(claimer2);
+    expect(claimer2Balance.toNumber()).to.be.equal(100);
     expect(activeUsersCount.toNumber()).to.be.equal(2);
-    expect(transaction.logs[1].event).to.be.equal("AddedToPending");
+    expect(transaction.logs[2].event).to.be.equal("ActivatedUser");
   });
 
   it("should not be able to fish a new user", async () => {
@@ -122,10 +151,10 @@ contract(
     expect(dailyUbi.toString()).to.be.equal("0");
   });
 
-  it("should returns a valid distribution calculation when the current balance is lower than the number of daily claimers including the pending users", async () => {
+  it("should returns a valid distribution calculation when the current balance is lower than the number of daily claimers", async () => {
     await goodDollar.mint(avatar.address, "1");
     await increaseTime(ONE_DAY);
-    await ubi.claim({ from: claimer1 });  // claimer 1 is now active while claimer2 is pending
+    await ubi.claim({ from: claimer1 });
     await ubi.claim({ from: claimer2 });
     let ubiBalance = await goodDollar.balanceOf(ubi.address);
     await increaseTime(ONE_DAY);
@@ -150,46 +179,27 @@ contract(
     expect(claimer1Balance.toString()).to.be.equal("1");
   });
 
-  it("should auto claim for given today pending users when execute distribute", async () => {
-    await identity.addWhitelisted(claimer3);
-    await goodDollar.mint(avatar.address, "10");
-    await ubi.claim({ from: claimer3 });
-    await increaseTime(ONE_DAY);
-    let claimer3BalanceBefore = await goodDollar.balanceOf(claimer3);
-    await ubi.distribute([claimer3]);
-    let claimer3BalanceAfter = await goodDollar.balanceOf(claimer3);
-    let dailyUbi = await ubi.dailyUbi();
-    expect(claimer3BalanceAfter.toNumber() - claimer3BalanceBefore.toNumber()).to.be.equal(dailyUbi.toNumber());
-  });
-
-  it("should not auto claim for given users which are not in today pending list when execute distribute", async () => {
-    await identity.addWhitelisted(claimer4);
-    let claimer3BalanceBefore = await goodDollar.balanceOf(claimer3);
-    let claimer4BalanceBefore = await goodDollar.balanceOf(claimer4);
-    await ubi.distribute([claimer3, claimer4]);
-    let claimer3BalanceAfter = await goodDollar.balanceOf(claimer3);
-    let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
-    expect(claimer3BalanceAfter.toNumber()).to.be.equal(claimer3BalanceBefore.toNumber());
-    expect(claimer4BalanceAfter.toNumber()).to.be.equal(claimer4BalanceBefore.toNumber());
-  });
-
-  it("should not be able to execute claim after the user received tokens since distribute had been executed", async () => {
-    let claimer4BalanceBefore = await goodDollar.balanceOf(claimer4);
-    await ubi.claim({ from: claimer4 })
-    await increaseTime(ONE_DAY);
-    await ubi.distribute([claimer4]);
-    let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
-    let dailyUbi = await ubi.dailyUbi();
-    let transaction = await ubi.claim({ from: claimer4 }).catch(e => e);
-    expect(claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()).to.be.equal(dailyUbi.toNumber());
-    expect(transaction.logs[0].event).to.be.equal("AlreadyClaimed");
+  it("should return the reward value for entitlement user", async () => {
+    let amount = await ubi.checkEntitlement({ from: claimer4 });
+    let claimAmount = await firstClaimPool.claimAmount();
+    expect(amount.toString()).to.be.equal(claimAmount.toString());
   });
 
   it("should not be able to fish an active user", async () => {
+    await identity.addWhitelisted(claimer3);
+    await identity.addWhitelisted(claimer4);
+    await ubi.claim({ from: claimer3 });
+    await ubi.claim({ from: claimer4 });
     let isActiveUser = await ubi.isActiveUser(claimer4);
     let error = await ubi.fish(claimer4, { from: fisherman }).catch(e => e);
     expect(isActiveUser).to.be.true;
     expect(error.message).to.have.string("is not an inactive use");
+  });
+
+  it("should return the daily ubi for entitlement user", async () => {
+    let amount = await ubi.checkEntitlement({ from: claimer4 });
+    let dailyUbi = await ubi.dailyUbi();
+    expect(amount.toString()).to.be.equal(dailyUbi.toString());
   });
 
   it("should not be able to execute claim twice a day", async () => {
@@ -203,19 +213,6 @@ contract(
     let claimer4Balance3 = await goodDollar.balanceOf(claimer4);
     expect(claimer4Balance2.toNumber() - claimer4Balance1.toNumber()).to.be.equal(dailyUbi.toNumber());
     expect(claimer4Balance3.toNumber() - claimer4Balance1.toNumber()).to.be.equal(dailyUbi.toNumber());
-  });
-
-  it("should not reclaim when execute distribute for a user who already claimed on the same day", async () => {
-    await goodDollar.mint(avatar.address, "20");
-    await increaseTime(ONE_DAY);
-    let claimer4Balance1 = await goodDollar.balanceOf(claimer4);
-    await ubi.claim({ from: claimer4 })
-    let claimer4Balance2 = await goodDollar.balanceOf(claimer4);
-    await ubi.distribute([claimer4]);
-    let dailyUbi = await ubi.dailyUbi();
-    let claimer4Balance3 = await goodDollar.balanceOf(claimer4);
-    expect(claimer4Balance2.toNumber() - claimer4Balance1.toNumber()).to.be.equal(dailyUbi.toNumber());
-    expect(claimer4Balance2.toNumber() - claimer4Balance1.toNumber()).to.be.equal(claimer4Balance3.toNumber() - claimer4Balance1.toNumber());
   });
 
   it("should be able to fish inactive user", async () => {
@@ -288,10 +285,10 @@ contract(
     expect(claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()).to.be.equal(dailyUbi.toNumber());
   });
 
-  it("should be able to fish user that had been pending but then removed from the whitelist", async () => {
+  it("should be able to fish user that removed from the whitelist", async () => {
     await goodDollar.mint(avatar.address, "20");
     await identity.addWhitelisted(claimer2);
-    await ubi.claim({ from: claimer2 }); // pending user
+    await ubi.claim({ from: claimer2 });
     await increaseTime(MAX_INACTIVE_DAYS * ONE_DAY);
     await identity.removeWhitelisted(claimer2);
     let claimer4BalanceBefore = await goodDollar.balanceOf(claimer4);
@@ -306,27 +303,19 @@ contract(
     expect(claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()).to.be.equal(dailyUbi.toNumber());
   });
 
-  it("should be able to insert to the pending list user that already removed and added again to the whitelist", async () => {
+  it("should recieves a claim reward on claim after removed and added again to the whitelist", async () => {
     let isFishedBefore = await ubi.fishedUsersAddresses(claimer2);
     let activeUsersCountBefore = await ubi.activeUsersCount();
     await identity.addWhitelisted(claimer2);
+    let claimerBalanceBefore = await goodDollar.balanceOf(claimer2);
     await ubi.claim({ from: claimer2 });
+    let claimerBalanceAfter = await goodDollar.balanceOf(claimer2);
     let isFishedAfter = await ubi.fishedUsersAddresses(claimer2);
     let activeUsersCountAfter = await ubi.activeUsersCount();
     expect(isFishedBefore).to.be.true;
     expect(isFishedAfter).to.be.false;
     expect(activeUsersCountAfter.toNumber() - activeUsersCountBefore.toNumber()).to.be.equal(1);
-  });
-
-  it("should be able to auto claim by a user that already removed and added again to the whitelist", async () => {
-    await goodDollar.mint(avatar.address, "20");
-    await increaseTime(ONE_DAY);
-    let claimer4Balance1 = await goodDollar.balanceOf(claimer2);
-    let transaction = await ubi.distribute([claimer2]);
-    let claimer4Balance2 = await goodDollar.balanceOf(claimer2);
-    let dailyUbi = await ubi.dailyUbi();
-    expect(claimer4Balance2.toNumber() - claimer4Balance1.toNumber()).to.be.equal(dailyUbi.toNumber());
-    expect(transaction.logs[2].event).to.be.equal("UBIDistributed");
+    expect(claimerBalanceAfter.toNumber() - claimerBalanceBefore.toNumber()).to.be.equal(100);
   });
 
   it("distribute formula should return correct value", async () => {
@@ -354,15 +343,7 @@ contract(
     expect(((ubiBalance.add(avatarBalance)).div(activeUsersCount)).toNumber()).to.be.equal(claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber());
     expect(((ubiBalance.add(avatarBalance)).div(activeUsersCount)).toNumber()).to.be.equal(dailyUbi.toNumber());
   });
-  
-  it("should not be able to iterate over more than the allowed number of accounts in distribute", async () => {
-    let error = await ubi.distribute([claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
-                                      claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
-                                      claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
-                                      ]).catch(e => e);
-    expect(error.message).to.have.string('exceeds of gas limitations');
-  });
-  
+
   it("should not be able to iterate over more than the allowed number of accounts in fishMulti", async () => {
     let error = await ubi.fishMulti([claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
                                       claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,claimer1,
@@ -370,5 +351,72 @@ contract(
                                       ]).catch(e => e);
     expect(error.message).to.have.string('exceeds of gas limitations');
   });
-});
 
+  it("should not be able to destroy the ubi contract if not avatar", async () => {
+    await increaseTime(10 * ONE_DAY);
+    let avatarBalanceBefore = await goodDollar.balanceOf(avatar.address);
+    let contractBalanceBefore = await goodDollar.balanceOf(ubi.address);
+    let error = await ubi.end(avatar.address).catch(e => e);
+    expect(error.message).to.have.string("only Avatar can call this method");
+    let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
+    let contractBalanceAfter = await goodDollar.balanceOf(ubi.address);
+    let isActive = await ubi.isActive();
+    expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal("0");
+    expect(contractBalanceAfter.toString()).to.be.equal(contractBalanceBefore.toString());
+    expect(isActive.toString()).to.be.equal("true");
+  });
+
+  it("should destroy the ubi contract and transfer funds to the avatar", async () => {
+    let avatarBalanceBefore = await goodDollar.balanceOf(avatar.address);
+    let contractBalanceBefore = await goodDollar.balanceOf(ubi.address);
+    let encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'end',
+      type: 'function',
+      inputs: [{
+          type: 'address',
+          name: '_avatar'
+      }]
+    }, [avatar.address]);
+    await controller.genericCall(ubi.address, encodedCall, avatar.address, 0);
+    let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
+    let contractBalanceAfter = await goodDollar.balanceOf(ubi.address);
+    let code = await web3.eth.getCode(ubi.address);
+    console.log(contractBalanceBefore.toString());
+    expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal(contractBalanceBefore.toString());
+    expect(contractBalanceAfter.toString()).to.be.equal("0");
+    expect(code.toString()).to.be.equal("0x");
+  });
+
+  it("should not be able to destroy the first claim pool contract if not avatar", async () => {
+    let avatarBalanceBefore = await goodDollar.balanceOf(avatar.address);
+    let contractBalanceBefore = await goodDollar.balanceOf(firstClaimPool.address);
+    let error = await firstClaimPool.end(avatar.address).catch(e => e);
+    expect(error.message).to.have.string("only Avatar can call this method");
+    let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
+    let contractBalanceAfter = await goodDollar.balanceOf(firstClaimPool.address);
+    let isActive = await firstClaimPool.isActive();
+    expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal("0");
+    expect(contractBalanceAfter.toString()).to.be.equal(contractBalanceBefore.toString());
+    expect(isActive.toString()).to.be.equal("true");
+  });
+
+  it("should destroy the first claim pool contract and transfer funds to the avatar", async () => {
+    let avatarBalanceBefore = await goodDollar.balanceOf(avatar.address);
+    let contractBalanceBefore = await goodDollar.balanceOf(firstClaimPool.address);
+    let encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'end',
+      type: 'function',
+      inputs: [{
+          type: 'address',
+          name: '_avatar'
+      }]
+    }, [avatar.address]);
+    await controller.genericCall(firstClaimPool.address, encodedCall, avatar.address, 0);
+    let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
+    let contractBalanceAfter = await goodDollar.balanceOf(firstClaimPool.address);
+    let code = await web3.eth.getCode(firstClaimPool.address);
+    expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal(contractBalanceBefore.toString());
+    expect(contractBalanceAfter.toString()).to.be.equal("0");
+    expect(code.toString()).to.be.equal("0x");
+  });
+});

@@ -1,19 +1,15 @@
 pragma solidity 0.5.4;
 
-import "../UBIScheme.sol";
+import "../FirstClaimPool.sol";
 
-contract UBISchemeMock is UBIScheme {
+contract FirstClaimPoolMock is FirstClaimPool {
 
-    constructor( Avatar _avatar,
-        Identity _identity,
-        FirstClaimPool _firstClaimPool,
-        uint256 _initialReserve,
-        uint256 _periodStart,
-        uint256 _periodEnd,
-        uint256 _maxInactiveDays
+    constructor(uint256 _claimAmount,
+        Avatar _avatar,
+        Identity _identity
     )
         public
-        UBIScheme(_avatar, _identity, _firstClaimPool, _initialReserve, _periodStart, _periodEnd, _maxInactiveDays) {}
+        FirstClaimPool(_claimAmount, _avatar, _identity) {}
 
     function start() public {
         isActive = true;

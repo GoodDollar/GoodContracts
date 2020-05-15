@@ -64,6 +64,6 @@ contract ContributionCalculation is DSMath, SchemeGuard {
             )
                 .div(10**decimalsDiff); // return to e2 precision
         require(_gdAmount > contribution, "Calculation error");
-        return _gdAmount.sub(contribution);
+        return contribution;
     }
  }

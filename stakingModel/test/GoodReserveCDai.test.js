@@ -445,11 +445,12 @@ it("should set marketmaker in the reserve by avatar", async () => {
     let nom = new BN(2e14).toString();
     let denom = new BN(1e15).toString();
     let actual = await contribution.calculateContribution(marketMaker.address, goodReserve.address, founder, cDAI.address, 1e4);
-    expect(actual.toString()).to.be.equal((1e4 - 1e4 * nom / denom).toString());
+    expect(actual.toString()).to.be.equal((1e4 * nom / denom).toString());
   });
 
   it("should be able to sell gd to cDAI with contribution of 20%", async () => {
     let amount = 1e4;
+    let expectedReturn = 800000; // deduced amount, ie. return minus contribution
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
     let supplyBefore = reserveToken.gdSupply; 
@@ -472,9 +473,9 @@ it("should set marketmaker in the reserve by avatar", async () => {
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveAfter = await cDAI.balanceOf(goodReserve.address);
     const priceAfter = await goodReserve.currentPrice(cDAI.address);
-    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal("800000");
-    expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal("800000");
-    expect((reserveBalanceBefore.sub(reserveBalanceAfter)).toString()).to.be.equal("800000");
+    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal(expectedReturn.toString());
+    expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal(expectedReturn.toString());
+    expect((reserveBalanceBefore.sub(reserveBalanceAfter)).toString()).to.be.equal(expectedReturn.toString());
     expect((supplyBefore - supplyAfter).toString()).to.be.equal((amount).toString());
     expect((rrAfter).toString()).to.be.equal(rrBefore.toString());
     expect(gdBalanceBefore.gt(gdBalanceAfter)).to.be.true;

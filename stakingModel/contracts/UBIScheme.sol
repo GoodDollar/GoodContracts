@@ -209,11 +209,12 @@ contract UBIScheme is AbstractUBI {
         if(!isRegistered(msg.sender) || !isActiveUser(msg.sender)) {
             return firstClaimPool.claimAmount();
         }
-        require(
-            currentDay == (now.sub(periodStart)) / 1 days,
-            "current day is incorrect"
-        );
-        return dailyUbi;
+        if(currentDay == (now.sub(periodStart)) / 1 days) {
+            return dailyUbi;
+        }
+        DAOToken token = avatar.nativeToken();
+        uint256 currentBalance = token.balanceOf(address(this));
+        return currentBalance.div(activeUsersCount);
     }
 
     /* @dev Function for claiming UBI. Requires contract to be active. Calls distributionFormula,

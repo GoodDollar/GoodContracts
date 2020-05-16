@@ -450,7 +450,7 @@ it("should set marketmaker in the reserve by avatar", async () => {
 
   it("should be able to sell gd to cDAI with contribution of 20%", async () => {
     let amount = 1e4;
-    let expectedReturn = 800000; // deduced amount, ie. return minus contribution
+    let expectedReturn = 800000; // return minus contribution = 1e4 GD = 1000000 * 80% = 800000
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
     let supplyBefore = reserveToken.gdSupply; 

@@ -209,7 +209,7 @@ contract UBIScheme is AbstractUBI {
             return firstClaimPool.claimAmount();
         }
         // checks if the user already claimed today
-        uint256 claimedToday = now.sub(lastClaimed[msg.sender]) < 1 days;
+        bool claimedToday = now.sub(lastClaimed[msg.sender]) < 1 days;
         // already claimed today
         if (claimedToday) {
             return 0;
@@ -318,5 +318,20 @@ contract UBIScheme is AbstractUBI {
             }
         }
         return true;
+    }
+
+    /**
+     * @dev Start function. Adds this contract to identity as a feeless scheme and
+     * adds permissions to FirstClaimPool
+     * Can only be called if scheme is registered
+     */
+    function start() public onlyRegistered {
+        controller.genericCall(
+            address(firstClaimPool),
+            abi.encodeWithSignature("setUBIScheme(address)", address(this)),
+            avatar,
+            0
+        );
+        super.start();
     }
 }

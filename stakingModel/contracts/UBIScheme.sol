@@ -61,7 +61,7 @@ contract UBIScheme is AbstractUBI {
     // were inactive. on the first claim the user is
     // activated. from the second claim the user may recieves tokens.
     event ActivatedUser(address indexed account);
-   
+
     // emits when a fish has been succeded
     event UBIFished(
         address indexed caller,
@@ -87,9 +87,7 @@ contract UBIScheme is AbstractUBI {
         uint256 _periodStart,
         uint256 _periodEnd,
         uint256 _maxInactiveDays
-    )
-        public
-        AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd) {
+    ) public AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd) {
         require(_maxInactiveDays > 0, "Max inactive days cannot be zero");
 
         maxInactiveDays = _maxInactiveDays;
@@ -195,7 +193,7 @@ contract UBIScheme is AbstractUBI {
         day.claimAmount = day.claimAmount.add(amount);
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
         token.transfer(account, amount);
-        if(isClaimed) {
+        if (isClaimed) {
             emit UBIClaimed(account, amount);
         }
     }
@@ -207,18 +205,18 @@ contract UBIScheme is AbstractUBI {
      */
     function checkEntitlement() public view requireActive returns (uint256) {
         // new user or inactive should recieve the first claim reward
-        if(!isRegistered(msg.sender) || !isActiveUser(msg.sender)) {
+        if (!isRegistered(msg.sender) || !isActiveUser(msg.sender)) {
             return firstClaimPool.claimAmount();
         }
         // checks if the user already claimed today
-        uint256 claimDays = now.sub(lastClaimed[msg.sender]) / 1 days;
+        uint256 claimedToday = now.sub(lastClaimed[msg.sender]) < 1 days;
         // already claimed today
-        if(claimDays == 0) {
+        if (claimedToday) {
             return 0;
         }
         // current day has already been updated which means
         // that the dailyUbi has been updated
-        if(currentDay == (now.sub(periodStart)) / 1 days) {
+        if (currentDay == (now.sub(periodStart)) / 1 days) {
             return dailyUbi;
         }
         // the current day has not updated yet
@@ -305,17 +303,17 @@ contract UBIScheme is AbstractUBI {
      * @param accounts to fish
      * @return A bool indicating if all the UBIs were fished
      */
-    function fishMulti(address[] memory accounts)
-        public
-        requireActive
-        returns (bool)
-    {
+    function fishMulti(address[] memory accounts) public requireActive returns (bool) {
         require(
             accounts.length < gasleft().div(iterationGasLimit),
             "exceeds of gas limitations"
         );
-        for(uint256 i = 0; i < accounts.length; ++i) {
-            if(isRegistered(accounts[i]) && !isActiveUser(accounts[i]) && !fishedUsersAddresses[accounts[i]]) {
+        for (uint256 i = 0; i < accounts.length; ++i) {
+            if (
+                isRegistered(accounts[i]) &&
+                !isActiveUser(accounts[i]) &&
+                !fishedUsersAddresses[accounts[i]]
+            ) {
                 fish(accounts[i]);
             }
         }

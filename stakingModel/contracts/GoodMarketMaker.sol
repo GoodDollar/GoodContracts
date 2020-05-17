@@ -272,7 +272,8 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         );
         ReserveToken storage rtoken = reserveTokens[address(_token)];
         require(rtoken.gdSupply > _gdAmount, "GD amount is higher than the total supply");
-        uint256 tokenReturn = sellReturn(_token, _contributionGdAmount);
+        uint256 amountAfterContribution = _gdAmount.sub(_contributionGdAmount);
+        uint256 tokenReturn = sellReturn(_token, amountAfterContribution);
         rtoken.gdSupply = rtoken.gdSupply.sub(_gdAmount);
         rtoken.reserveSupply = rtoken.reserveSupply.sub(tokenReturn);
         emit BalancesUpdated(

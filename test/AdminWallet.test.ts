@@ -84,7 +84,7 @@ contract(
 
     it("should not top admin list when empty", async () => {
       await helpers.assertVMException(
-        newWallet.topAdmins(0),
+        (newWallet as any).topAdmins(0),
         "Admin list is empty"
       );
     });
@@ -102,8 +102,10 @@ contract(
       const oldBalance = await web3.eth.getBalance(admin2);
       expect(oldBalance).to.be.equal("0");
 
-      await newWallet.topAdmins(0);
+      await (newWallet as any).topAdmins(0, 1); //test topping with indexes
+      await (newWallet as any).topAdmins(1, 2);
       const newBalance = await web3.eth.getBalance(admin2);
+      await (newWallet as any).topAdmins(0);
       const adminTopAmount = await newWallet
         .adminToppingAmount()
         .then(_ => _.toString());

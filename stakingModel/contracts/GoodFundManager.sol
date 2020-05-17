@@ -11,7 +11,7 @@ import "./GoodReserveCDai.sol";
 interface StakingContract {
     function collectUBIInterest(address recipient)
         external
-        returns (uint256, uint256, uint256);
+        returns (uint256, uint256, uint256, uint32);
 }
 
 
@@ -26,18 +26,17 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
 
     ERC20 cDai;
     GoodReserveCDai public reserve;
+    address public bridgeContract;
+    address public homeAvatar;
     uint256 public blockInterval;
     uint256 public lastTransferred;
-
-    // // tracking the daily withdraws and the actual amount
-    // // at the begining of the trading day.
-    // mapping (uint256 => Funds) public dailyFunds;
 
     event FundsTransferred(
         address indexed caller,
         address indexed staking,
         address indexed reserve,
-        uint256 cdaiGains,
+        uint256 cDAIinterestEarned,
+        uint256 cDAIinterestDonated,
         uint256 gdInterest,
         uint256 gdUBI
     );
@@ -47,12 +46,18 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         _;
     }
 
-    constructor(address _cDai, Avatar _avatar, Identity _identity, uint256 _blockInterval)
-        public
-        FeelessScheme(_identity, _avatar)
-        ActivePeriod(now, now * 2)
-    {
+    constructor(
+        address _cDai,
+        Avatar _avatar,
+        Identity _identity,
+        address _bridgeContract,
+        address _homeAvatar,
+        uint256 _blockInterval
+
+    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2) {
         cDai = ERC20(_cDai);
+        bridgeContract = _bridgeContract;
+        homeAvatar = _homeAvatar;
         blockInterval = _blockInterval;
         lastTransferred = block.number;
     }
@@ -74,9 +79,22 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     }
 
     /**
-    @dev allow the DAO to change the block interval
-    @param _blockInterval the new value
-    */
+     * @dev sets the token bridge address on mainnet and the recipient of minted UBI (avatar on sidechain)
+     * @param _bridgeContract address
+     * @param _avatar address
+     */
+    function setBridgeAndHomeAvatar(address _bridgeContract, address _avatar)
+        public
+        onlyAvatar
+    {
+        bridgeContract = _bridgeContract;
+        homeAvatar = _avatar;
+    }
+    
+    /**
+     * @dev allow the DAO to change the block interval
+     * @param _blockInterval the new value
+     */
     function setBlockInterval(uint256 _blockInterval) public onlyAvatar {
         blockInterval = _blockInterval;
     }
@@ -97,28 +115,47 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             block.number.sub(lastTransferred) > blockInterval,
             "Need to wait for the next interval"
         );
+        
+        lastTransferred = block.number;
+
         // cdai balance of the reserve contract
         uint256 currentBalance = cDai.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract
-        staking.collectUBIInterest(address(reserve));
+        //collectUBIInterest returns (cdaigains, daigains, precission loss, donation ratio)
+        (, , , uint32 donationRatio) = staking.collectUBIInterest(
+            address(reserve)
+        );
+
         // finds the actual transferred cdai
-        uint256 actualCDaiGains = cDai.balanceOf(address(reserve)).sub(currentBalance);
-        lastTransferred = block.number;
-        if (actualCDaiGains > 0) {
+        uint256 interest = cDai.balanceOf(address(reserve)).sub(
+            currentBalance
+        );
+        if (interest > 0) {
+            uint256 interestDonated = interest.mul(donationRatio).div(1e6);
+            uint256 afterDonation = interest.sub(interestDonated);
             // mints gd while the interest amount is equal to the transferred amount
             (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(
                 cDai,
-                actualCDaiGains,
-                actualCDaiGains
+                interest,
+                afterDonation
             );
             // transfers the minted tokens to the given staking contract
             GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-            token.transfer(address(staking), gdInterest);
+            if(gdInterest > 0 )
+                token.transfer(address(staking), gdInterest);
+            if(gdUBI > 0)
+                //transfer ubi to avatar on sidechain via bridge
+                token.transferAndCall(
+                    bridgeContract,
+                    gdUBI,
+                    abi.encodePacked(bytes32(uint256(homeAvatar)))
+                );
             emit FundsTransferred(
                 msg.sender,
                 address(staking),
                 address(reserve),
-                actualCDaiGains,
+                interest,
+                interestDonated,
                 gdInterest,
                 gdUBI
             );

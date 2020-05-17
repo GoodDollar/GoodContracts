@@ -60,6 +60,15 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     );
     await goodReserve.start();
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
+
+    await marketMaker.initializeToken(
+      cDAI.address,
+      "100", //1gd
+      "10000", //0.0001 cDai
+      "1000000" //100% rr
+    );
+
+    await marketMaker.initializeToken(dai.address, "100", "1000000000", "1000000");
   });
 
   it("should set marketmaker in the reserve by avatar", async () => {
@@ -81,22 +90,6 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     expect(newMM.toString()).to.be.equal(marketMaker.address);
   });
 
-  it("should initialize token with price", async () => {
-    const expansion = await marketMaker.initializeToken(
-      cDAI.address,
-      "100", //1gd
-      "10000", //0.0001 cDai
-      "1000000" //100% rr
-    );
-    const price = await marketMaker.currentPrice(cDAI.address);
-    expect(price.toString()).to.be.equal("10000"); //1gd is equal 0.0001 cDAI = 100000 wei;
-    const onecDAIReturn = await marketMaker.buyReturn(
-      cDAI.address,
-      "100000000" //1cDai
-    );
-    expect(onecDAIReturn.toNumber() / 100).to.be.equal(10000); //0.0001 cdai is 1 gd, so for 1eth you get 10000 gd (divide by 100 to account for 2 decimals precision)
-  });
-
   it("should returned true for isActive", async () => {
     const isActive = await goodReserve.isActive();
     expect(isActive.toString()).to.be.equal("true");
@@ -109,26 +102,6 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     expect(gdFloatPrice).to.be.equal(0.0001);
     expect(cdaiWorthInGD.toString()).to.be.equal("1000000000000"); //in 8 decimals precision
     expect(cdaiWorthInGD.toNumber() / 10 ** 8).to.be.equal(10000);
-  });
-
-  it("should calculate mint UBI correctly for 8 decimals precision", async () => {
-    const gdPrice = await marketMaker.currentPrice(cDAI.address);
-    const toMint = await marketMaker.calculateMintInterest(cDAI.address, "100000000");
-    const expectedTotalMinted = 10 ** 8 / gdPrice.toNumber();
-    expect(expectedTotalMinted).to.be.equal(10000); //10k GD
-    expect(toMint.toString()).to.be.equal((expectedTotalMinted * 100).toString()); //add 2 decimals precision
-  });
-
-  it("should calculate mint UBI correctly for 18 decimals precision", async () => {
-    await marketMaker.initializeToken(dai.address, "100", "1000000000", "1000000");
-    const gdPrice = await marketMaker.currentPrice(dai.address);
-    const toMint = await marketMaker.calculateMintInterest(
-      dai.address,
-      web3.utils.toWei("1", "ether")
-    );
-    const expectedTotalMinted = 10 ** 18 / gdPrice.toNumber();
-    expect(expectedTotalMinted).to.be.equal(1000000000); //10k GD with 2 decimals
-    expect(toMint.toString()).to.be.equal((expectedTotalMinted * 100).toString());
   });
 
   it("should not be able to buy gd if the minter is not the reserve", async () => {
@@ -174,8 +147,8 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     );
     expect(rrAfter.toString()).to.be.equal("999388");
     expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
-    expect(gdBalanceFund.toString()).to.be.equal("0"); // 1 gd
-    expect(gdBalanceAvatar.toString()).to.be.equal(
+    expect(gdBalanceAvatar.toString()).to.be.equal("0"); // 1 gd
+    expect(gdBalanceFund.toString()).to.be.equal(
       tx.logs[0].args.gdInterestMinted.add(tx.logs[0].args.gdExpansionMinted).toString()
     );
   });
@@ -209,9 +182,9 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     );
     expect(supplyAfter.toString()).to.be.equal(toMint.add(supplyBefore).toString());
     expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
-    expect((gdBalanceFundAfter - gdBalanceFundBefore).toString()).to.be.equal("100"); // 1 gd
-    expect((gdBalanceAvatarAfter - gdBalanceAvatarBefore).toString()).to.be.equal(
-      (toMint - 100).toString()
+    expect((gdBalanceAvatarAfter - gdBalanceAvatarBefore).toString()).to.be.equal("0"); // 1 gd
+    expect((gdBalanceFundAfter - gdBalanceFundBefore).toString()).to.be.equal(
+      toMint.toString()
     );
     expect(rrAfter.toString()).to.be.equal("998777");
   });
@@ -233,23 +206,30 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
   });
 
   it("should set block interval by avatar", async () => {
-    let encodedCall = web3.eth.abi.encodeFunctionCall({
-      name: 'setBlockInterval',
-      type: 'function',
-      inputs: [{
-          type: 'uint256',
-          name: '_blockInterval'
-      }]
-    }, [100]);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "setBlockInterval",
+        type: "function",
+        inputs: [
+          {
+            type: "uint256",
+            name: "_blockInterval"
+          }
+        ]
+      },
+      [100]
+    );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     const newBI = await goodReserve.blockInterval();
-    expect(newBI.toString()).to.be.equal('100');
+    expect(newBI.toString()).to.be.equal("100");
   });
 
   it("should not mint UBI if not in the interval", async () => {
     const gdBalanceFundBefore = await goodDollar.balanceOf(founder);
     const gdBalanceAvatarBefore = await goodDollar.balanceOf(avatar.address);
-    const error = await goodReserve.mintInterestAndUBI(cDAI.address, web3.utils.toWei("10000", "gwei"), "10000").catch(e => e);
+    const error = await goodReserve
+      .mintInterestAndUBI(cDAI.address, web3.utils.toWei("10000", "gwei"), "10000")
+      .catch(e => e);
     const gdBalanceFundAfter = await goodDollar.balanceOf(founder);
     const gdBalanceAvatarAfter = await goodDollar.balanceOf(avatar.address);
     expect(error.message).to.have.string("wait for the next interval");
@@ -463,11 +443,16 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       cDAI.address,
       1e4
     );
-    expect(actual.toString()).to.be.equal((1e4 - (1e4 * nom) / denom).toString());
+    expect(actual.toString()).to.be.equal(((1e4 * nom) / denom).toString());
   });
 
   it("should be able to sell gd to cDAI with contribution of 20%", async () => {
-    let amount = 1e4;
+    let amount = 1e4; // 100 gd
+    // deduced amount, ie. return minus contribution. reserve ratio is 100%.
+    // example without deduction:
+    // 1 gd (100) equals to 0.0001 cDai (10000) so 100 gd (10k) equals to 0.01 cDai (1m)
+    // since there is 20% contribution the return is 0.008 cDai (800k)
+    let expectedReturn = 800000;
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
     let supplyBefore = reserveToken.gdSupply;
@@ -486,12 +471,14 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveAfter = await cDAI.balanceOf(goodReserve.address);
     const priceAfter = await goodReserve.currentPrice(cDAI.address);
-    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal("800000");
+    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal(
+      expectedReturn.toString()
+    );
     expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal(
-      "800000"
+      expectedReturn.toString()
     );
     expect(reserveBalanceBefore.sub(reserveBalanceAfter).toString()).to.be.equal(
-      "800000"
+      expectedReturn.toString()
     );
     expect((supplyBefore - supplyAfter).toString()).to.be.equal(amount.toString());
     expect(rrAfter.toString()).to.be.equal(rrBefore.toString());

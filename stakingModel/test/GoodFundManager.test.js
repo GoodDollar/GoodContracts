@@ -10,6 +10,7 @@ const Formula = artifacts.require("FeeFormula");
 const avatarMock = artifacts.require("AvatarMock");
 const ControllerMock = artifacts.require("ControllerMock");
 const ContributionCalculation = artifacts.require("ContributionCalculation");
+const TransferAndCallMock = artifacts.require("TransferAndCallMock");
 
 const BN = web3.utils.BN;
 export const BLOCK_INTERVAL = 0;
@@ -17,7 +18,7 @@ export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract(
   "GoodFundManager - transfer interest from the staking contract to the reserve contract",
-  ([founder, staker]) => {
+  ([founder, staker, homeAvatar]) => {
     let dai,
       cDAI,
       marketMaker,
@@ -29,14 +30,17 @@ contract(
       formula,
       avatar,
       controller,
-      contribution;
+      contribution,
+      bridge;
 
     before(async () => {
       dai = await DAIMock.new();
       cDAI = await cDAIMock.new(dai.address);
-      dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
-      formula = await Formula.new(0);
-      identity = await Identity.new();
+      [, formula, identity] = await Promise.all([
+        dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether")),
+        Formula.new(0),
+        Identity.new()
+      ]);
       goodDollar = await GoodDollar.new(
         "GoodDollar",
         "GDD",
@@ -45,29 +49,31 @@ contract(
         identity.address,
         NULL_ADDRESS
       );
-      avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
+      [bridge, avatar] = await Promise.all([
+        TransferAndCallMock.new(goodDollar.address),
+        avatarMock.new("", goodDollar.address, NULL_ADDRESS)
+      ]);
       controller = await ControllerMock.new(avatar.address);
       await avatar.transferOwnership(controller.address);
       goodFundManager = await GoodFundsManager.new(
         cDAI.address,
         avatar.address,
         identity.address,
+        bridge.address,
+        homeAvatar,
         BLOCK_INTERVAL
       );
-      await goodFundManager.start();
-      simpleStaking = await SimpleDAIStaking.new(
-        dai.address,
-        cDAI.address,
-        goodFundManager.address,
-        BLOCK_INTERVAL
-      );
-      marketMaker = await MarketMaker.new(
-        goodDollar.address,
-        999388834642296,
-        1e15,
-        avatar.address
-      );
-      contribution = await ContributionCalculation.new(avatar.address, 0, 1e15);
+      [, simpleStaking, marketMaker, contribution] = await Promise.all([
+        goodFundManager.start(),
+        SimpleDAIStaking.new(
+          dai.address,
+          cDAI.address,
+          goodFundManager.address,
+          BLOCK_INTERVAL
+        ),
+        MarketMaker.new(goodDollar.address, 999388834642296, 1e15, avatar.address),
+        ContributionCalculation.new(avatar.address, 0, 1e15)
+      ]);
       goodReserve = await GoodReserve.new(
         dai.address,
         cDAI.address,
@@ -79,15 +85,17 @@ contract(
         contribution.address,
         BLOCK_INTERVAL
       );
-      await goodReserve.start();
-      await marketMaker.initializeToken(
-        cDAI.address,
-        "100", //1gd
-        "10000", //0.0001 cDai
-        "1000000" //100% rr
-      );
-      await marketMaker.transferOwnership(goodReserve.address);
-      goodDollar.addMinter(goodReserve.address);
+      await Promise.all([
+        goodReserve.start(),
+        marketMaker.initializeToken(
+          cDAI.address,
+          "100", //1gd
+          "10000", //0.0001 cDai
+          "1000000" //100% rr
+        ),
+        marketMaker.transferOwnership(goodReserve.address),
+        goodDollar.addMinter(goodReserve.address)
+      ]);
     });
 
     it("should not transfer before reserve has been set", async () => {
@@ -155,10 +163,12 @@ contract(
       let cdaiGains = gains["0"];
       let reserveCDaiBalanceBefore = await cDAI.balanceOf(goodReserve.address);
       let tx = await goodFundManager.transferInterest(simpleStaking.address);
+      let homeAvatarAfter = await goodDollar.balanceOf(homeAvatar);
       let reserveCDaiBalanceAfter = await cDAI.balanceOf(goodReserve.address);
       let stakingGDBalance = await goodDollar.balanceOf(simpleStaking.address);
       const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
-      expect(stakingGDBalance.toString()).to.be.equal("970492");
+      expect(stakingGDBalance.toString()).to.be.equal("0"); //100% of interest is donated, so nothing is returned to staking
+      expect(homeAvatarAfter.toString()).to.be.equal("971086"); //970492 interest + 594 minted from expansion
       expect(
         reserveCDaiBalanceAfter.sub(reserveCDaiBalanceBefore).toString()
       ).to.be.equal(cdaiGains.toString());

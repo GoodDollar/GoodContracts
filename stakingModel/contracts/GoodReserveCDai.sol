@@ -120,9 +120,9 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     );
 
     constructor(
-        address _dai,
-        address _cDai,
-        address _gooddollar,
+        ERC20 _dai,
+        cERC20 _cDai,
+        GoodDollar _gooddollar,
         address _fundManager,
         Avatar _avatar,
         Identity _identity,
@@ -130,9 +130,9 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         ContributionCalc _contribution,
         uint256 _blockInterval
     ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2) {
-        dai = ERC20(_dai);
-        cDai = cERC20(_cDai);
-        gooddollar = GoodDollar(_gooddollar);
+        dai = _dai;
+        cDai = _cDai;
+        gooddollar = _gooddollar;
         avatar = _avatar;
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
@@ -219,7 +219,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     /**
      * @dev sell G$ to sellTo and update the bonding curve params. sell occurs only if the
      * token return is above the given minimum. notice that there is a contribution
-     * amount from the given G$ that stays in the reserve. it is possible to sell only to
+     * amount from the given G$ that remains in the reserve. it is possible to sell only to
      * cDAI and when the contract is set to active. MUST call to G$ `approve` prior this
      * selling action to allow this contract to accomplish the conversion.
      * @param gdAmount how much G$ tokens convert to `sellTo` tokens
@@ -292,9 +292,8 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 gdExpansionToMint = marketMaker.mintExpansion(interestToken);
         uint256 gdUBI = gdInterestToMint.sub(gdInterest);
         gdUBI = gdUBI.add(gdExpansionToMint);
-        ERC20Mintable(address(gooddollar)).mint(fundManager, gdInterest);
-        //TODO: how do we transfer to bridge, is the fundmanager in charge of that?
-        ERC20Mintable(address(gooddollar)).mint(address(avatar), gdUBI);
+        uint256 toMint = gdUBI.add(gdInterest);
+        if (toMint > 0) ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
         lastMinted = block.number;
         emit GDInterestAndExpansionMinted(
             msg.sender,

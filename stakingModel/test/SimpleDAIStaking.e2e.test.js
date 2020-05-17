@@ -13,7 +13,7 @@ export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const DAI_ADDRESS = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 export const cDAI_ADDRESS = "0xe7bc397dbd069fc7d0109c0636d06888bb50668c";
 
-contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
+contract("SimpleDAIStaking - kovan e2e test", ([founder, staker]) => {
   let dai;
   let cDAI;
   let simpleStaking;

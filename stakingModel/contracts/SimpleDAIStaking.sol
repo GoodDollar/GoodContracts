@@ -41,7 +41,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
 
     event DAIStaked(address indexed staker, uint256 daiValue);
     event DAIStakeWithdraw(address indexed staker, uint256 daiValue, uint256 daiActual);
-    event InterestDonated(
+    event InterestCollected(
         address recipient,
         uint256 cdaiValue,
         uint256 daiValue,
@@ -53,6 +53,10 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     uint256 public blockInterval;
     uint256 lastUBICollection;
     uint256 public totalStaked = 0;
+
+    //how much of the generated interest is donated, meaning no G$ is expected in compensation, 1 in mil precision.
+    //100% for phase0 POC
+    uint32 public avgInterestDonatedRatio = 1e6;
 
     modifier onlyFundManager {
         require(msg.sender == owner(), "Only FundManager can call this method");
@@ -153,7 +157,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     function collectUBIInterest(address recipient)
         public
         onlyFundManager
-        returns (uint256, uint256, uint256)
+        returns (uint256, uint256, uint256, uint32)
     {
         require(recipient != address(this), "Recipient cannot be the staking contract"); // otherwise fund manager has to wait for the next interval
 
@@ -169,8 +173,8 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         ) = currentUBIInterest();
         cDai.transfer(recipient, cdaiGains);
         lastUBICollection = block.number;
-        emit InterestDonated(recipient, cdaiGains, daiGains, precisionLossDai);
-        return (cdaiGains, daiGains, precisionLossDai);
+        emit InterestCollected(recipient, cdaiGains, daiGains, precisionLossDai);
+        return (cdaiGains, daiGains, precisionLossDai, avgInterestDonatedRatio);
     }
 
     /**

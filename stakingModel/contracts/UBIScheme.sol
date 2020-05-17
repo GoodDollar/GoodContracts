@@ -50,11 +50,7 @@ contract UBIScheme is AbstractUBI {
     mapping(address => bool) public fishedUsersAddresses;
 
     // emits when a withdraw has been succeded
-    event WithdrawFromDao(
-        address indexed caller,
-        uint256 prevBalance,
-        uint256 newBalance
-    );
+    event WithdrawFromDao(uint256 prevBalance, uint256 newBalance);
 
     // tracking users who claimed for the first time or
     // were inactive. on the first claim the user is
@@ -96,26 +92,28 @@ contract UBIScheme is AbstractUBI {
      * updated balance.
      */
     function _withdrawFromDao() internal {
-        DAOToken token = avatar.nativeToken();
-        uint256 prevBalance = token.balanceOf(address(this));
-        uint256 toWithdraw = token.balanceOf(address(avatar));
-        controller.genericCall(
-            address(token),
-            abi.encodeWithSignature(
-                "transfer(address,uint256)",
-                address(this),
-                toWithdraw
-            ),
-            avatar,
-            0
-        );
-        uint256 newBalance = prevBalance.add(toWithdraw);
-        require(newBalance == token.balanceOf(address(this)), "DAO transfer has failed");
-        Funds storage funds = dailyUBIHistory[currentDay];
-        funds.hasWithdrawn = true;
-        funds.openAmount = newBalance;
-        lastWithdrawDay = currentDay;
-        emit WithdrawFromDao(msg.sender, prevBalance, newBalance);
+        if (lastWithdrawDay != currentDay) {
+            DAOToken token = avatar.nativeToken();
+            uint256 prevBalance = token.balanceOf(address(this));
+            uint256 toWithdraw = token.balanceOf(address(avatar));
+            controller.genericCall(
+                address(token),
+                abi.encodeWithSignature(
+                    "transfer(address,uint256)",
+                    address(this),
+                    toWithdraw
+                ),
+                avatar,
+                0
+            );
+            uint256 newBalance = prevBalance.add(toWithdraw);
+            require(
+                newBalance == token.balanceOf(address(this)),
+                "DAO transfer has failed"
+            );
+            lastWithdrawDay = currentDay;
+            emit WithdrawFromDao(prevBalance, newBalance);
+        }
     }
 
     /* @dev The claim calculation formula. Divided the daily balance with
@@ -126,11 +124,14 @@ contract UBIScheme is AbstractUBI {
         internal
         returns (uint256)
     {
-        if (lastWithdrawDay != currentDay && activeUsersCount > 0) {
+        if (activeUsersCount > 0) {
             // once in 24 hrs pulls gd from dao
-            _withdrawFromDao();
+            if (shouldWithdrawFromDAO) _withdrawFromDao();
             DAOToken token = avatar.nativeToken();
             uint256 currentBalance = token.balanceOf(address(this));
+            Funds storage funds = dailyUBIHistory[currentDay];
+            funds.hasWithdrawn = shouldWithdrawFromDAO;
+            funds.openAmount = currentBalance;
             dailyUbi = currentBalance.div(activeUsersCount);
         }
         return dailyUbi;

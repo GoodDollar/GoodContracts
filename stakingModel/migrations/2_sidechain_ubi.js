@@ -1,6 +1,8 @@
 const settings = require("./deploy-settings.json");
 const daoAddresses = require("../../releases/deployment.json");
 const UBIScheme = artifacts.require("./UBIScheme.sol");
+const UBIPool = artifacts.require("FirstClaimPool");
+
 const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 
@@ -14,6 +16,7 @@ module.exports = async function(deployer, network) {
   if (network.indexOf("mainnet") >= 0 && network !== "test") {
     return;
   }
+
   await deployer;
   const accounts = await web3.eth.getAccounts();
   const founders = [accounts[0]];
@@ -22,10 +25,18 @@ module.exports = async function(deployer, network) {
   const networkSettings = settings[network] || settings["default"];
   const homedao = daoAddresses[network];
 
+  const ubiPool = await deployer.deploy(
+    UBIPool,
+    networkSettings.firstClaimAmount,
+    homedao.Avatar,
+    homedao.Identity
+  );
+
   const ubi = await deployer.deploy(
     UBIScheme,
     homedao.Avatar,
     homedao.Identity,
+    ubiPool.address,
     (Date.now() / 1000).toFixed(0),
     (Date.now() / 1000 + 60 * 60 * 24 * 365).toFixed(0),
     networkSettings.maxInactiveDays

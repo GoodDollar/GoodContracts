@@ -32,7 +32,6 @@ module.exports = async function(deployer, network) {
   const maindao = daoAddresses[network];
   const homedao = daoAddresses[homeNetwork];
 
-  //TODO: update to bridge with bridge+homeavatar once PR is merged
   let foreignBridgeAddr, daiAddress, cdaiAddress;
   if (network == "test") {
     const [foreignBridge, dai] = await Promise.all([
@@ -48,7 +47,7 @@ module.exports = async function(deployer, network) {
     daiAddress = networkSettings.daiAddress;
     cdaiAddress = networkSettings.cdaiAddress;
   }
-  const ubiBridgeRecipient = homedao.UBIScheme;
+  const ubiBridgeRecipient = networkAddresses.UBIScheme;
   const homeAvatar = homedao.Avatar;
 
   console.log("deploying stand alone contracts");
@@ -56,7 +55,10 @@ module.exports = async function(deployer, network) {
     FundManager,
     cdaiAddress,
     maindao.Avatar,
-    maindao.Identity
+    maindao.Identity,
+    foreignBridgeAddr,
+    ubiBridgeRecipient,
+    networkSettings.blockInterval
   );
 
   //daily expansion = rdiv(999388834642296, 1e15); //20% yearly
@@ -100,7 +102,8 @@ module.exports = async function(deployer, network) {
     maindao.Avatar,
     maindao.Identity,
     marketmaker.address,
-    contribcalc.address
+    contribcalc.address,
+    networkSettings.blockInterval
   );
   const [stakingContract, reserve] = await Promise.all([stakingContractP, reserveP]);
   await marketmaker.transferOwnership(reserve.address);

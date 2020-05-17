@@ -69,7 +69,8 @@ module.exports = async function(deployer, network) {
 
   let releasedContracts = {
     ...networkAddresses,
-    UBIScheme: ubi.address
+    UBIScheme: ubi.address,
+    FirstClaimPool: ubiPool.address
   };
 
   console.log("Writing deployment file...\n", { releasedContracts });

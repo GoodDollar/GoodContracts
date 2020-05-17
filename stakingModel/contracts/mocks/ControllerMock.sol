@@ -2,6 +2,10 @@ pragma solidity 0.5.4;
 
 import "@daostack/arc/contracts/controller/Controller.sol";
 
+/**
+ * @title A Controller mock. Ignores the scheme registration.
+ * Those tests can be found on e2e tests.
+ */
 contract ControllerMock is Controller {
 
     constructor(Avatar _avatar)

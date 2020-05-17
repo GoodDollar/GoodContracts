@@ -2,6 +2,10 @@ pragma solidity 0.5.4;
 
 import "../FirstClaimPool.sol";
 
+/**
+ * @title A FirstClaimPool mock. Ignores the scheme registration.
+ * Those tests can be found on e2e tests.
+ */
 contract FirstClaimPoolMock is FirstClaimPool {
 
     constructor(uint256 _claimAmount,

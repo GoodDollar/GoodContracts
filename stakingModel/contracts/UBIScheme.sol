@@ -206,12 +206,22 @@ contract UBIScheme is AbstractUBI {
      * @return The amount of GoodDollar the address can claim.
      */
     function checkEntitlement() public view requireActive returns (uint256) {
+        // new user or inactive should recieve the first claim reward
         if(!isRegistered(msg.sender) || !isActiveUser(msg.sender)) {
             return firstClaimPool.claimAmount();
         }
+        // checks if the user already claimed today
+        uint256 claimDays = now.sub(lastClaimed[msg.sender]) / 1 days;
+        // already claimed today
+        if(claimDays == 0) {
+            return 0;
+        }
+        // current day has already been updated which means
+        // that the dailyUbi has been updated
         if(currentDay == (now.sub(periodStart)) / 1 days) {
             return dailyUbi;
         }
+        // the current day has not updated yet
         DAOToken token = avatar.nativeToken();
         uint256 currentBalance = token.balanceOf(address(this));
         return currentBalance.div(activeUsersCount);
@@ -310,17 +320,5 @@ contract UBIScheme is AbstractUBI {
             }
         }
         return true;
-    }
-
-    /**
-    * @dev making the contract inactive after it has transferred funds to `_avatar`
-    * only the avatar can destroy the contract.
-    * @param _avatar destination avatar address for funds
-    */
-    function end(Avatar _avatar)
-        public
-        onlyAvatar
-    {
-        super.end(_avatar);
     }
 }

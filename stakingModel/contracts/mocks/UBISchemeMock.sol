@@ -2,6 +2,10 @@ pragma solidity 0.5.4;
 
 import "../UBIScheme.sol";
 
+/**
+ * @title An UBIScheme mock. Ignores the scheme registration.
+ * Those tests can be found on e2e tests.
+ */
 contract UBISchemeMock is UBIScheme {
 
     constructor( Avatar _avatar,

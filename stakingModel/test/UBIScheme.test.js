@@ -136,7 +136,8 @@ contract(
     let claimer2Balance = await goodDollar.balanceOf(claimer2);
     expect(claimer2Balance.toNumber()).to.be.equal(100);
     expect(activeUsersCount.toNumber()).to.be.equal(2);
-    expect(transaction.logs[2].event).to.be.equal("ActivatedUser");
+    const activatedUserEventExists = transaction.logs.some(e => e.event === 'ActivatedUser');
+    expect(activatedUserEventExists).to.be.true;
   });
 
   it("should not be able to fish a new user", async () => {
@@ -213,6 +214,11 @@ contract(
     let claimer4Balance3 = await goodDollar.balanceOf(claimer4);
     expect(claimer4Balance2.toNumber() - claimer4Balance1.toNumber()).to.be.equal(dailyUbi.toNumber());
     expect(claimer4Balance3.toNumber() - claimer4Balance1.toNumber()).to.be.equal(dailyUbi.toNumber());
+  });
+
+  it("should return 0 for entitlement if the user has already claimed for today", async () => {
+    let amount = await ubi.checkEntitlement({ from: claimer4 });
+    expect(amount.toString()).to.be.equal('0');
   });
 
   it("should be able to fish inactive user", async () => {

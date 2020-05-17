@@ -161,6 +161,16 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
     );
   });
 
+  it("should calculate mint UBI correctly for 18 decimals precision", async () => {
+    const gdPrice = await marketMaker.currentPrice(dai.address);
+    const toMint = await marketMaker.calculateMintInterest(dai.address, web3.utils.toWei("1", "ether"));
+    const expectedTotalMinted = 10 ** 18 / gdPrice.toNumber();
+    // according to the sell formula the gd price should be 10^14 so 10^18 / 10^14 = 10^4
+    // Return = _reserveBalance * (1 - (1 - _sellAmount / _supply) ^ (1000000 / _reserveRatio))
+    expect(expectedTotalMinted).to.be.equal(10000);
+    expect(toMint.toString()).to.be.equal((expectedTotalMinted * 100).toString());
+  });
+
   it("should calculate sell return with cDAI", async () => {
     const gDReturn = await marketMaker.sellReturn(
       cDAI.address,
@@ -406,18 +416,5 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
     let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
     let gdSupplyAfter = reserveTokenAfter.gdSupply;
     expect(gdSupplyAfter.toString()).to.be.equal(gdSupplyBefore.toString());
-  });
-
-  xit("should calculate mint UBI correctly for 18 decimals precision", async () => {
-    const gdPrice = await marketMaker.currentPrice(dai.address);
-    const toMint = await marketMaker.shouldMint(
-      dai.address,
-      web3.utils.toWei("1", "ether")
-    );
-    console.log(gdPrice.toString(), toMint.toString());
-    const expectedTotalMinted = 10 ** 18 / gdPrice.toNumber();
-
-    expect(expectedTotalMinted).to.be.equal(1000000000); //10k GD with 2 decimals
-    expect(toMint.toString()).to.be.equal((expectedTotalMinted * 100).toString());
   });
 });

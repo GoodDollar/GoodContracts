@@ -65,6 +65,20 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       BLOCK_INTERVAL
     );
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
+    
+    await marketMaker.initializeToken(
+      cDAI.address,
+      "100", //1gd
+      "10000", //0.0001 cDai
+      "1000000" //100% rr
+    );
+
+    await marketMaker.initializeToken(
+      dai.address,
+      "100",
+      "1000000000",
+      "1000000"
+    );
   });
 
 it("should set marketmaker in the reserve by avatar", async () => {
@@ -80,22 +94,6 @@ it("should set marketmaker in the reserve by avatar", async () => {
     const newMM = await goodReserve.marketMaker();
     expect(newMM.toString()).to.be.equal(marketMaker.address);
   });
-
-  it("should initialize token with price", async () => {
-    const expansion = await marketMaker.initializeToken(
-      cDAI.address,
-      "100", //1gd
-      "10000", //0.0001 cDai
-      "1000000" //100% rr
-    );
-    const price = await marketMaker.currentPrice(cDAI.address);
-    expect(price.toString()).to.be.equal("10000"); //1gd is equal 0.0001 cDAI = 100000 wei;
-    const onecDAIReturn = await marketMaker.buyReturn(
-      cDAI.address,
-      "100000000" //1cDai
-    );
-    expect(onecDAIReturn.toNumber() / 100).to.be.equal(10000); //0.0001 cdai is 1 gd, so for 1eth you get 10000 gd (divide by 100 to account for 2 decimals precision)
-  });
   
   it("should returned true for isActive", async () => {
     const isActive = await goodReserve.isActive();
@@ -109,35 +107,6 @@ it("should set marketmaker in the reserve by avatar", async () => {
     expect(gdFloatPrice).to.be.equal(0.0001);
     expect(cdaiWorthInGD.toString()).to.be.equal("1000000000000"); //in 8 decimals precision
     expect(cdaiWorthInGD.toNumber() / 10 ** 8).to.be.equal(10000);
-  });
-
-  it("should calculate mint UBI correctly for 8 decimals precision", async () => {
-    const gdPrice = await marketMaker.currentPrice(cDAI.address);
-    const toMint = await marketMaker.calculateMintInterest(cDAI.address, "100000000");
-    const expectedTotalMinted = 10 ** 8 / gdPrice.toNumber();
-    expect(expectedTotalMinted).to.be.equal(10000); //10k GD
-    expect(toMint.toString()).to.be.equal(
-      (expectedTotalMinted * 100).toString()
-    ); //add 2 decimals precision
-  });
-
-  it("should calculate mint UBI correctly for 18 decimals precision", async () => {
-    await marketMaker.initializeToken(
-      dai.address,
-      "100",
-      "1000000000",
-      "1000000"
-    );
-    const gdPrice = await marketMaker.currentPrice(dai.address);
-    const toMint = await marketMaker.calculateMintInterest(
-      dai.address,
-      web3.utils.toWei("1", "ether")
-    );
-    const expectedTotalMinted = 10 ** 18 / gdPrice.toNumber();
-    expect(expectedTotalMinted).to.be.equal(1000000000); //10k GD with 2 decimals
-    expect(toMint.toString()).to.be.equal(
-      (expectedTotalMinted * 100).toString()
-    );
   });
 
   it("should not be able to buy gd if the minter is not the reserve", async () => {

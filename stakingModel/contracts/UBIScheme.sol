@@ -30,6 +30,7 @@ contract UBIScheme is AbstractUBI {
     // (see `fish` notes)
     uint256 public maxInactiveDays;
 
+    bool public shouldWithdrawFromDAO;
     //a pool of G$ to give to activated users, since they will enter the UBI pool calculations
     //only in the next day, meaning they can only claim in the next day.
     FirstClaimPool firstClaimPool;
@@ -85,6 +86,7 @@ contract UBIScheme is AbstractUBI {
 
         maxInactiveDays = _maxInactiveDays;
         firstClaimPool = _firstClaimPool;
+        shouldWithdrawFromDAO = false;
     }
 
     /* @dev On a daily basis UBIScheme withdraw tokens from GoodDao.

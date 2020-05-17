@@ -449,8 +449,12 @@ it("should set marketmaker in the reserve by avatar", async () => {
   });
 
   it("should be able to sell gd to cDAI with contribution of 20%", async () => {
-    let amount = 1e4;
-    let expectedReturn = 800000; // deduced amount, ie. return minus contribution
+    let amount = 1e4; // 100 gd
+    // deduced amount, ie. return minus contribution. reserve ratio is 100%.
+    // example without deduction:
+    // 1 gd (100) equals to 0.0001 cDai (10000) so 100 gd (10k) equals to 0.01 cDai (1m)
+    // since there is 20% contribution the return is 0.008 cDai (800k)
+    let expectedReturn = 800000;
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
     let supplyBefore = reserveToken.gdSupply; 

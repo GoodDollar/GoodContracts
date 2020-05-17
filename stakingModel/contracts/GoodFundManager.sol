@@ -27,6 +27,8 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     GoodReserveCDai public reserve;
     address public bridgeContract;
     address public homeAvatar;
+    uint256 public blockInterval;
+    uint256 public lastTransferred;
 
     event FundsTransferred(
         address indexed caller,
@@ -45,6 +47,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
 
     constructor(
         address _cDai,
+        uint256 _blockInterval,
         Avatar _avatar,
         Identity _identity,
         address _bridgeContract,
@@ -53,6 +56,8 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         cDai = ERC20(_cDai);
         bridgeContract = _bridgeContract;
         homeAvatar = _homeAvatar;
+        blockInterval = _blockInterval;
+        lastTransferred = block.number;
         start();
     }
 
@@ -84,6 +89,14 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         bridgeContract = _bridgeContract;
         homeAvatar = _avatar;
     }
+    
+    /**
+     * @dev allow the DAO to change the block interval
+     * @param _blockInterval the new value
+     */
+    function setBlockInterval(uint256 _blockInterval) public onlyAvatar {
+        blockInterval = _blockInterval;
+    }
 
     /**
      * @dev collects ubi interest in cdai from from a given staking and transfer it to
@@ -98,6 +111,10 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         onlyRegistered
         reserveHasInitialized
     {
+        require(
+            block.number.sub(lastTransferred) > blockInterval,
+            "Need to wait for the next interval"
+        );
         // cdai balance of the reserve contract
         uint256 currentBalance = cDai.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract

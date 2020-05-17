@@ -13,7 +13,7 @@ const ContributionCalculation = artifacts.require("ContributionCalculation");
 const TransferAndCallMock = artifacts.require("TransferAndCallMock");
 
 const BN = web3.utils.BN;
-export const BLOCK_INTERVAL = 2;
+export const BLOCK_INTERVAL = 0;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract("GoodFundManager - transfer interest from the staking contract to the reserve contract", ([founder, staker, homeAvatar]) => {
@@ -37,7 +37,7 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
     avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
     controller = await ControllerMock.new(avatar.address);
     await avatar.transferOwnership(controller.address);
-    goodFundManager = await GoodFundsManager.new(cDAI.address, avatar.address, identity.address, bridge.address, homeAvatar);
+    goodFundManager = await GoodFundsManager.new(cDAI.address, BLOCK_INTERVAL, avatar.address, identity.address, bridge.address, homeAvatar);
     simpleStaking = await SimpleDAIStaking.new(
       dai.address,
       cDAI.address,
@@ -60,7 +60,8 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
       avatar.address,
       identity.address,
       marketMaker.address,
-      contribution.address
+      contribution.address,
+      BLOCK_INTERVAL,
     );
     await marketMaker.initializeToken(
       cDAI.address,
@@ -137,6 +138,25 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
     expect(reserveCDaiBalanceAfter.sub(reserveCDaiBalanceBefore).toString()).to.be.equal(cdaiGains.toString());
     expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
     expect(tx.logs[0].event).to.be.equal("FundsTransferred");
+  });
+
+  it("should set block interval by avatar", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'setBlockInterval',
+      type: 'function',
+      inputs: [{
+          type: 'uint256',
+          name: '_blockInterval'
+      }]
+    }, [100]);
+    await controller.genericCall(goodFundManager.address, encodedCall, avatar.address, 0);
+    const newBI = await goodFundManager.blockInterval();
+    expect(newBI.toString()).to.be.equal('100');
+  });
+
+  it("should not mint UBI if not in the interval", async () => {
+    const error = await goodFundManager.transferInterest(simpleStaking.address).catch(e => e);
+    expect(error.message).to.have.string("wait for the next interval");
   });
 
   it("should not be able to destroy the contract if the caller is not the dao", async () => {

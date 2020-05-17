@@ -13,6 +13,7 @@ const Formula = artifacts.require("FeeFormula");
 const ContributionCalculation = artifacts.require("ContributionCalculation");
 
 const BN = web3.utils.BN;
+export const BLOCK_INTERVAL = 0;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
@@ -60,9 +61,24 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       avatar.address,
       identity.address,
       marketMaker.address,
-      contribution.address
+      contribution.address,
+      BLOCK_INTERVAL
     );
     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
+    
+    await marketMaker.initializeToken(
+      cDAI.address,
+      "100", //1gd
+      "10000", //0.0001 cDai
+      "1000000" //100% rr
+    );
+
+    await marketMaker.initializeToken(
+      dai.address,
+      "100",
+      "1000000000",
+      "1000000"
+    );
   });
 
 it("should set marketmaker in the reserve by avatar", async () => {
@@ -78,22 +94,6 @@ it("should set marketmaker in the reserve by avatar", async () => {
     const newMM = await goodReserve.marketMaker();
     expect(newMM.toString()).to.be.equal(marketMaker.address);
   });
-
-  it("should initialize token with price", async () => {
-    const expansion = await marketMaker.initializeToken(
-      cDAI.address,
-      "100", //1gd
-      "10000", //0.0001 cDai
-      "1000000" //100% rr
-    );
-    const price = await marketMaker.currentPrice(cDAI.address);
-    expect(price.toString()).to.be.equal("10000"); //1gd is equal 0.0001 cDAI = 100000 wei;
-    const onecDAIReturn = await marketMaker.buyReturn(
-      cDAI.address,
-      "100000000" //1cDai
-    );
-    expect(onecDAIReturn.toNumber() / 100).to.be.equal(10000); //0.0001 cdai is 1 gd, so for 1eth you get 10000 gd (divide by 100 to account for 2 decimals precision)
-  });
   
   it("should returned true for isActive", async () => {
     const isActive = await goodReserve.isActive();
@@ -107,35 +107,6 @@ it("should set marketmaker in the reserve by avatar", async () => {
     expect(gdFloatPrice).to.be.equal(0.0001);
     expect(cdaiWorthInGD.toString()).to.be.equal("1000000000000"); //in 8 decimals precision
     expect(cdaiWorthInGD.toNumber() / 10 ** 8).to.be.equal(10000);
-  });
-
-  it("should calculate mint UBI correctly for 8 decimals precision", async () => {
-    const gdPrice = await marketMaker.currentPrice(cDAI.address);
-    const toMint = await marketMaker.calculateMintInterest(cDAI.address, "100000000");
-    const expectedTotalMinted = 10 ** 8 / gdPrice.toNumber();
-    expect(expectedTotalMinted).to.be.equal(10000); //10k GD
-    expect(toMint.toString()).to.be.equal(
-      (expectedTotalMinted * 100).toString()
-    ); //add 2 decimals precision
-  });
-
-  it("should calculate mint UBI correctly for 18 decimals precision", async () => {
-    await marketMaker.initializeToken(
-      dai.address,
-      "100",
-      "1000000000",
-      "1000000"
-    );
-    const gdPrice = await marketMaker.currentPrice(dai.address);
-    const toMint = await marketMaker.calculateMintInterest(
-      dai.address,
-      web3.utils.toWei("1", "ether")
-    );
-    const expectedTotalMinted = 10 ** 18 / gdPrice.toNumber();
-    expect(expectedTotalMinted).to.be.equal(1000000000); //10k GD with 2 decimals
-    expect(toMint.toString()).to.be.equal(
-      (expectedTotalMinted * 100).toString()
-    );
   });
 
   it("should not be able to buy gd if the minter is not the reserve", async () => {
@@ -220,6 +191,31 @@ it("should set marketmaker in the reserve by avatar", async () => {
         from: staker
       }).catch(e => e);
     expect(error.message).not.to.be.empty;
+  });
+
+  it("should set block interval by avatar", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall({
+      name: 'setBlockInterval',
+      type: 'function',
+      inputs: [{
+          type: 'uint256',
+          name: '_blockInterval'
+      }]
+    }, [100]);
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
+    const newBI = await goodReserve.blockInterval();
+    expect(newBI.toString()).to.be.equal('100');
+  });
+
+  it("should not mint UBI if not in the interval", async () => {
+    const gdBalanceFundBefore = await goodDollar.balanceOf(founder);
+    const gdBalanceAvatarBefore = await goodDollar.balanceOf(avatar.address);
+    const error = await goodReserve.mintInterestAndUBI(cDAI.address, web3.utils.toWei("10000", "gwei"), "10000").catch(e => e);
+    const gdBalanceFundAfter = await goodDollar.balanceOf(founder);
+    const gdBalanceAvatarAfter = await goodDollar.balanceOf(avatar.address);
+    expect(error.message).to.have.string("wait for the next interval");
+    expect(gdBalanceFundAfter.toString()).to.be.equal(gdBalanceFundBefore.toString());
+    expect(gdBalanceAvatarAfter.toString()).to.be.equal(gdBalanceAvatarBefore.toString());
   });
 
   it("should be able to buy gd with cDAI", async () => {

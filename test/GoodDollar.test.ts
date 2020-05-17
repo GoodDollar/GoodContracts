@@ -2,6 +2,7 @@ import * as helpers from './helpers';
 
 const Identity = artifacts.require("Identity");
 const FeeFormula = artifacts.require("FeeFormula");
+const SenderFeeFormula = artifacts.require("SenderFeeFormula");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
 const Avatar = artifacts.require("Avatar");
 const ControllerInterface = artifacts.require("ControllerInterface");
@@ -13,8 +14,10 @@ contract("GoodDollar", ([founder, whitelisted, outsider]) => {
     let receiver: helpers.ThenArg<ReturnType<typeof TransferAndCallMock['new']>>;
     let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
     let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
+    let newFormula: helpers.ThenArg<ReturnType<typeof FeeFormula['new']>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
+    let newtoken: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
     let cappedToken: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
     let unCappedToken: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
     let controller: helpers.ThenArg<ReturnType<typeof ControllerInterface['new']>>;
@@ -28,8 +31,10 @@ contract("GoodDollar", ([founder, whitelisted, outsider]) => {
         unCappedToken = await GoodDollar.new('Test', 'TDD', 0, feeFormula.address, identity.address, receiver.address)
         cappedToken = await GoodDollar.new('Test', 'TDD', helpers.toGD('10') , feeFormula.address, identity.address, receiver.address);
         token = await GoodDollar.at(await avatar.nativeToken());
-
-        await token.transfer(whitelisted, helpers.toGD("100"));
+        newFormula = await SenderFeeFormula.new(1);
+        newtoken = await GoodDollar.new("gd","gd",1000000,newFormula.address,identity.address,avatar.address)
+        newtoken.mint(whitelisted,helpers.toGD("300"))
+        await token.transfer(whitelisted, helpers.toGD("300"));
         await token.transfer(founder, helpers.toGD("100"));
         await token.transfer(outsider, helpers.toGD("10"));
         await identity.addWhitelisted(whitelisted);
@@ -90,4 +95,52 @@ contract("GoodDollar", ([founder, whitelisted, outsider]) => {
 
         await helpers.assertVMException(cappedToken.mint(founder, helpers.toGD("12")), "Cannot increase supply beyond cap");
     });
+
+    it("should collect transaction fee", async () => {
+        const oldReserve = await token.balanceOf(avatar.address);
+  
+        await token.transfer(founder, helpers.toGD("200"),{from: whitelisted});
+  
+        // Check that reserve has received fees
+        const reserve = (await token.balanceOf(avatar.address)) as any;
+  
+        const reserveDiff = reserve.sub(oldReserve);
+        const totalFees = (await (token as any)
+          .getFees(helpers.toGD("200"))
+          .then(_ => _["0"])) as any;
+        expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
+      });
+
+    it("should get same results from overloaded getFees method", async () => {
+      const totalFees = (await (token as any) //fix overload issue
+        .getFees(helpers.toGD("300"))
+        .then(_ => _["0"])) as any;
+      const totalFees2 = (await token
+        .getFees(helpers.toGD("300"), whitelisted, whitelisted)
+        .then(_ => _["0"])) as any;
+      expect(totalFees2.toNumber()).to.be.gt(0);
+      expect(totalFees2.toString()).to.be.equal(totalFees.toString());
+    });
+  
+    it("should collect transaction fee from sender", async () => {
+        const oldReserve = await newtoken.balanceOf(avatar.address);
+        const oldFounder = await newtoken.balanceOf(founder);
+        await newtoken.transfer(founder, helpers.toGD("200"),{from: whitelisted});
+  
+        // Check that reserve has received fees
+        const reserve = (await newtoken.balanceOf(avatar.address)) as any;
+        const newFounder = (await newtoken.balanceOf(founder)) as any;
+        const newWhitelisted = await newtoken.balanceOf(whitelisted);
+
+        const reserveDiff = reserve.sub(oldReserve);
+        const founderDiff = newFounder.sub(oldFounder);
+
+        const totalFees = (await (newtoken as any)
+          .getFees(helpers.toGD("200"))
+          .then(_ => _["0"])) as any;
+        expect(reserveDiff.toString()).to.be.equal(totalFees.toString());
+        expect(founderDiff.toString()).to.be.equal(helpers.toGD("200"));
+        expect(newWhitelisted.toString()).to.be.equal(helpers.toGD("98"));// 300 - 200 - 2(1% fee)
+
+      });
 });

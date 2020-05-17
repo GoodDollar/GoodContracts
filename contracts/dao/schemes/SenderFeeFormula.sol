@@ -4,19 +4,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 
 import "./SchemeGuard.sol";
-
-
-/**
- * @title Fee formula abstract contract
- */
-contract AbstractFees is SchemeGuard {
-    constructor() public SchemeGuard(Avatar(0)) {}
-
-    function getTxFees(uint256 _value, address _sender, address _recipient)
-        public
-        view
-        returns (uint256, bool);
-}
+import "./FeeFormula.sol";
 
 
 /**
@@ -24,11 +12,11 @@ contract AbstractFees is SchemeGuard {
  * contract that provides a function to calculate
  * fees as a percentage of any given value
  */
-contract FeeFormula is AbstractFees {
+contract SenderFeeFormula is AbstractFees {
     using SafeMath for uint256;
 
     uint256 public percentage;
-    bool public constant senderPays = false;
+    bool public constant senderPays = true;
 
     /**
      * @dev Constructor. Requires the given percentage parameter

@@ -44,7 +44,15 @@ module.exports = {
       host: "127.0.0.1",
       port: 9545,
       network_id: "*",
-      gas: 8000000
+      gas: 9000000,
+      gasPrice: 1000000000 //1 gwei
+    },
+    tdd: {
+      host: "127.0.0.1",
+      port: 9545,
+      network_id: "*",
+      gas: 9000000,
+      gasPrice: 1000000000 //1 gwei
     },
     coverage: {
       host: "127.0.0.1",

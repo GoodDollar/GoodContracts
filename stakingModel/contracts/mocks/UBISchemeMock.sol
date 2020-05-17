@@ -12,7 +12,6 @@ contract UBISchemeMock is UBIScheme {
         Avatar _avatar,
         Identity _identity,
         FirstClaimPool _firstClaimPool,
-        uint256 _initialReserve,
         uint256 _periodStart,
         uint256 _periodEnd,
         uint256 _maxInactiveDays
@@ -22,7 +21,6 @@ contract UBISchemeMock is UBIScheme {
             _avatar,
             _identity,
             _firstClaimPool,
-            _initialReserve,
             _periodStart,
             _periodEnd,
             _maxInactiveDays

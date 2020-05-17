@@ -40,11 +40,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     mapping(address => Staker) public stakers;
 
     event DAIStaked(address indexed staker, uint256 daiValue);
-    event DAIStakeWithdraw(
-        address indexed staker,
-        uint256 daiValue,
-        uint256 daiActual
-    );
+    event DAIStakeWithdraw(address indexed staker, uint256 daiValue, uint256 daiActual);
     event InterestCollected(
         address recipient,
         uint256 cdaiValue,
@@ -54,7 +50,6 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
 
     ERC20 dai;
     cERC20 cDai;
-    address uniswap;
     uint256 public blockInterval;
     uint256 lastUBICollection;
     uint256 public totalStaked = 0;
@@ -68,19 +63,12 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         _;
     }
 
-    constructor(
-        address _dai,
-        address _cDai,
-        address _uniswap,
-        address _fundManager,
-        uint256 _blockInterval
-    )
+    constructor(address _dai, address _cDai, address _fundManager, uint256 _blockInterval)
         public
         SchemeGuard(Avatar(address(0)))
     {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
-        uniswap = _uniswap;
         blockInterval = _blockInterval;
         lastUBICollection = block.number;
         transferOwnership(_fundManager);
@@ -112,9 +100,9 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
             require(res == 0, "Minting cDai failed, funds returned");
         }
         Staker storage staker = stakers[msg.sender];
-        staker.stakedDAI = staker.stakedDAI + amount;
+        staker.stakedDAI = staker.stakedDAI.add(amount);
         staker.lastStake = block.number;
-        totalStaked += amount;
+        totalStaked = totalStaked.add(amount);
         emit DAIStaked(msg.sender, amount);
     }
 
@@ -124,13 +112,10 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     function withdrawStake() public {
         Staker storage staker = stakers[msg.sender];
         require(staker.stakedDAI > 0, "No DAI staked");
-        require(
-            cDai.redeemUnderlying(staker.stakedDAI) == 0,
-            "Failed to redeem cDai"
-        );
+        require(cDai.redeemUnderlying(staker.stakedDAI) == 0, "Failed to redeem cDai");
         uint256 daiWithdraw = staker.stakedDAI;
         staker.stakedDAI = 0; // update balance before transfer to prevent re-entry
-        totalStaked -= daiWithdraw;
+        totalStaked = totalStaked.sub(daiWithdraw);
         uint256 daiActual = dai.balanceOf(address(this));
         if (daiActual < daiWithdraw) {
             daiWithdraw = daiActual;
@@ -144,17 +129,11 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         uint256 er = cDai.exchangeRateStored();
 
         //TODO: why 1e10? cDai is e8 so we should convert it to e28 like exchange rate
-        uint256 daiBalance = rmul(cDai.balanceOf(address(this)) * 1e10, er).div(
-            10
-        );
+        uint256 daiBalance = rmul(cDai.balanceOf(address(this)) * 1e10, er).div(10);
         return daiBalance;
     }
 
-    function currentUBIInterest()
-        public
-        view
-        returns (uint256, uint256, uint256)
-    {
+    function currentUBIInterest() public view returns (uint256, uint256, uint256) {
         uint256 er = cDai.exchangeRateStored();
         uint256 daiWorth = currentDAIWorth();
         if (daiWorth < totalStaked) {
@@ -180,10 +159,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         onlyFundManager
         returns (uint256, uint256, uint256, uint32)
     {
-        require(
-            recipient != address(this),
-            "Recipient cannot be the staking contract"
-        ); // otherwise fund manager has to wait for the next interval
+        require(recipient != address(this), "Recipient cannot be the staking contract"); // otherwise fund manager has to wait for the next interval
 
         require(
             block.number.sub(lastUBICollection) > blockInterval,
@@ -197,12 +173,15 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         ) = currentUBIInterest();
         cDai.transfer(recipient, cdaiGains);
         lastUBICollection = block.number;
-        emit InterestCollected(
-            recipient,
-            cdaiGains,
-            daiGains,
-            precisionLossDai
-        );
+        emit InterestCollected(recipient, cdaiGains, daiGains, precisionLossDai);
         return (cdaiGains, daiGains, precisionLossDai, avgInterestDonatedRatio);
+    }
+
+    /**
+     * @dev can fund manager collect interest
+     * @return bool - true if enough time has passed (counted in blocks)
+     */
+    function canCollect() public view returns (bool) {
+        return block.number.sub(lastUBICollection) > blockInterval;
     }
 }

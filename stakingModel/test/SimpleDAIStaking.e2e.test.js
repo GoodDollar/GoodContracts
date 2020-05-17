@@ -10,17 +10,17 @@ export const BLOCK_INTERVAL = 2;
 
 // kovan network addresses
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-export const DAI_ADDRESS  = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
+export const DAI_ADDRESS = "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa";
 export const cDAI_ADDRESS = "0xe7bc397dbd069fc7d0109c0636d06888bb50668c";
 
-contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
+contract("SimpleDAIStaking - kovan e2e test", ([founder, staker]) => {
   let dai;
   let cDAI;
   let simpleStaking;
 
   before(async function() {
     let network = process.env.NETWORK;
-    if(network !== 'kovan'){
+    if (network !== "kovan") {
       this.skip();
     }
     dai = await DAIMock.at(DAI_ADDRESS);
@@ -28,7 +28,6 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     simpleStaking = await SimpleDAIStaking.new(
       DAI_ADDRESS,
       cDAI_ADDRESS,
-      NULL_ADDRESS,
       founder,
       BLOCK_INTERVAL
     );
@@ -59,20 +58,24 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await simpleStaking.collectUBIInterest(founder);
     const fundBalanceAfter = await cDAI.balanceOf(founder);
     const fundDaiWorth = await simpleStaking.currentDAIWorth();
-    expect(cdaiGains.toString()).to.be.equal((fundBalanceAfter - fundBalanceBefore).toString());
+    expect(cdaiGains.toString()).to.be.equal(
+      (fundBalanceAfter - fundBalanceBefore).toString()
+    );
     let stakedcDaiBalanceBefore = await cDAI.balanceOf(simpleStaking.address);
     let stakerDaiBalanceBefore = await dai.balanceOf(staker);
     const transaction = await simpleStaking.withdrawStake({
-                          from: staker
-                        })
+      from: staker
+    });
     let stakedcDaiBalanceAfter = await cDAI.balanceOf(simpleStaking.address);
     let stakerDaiBalanceAfter = await dai.balanceOf(staker);
     let balanceAfterWithdraw = (await simpleStaking.stakers(staker)).stakedDAI;
     expect(stakedcDaiBalanceAfter.lt(stakedcDaiBalanceBefore)).to.be.true;
     expect(stakerDaiBalanceAfter.gt(stakerDaiBalanceBefore)).to.be.true;
-    expect(balanceAfter.toString()).to.be.equal((stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString());
+    expect(balanceAfter.toString()).to.be.equal(
+      (stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString()
+    );
     expect(balanceAfterWithdraw.toString()).to.be.equal("0");
     expect(transaction.logs[0].event).to.be.equal("DAIStakeWithdraw");
-    console.log('finish');
+    console.log("finish");
   });
 });

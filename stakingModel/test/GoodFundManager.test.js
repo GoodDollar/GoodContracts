@@ -36,9 +36,11 @@ contract(
     before(async () => {
       dai = await DAIMock.new();
       cDAI = await cDAIMock.new(dai.address);
-      dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
-      formula = await Formula.new(0);
-      identity = await Identity.new();
+      [, formula, identity] = await Promise.all([
+        dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether")),
+        Formula.new(0),
+        Identity.new()
+      ]);
       goodDollar = await GoodDollar.new(
         "GoodDollar",
         "GDD",
@@ -47,38 +49,31 @@ contract(
         identity.address,
         NULL_ADDRESS
       );
-      bridge = await TransferAndCallMock.new(goodDollar.address);
-      avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
+      [bridge, avatar] = await Promise.all([
+        TransferAndCallMock.new(goodDollar.address),
+        avatarMock.new("", goodDollar.address, NULL_ADDRESS)
+      ]);
       controller = await ControllerMock.new(avatar.address);
       await avatar.transferOwnership(controller.address);
       goodFundManager = await GoodFundsManager.new(
         cDAI.address,
-        BLOCK_INTERVAL,
         avatar.address,
         identity.address,
         bridge.address,
-        homeAvatar
-      );
-      simpleStaking = await SimpleDAIStaking.new(
-        dai.address,
-        cDAI.address,
-        NULL_ADDRESS,
-        goodFundManager.address,
+        homeAvatar,
         BLOCK_INTERVAL
       );
-      marketMaker = await MarketMaker.new(
-        goodDollar.address,
-        founder,
-        999388834642296,
-        1e15,
-        avatar.address
-      );
-      contribution = await ContributionCalculation.new(
-        avatar.address,
-        goodDollar.address,
-        0,
-        1e15
-      );
+      [, simpleStaking, marketMaker, contribution] = await Promise.all([
+        goodFundManager.start(),
+        SimpleDAIStaking.new(
+          dai.address,
+          cDAI.address,
+          goodFundManager.address,
+          BLOCK_INTERVAL
+        ),
+        MarketMaker.new(goodDollar.address, 999388834642296, 1e15, avatar.address),
+        ContributionCalculation.new(avatar.address, 0, 1e15)
+      ]);
       goodReserve = await GoodReserve.new(
         dai.address,
         cDAI.address,
@@ -90,14 +85,17 @@ contract(
         contribution.address,
         BLOCK_INTERVAL
       );
-      await marketMaker.initializeToken(
-        cDAI.address,
-        "100", //1gd
-        "10000", //0.0001 cDai
-        "1000000" //100% rr
-      );
-      await marketMaker.transferOwnership(goodReserve.address);
-      goodDollar.addMinter(goodReserve.address);
+      await Promise.all([
+        goodReserve.start(),
+        marketMaker.initializeToken(
+          cDAI.address,
+          "100", //1gd
+          "10000", //0.0001 cDai
+          "1000000" //100% rr
+        ),
+        marketMaker.transferOwnership(goodReserve.address),
+        goodDollar.addMinter(goodReserve.address)
+      ]);
     });
 
     it("should not transfer before reserve has been set", async () => {
@@ -108,12 +106,15 @@ contract(
     });
 
     it("should not be able to set the reserve if the sender is not the dao", async () => {
-      let error = await goodFundManager
-        .setReserve(goodReserve.address)
-        .catch(e => e);
+      let error = await goodFundManager.setReserve(goodReserve.address).catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
     });
 
+    it("should not be able to set the bridge and homeAvatar if the sender is not the dao", async () => {
+      let error = await goodFundManager.setBridgeAndHomeAvatar(bridge.address, homeAvatar).catch(e => e);
+      expect(error.message).to.have.string("only Avatar can call this method");
+    });
+  
     it("should set the reserve in the fund manager", async () => {
       let encodedCall = web3.eth.abi.encodeFunctionCall(
         {
@@ -139,8 +140,8 @@ contract(
     });
 
     it("should be able to stake dai", async () => {
-      dai.mint(staker, web3.utils.toWei("100", "ether"));
-      dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
+      await dai.mint(staker, web3.utils.toWei("100", "ether"));
+      await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
         from: staker
       });
       await simpleStaking
@@ -153,9 +154,7 @@ contract(
         web3.utils.toWei("100", "ether") //100 dai
       );
       let totalStaked = await simpleStaking.totalStaked();
-      expect(totalStaked.toString()).to.be.equal(
-        web3.utils.toWei("100", "ether")
-      );
+      expect(totalStaked.toString()).to.be.equal(web3.utils.toWei("100", "ether"));
       let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
       expect(stakedcDaiBalance.toString()).to.be.equal(
         web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai because of the exchange rate dai <> cdai)
@@ -213,6 +212,36 @@ contract(
       expect(error.message).to.have.string("wait for the next interval");
     });
 
+    it("should set bridge and home avatar by avatar", async () => {
+      let encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "setBridgeAndHomeAvatar",
+          type: "function",
+          inputs: [
+            {
+              type: "address",
+              name: "_bridgeContract"
+            },
+            {
+              type: "address",
+              name: "_avatar"
+            }
+          ]
+        },
+        [founder, staker]
+      );
+      await controller.genericCall(
+        goodFundManager.address,
+        encodedCall,
+        avatar.address,
+        0
+      );
+      const newFundManger = await goodFundManager.bridgeContract();
+      const newHomeAvatar = await goodFundManager.homeAvatar();
+      expect(newFundManger).to.be.equal(founder);
+      expect(newHomeAvatar).to.be.equal(staker);
+    });
+  
     it("should not be able to destroy the contract if the caller is not the dao", async () => {
       let error = await goodFundManager.end(avatar.address).catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
@@ -220,9 +249,7 @@ contract(
 
     it("should destroy the contract and transfer funds to the given destination", async () => {
       let avatarCDAIBalanceBefore = await cDAI.balanceOf(avatar.address);
-      let fundmanagerCDAIBalanceBefore = await cDAI.balanceOf(
-        goodFundManager.address
-      );
+      let fundmanagerCDAIBalanceBefore = await cDAI.balanceOf(goodFundManager.address);
       let avatarGDBalanceBefore = await goodDollar.balanceOf(avatar.address);
       let fundmanagerGDBalanceBefore = await goodDollar.balanceOf(
         goodFundManager.address
@@ -247,21 +274,17 @@ contract(
         0
       );
       let avatarCDAIBalanceAfter = await cDAI.balanceOf(avatar.address);
-      let fundmanagerCDAIBalanceAfter = await cDAI.balanceOf(
-        goodFundManager.address
-      );
+      let fundmanagerCDAIBalanceAfter = await cDAI.balanceOf(goodFundManager.address);
       let avatarGDBalanceAfter = await goodDollar.balanceOf(avatar.address);
-      let fundmanagerGDBalanceAfter = await goodDollar.balanceOf(
-        goodFundManager.address
-      );
+      let fundmanagerGDBalanceAfter = await goodDollar.balanceOf(goodFundManager.address);
       let code = await web3.eth.getCode(goodFundManager.address);
-      expect(
-        (avatarCDAIBalanceAfter - avatarCDAIBalanceBefore).toString()
-      ).to.be.equal(fundmanagerCDAIBalanceBefore.toString());
+      expect((avatarCDAIBalanceAfter - avatarCDAIBalanceBefore).toString()).to.be.equal(
+        fundmanagerCDAIBalanceBefore.toString()
+      );
       expect(fundmanagerCDAIBalanceAfter.toString()).to.be.equal("0");
-      expect(
-        (avatarGDBalanceAfter - avatarGDBalanceBefore).toString()
-      ).to.be.equal(fundmanagerGDBalanceBefore.toString());
+      expect((avatarGDBalanceAfter - avatarGDBalanceBefore).toString()).to.be.equal(
+        fundmanagerGDBalanceBefore.toString()
+      );
       expect(fundmanagerGDBalanceAfter.toString()).to.be.equal("0");
       expect(code.toString()).to.be.equal("0x");
     });

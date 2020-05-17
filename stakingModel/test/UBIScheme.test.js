@@ -40,7 +40,7 @@ export const increaseTime = async function(duration) {
 
 contract(
   "UBIScheme",
-  ([founder, claimer1, claimer2, claimer3, claimer4, fisherman]) => {
+  ([founder, claimer1, claimer2, claimer3, claimer4, fisherman, claimer5, claimer6]) => {
     let goodDollar, identity, formula, avatar, ubi, controller, firstClaimPool;
 
     before(async () => {
@@ -57,11 +57,7 @@ contract(
       avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
       controller = await ControllerMock.new(avatar.address);
       await avatar.transferOwnership(controller.address);
-      firstClaimPool = await FirstClaimPool.new(
-        100,
-        avatar.address,
-        identity.address
-      );
+      firstClaimPool = await FirstClaimPool.new(100, avatar.address, identity.address);
       await firstClaimPool.start();
     });
 
@@ -70,7 +66,6 @@ contract(
         avatar.address,
         identity.address,
         firstClaimPool.address,
-        10,
         0,
         100,
         0
@@ -87,7 +82,6 @@ contract(
         avatar.address,
         identity.address,
         firstClaimPool.address,
-        10,
         startUBI,
         endUBI,
         MAX_INACTIVE_DAYS
@@ -252,12 +246,12 @@ contract(
       let dailyUbi = await ubi.dailyUbi();
       await ubi.claim({ from: claimer4 });
       let claimer4Balance3 = await goodDollar.balanceOf(claimer4);
-      expect(
-        claimer4Balance2.toNumber() - claimer4Balance1.toNumber()
-      ).to.be.equal(dailyUbi.toNumber());
-      expect(
-        claimer4Balance3.toNumber() - claimer4Balance1.toNumber()
-      ).to.be.equal(dailyUbi.toNumber());
+      expect(claimer4Balance2.toNumber() - claimer4Balance1.toNumber()).to.be.equal(
+        dailyUbi.toNumber()
+      );
+      expect(claimer4Balance3.toNumber() - claimer4Balance1.toNumber()).to.be.equal(
+        dailyUbi.toNumber()
+      );
     });
 
     it("should return 0 for entitlement if the user has already claimed for today", async () => {
@@ -276,7 +270,7 @@ contract(
       let dailyUbi = await ubi.dailyUbi();
       expect(isFishedBefore).to.be.false;
       expect(isFishedAfter).to.be.true;
-      expect(tx.logs[1].event).to.be.equal("UBIFished");
+      expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
       expect(
         claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
       ).to.be.equal(dailyUbi.toNumber());
@@ -305,7 +299,7 @@ contract(
       let tx = await ubi.fishMulti([claimer2, claimer3], { from: claimer4 });
       let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
       let dailyUbi = await ubi.dailyUbi();
-      expect(tx.logs[1].event).to.be.equal("UBIFished");
+      expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
       expect(
         claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
       ).to.be.equal(2 * dailyUbi.toNumber());
@@ -339,7 +333,7 @@ contract(
       let dailyUbi = await ubi.dailyUbi();
       expect(isFishedBefore).to.be.false;
       expect(isFishedAfter).to.be.true;
-      expect(tx.logs[1].event).to.be.equal("UBIFished");
+      expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
       expect(
         claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
       ).to.be.equal(dailyUbi.toNumber());
@@ -359,7 +353,7 @@ contract(
       let dailyUbi = await ubi.dailyUbi();
       expect(isFishedBefore).to.be.false;
       expect(isFishedAfter).to.be.true;
-      expect(tx.logs[1].event).to.be.equal("UBIFished");
+      expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
       expect(
         claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
       ).to.be.equal(dailyUbi.toNumber());
@@ -398,9 +392,7 @@ contract(
           .add(avatarBalance)
           .div(activeUsersCount)
           .toNumber()
-      ).to.be.equal(
-        claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
-      );
+      ).to.be.equal(claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber());
     });
 
     it("distribute formula should return correct value while gd has transferred directly to the ubi", async () => {
@@ -418,9 +410,7 @@ contract(
           .add(avatarBalance)
           .div(activeUsersCount)
           .toNumber()
-      ).to.be.equal(
-        claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
-      );
+      ).to.be.equal(claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber());
       expect(
         ubiBalance
           .add(avatarBalance)
@@ -429,42 +419,19 @@ contract(
       ).to.be.equal(dailyUbi.toNumber());
     });
 
-    it("should not be able to iterate over more than the allowed number of accounts in fishMulti", async () => {
-      let error = await ubi
-        .fishMulti([
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1,
-          claimer1
-        ])
-        .catch(e => e);
-      expect(error.message).to.have.string("exceeds of gas limitations");
+    it("should be able to iterate over all accounts if enough gas in fishMulti", async () => {
+      //should not reach fishin first user because atleast 150k gas is required
+      let tx = await ubi
+        .fishMulti([claimer5, claimer6, claimer1], { from: fisherman, gas: 100000 })
+        .then(_ => true)
+        .catch(_ => console.log({ e }));
+      expect(tx).to.be.true;
+      //should loop over all users when enough gas without exceptions
+      let res = await ubi
+        .fishMulti([claimer5, claimer6, claimer1], { gas: 1000000 })
+        .then(_ => true)
+        .catch(e => console.log({ e }));
+      expect(res).to.be.true;
     });
 
     it("should not be able to destroy the ubi contract if not avatar", async () => {
@@ -476,9 +443,7 @@ contract(
       let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
       let contractBalanceAfter = await goodDollar.balanceOf(ubi.address);
       let isActive = await ubi.isActive();
-      expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal(
-        "0"
-      );
+      expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal("0");
       expect(contractBalanceAfter.toString()).to.be.equal(
         contractBalanceBefore.toString()
       );
@@ -515,19 +480,13 @@ contract(
 
     it("should not be able to destroy the first claim pool contract if not avatar", async () => {
       let avatarBalanceBefore = await goodDollar.balanceOf(avatar.address);
-      let contractBalanceBefore = await goodDollar.balanceOf(
-        firstClaimPool.address
-      );
+      let contractBalanceBefore = await goodDollar.balanceOf(firstClaimPool.address);
       let error = await firstClaimPool.end(avatar.address).catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
       let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
-      let contractBalanceAfter = await goodDollar.balanceOf(
-        firstClaimPool.address
-      );
+      let contractBalanceAfter = await goodDollar.balanceOf(firstClaimPool.address);
       let isActive = await firstClaimPool.isActive();
-      expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal(
-        "0"
-      );
+      expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal("0");
       expect(contractBalanceAfter.toString()).to.be.equal(
         contractBalanceBefore.toString()
       );
@@ -536,9 +495,7 @@ contract(
 
     it("should destroy the first claim pool contract and transfer funds to the avatar", async () => {
       let avatarBalanceBefore = await goodDollar.balanceOf(avatar.address);
-      let contractBalanceBefore = await goodDollar.balanceOf(
-        firstClaimPool.address
-      );
+      let contractBalanceBefore = await goodDollar.balanceOf(firstClaimPool.address);
       let encodedCall = web3.eth.abi.encodeFunctionCall(
         {
           name: "end",
@@ -559,9 +516,7 @@ contract(
         0
       );
       let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
-      let contractBalanceAfter = await goodDollar.balanceOf(
-        firstClaimPool.address
-      );
+      let contractBalanceAfter = await goodDollar.balanceOf(firstClaimPool.address);
       let code = await web3.eth.getCode(firstClaimPool.address);
       expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal(
         contractBalanceBefore.toString()

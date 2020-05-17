@@ -14,6 +14,7 @@ interface StakingContract {
         returns (uint256, uint256, uint256, uint32);
 }
 
+
 /**
  * @title GoodFundManager contract that transfer interest from the staking contract
  * to the reserve contract and transfer the return mintable tokens to the staking
@@ -47,18 +48,18 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
 
     constructor(
         address _cDai,
-        uint256 _blockInterval,
         Avatar _avatar,
         Identity _identity,
         address _bridgeContract,
-        address _homeAvatar
+        address _homeAvatar,
+        uint256 _blockInterval
+
     ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2) {
         cDai = ERC20(_cDai);
         bridgeContract = _bridgeContract;
         homeAvatar = _homeAvatar;
         blockInterval = _blockInterval;
         lastTransferred = block.number;
-        start();
     }
 
     /* @dev Start function. Adds this contract to identity as a feeless scheme.
@@ -108,13 +109,15 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     function transferInterest(StakingContract staking)
         public
         requireActive
-        onlyRegistered
         reserveHasInitialized
     {
         require(
             block.number.sub(lastTransferred) > blockInterval,
             "Need to wait for the next interval"
         );
+        
+        lastTransferred = block.number;
+
         // cdai balance of the reserve contract
         uint256 currentBalance = cDai.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract
@@ -138,13 +141,15 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             );
             // transfers the minted tokens to the given staking contract
             GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-            token.transfer(address(staking), gdInterest);
-            //transfer ubi to avatar on sidechain via bridge
-            token.transferAndCall(
-                bridgeContract,
-                gdUBI,
-                abi.encodePacked(bytes32(uint256(homeAvatar)))
-            );
+            if(gdInterest > 0 )
+                token.transfer(address(staking), gdInterest);
+            if(gdUBI > 0)
+                //transfer ubi to avatar on sidechain via bridge
+                token.transferAndCall(
+                    bridgeContract,
+                    gdUBI,
+                    abi.encodePacked(bytes32(uint256(homeAvatar)))
+                );
             emit FundsTransferred(
                 msg.sender,
                 address(staking),

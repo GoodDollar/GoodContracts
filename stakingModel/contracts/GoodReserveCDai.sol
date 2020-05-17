@@ -13,19 +13,32 @@ import "../../contracts/token/GoodDollar.sol";
 
 import "./GoodMarketMaker.sol";
 
+
 interface cERC20 {
     function mint(uint256 mintAmount) external returns (uint256);
+
     function redeemUnderlying(uint256 mintAmount) external returns (uint256);
+
     function exchangeRateCurrent() external returns (uint256);
+
     function exchangeRateStored() external view returns (uint256);
+
     function balanceOf(address addr) external view returns (uint256);
+
     function transfer(address to, uint256 amount) external returns (bool);
 }
 
-interface ContributionCalc {
-    function calculateContribution(GoodMarketMaker _marketMaker, GoodReserveCDai _reserve, address _contributer, ERC20 _token, uint256 _gdAmount) external view returns (uint256);
 
+interface ContributionCalc {
+    function calculateContribution(
+        GoodMarketMaker _marketMaker,
+        GoodReserveCDai _reserve,
+        address _contributer,
+        ERC20 _token,
+        uint256 _gdAmount
+    ) external view returns (uint256);
 }
+
 
 /**
 @title Reserve based on cDAI and dynamic reserve ratio market maker
@@ -56,10 +69,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     ContributionCalc public contribution;
 
     modifier onlyFundManager {
-        require(
-            msg.sender == fundManager,
-            "Only FundManager can call this method"
-        );
+        require(msg.sender == fundManager, "Only FundManager can call this method");
         _;
     }
 
@@ -76,30 +86,38 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 gdUBI
     );
 
-    event TokenPurchased(address indexed caller,
-                             address indexed reserveToken,
-                             uint256 reserveAmount,
-                             uint256 minReturn,
-                             uint256 actualReturn);
+    event TokenPurchased(
+        address indexed caller,
+        address indexed reserveToken,
+        uint256 reserveAmount,
+        uint256 minReturn,
+        uint256 actualReturn
+    );
 
-    event TokenSold(address indexed caller,
-                             address indexed reserveToken,
-                             uint256 gdAmount,
-                             uint256 contributionAmount,
-                             uint256 minReturn,
-                             uint256 actualReturn);
+    event TokenSold(
+        address indexed caller,
+        address indexed reserveToken,
+        uint256 gdAmount,
+        uint256 contributionAmount,
+        uint256 minReturn,
+        uint256 actualReturn
+    );
 
-    event ContributionAddressUpdated(address indexed caller,
-                                     address prevAddress,
-                                     address newAddress);
+    event ContributionAddressUpdated(
+        address indexed caller,
+        address prevAddress,
+        address newAddress
+    );
 
-    event GDInterestAndExpansionMinted(address indexed caller,
-                                       address indexed interestCollector,
-                                       address indexed ubiCollector,
-                                       uint256 gdInterestMinted,
-                                       uint256 gdExpansionMinted,
-                                       uint256 gdInterestTransferred,
-                                       uint256 gdUbiTransferred);
+    event GDInterestAndExpansionMinted(
+        address indexed caller,
+        address indexed interestCollector,
+        address indexed ubiCollector,
+        uint256 gdInterestMinted,
+        uint256 gdExpansionMinted,
+        uint256 gdInterestTransferred,
+        uint256 gdUbiTransferred
+    );
 
     constructor(
         ERC20 _dai,
@@ -111,11 +129,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         address _marketMaker,
         ContributionCalc _contribution,
         uint256 _blockInterval
-    )
-        public
-        FeelessScheme(_identity, _avatar)
-        ActivePeriod(now, now * 2)
-    {
+    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2) {
         dai = _dai;
         cDai = _cDai;
         gooddollar = _gooddollar;
@@ -124,17 +138,19 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         marketMaker = GoodMarketMaker(_marketMaker);
         blockInterval = _blockInterval;
         contribution = _contribution;
-        start();
     }
 
     /* @dev Start function. Adds this contract to identity as a feeless scheme.
      * Can only be called if scheme is registered
      */
-    function start()
-        public
-        onlyRegistered
-    {
+    function start() public onlyRegistered {
         addRights();
+        controller.genericCall(
+            address(gooddollar),
+            abi.encodeWithSignature("addMinter(address)", address(this)),
+            avatar,
+            0
+        );
         super.start();
     }
 
@@ -158,24 +174,21 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     @dev allow the DAO to change the contribution formula contract
     @param _contribution address of the new contribution contract
     */
-    function setContributionAddress(address _contribution)
-        public
-        onlyAvatar
-    {
+    function setContributionAddress(address _contribution) public onlyAvatar {
         address prevAddress = address(contribution);
         contribution = ContributionCalc(_contribution);
         emit ContributionAddressUpdated(msg.sender, prevAddress, _contribution);
     }
 
     /**
-    * @dev buy G$ from buyWith and update the bonding curve params. buy occurs only if
-    * the G$ return is above the given minimum. it is possible to buy only with cDAI
-    * and when the contract is set to active. MUST call to `buyWith` `approve` prior
-    * this buying action to allow this contract to accomplish the conversion.
-    * @param tokenAmount how much `buyWith` tokens convert to G$ tokens
-    * @param minReturn the minimum allowed return in G$ tokens
-    * @return (gdReturn) how much G$ tokens were transferred
-    */
+     * @dev buy G$ from buyWith and update the bonding curve params. buy occurs only if
+     * the G$ return is above the given minimum. it is possible to buy only with cDAI
+     * and when the contract is set to active. MUST call to `buyWith` `approve` prior
+     * this buying action to allow this contract to accomplish the conversion.
+     * @param tokenAmount how much `buyWith` tokens convert to G$ tokens
+     * @param minReturn the minimum allowed return in G$ tokens
+     * @return (gdReturn) how much G$ tokens were transferred
+     */
     function buy(ERC20 buyWith, uint256 tokenAmount, uint256 minReturn)
         public
         requireActive
@@ -193,20 +206,26 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 gdReturn = marketMaker.buy(buyWith, tokenAmount);
         require(gdReturn >= minReturn, "GD return must be above the minReturn");
         ERC20Mintable(address(gooddollar)).mint(msg.sender, gdReturn);
-        emit TokenPurchased(msg.sender, address(buyWith), tokenAmount, minReturn, gdReturn);
+        emit TokenPurchased(
+            msg.sender,
+            address(buyWith),
+            tokenAmount,
+            minReturn,
+            gdReturn
+        );
         return gdReturn;
     }
 
     /**
-    * @dev sell G$ to sellTo and update the bonding curve params. sell occurs only if the
-    * token return is above the given minimum. notice that there is a contribution
-    * amount from the given G$ that remains in the reserve. it is possible to sell only to
-    * cDAI and when the contract is set to active. MUST call to G$ `approve` prior this
-    * selling action to allow this contract to accomplish the conversion.
-    * @param gdAmount how much G$ tokens convert to `sellTo` tokens
-    * @param minReturn the minimum allowed return in `sellTo` tokens
-    * @return (tokenReturn) how much `sellTo` tokens were transferred
-    */
+     * @dev sell G$ to sellTo and update the bonding curve params. sell occurs only if the
+     * token return is above the given minimum. notice that there is a contribution
+     * amount from the given G$ that remains in the reserve. it is possible to sell only to
+     * cDAI and when the contract is set to active. MUST call to G$ `approve` prior this
+     * selling action to allow this contract to accomplish the conversion.
+     * @param gdAmount how much G$ tokens convert to `sellTo` tokens
+     * @param minReturn the minimum allowed return in `sellTo` tokens
+     * @return (tokenReturn) how much `sellTo` tokens were transferred
+     */
     function sell(ERC20 sellTo, uint256 gdAmount, uint256 minReturn)
         public
         requireActive
@@ -214,11 +233,28 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         returns (uint256)
     {
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
-        uint256 contributionAmount = contribution.calculateContribution(marketMaker, this, msg.sender, sellTo, gdAmount);
-        uint256 tokenReturn = marketMaker.sellWithContribution(sellTo, gdAmount, contributionAmount);
+        uint256 contributionAmount = contribution.calculateContribution(
+            marketMaker,
+            this,
+            msg.sender,
+            sellTo,
+            gdAmount
+        );
+        uint256 tokenReturn = marketMaker.sellWithContribution(
+            sellTo,
+            gdAmount,
+            contributionAmount
+        );
         require(tokenReturn >= minReturn, "Token return must be above the minReturn");
         require(sellTo.transfer(msg.sender, tokenReturn) == true, "Transfer failed");
-        emit TokenSold(msg.sender, address(sellTo), gdAmount, contributionAmount, minReturn, tokenReturn);
+        emit TokenSold(
+            msg.sender,
+            address(sellTo),
+            gdAmount,
+            contributionAmount,
+            minReturn,
+            tokenReturn
+        );
         return tokenReturn;
     }
 
@@ -232,17 +268,13 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
 
     //TODO: WIP
     /**
-    * @dev anyone can call this to trigger calculations
-    * reserve sends UBI to Avatar and returns interest to FundManager
-    * @param transfered how much was transfered to the reserve for UBI in `interestToken`
-    * @param interest out of total transfered how much is the interest (in interestToken) that needs to be paid back (some interest might be donated)
-    * @return (gdInterest, gdUBI) how much G$ interest was minted and how much G$ UBI was minted
-    */
-    function mintInterestAndUBI(
-        ERC20 interestToken,
-        uint256 transfered,
-        uint256 interest
-    )
+     * @dev anyone can call this to trigger calculations
+     * reserve sends UBI to Avatar and returns interest to FundManager
+     * @param transfered how much was transfered to the reserve for UBI in `interestToken`
+     * @param interest out of total transfered how much is the interest (in interestToken) that needs to be paid back (some interest might be donated)
+     * @return (gdInterest, gdUBI) how much G$ interest was minted and how much G$ UBI was minted
+     */
+    function mintInterestAndUBI(ERC20 interestToken, uint256 transfered, uint256 interest)
         public
         requireActive
         onlyCDai(interestToken)
@@ -261,8 +293,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 gdUBI = gdInterestToMint.sub(gdInterest);
         gdUBI = gdUBI.add(gdExpansionToMint);
         uint256 toMint = gdUBI.add(gdInterest);
-        if(toMint > 0)
-            ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
+        if (toMint > 0) ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
         lastMinted = block.number;
         emit GDInterestAndExpansionMinted(
             msg.sender,
@@ -277,22 +308,20 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     }
 
     /**
-    * @dev making the contract inactive after it has transferred the cDAI funds to `_avatar`
-    * and has transferred the market maker ownership to `_avatar`. inactive
-    * means that buy / sell / mintInterestAndUBI actions will no longer be active. only the
-    * avatar can destroy the contract.
-    * @param _avatar destination avatar address for cDAI funds, ether funds and new marketmaker owner
-    */
-    function end(Avatar _avatar)
-        public
-        onlyAvatar
-    {
+     * @dev making the contract inactive after it has transferred the cDAI funds to `_avatar`
+     * and has transferred the market maker ownership to `_avatar`. inactive
+     * means that buy / sell / mintInterestAndUBI actions will no longer be active. only the
+     * avatar can destroy the contract.
+     * @param _avatar destination avatar address for cDAI funds, ether funds and new marketmaker owner
+     */
+    function end(Avatar _avatar) public onlyAvatar {
         uint256 remainingReserve = cDai.balanceOf(address(this));
         if (remainingReserve > 0) {
             cDai.transfer(address(_avatar), remainingReserve);
         }
         require(cDai.balanceOf(address(this)) == 0, "Funds transfer has failed");
         marketMaker.transferOwnership(address(_avatar));
+        gooddollar.renounceMinter();
         super.internalEnd(_avatar);
     }
 }

@@ -26,6 +26,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
     uint256 public authenticationPeriod = 14;
 
     mapping(address => uint256) public dateAuthenticated;
+    mapping(address => uint256) public dateAdded;
 
     mapping(address => string) public addrToDID;
     mapping(bytes32 => address) public didHashToAddress;
@@ -45,11 +46,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * Can only be called by Identity Administrators.
      * @param period new value for authenticationPeriod
      */
-    function setAuthenticationPeriod(uint256 period)
-        public
-        onlyOwner
-        whenNotPaused
-    {
+    function setAuthenticationPeriod(uint256 period) public onlyOwner whenNotPaused {
         authenticationPeriod = period;
     }
 
@@ -117,8 +114,8 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @return a bool indicating weather the address is present in whitelist
      */
     function isWhitelisted(address account) public view returns (bool) {
-       uint256 daysSinceAuthentication = (now.sub(dateAuthenticated[account])) / 1 days;
-        return (daysSinceAuthentication <= authenticationPeriod);
+        uint256 daysSinceAuthentication = (now.sub(dateAuthenticated[account])) / 1 days;
+        return daysSinceAuthentication <= authenticationPeriod && whitelist.has(account);
     }
 
     /* @dev Function that gives the date the given user was added
@@ -229,6 +226,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         whitelist.add(account);
 
         whitelistedCount += 1;
+        dateAdded[account] = now;
         dateAuthenticated[account] = now;
 
         if (isContract(account)) {
@@ -242,14 +240,9 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account the address to add
      * @param did the id to register account under
      */
-    function _addWhitelistedWithDID(address account, string memory did)
-        internal
-    {
+    function _addWhitelistedWithDID(address account, string memory did) internal {
         bytes32 pHash = keccak256(bytes(did));
-        require(
-            didHashToAddress[pHash] == address(0),
-            "DID already registered"
-        );
+        require(didHashToAddress[pHash] == address(0), "DID already registered");
 
         addrToDID[account] = did;
         didHashToAddress[pHash] = account;

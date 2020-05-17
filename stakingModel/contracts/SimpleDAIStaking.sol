@@ -7,22 +7,28 @@ import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../../contracts/dao/schemes/SchemeGuard.sol";
 import "../../contracts/DSMath.sol";
 
+
 interface cERC20 {
     function mint(uint256 mintAmount) external returns (uint256);
-    function redeemUnderlying(uint256 mintAmount) external returns (uint256);
-    function exchangeRateCurrent() external returns (uint256);
-    function exchangeRateStored() external view returns (uint256);
-    function balanceOf(address addr) external view returns (uint256);
-    function transfer(address to, uint256 amount) external returns (bool);
 
+    function redeemUnderlying(uint256 mintAmount) external returns (uint256);
+
+    function exchangeRateCurrent() external returns (uint256);
+
+    function exchangeRateStored() external view returns (uint256);
+
+    function balanceOf(address addr) external view returns (uint256);
+
+    function transfer(address to, uint256 amount) external returns (bool);
 }
 
+
 /**
-* @title Staking contract that donates earned interest to the DAO
-* allowing stakers to deposit DAI/ETH
-* or withdraw their stake in DAI
-* the contracts buy cDai and can transfer the daily interest to the owner (DAO)
-*/
+ * @title Staking contract that donates earned interest to the DAO
+ * allowing stakers to deposit DAI/ETH
+ * or withdraw their stake in DAI
+ * the contracts buy cDai and can transfer the daily interest to the owner (DAO)
+ */
 contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     using SafeMath for uint256;
 
@@ -34,8 +40,12 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     mapping(address => Staker) public stakers;
 
     event DAIStaked(address indexed staker, uint256 daiValue);
-    event DAIStakeWithdraw(address indexed staker, uint256 daiValue, uint256 daiActual);
-    event InterestDonated(
+    event DAIStakeWithdraw(
+        address indexed staker,
+        uint256 daiValue,
+        uint256 daiActual
+    );
+    event InterestCollected(
         address recipient,
         uint256 cdaiValue,
         uint256 daiValue,
@@ -49,6 +59,10 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     uint256 lastUBICollection;
     uint256 public totalStaked = 0;
 
+    //how much of the generated interest is donated, meaning no G$ is expected in compensation, 1 in mil precision.
+    //100% for phase0 POC
+    uint32 public avgInterestDonatedRatio = 1e6;
+
     modifier onlyFundManager {
         require(msg.sender == owner(), "Only FundManager can call this method");
         _;
@@ -60,7 +74,6 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         address _uniswap,
         address _fundManager,
         uint256 _blockInterval
-
     )
         public
         SchemeGuard(Avatar(address(0)))
@@ -78,10 +91,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
      * @param amount of dai to stake
      */
     function stakeDAI(uint256 amount) public whenNotPaused {
-        require(
-            amount > 0,
-            "You need to stake a positive token amount"
-        );
+        require(amount > 0, "You need to stake a positive token amount");
         require(
             dai.allowance(msg.sender, address(this)) >= amount,
             "You need to approve DAI transfer first"
@@ -153,7 +163,8 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         uint256 daiGains = daiWorth.sub(totalStaked);
         uint256 cdaiGains = rdiv(daiGains * 1e10, er); //mul by 1e10 to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
         uint256 precisionLossCDaiRay = cdaiGains % 1e19; //get right most bits not covered by precision of cdai which is only 8 decimals while RAY is 27
-        if (cdaiGains > 0) { // dividing 0 returns unexpected result
+        if (cdaiGains > 0) {
+            // dividing 0 returns unexpected result
             cdaiGains = cdaiGains.div(1e19); //lower back to 8 decimals
         }
         uint256 precisionLossDai = rmul(precisionLossCDaiRay, er).div(1e10); //div by 1e10 to get results in dai precision 1e18
@@ -167,7 +178,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     function collectUBIInterest(address recipient)
         public
         onlyFundManager
-        returns (uint256, uint256, uint256)
+        returns (uint256, uint256, uint256, uint32)
     {
         require(
             recipient != address(this),
@@ -179,11 +190,19 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
             "Need to wait for the next interval"
         );
 
-        (uint256 cdaiGains, uint256 daiGains, uint256 precisionLossDai) = currentUBIInterest();
+        (
+            uint256 cdaiGains,
+            uint256 daiGains,
+            uint256 precisionLossDai
+        ) = currentUBIInterest();
         cDai.transfer(recipient, cdaiGains);
         lastUBICollection = block.number;
-        emit InterestDonated(recipient, cdaiGains, daiGains, precisionLossDai);
-        return (cdaiGains, daiGains, precisionLossDai);
+        emit InterestCollected(
+            recipient,
+            cdaiGains,
+            daiGains,
+            precisionLossDai
+        );
+        return (cdaiGains, daiGains, precisionLossDai, avgInterestDonatedRatio);
     }
-
 }

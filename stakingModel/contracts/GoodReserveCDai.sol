@@ -102,9 +102,9 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
                                        uint256 gdUbiTransferred);
 
     constructor(
-        address _dai,
-        address _cDai,
-        address _gooddollar,
+        ERC20 _dai,
+        cERC20 _cDai,
+        GoodDollar _gooddollar,
         address _fundManager,
         Avatar _avatar,
         Identity _identity,
@@ -116,9 +116,9 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         FeelessScheme(_identity, _avatar)
         ActivePeriod(now, now * 2)
     {
-        dai = ERC20(_dai);
-        cDai = cERC20(_cDai);
-        gooddollar = GoodDollar(_gooddollar);
+        dai = _dai;
+        cDai = _cDai;
+        gooddollar = _gooddollar;
         avatar = _avatar;
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
@@ -126,7 +126,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         contribution = _contribution;
         start();
     }
-   
+
     /* @dev Start function. Adds this contract to identity as a feeless scheme.
      * Can only be called if scheme is registered
      */
@@ -260,9 +260,9 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 gdExpansionToMint = marketMaker.mintExpansion(interestToken);
         uint256 gdUBI = gdInterestToMint.sub(gdInterest);
         gdUBI = gdUBI.add(gdExpansionToMint);
-        ERC20Mintable(address(gooddollar)).mint(fundManager, gdInterest);
-        //TODO: how do we transfer to bridge, is the fundmanager in charge of that?
-        ERC20Mintable(address(gooddollar)).mint(address(avatar), gdUBI);
+        uint256 toMint = gdUBI.add(gdInterest);
+        if(toMint > 0)
+            ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
         lastMinted = block.number;
         emit GDInterestAndExpansionMinted(
             msg.sender,

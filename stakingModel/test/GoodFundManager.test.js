@@ -110,11 +110,13 @@ contract(
       expect(error.message).to.have.string("only Avatar can call this method");
     });
 
-    it("should not be able to set the bridge and homeAvatar if the sender is not the dao", async () => {
-      let error = await goodFundManager.setBridgeAndHomeAvatar(bridge.address, homeAvatar).catch(e => e);
+    it("should not be able to set the bridge and ubi recipient if the sender is not the dao", async () => {
+      let error = await goodFundManager
+        .setBridgeAndUBIRecipient(bridge.address, ubirecipient)
+        .catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
     });
-  
+
     it("should set the reserve in the fund manager", async () => {
       let encodedCall = web3.eth.abi.encodeFunctionCall(
         {
@@ -212,10 +214,10 @@ contract(
       expect(error.message).to.have.string("wait for the next interval");
     });
 
-    it("should set bridge and home avatar by avatar", async () => {
+    it("should set bridge and ubi recipient avatar", async () => {
       let encodedCall = web3.eth.abi.encodeFunctionCall(
         {
-          name: "setBridgeAndHomeAvatar",
+          name: "setBridgeAndUBIRecipient",
           type: "function",
           inputs: [
             {
@@ -237,11 +239,11 @@ contract(
         0
       );
       const newFundManger = await goodFundManager.bridgeContract();
-      const newHomeAvatar = await goodFundManager.homeAvatar();
+      const newUbiRecipient = await goodFundManager.ubiRecipient();
       expect(newFundManger).to.be.equal(founder);
-      expect(newHomeAvatar).to.be.equal(staker);
+      expect(newUbiRecipient).to.be.equal(staker);
     });
-  
+
     it("should not be able to destroy the contract if the caller is not the dao", async () => {
       let error = await goodFundManager.end(avatar.address).catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");

@@ -200,7 +200,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     /**
     * @dev sell G$ to sellTo and update the bonding curve params. sell occurs only if the
     * token return is above the given minimum. notice that there is a contribution
-    * amount from the given G$ that stays in the reserve. it is possible to sell only to
+    * amount from the given G$ that remains in the reserve. it is possible to sell only to
     * cDAI and when the contract is set to active. MUST call to G$ `approve` prior this
     * selling action to allow this contract to accomplish the conversion.
     * @param gdAmount how much G$ tokens convert to `sellTo` tokens

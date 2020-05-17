@@ -133,7 +133,7 @@ contract("GoodFundManager - transfer interest from the staking contract to the r
     const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
     const gdUBI = tx.logs[0].args.gdUBI;
     expect(stakingGDBalance.toString()).to.be.equal("0"); // should has empty
-    expect(homeAvatarAfter.toString()).to.be.equal(gdUBI);
+    expect(homeAvatarAfter.toString()).to.be.equal(gdUBI.toString());
     expect(reserveCDaiBalanceAfter.sub(reserveCDaiBalanceBefore).toString()).to.be.equal(cdaiGains.toString());
     expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
     expect(tx.logs[0].event).to.be.equal("FundsTransferred");

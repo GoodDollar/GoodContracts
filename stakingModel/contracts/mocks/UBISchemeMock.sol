@@ -40,12 +40,12 @@ contract UBISchemeMock is UBIScheme {
         );
     }
 
-    function end(Avatar _avatar) public onlyAvatar {
+    function end() public onlyAvatar {
         DAOToken token = avatar.nativeToken();
         uint256 remainingGDReserve = token.balanceOf(address(this));
         if (remainingGDReserve > 0) {
-            token.transfer(address(_avatar), remainingGDReserve);
+            token.transfer(address(avatar), remainingGDReserve);
         }
-        super.internalEnd(_avatar);
+        super.internalEnd(avatar);
     }
 }

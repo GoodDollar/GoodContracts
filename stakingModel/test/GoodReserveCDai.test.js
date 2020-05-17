@@ -542,35 +542,8 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
   it("should not be able to destroy if not avatar", async () => {
     let avatarBalanceBefore = await cDAI.balanceOf(avatar.address);
     let reserveBalanceBefore = await cDAI.balanceOf(goodReserve.address);
-    let error = await goodReserve.end(avatar.address).catch(e => e);
+    let error = await goodReserve.end().catch(e => e);
     expect(error.message).to.have.string("only Avatar can call this method");
-    let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
-    let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
-    let isActive = await goodReserve.isActive();
-    let newMMOwner = await marketMaker.owner();
-    expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal("0");
-    expect(reserveBalanceAfter.toString()).to.be.equal(reserveBalanceBefore.toString());
-    expect(newMMOwner).to.be.equal(goodReserve.address);
-    expect(isActive.toString()).to.be.equal("true");
-  });
-
-  it("should not destroy the contract if the destination address is invalid", async () => {
-    let avatarBalanceBefore = await cDAI.balanceOf(avatar.address);
-    let reserveBalanceBefore = await cDAI.balanceOf(goodReserve.address);
-    let encodedCall = web3.eth.abi.encodeFunctionCall(
-      {
-        name: "end",
-        type: "function",
-        inputs: [
-          {
-            type: "address",
-            name: "_avatar"
-          }
-        ]
-      },
-      [NULL_ADDRESS]
-    );
-    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
     let isActive = await goodReserve.isActive();
@@ -588,14 +561,9 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       {
         name: "end",
         type: "function",
-        inputs: [
-          {
-            type: "address",
-            name: "_avatar"
-          }
-        ]
+        inputs: []
       },
-      [avatar.address]
+      []
     );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
@@ -617,14 +585,9 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       {
         name: "end",
         type: "function",
-        inputs: [
-          {
-            type: "address",
-            name: "_avatar"
-          }
-        ]
+        inputs: []
       },
-      [avatar.address]
+      []
     );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);

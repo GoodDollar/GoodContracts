@@ -6,10 +6,10 @@ import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 import "./ActivePeriod.sol";
 import "./SchemeGuard.sol";
 
+
 /* @title Scheme contract responsible for minting to a given recipient.
  */
 contract ReserveMinter is ActivePeriod, SchemeGuard {
-
     address public receiver;
     uint256 public amount;
 
@@ -18,13 +18,9 @@ contract ReserveMinter is ActivePeriod, SchemeGuard {
      * @param _amount The amount to mint to receiver
      * @param _receiver The address to receive minted amount
      */
-    constructor(
-        Avatar _avatar,
-        uint256 _amount,
-        address _receiver
-    )
+    constructor(Avatar _avatar, uint256 _amount, address _receiver)
         public
-        ActivePeriod(now, now*2)
+        ActivePeriod(now, now * 2, _avatar)
         SchemeGuard(_avatar)
     {
         require(_receiver != address(0), "receiver cannot be null address");
@@ -46,7 +42,8 @@ contract ReserveMinter is ActivePeriod, SchemeGuard {
             address(token),
             abi.encodeWithSignature("mint(address,uint256)", receiver, amount),
             avatar,
-            0);
+            0
+        );
 
         super.internalEnd(avatar);
     }

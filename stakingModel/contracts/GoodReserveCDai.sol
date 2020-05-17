@@ -129,7 +129,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         address _marketMaker,
         ContributionCalc _contribution,
         uint256 _blockInterval
-    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2) {
+    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2, _avatar) {
         dai = _dai;
         cDai = _cDai;
         gooddollar = _gooddollar;
@@ -312,16 +312,15 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * and has transferred the market maker ownership to `_avatar`. inactive
      * means that buy / sell / mintInterestAndUBI actions will no longer be active. only the
      * avatar can destroy the contract.
-     * @param _avatar destination avatar address for cDAI funds, ether funds and new marketmaker owner
      */
-    function end(Avatar _avatar) public onlyAvatar {
+    function end() public onlyAvatar {
         uint256 remainingReserve = cDai.balanceOf(address(this));
         if (remainingReserve > 0) {
-            cDai.transfer(address(_avatar), remainingReserve);
+            cDai.transfer(address(avatar), remainingReserve);
         }
         require(cDai.balanceOf(address(this)) == 0, "Funds transfer has failed");
-        marketMaker.transferOwnership(address(_avatar));
+        marketMaker.transferOwnership(address(avatar));
         gooddollar.renounceMinter();
-        super.internalEnd(_avatar);
+        super.internalEnd(avatar);
     }
 }

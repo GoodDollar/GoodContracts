@@ -5,7 +5,7 @@ const FundManager = artifacts.require("./GoodFundManager.sol");
 const MarketMaker = artifacts.require("./GoodMarketMaker.sol");
 const Reserve = artifacts.require("./GoodReserveCDai.sol");
 const Contribution = artifacts.require("./ContributionCalculation.sol");
-const BridgeMock = artifacts.require("./BridgeMock.sol");
+const BridgeMock = artifacts.require("./TransferAndCallMock.sol");
 const DAIMock = artifacts.require("./DAIMock.sol");
 const cDAIMock = artifacts.require("./cDAIMock.sol");
 
@@ -35,7 +35,7 @@ module.exports = async function(deployer, network) {
   let foreignBridgeAddr, daiAddress, cdaiAddress;
   if (network == "test") {
     const [foreignBridge, dai] = await Promise.all([
-      deployer.deploy(BridgeMock),
+      deployer.deploy(BridgeMock, maindao.GoodDollar),
       deployer.deploy(DAIMock)
     ]);
     const cdai = await deployer.deploy(cDAIMock, dai.address);
@@ -150,6 +150,7 @@ module.exports = async function(deployer, network) {
     Contribution: contribcalc.address,
     DAI: daiAddress,
     cDAI: cdaiAddress,
+    MainnetBridge: foreignBridgeAddr,
     network,
     networkId: parseInt(deployer.network_id)
   };

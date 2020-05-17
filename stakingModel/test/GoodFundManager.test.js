@@ -18,7 +18,7 @@ export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract(
   "GoodFundManager - transfer interest from the staking contract to the reserve contract",
-  ([founder, staker, homeAvatar]) => {
+  ([founder, staker, ubirecipient]) => {
     let dai,
       cDAI,
       marketMaker,
@@ -60,7 +60,7 @@ contract(
         avatar.address,
         identity.address,
         bridge.address,
-        homeAvatar,
+        ubirecipient,
         BLOCK_INTERVAL
       );
       [, simpleStaking, marketMaker, contribution] = await Promise.all([
@@ -110,11 +110,13 @@ contract(
       expect(error.message).to.have.string("only Avatar can call this method");
     });
 
-    it("should not be able to set the bridge and homeAvatar if the sender is not the dao", async () => {
-      let error = await goodFundManager.setBridgeAndHomeAvatar(bridge.address, homeAvatar).catch(e => e);
+    it("should not be able to set the bridge and ubi recipient if the sender is not the dao", async () => {
+      let error = await goodFundManager
+        .setBridgeAndUBIRecipient(bridge.address, ubirecipient)
+        .catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
     });
-  
+
     it("should set the reserve in the fund manager", async () => {
       let encodedCall = web3.eth.abi.encodeFunctionCall(
         {
@@ -168,12 +170,12 @@ contract(
       let cdaiGains = gains["0"];
       let reserveCDaiBalanceBefore = await cDAI.balanceOf(goodReserve.address);
       let tx = await goodFundManager.transferInterest(simpleStaking.address);
-      let homeAvatarAfter = await goodDollar.balanceOf(homeAvatar);
+      let recipientAfter = await goodDollar.balanceOf(ubirecipient);
       let reserveCDaiBalanceAfter = await cDAI.balanceOf(goodReserve.address);
       let stakingGDBalance = await goodDollar.balanceOf(simpleStaking.address);
       const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
       expect(stakingGDBalance.toString()).to.be.equal("0"); //100% of interest is donated, so nothing is returned to staking
-      expect(homeAvatarAfter.toString()).to.be.equal("971086"); //970492 interest + 594 minted from expansion
+      expect(recipientAfter.toString()).to.be.equal("971086"); //970492 interest + 594 minted from expansion
       expect(
         reserveCDaiBalanceAfter.sub(reserveCDaiBalanceBefore).toString()
       ).to.be.equal(cdaiGains.toString());
@@ -212,10 +214,10 @@ contract(
       expect(error.message).to.have.string("wait for the next interval");
     });
 
-    it("should set bridge and home avatar by avatar", async () => {
+    it("should set bridge and ubi recipient avatar", async () => {
       let encodedCall = web3.eth.abi.encodeFunctionCall(
         {
-          name: "setBridgeAndHomeAvatar",
+          name: "setBridgeAndUBIRecipient",
           type: "function",
           inputs: [
             {
@@ -237,11 +239,11 @@ contract(
         0
       );
       const newFundManger = await goodFundManager.bridgeContract();
-      const newHomeAvatar = await goodFundManager.homeAvatar();
+      const newUbiRecipient = await goodFundManager.ubiRecipient();
       expect(newFundManger).to.be.equal(founder);
-      expect(newHomeAvatar).to.be.equal(staker);
+      expect(newUbiRecipient).to.be.equal(staker);
     });
-  
+
     it("should not be able to destroy the contract if the caller is not the dao", async () => {
       let error = await goodFundManager.end(avatar.address).catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");

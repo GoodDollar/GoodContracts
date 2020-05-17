@@ -25,7 +25,9 @@ contract UBISchemeMock is UBIScheme {
             _periodEnd,
             _maxInactiveDays
         )
-    {}
+    {
+        shouldWithdrawFromDAO = true;
+    }
 
     //we mock this to skip the onlyRegistered modifier that requires scheme registration, dao voting etc...
     function start() public {

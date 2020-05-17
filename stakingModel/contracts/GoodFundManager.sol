@@ -27,7 +27,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     ERC20 cDai;
     GoodReserveCDai public reserve;
     address public bridgeContract;
-    address public homeAvatar;
+    address public ubiRecipient;
     uint256 public blockInterval;
     uint256 public lastTransferred;
 
@@ -51,13 +51,13 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         Avatar _avatar,
         Identity _identity,
         address _bridgeContract,
-        address _homeAvatar,
+        address _ubiRecipient,
         uint256 _blockInterval
 
     ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2) {
         cDai = ERC20(_cDai);
         bridgeContract = _bridgeContract;
-        homeAvatar = _homeAvatar;
+        ubiRecipient = _ubiRecipient;
         blockInterval = _blockInterval;
         lastTransferred = block.number;
     }
@@ -81,14 +81,14 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     /**
      * @dev sets the token bridge address on mainnet and the recipient of minted UBI (avatar on sidechain)
      * @param _bridgeContract address
-     * @param _avatar address
+     * @param _recipient address
      */
-    function setBridgeAndHomeAvatar(address _bridgeContract, address _avatar)
+    function setBridgeAndUBIRecipient(address _bridgeContract, address _recipient)
         public
         onlyAvatar
     {
         bridgeContract = _bridgeContract;
-        homeAvatar = _avatar;
+        ubiRecipient = _recipient;
     }
     
     /**
@@ -148,7 +148,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
                 token.transferAndCall(
                     bridgeContract,
                     gdUBI,
-                    abi.encodePacked(bytes32(uint256(homeAvatar)))
+                    abi.encodePacked(bytes32(uint256(ubiRecipient)))
                 );
             emit FundsTransferred(
                 msg.sender,

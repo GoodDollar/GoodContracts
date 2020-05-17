@@ -157,7 +157,8 @@ contract(
       let tx = await ubi.claim({ from: claimer1 });
       let claimer1Balance = await goodDollar.balanceOf(claimer1);
       expect(claimer1Balance.toNumber()).to.be.equal(0);
-      expect(tx.logs[1].event).to.be.equal("ActivatedUser");
+      const emittedEvents = tx.logs.map(e => e.event);
+      expect(emittedEvents).to.include.members(["ActivatedUser", "UBIClaimed"]);
     });
 
     it("should award a new user with the award amount on first time execute claim", async () => {
@@ -203,15 +204,17 @@ contract(
     it("should calculate the daily distribution and withdraw balance from the dao when an active user executes claim", async () => {
       await increaseTime(ONE_DAY);
       await goodDollar.mint(avatar.address, "1");
+      //ubi will have 2GD in pool so daily ubi is now also 1
       await ubi.claim({ from: claimer1 });
       await ubi.claim({ from: claimer2 });
       await increaseTime(ONE_DAY);
       await goodDollar.mint(avatar.address, "1");
+      //daily ubi is 0 since only 1 GD is in pool and can't be divided
       await ubi.claim({ from: claimer1 });
       let avatarBalance = await goodDollar.balanceOf(avatar.address);
       let claimer1Balance = await goodDollar.balanceOf(claimer1);
       expect(avatarBalance.toString()).to.be.equal("0");
-      expect(claimer1Balance.toString()).to.be.equal("1");
+      expect(claimer1Balance.toString()).to.be.equal("1"); //so just 1 GD from first day claimed in this test
     });
 
     it("should return the reward value for entitlement user", async () => {
@@ -470,7 +473,6 @@ contract(
       let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
       let contractBalanceAfter = await goodDollar.balanceOf(ubi.address);
       let code = await web3.eth.getCode(ubi.address);
-      console.log(contractBalanceBefore.toString());
       expect((avatarBalanceAfter - avatarBalanceBefore).toString()).to.be.equal(
         contractBalanceBefore.toString()
       );

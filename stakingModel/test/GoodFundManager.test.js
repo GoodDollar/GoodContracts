@@ -18,7 +18,7 @@ export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract(
   "GoodFundManager - transfer interest from the staking contract to the reserve contract",
-  ([founder, staker, homeAvatar]) => {
+  ([founder, staker, ubirecipient]) => {
     let dai,
       cDAI,
       marketMaker,
@@ -60,7 +60,7 @@ contract(
         avatar.address,
         identity.address,
         bridge.address,
-        homeAvatar,
+        ubirecipient,
         BLOCK_INTERVAL
       );
       [, simpleStaking, marketMaker, contribution] = await Promise.all([
@@ -163,12 +163,12 @@ contract(
       let cdaiGains = gains["0"];
       let reserveCDaiBalanceBefore = await cDAI.balanceOf(goodReserve.address);
       let tx = await goodFundManager.transferInterest(simpleStaking.address);
-      let homeAvatarAfter = await goodDollar.balanceOf(homeAvatar);
+      let recipientAfter = await goodDollar.balanceOf(ubirecipient);
       let reserveCDaiBalanceAfter = await cDAI.balanceOf(goodReserve.address);
       let stakingGDBalance = await goodDollar.balanceOf(simpleStaking.address);
       const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
       expect(stakingGDBalance.toString()).to.be.equal("0"); //100% of interest is donated, so nothing is returned to staking
-      expect(homeAvatarAfter.toString()).to.be.equal("971086"); //970492 interest + 594 minted from expansion
+      expect(recipientAfter.toString()).to.be.equal("971086"); //970492 interest + 594 minted from expansion
       expect(
         reserveCDaiBalanceAfter.sub(reserveCDaiBalanceBefore).toString()
       ).to.be.equal(cdaiGains.toString());

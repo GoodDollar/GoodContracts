@@ -25,7 +25,7 @@
     "test:generate-typings": "(rm ./build/contracts/*.min.json || true) && truffle compile && typechain --target truffle './build/**/*.json'",
     "test:tsc": "tsc --noEmit",
     "lint": "solhint --formatter codeframe develop/**/*.sol",
-    "test:ganache": "wait-on tcp:9545 && truffle test && kill -9 $(lsof -t -i:9545)",
+    "test:ganache": "wait-on tcp:9545 && truffle test && pkill -SIGQUIT -f ganache",
     "migrate:ganache": "truffle migrate --to 2 --network ${NETWORK-develop}",
     "migrate:full": "truffle migrate --network ${NETWORK-develop}",
     "migrate_reset:full": "truffle migrate --network ${NETWORK-develop} --reset",

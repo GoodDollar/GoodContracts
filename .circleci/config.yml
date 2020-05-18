@@ -31,17 +31,26 @@ jobs:
       - run: # run tests
           name: test
           command: npm run test
+      - run:
+          name: coverage
+          command: npm run coverage
 
       - run: # run tests
           name: test stakingModel
           command: |
             cd stakingModel
             npm ci
-            npm run test 
+            npm run test            
+            cd ..
+
+      - run:
+          name: coverage stakingModel
+          command: |
+            cd stakingModel
+            npm run coverage
             cd ..
 
       - run:
           name: coverage
           command: |
-            npm run coverage
             npm run coverage:report

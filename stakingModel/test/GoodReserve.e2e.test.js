@@ -63,30 +63,6 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     
   });
 
-  
-
-//   it("should mint new dai", async () => {
-    
-// console.log('bbbbb');
-//     dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
-//     console.log('cccccccc');
-
-//     await marketMaker.initializeToken(
-//       cDAI.address,
-//       "100", //1gd
-//       "10000", //0.0001 cDai
-//       "1000000" //100% rr
-//     );
-//     console.log('dssdsds');
-//   });
-
-
-
-
-
-
-
-
   it("should not set the marketmaker", async () => {
     let error = await setMarketMaker.setMarketMaker().catch(e => e);
     expect(error.message).not.to.be.empty;

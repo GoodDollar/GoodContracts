@@ -1,5 +1,37 @@
 version: 2
 jobs:
+  testMain:
+    steps:
+      - run: # run tests
+        name: test
+        command: npm run test
+
+      - run:
+        name: coverage
+        command: |
+          npm run coverage
+
+  testStaking:
+    steps:
+      - run: # run tests
+        name: test staking model
+        command: |
+          cd stakingModel
+          npm ci
+          npm run test 
+          cd ..
+
+      - run:
+        name: coverage
+        command: |
+          npm run coverage
+
+  coverage:
+    steps:
+      - run:
+        name: report coverage
+        command: npm run coverage:report
+
   build:
     docker:
       - image: circleci/node:10.16
@@ -28,20 +60,18 @@ jobs:
           paths:
             - ./node_modules
 
-      - run: # run tests
-          name: test
-          command: npm run test
-
-      - run: # run tests
-          name: test stakingModel
-          command: |
-            cd stakingModel
-            npm ci
-            npm run test 
-            cd ..
-
-      - run:
-          name: coverage
-          command: |
-            npm run coverage
-            npm run coverage:report
+workflows:
+  version: 2
+  build-test-and-deploy:
+    jobs:
+      - build
+      - testMain:
+          requires:
+            - build
+      - testStaking:
+          requires:
+            - build
+      - coverage:
+          requires:
+            - testMain
+            - testStaking

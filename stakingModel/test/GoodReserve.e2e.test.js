@@ -1,9 +1,6 @@
 const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
-
-
-
 const GoodReserve = artifacts.require("GoodReserveCDai");
 const MarketMaker = artifacts.require("GoodMarketMaker");
 const Avatar = artifacts.require("Avatar");
@@ -55,7 +52,6 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     goodDollar = await GoodDollar.at(dao_addresses.GoodDollar);
     registrar = await SchemeRegistrar.at(dao_addresses.SchemeRegistrar);
     absoluteVote = await AbsoluteVote.at(dao_addresses.AbsoluteVote);
-
     // schemes
     setMarketMaker = await SetMarketMaker.new(avatarAddress, goodReserve.address, marketMaker.address);
     setBlockInterval = await SetBlockInterval.new(avatarAddress, goodReserve.address, 5759);

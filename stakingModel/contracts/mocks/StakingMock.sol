@@ -1,0 +1,27 @@
+pragma solidity 0.5.4;
+
+import "../SimpleDAIStaking.sol";
+
+/**
+ * @title A SimpleDAIStaking mock.
+ * return different donation ratio on collect.
+ */
+contract SimpleDAIStakingMock is SimpleDAIStaking {
+
+    constructor(address _dai, address _cDai, address _fundManager, uint256 _blockInterval)
+        public
+        SimpleDAIStaking(_dai, _cDai, _fundManager, _blockInterval) {}
+
+    function collectUBIInterest(address recipient)
+        public
+        onlyFundManager
+        returns (uint256, uint256, uint256, uint32)
+    {
+        (
+            uint256 cdaiGains,
+            uint256 daiGains,
+            uint256 precisionLossDai,
+        ) =  super.collectUBIInterest(recipient);
+        return (cdaiGains, daiGains, precisionLossDai, 8e5);
+    }
+}

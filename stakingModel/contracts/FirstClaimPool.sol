@@ -6,10 +6,11 @@ import "../../contracts/dao/schemes/FeelessScheme.sol";
 import "../../contracts/dao/schemes/ActivePeriod.sol";
 import "./UBIScheme.sol";
 
+
 /**
-* @title FirstClaimPool contract that transfer bonus tokens when claiming for
-* the first time
-*/
+ * @title FirstClaimPool contract that transfer bonus tokens when claiming for
+ * the first time
+ */
 contract FirstClaimPool is FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
@@ -17,10 +18,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
     uint256 public claimAmount;
 
     modifier onlyUBIScheme {
-        require(
-            msg.sender == address(ubi),
-            "Only UBIScheme can call this method"
-        );
+        require(msg.sender == address(ubi), "Only UBIScheme can call this method");
         _;
     }
 
@@ -29,14 +27,10 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         _;
     }
 
-    constructor(
-        uint256 _claimAmount,
-        Avatar _avatar,
-        Identity _identity
-    )
+    constructor(uint256 _claimAmount, Avatar _avatar, Identity _identity)
         public
         FeelessScheme(_identity, _avatar)
-        ActivePeriod(now, now * 2)
+        ActivePeriod(now, now * 2, _avatar)
     {
         claimAmount = _claimAmount;
     }
@@ -44,10 +38,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
     /* @dev Start function. Adds this contract to identity as a feeless scheme.
      * Can only be called if scheme is registered
      */
-    function start()
-        public
-        onlyRegistered
-    {
+    function start() public onlyRegistered {
         addRights();
         super.start();
     }
@@ -78,11 +69,11 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         requireActive
         ubiHasInitialized
         onlyUBIScheme
-        returns(uint256)
+        returns (uint256)
     {
         DAOToken token = avatar.nativeToken();
         uint256 balance = token.balanceOf(address(this));
-        if(balance >= claimAmount) {
+        if (balance >= claimAmount) {
             token.transfer(account, claimAmount);
             return claimAmount;
         }
@@ -90,20 +81,16 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
     }
 
     /**
-    * @dev making the contract inactive after it has transferred funds to `_avatar`
-    * only the avatar can destroy the contract.
-    * @param _avatar destination avatar address for funds
-    */
-    function end(Avatar _avatar)
-        public
-        onlyAvatar
-    {
+     * @dev making the contract inactive after it has transferred funds to `_avatar`
+     * only the avatar can destroy the contract.
+     */
+    function end() public onlyAvatar {
         DAOToken token = avatar.nativeToken();
         uint256 remainingGDReserve = token.balanceOf(address(this));
         if (remainingGDReserve > 0) {
-            token.transfer(address(_avatar), remainingGDReserve);
+            token.transfer(address(avatar), remainingGDReserve);
         }
         removeRights();
-        super.internalEnd(_avatar);
+        super.internalEnd(avatar);
     }
 }

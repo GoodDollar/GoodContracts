@@ -245,7 +245,7 @@ contract(
     });
 
     it("should not be able to destroy the contract if the caller is not the dao", async () => {
-      let error = await goodFundManager.end(avatar.address).catch(e => e);
+      let error = await goodFundManager.end().catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
     });
 
@@ -260,14 +260,9 @@ contract(
         {
           name: "end",
           type: "function",
-          inputs: [
-            {
-              type: "address",
-              name: "_avatar"
-            }
-          ]
+          inputs: []
         },
-        [avatar.address]
+        []
       );
       await controller.genericCall(
         goodFundManager.address,

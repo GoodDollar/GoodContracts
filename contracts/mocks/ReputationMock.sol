@@ -3,8 +3,8 @@ pragma solidity 0.5.4;
 import "../dao/schemes/ReputationReward.sol";
 import "../dao/schemes/ActivePeriod.sol";
 
-contract ReputationMock is ReputationReward, ActivePeriod {
 
+contract ReputationMock is ReputationReward, ActivePeriod {
     constructor(
         Avatar _avatar,
         Identity _identity,
@@ -14,7 +14,7 @@ contract ReputationMock is ReputationReward, ActivePeriod {
     )
         public
         ReputationReward(_avatar, _identity, _reputationReward)
-        ActivePeriod(_periodStart, _periodEnd)
+        ActivePeriod(_periodStart, _periodEnd, _avatar)
     {}
 
     function start() public {
@@ -23,9 +23,9 @@ contract ReputationMock is ReputationReward, ActivePeriod {
         super.rewardAddress(msg.sender);
     }
 
-    function end(Avatar _avatar) public {
+    function end() public {
         super.rewardAddress(msg.sender);
 
-        super.end(_avatar);
+        super.end();
     }
 }

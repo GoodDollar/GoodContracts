@@ -1,4 +1,4 @@
-import * as helpers from './helpers';
+import * as helpers from "./helpers";
 
 const Identity = artifacts.require("Identity");
 const DaoCreatorGoodDollar = artifacts.require("DaoCreatorGoodDollar");
@@ -11,14 +11,13 @@ const ReputationMock = artifacts.require("ReputationMock");
 const Reputation = artifacts.require("Reputation");
 
 contract("Integration - Claiming Reputation", ([founder, whitelisted, whitelisted2]) => {
-
-  let identity: helpers.ThenArg<ReturnType<typeof Identity['new']>>;
-  let avatar: helpers.ThenArg<ReturnType<typeof Avatar['new']>>;
-  let controller: helpers.ThenArg<ReturnType<typeof ControllerInterface['new']>>;
-  let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote['new']>>;
-  let token: helpers.ThenArg<ReturnType<typeof GoodDollar['new']>>;
-  let reputationMock: helpers.ThenArg<ReturnType<typeof ReputationMock['new']>>;
-  let reputation: helpers.ThenArg<ReturnType<typeof Reputation['new']>>;
+  let identity: helpers.ThenArg<ReturnType<typeof Identity["new"]>>;
+  let avatar: helpers.ThenArg<ReturnType<typeof Avatar["new"]>>;
+  let controller: helpers.ThenArg<ReturnType<typeof ControllerInterface["new"]>>;
+  let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote["new"]>>;
+  let token: helpers.ThenArg<ReturnType<typeof GoodDollar["new"]>>;
+  let reputationMock: helpers.ThenArg<ReturnType<typeof ReputationMock["new"]>>;
+  let reputation: helpers.ThenArg<ReturnType<typeof Reputation["new"]>>;
 
   let proposalId: string;
 
@@ -26,7 +25,7 @@ contract("Integration - Claiming Reputation", ([founder, whitelisted, whiteliste
   const reward = "10";
 
   before(async () => {
-    const periodStart = (await web3.eth.getBlock('latest')).timestamp + periodOffset;
+    const periodStart = (await web3.eth.getBlock("latest")).timestamp + periodOffset;
     const periodEnd = periodStart + periodOffset;
 
     identity = await Identity.deployed();
@@ -34,32 +33,50 @@ contract("Integration - Claiming Reputation", ([founder, whitelisted, whiteliste
     controller = await ControllerInterface.at(await avatar.owner());
     absoluteVote = await AbsoluteVote.deployed();
     token = await GoodDollar.at(await avatar.nativeToken());
-    reputationMock = await ReputationMock.new(avatar.address, identity.address, reward, periodStart, periodEnd, { from: founder } );
+    reputationMock = await ReputationMock.new(
+      avatar.address,
+      identity.address,
+      reward,
+      periodStart,
+      periodEnd,
+      { from: founder }
+    );
     reputation = await Reputation.at(await avatar.nativeReputation());
 
     await identity.addWhitelisted(whitelisted);
   });
 
   it("should not allow creation of scheme with zero or less reputation", async () => {
-    const periodStart = (await web3.eth.getBlock('latest')).timestamp + periodOffset;
+    const periodStart = (await web3.eth.getBlock("latest")).timestamp + periodOffset;
     const periodEnd = periodStart + periodOffset;
 
-    helpers.assertVMException(ReputationMock.new(avatar.address, identity.address, 0, periodStart, periodEnd, { from: founder }),
-      "reputation reward cannot be zero");
+    helpers.assertVMException(
+      ReputationMock.new(avatar.address, identity.address, 0, periodStart, periodEnd, {
+        from: founder
+      }),
+      "reputation reward cannot be zero"
+    );
   });
 
   it("should correctly propose Rep scheme", async () => {
     // Propose it
     const schemeRegistrar = await SchemeRegistrar.deployed();
-    const transaction = await schemeRegistrar.proposeScheme(avatar.address, reputationMock.address, 
-      helpers.NULL_HASH, "0x00000010", helpers.NULL_HASH);
+    const transaction = await schemeRegistrar.proposeScheme(
+      avatar.address,
+      reputationMock.address,
+      helpers.NULL_HASH,
+      "0x00000010",
+      helpers.NULL_HASH
+    );
 
-   proposalId = transaction.logs[0].args._proposalId;
+    proposalId = transaction.logs[0].args._proposalId;
   });
 
   it("should correctly register Rep scheme", async () => {
     const voteResult = await absoluteVote.vote(proposalId, 1, 0, founder);
-    const executeProposalEventExists = voteResult.logs.some(e => e.event === 'ExecuteProposal');
+    const executeProposalEventExists = voteResult.logs.some(
+      e => e.event === "ExecuteProposal"
+    );
 
     // Verifies that the ExecuteProposal event has been emitted
     assert(executeProposalEventExists);
@@ -68,35 +85,43 @@ contract("Integration - Claiming Reputation", ([founder, whitelisted, whiteliste
   it("should reward whitelisted and creator for starting period", async () => {
     const oldReputationBalanceWhitelisted = await reputation.balanceOf(whitelisted);
     const oldReputationBalanceFounder = (await reputation.balanceOf(founder)) as any;
-    
-    expect(oldReputationBalanceWhitelisted.toString()).to.be.equal('0');
+
+    expect(oldReputationBalanceWhitelisted.toString()).to.be.equal("0");
     expect(oldReputationBalanceFounder.toString()).to.be.equal(reward.toString());
 
     await helpers.assertVMException(reputationMock.start(), "not in period");
-    await helpers.increaseTime(periodOffset*1.5);
+    await helpers.increaseTime(periodOffset * 1.5);
     assert(await reputationMock.start({ from: whitelisted }));
 
     const newReputationBalanceWhitelisted = await reputation.balanceOf(whitelisted);
     const newReputationBalanceFounder = (await reputation.balanceOf(founder)) as any;
-    const founderNewOldRepDiff = newReputationBalanceFounder.sub(oldReputationBalanceFounder);
+    const founderNewOldRepDiff = newReputationBalanceFounder.sub(
+      oldReputationBalanceFounder
+    );
 
     expect(newReputationBalanceWhitelisted.toString()).to.be.equal(reward.toString());
     expect(founderNewOldRepDiff.toString()).to.be.equal(reward.toString());
   });
 
   it("should reward for ending Rep period", async () => {
-    const oldReputationBalanceWhitelisted = (await reputation.balanceOf(whitelisted)) as any;
+    const oldReputationBalanceWhitelisted = (await reputation.balanceOf(
+      whitelisted
+    )) as any;
     expect(oldReputationBalanceWhitelisted.toString()).to.be.equal(reward);
 
-    await helpers.assertVMException(reputationMock.end(avatar.address), "period has not ended");
+    await helpers.assertVMException(reputationMock.end(), "period has not ended");
     await helpers.increaseTime(periodOffset);
-    assert(await reputationMock.end(avatar.address, { from: whitelisted }));
+    assert(await reputationMock.end({ from: whitelisted }));
 
-    const newReputationBalanceWhitelisted = (await reputation.balanceOf(whitelisted)) as any;
-    const whitelistedRepDiff = newReputationBalanceWhitelisted.sub(oldReputationBalanceWhitelisted);
+    const newReputationBalanceWhitelisted = (await reputation.balanceOf(
+      whitelisted
+    )) as any;
+    const whitelistedRepDiff = newReputationBalanceWhitelisted.sub(
+      oldReputationBalanceWhitelisted
+    );
     expect(whitelistedRepDiff.toString()).to.be.equal(reward.toString());
   });
 });
 
 // Important see: https://stackoverflow.com/questions/40900791/cannot-redeclare-block-scoped-variable-in-unrelated-files
-export {}
+export {};

@@ -441,7 +441,7 @@ contract(
       await increaseTime(10 * ONE_DAY);
       let avatarBalanceBefore = await goodDollar.balanceOf(avatar.address);
       let contractBalanceBefore = await goodDollar.balanceOf(ubi.address);
-      let error = await ubi.end(avatar.address).catch(e => e);
+      let error = await ubi.end().catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
       let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
       let contractBalanceAfter = await goodDollar.balanceOf(ubi.address);
@@ -460,14 +460,9 @@ contract(
         {
           name: "end",
           type: "function",
-          inputs: [
-            {
-              type: "address",
-              name: "_avatar"
-            }
-          ]
+          inputs: []
         },
-        [avatar.address]
+        []
       );
       await controller.genericCall(ubi.address, encodedCall, avatar.address, 0);
       let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
@@ -483,7 +478,7 @@ contract(
     it("should not be able to destroy the first claim pool contract if not avatar", async () => {
       let avatarBalanceBefore = await goodDollar.balanceOf(avatar.address);
       let contractBalanceBefore = await goodDollar.balanceOf(firstClaimPool.address);
-      let error = await firstClaimPool.end(avatar.address).catch(e => e);
+      let error = await firstClaimPool.end().catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
       let avatarBalanceAfter = await goodDollar.balanceOf(avatar.address);
       let contractBalanceAfter = await goodDollar.balanceOf(firstClaimPool.address);
@@ -502,14 +497,9 @@ contract(
         {
           name: "end",
           type: "function",
-          inputs: [
-            {
-              type: "address",
-              name: "_avatar"
-            }
-          ]
+          inputs: []
         },
-        [avatar.address]
+        []
       );
       await controller.genericCall(
         firstClaimPool.address,

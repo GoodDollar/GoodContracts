@@ -151,6 +151,7 @@ module.exports = {
       gasPrice: 1000000000 //1 gwei
     }
   },
+  plugins: ["solidity-coverage"],
   mocha: {
     reporter: "eth-gas-reporter",
     reporterOptions: {

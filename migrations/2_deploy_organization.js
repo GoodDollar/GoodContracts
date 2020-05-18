@@ -26,8 +26,7 @@ const tokenSymbol = "G$";
 // initial preliminary constants
 const votePrecedence = 50;
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-const NULL_HASH =
-  "0x0000000000000000000000000000000000000000000000000000000000000000";
+const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 // AdminWallet Settings
 
@@ -51,13 +50,8 @@ module.exports = async function(deployer, network) {
     const accounts = await web3.eth.getAccounts();
     const founders = [accounts[0]];
 
-    const feeFormula = await deployer.deploy(
-      FeeFormula,
-      networkSettings.txFeePercentage
-    );
-    const controllerCreator = await deployer.deploy(
-      ControllerCreatorGoodDollar
-    );
+    const feeFormula = await deployer.deploy(FeeFormula, networkSettings.txFeePercentage);
+    const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar);
     const addFoundersGoodDollar = await deployer.deploy(
       AddFoundersGoodDollar,
       controllerCreator.address
@@ -79,6 +73,7 @@ module.exports = async function(deployer, network) {
       initRepInWei
     });
 
+    console.log("forgeorg");
     await daoCreator.forgeOrg(
       tokenName,
       tokenSymbol,
@@ -88,7 +83,7 @@ module.exports = async function(deployer, network) {
       founders,
       initTokenInWei,
       initRepInWei,
-      { gas: 8000000 }
+      { gas: isMainNet ? 8000000 : undefined }
     );
 
     const avatar = await Avatar.at(await daoCreator.avatar());
@@ -99,6 +94,7 @@ module.exports = async function(deployer, network) {
     if (isMainNet) {
       console.log("Skipping AdminWallet for mainnet");
     } else {
+      console.log("adminwallet");
       adminWalletP = deployer.deploy(
         AdminWallet,
         founders,
@@ -117,7 +113,7 @@ module.exports = async function(deployer, network) {
     ]);
 
     //for testing we give founders some tokens
-    if (network === "test") {
+    if (["test", "coverage", "soliditycoverage"].includes(network)) {
       await Promise.all(founders.map(f => token.mint(f, initTokenInWei)));
     }
 
@@ -181,12 +177,7 @@ module.exports = async function(deployer, network) {
       identity.address,
       feeFormula.address
     ];
-    paramsArray = [
-      schemeRegisterParams,
-      upgradeParametersHash,
-      NULL_HASH,
-      NULL_HASH
-    ];
+    paramsArray = [schemeRegisterParams, upgradeParametersHash, NULL_HASH, NULL_HASH];
     permissionArray = ["0x0000001F", "0x0000001F", "0x0000001F", "0x0000001F"];
 
     await daoCreator.setSchemes(

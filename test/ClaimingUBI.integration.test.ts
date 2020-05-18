@@ -26,9 +26,7 @@ contract(
     let identity: helpers.ThenArg<ReturnType<typeof Identity["new"]>>;
     let feeFormula: helpers.ThenArg<ReturnType<typeof FeeFormula["new"]>>;
     let avatar: helpers.ThenArg<ReturnType<typeof Avatar["new"]>>;
-    let controller: helpers.ThenArg<
-      ReturnType<typeof ControllerInterface["new"]>
-    >;
+    let controller: helpers.ThenArg<ReturnType<typeof ControllerInterface["new"]>>;
     let absoluteVote: helpers.ThenArg<ReturnType<typeof AbsoluteVote["new"]>>;
     let token: helpers.ThenArg<ReturnType<typeof GoodDollar["new"]>>;
     let ubi: helpers.ThenArg<ReturnType<typeof UBI["new"]>>;
@@ -36,17 +34,14 @@ contract(
     let fixedUBI: helpers.ThenArg<ReturnType<typeof FixedUBI["new"]>>;
     let vanillaFixedUBI: helpers.ThenArg<ReturnType<typeof FixedUBI["new"]>>;
     let emptyUBI: helpers.ThenArg<ReturnType<typeof UBI["new"]>>;
-    let reserveRelayer: helpers.ThenArg<
-      ReturnType<typeof ReserveRelayer["new"]>
-    >;
+    let reserveRelayer: helpers.ThenArg<ReturnType<typeof ReserveRelayer["new"]>>;
 
     let proposalId: string;
 
     const periodOffset = 60000;
 
     before(async () => {
-      const periodStart =
-        (await web3.eth.getBlock("latest")).timestamp + periodOffset;
+      const periodStart = (await web3.eth.getBlock("latest")).timestamp + periodOffset;
       const periodEnd = periodStart + periodOffset;
       const periodStart2 = periodEnd + periodOffset;
       const periodEnd2 = periodStart2 + periodOffset * 2;
@@ -54,9 +49,7 @@ contract(
 
       identity = await Identity.deployed();
       feeFormula = await FeeFormula.deployed();
-      avatar = await Avatar.at(
-        await (await DaoCreatorGoodDollar.deployed()).avatar()
-      );
+      avatar = await Avatar.at(await (await DaoCreatorGoodDollar.deployed()).avatar());
       controller = await ControllerInterface.at(await avatar.owner());
       absoluteVote = await AbsoluteVote.deployed();
       token = await GoodDollar.at(await avatar.nativeToken());
@@ -106,8 +99,7 @@ contract(
     });
 
     it("should not allow creating fixed UBI contract with zero distribution", async () => {
-      const periodStart =
-        (await web3.eth.getBlock("latest")).timestamp + periodOffset;
+      const periodStart = (await web3.eth.getBlock("latest")).timestamp + periodOffset;
       const periodEnd = periodStart + periodOffset;
 
       await helpers.assertVMException(
@@ -248,10 +240,7 @@ contract(
       // Verifies that the ExecuteProposal event has been emitted
       assert(executeProposalEventExists);
 
-      await helpers.assertVMException(
-        reserveUBI.start(),
-        "Not enough funds to start"
-      );
+      await helpers.assertVMException(reserveUBI.start(), "Not enough funds to start");
     });
 
     it("should register fixed claim scheme and add whitelisteds", async () => {
@@ -288,21 +277,13 @@ contract(
       const claimDistribution = (await ubi.claimDistribution()) as any;
 
       const whitelistedBalance = (await token.balanceOf(whitelisted)) as any;
-      const whitelistedBalanceDiff = whitelistedBalance.sub(
-        oldWhitelistedBalance
-      );
+      const whitelistedBalanceDiff = whitelistedBalance.sub(oldWhitelistedBalance);
 
       const lastClaimed = (await ubi.lastClaimed(whitelisted)).toNumber();
       expect(lastClaimed).to.be.gte(now);
-      expect(whitelistedBalanceDiff.toString()).to.be.equal(
-        claimDistribution.toString()
-      );
-      expect(whitelistedBalanceDiff.toString()).to.be.equal(
-        claimDistribution.toString()
-      );
-      expect(whitelistedBalanceDiff.toString()).to.be.equal(
-        amountClaimed.toString()
-      );
+      expect(whitelistedBalanceDiff.toString()).to.be.equal(claimDistribution.toString());
+      expect(whitelistedBalanceDiff.toString()).to.be.equal(claimDistribution.toString());
+      expect(whitelistedBalanceDiff.toString()).to.be.equal(amountClaimed.toString());
     });
 
     it("should show amount of whitelisteds", async () => {
@@ -343,10 +324,7 @@ contract(
     });
 
     it("should end UBI period", async () => {
-      await helpers.assertVMException(
-        ubi.end(avatar.address),
-        "period has not ended"
-      );
+      await helpers.assertVMException(ubi.end(avatar.address), "period has not ended");
       await helpers.increaseTime(periodOffset);
       assert(await ubi.end(avatar.address));
     });
@@ -392,7 +370,7 @@ contract(
     });
 
     it("should not allow to claim for more than one day", async () => {
-      await helpers.increaseTime(periodOffset * 5000);
+      await helpers.increaseTime(periodOffset * 5);
       await token.burn(await token.balanceOf(whitelisted3), {
         from: whitelisted3
       });
@@ -410,9 +388,7 @@ contract(
       const newBalancewhitelisted3 = await token.balanceOf(whitelisted3);
 
       const maxValue = helpers.toGD("1") as any;
-      expect(newBalancewhitelisted3.toString()).to.be.equal(
-        maxValue.toString()
-      );
+      expect(newBalancewhitelisted3.toString()).to.be.equal(maxValue.toString());
 
       const lastClaimed = (await fixedUBI.lastClaimed(whitelisted3)).toNumber();
       expect(lastClaimed).to.be.gte(now);

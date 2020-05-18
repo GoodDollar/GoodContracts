@@ -11,6 +11,7 @@ import "./ActivePeriod.sol";
 import "./FeelessScheme.sol";
 import "./SchemeGuard.sol";
 
+
 /* @title Sign-Up bonus scheme responsible for transferring
  * a given amount of GoodDollar to users
  */
@@ -36,11 +37,7 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
         Identity _identity,
         uint256 _initalReserve,
         uint256 _maxBonus
-    )
-        public
-        ActivePeriod(now, now * 2)
-        FeelessScheme(_identity, _avatar)
-    {
+    ) public ActivePeriod(now, now * 2, _avatar) FeelessScheme(_identity, _avatar) {
         require(_maxBonus > 0, "Max bonus cannot be zero");
 
         initalReserve = _initalReserve;
@@ -57,14 +54,18 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
 
         DAOToken token = avatar.nativeToken();
 
-        if ( initalReserve > 0) {
+        if (initalReserve > 0) {
             uint256 reserve = token.balanceOf(address(avatar));
 
             require(reserve >= initalReserve, "Not enough funds to start");
 
             controller.genericCall(
                 address(token),
-                abi.encodeWithSignature("transfer(address,uint256)", address(this), initalReserve),
+                abi.encodeWithSignature(
+                    "transfer(address,uint256)",
+                    address(this),
+                    initalReserve
+                ),
                 avatar,
                 0
             );
@@ -76,7 +77,7 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
      * remaining GoodDollar back to the avatar. Can be called at any
      * Time by identity admins
      */
-    function end(Avatar /*_avatar*/) public onlyIdentityAdmin {
+    function end() public onlyIdentityAdmin {
         DAOToken token = avatar.nativeToken();
 
         uint256 remainingReserve = token.balanceOf(address(this));
@@ -93,7 +94,11 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
      * @param _user The address to award
      * @param _amount The amount to award
      */
-    function awardUser(address _user, uint256 _amount) public requireActive onlyIdentityAdmin {
+    function awardUser(address _user, uint256 _amount)
+        public
+        requireActive
+        onlyIdentityAdmin
+    {
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
         require(rewarded[_user].add(_amount) <= maxBonus, "Cannot award user beyond max");
 
@@ -102,4 +107,4 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
 
         emit BonusClaimed(_user, _amount);
     }
- }
+}

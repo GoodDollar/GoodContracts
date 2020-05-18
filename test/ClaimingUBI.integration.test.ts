@@ -164,16 +164,13 @@ contract(
       await helpers.increaseTime(periodOffset * 1.1);
       assert(await emptyUBI.start());
 
-      await helpers.assertVMException(
-        emptyUBI.end(avatar.address),
-        "period has not ended"
-      );
+      await helpers.assertVMException(emptyUBI.end(), "period has not ended");
       await helpers.increaseTime(periodOffset);
 
       const reserve = await token.balanceOf(emptyUBI.address);
 
       expect(reserve.toString()).to.be.equal("0");
-      assert(await emptyUBI.end(avatar.address));
+      assert(await emptyUBI.end());
     });
 
     it("should perform transactions and increase fee reserve", async () => {
@@ -324,9 +321,9 @@ contract(
     });
 
     it("should end UBI period", async () => {
-      await helpers.assertVMException(ubi.end(avatar.address), "period has not ended");
+      await helpers.assertVMException(ubi.end(), "period has not ended");
       await helpers.increaseTime(periodOffset);
-      assert(await ubi.end(avatar.address));
+      assert(await ubi.end());
     });
 
     it("should allow starting fixed claim scheme", async () => {

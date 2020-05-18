@@ -54,7 +54,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         address _ubiRecipient,
         uint256 _blockInterval
 
-    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2) {
+    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2, _avatar) {
         cDai = ERC20(_cDai);
         bridgeContract = _bridgeContract;
         ubiRecipient = _ubiRecipient;
@@ -165,18 +165,17 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     /**
      * @dev making the contract inactive after it has transferred funds to `_avatar`
      * only the avatar can destroy the contract.
-     * @param _avatar destination avatar address for funds
      */
-    function end(Avatar _avatar) public onlyAvatar {
+    function end() public onlyAvatar {
         uint256 remainingCDaiReserve = cDai.balanceOf(address(this));
         if (remainingCDaiReserve > 0) {
-            cDai.transfer(address(_avatar), remainingCDaiReserve);
+            cDai.transfer(address(avatar), remainingCDaiReserve);
         }
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
         uint256 remainingGDReserve = token.balanceOf(address(this));
         if (remainingGDReserve > 0) {
-            token.transfer(address(_avatar), remainingGDReserve);
+            token.transfer(address(avatar), remainingGDReserve);
         }
-        super.internalEnd(_avatar);
+        super.internalEnd(avatar);
     }
 }

@@ -8,10 +8,10 @@ import "./FeelessScheme.sol";
 import "./SchemeGuard.sol";
 import "../../identity/Identity.sol";
 
+
 /* @title Scheme contract responsible for transferring balance of avatar to given receiver
  */
 contract ReserveRelayer is ActivePeriod, FeelessScheme {
-
     address public receiver;
 
     /* @dev Constructor. Reverts if receiver is invalid
@@ -29,7 +29,7 @@ contract ReserveRelayer is ActivePeriod, FeelessScheme {
         uint256 _periodEnd
     )
         public
-        ActivePeriod(_periodStart, _periodEnd)
+        ActivePeriod(_periodStart, _periodEnd, _avatar)
         FeelessScheme(_identity, _avatar)
     {
         require(_receiver != address(0), "receiver cannot be null address");
@@ -52,7 +52,8 @@ contract ReserveRelayer is ActivePeriod, FeelessScheme {
             address(token),
             abi.encodeWithSignature("transfer(address,uint256)", receiver, reserve),
             avatar,
-            0);
+            0
+        );
 
         removeRights();
 

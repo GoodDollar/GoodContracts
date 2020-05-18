@@ -13,7 +13,7 @@ const NULL_HASH = "0x00000000000000000000000000000000000000000000000000000000000
 
 module.exports = async function(deployer, network) {
   if (network === "tdd") return;
-  if (network.indexOf("mainnet") >= 0 && network !== "test") {
+  if (network.indexOf("mainnet") >= 0) {
     return;
   }
 

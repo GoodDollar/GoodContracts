@@ -13,7 +13,8 @@ import "../../token/GoodDollar.sol";
 import "./ActivePeriod.sol";
 import "./FeelessScheme.sol";
 
-/* @title Base contract template for UBI scheme 
+
+/* @title Base contract template for UBI scheme
  */
 contract AbstractUBI is ActivePeriod, FeelessScheme {
     using SafeMath for uint256;
@@ -23,14 +24,14 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
     uint256 public claimDistribution;
 
     struct Day {
-        mapping (address => bool) hasClaimed;
+        mapping(address => bool) hasClaimed;
         uint256 amountOfClaimers;
         uint256 claimAmount;
     }
 
-    mapping (uint256 => Day) claimDay;
+    mapping(uint256 => Day) claimDay;
 
-    mapping (address => uint256) public lastClaimed;
+    mapping(address => uint256) public lastClaimed;
 
     uint256 public currentDay;
 
@@ -53,7 +54,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         uint256 _periodEnd
     )
         public
-        ActivePeriod(_periodStart, _periodEnd)
+        ActivePeriod(_periodStart, _periodEnd, _avatar)
         FeelessScheme(_identity, _avatar)
     {
         initialReserve = _initialReserve;
@@ -65,7 +66,9 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
      * @param reserve the account balance to calculate from
      * @return The distribution for each claimer
      */
-    function distributionFormula(uint256 reserve, address user) internal returns(uint256);
+    function distributionFormula(uint256 reserve, address user)
+        internal
+        returns (uint256);
 
     /* @dev function that gets the amount of people who claimed on the given day
      * @param day the day to get claimer count from, with 0 being the starting day
@@ -85,7 +88,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
 
     /* @dev function that gets count of claimers and amount claimed for the most recent
      * day where claiming transpired.
-     * @return the amount of claimers and the amount claimed. 
+     * @return the amount of claimers and the amount claimed.
      */
     function getDailyStats() public view returns (uint256 count, uint256 amount) {
         return (getClaimerCount(currentDay), getClaimAmount(currentDay));
@@ -107,14 +110,22 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         // Transfer the fee reserve to this contract
         DAOToken token = avatar.nativeToken();
 
-        if(initialReserve > 0) {
-            require(initialReserve <= token.balanceOf(address(avatar)), "Not enough funds to start");
+        if (initialReserve > 0) {
+            require(
+                initialReserve <= token.balanceOf(address(avatar)),
+                "Not enough funds to start"
+            );
 
             controller.genericCall(
                 address(token),
-                abi.encodeWithSignature("transfer(address,uint256)", address(this), initialReserve),
+                abi.encodeWithSignature(
+                    "transfer(address,uint256)",
+                    address(this),
+                    initialReserve
+                ),
                 avatar,
-                0);
+                0
+            );
         }
         emit UBIStarted(token.balanceOf(address(this)), now);
     }
@@ -125,8 +136,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
      * Sends the remaining funds on contract back to the avatar contract
      * address
      */
-    function end(Avatar /*_avatar*/) public requirePeriodEnd {
-
+    function end() public requirePeriodEnd {
         DAOToken token = avatar.nativeToken();
 
         uint256 remainingReserve = token.balanceOf(address(this));
@@ -136,7 +146,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         }
 
         removeRights();
-        super.end(avatar);
+        super.end();
     }
 
     /* @dev UBI claiming function. Can only be called by users that were
@@ -144,12 +154,12 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
      * Each claimer can only claim once per UBI contract
      * @return true if the user claimed successfully
      */
-    function claim() 
-        public 
+    function claim()
+        public
         requireActive
         onlyWhitelisted
         onlyAddedBefore(periodStart)
-        returns(bool)
+        returns (bool)
     {
         require(!claimDay[currentDay].hasClaimed[msg.sender], "has already claimed");
         claimDay[currentDay].hasClaimed[msg.sender] = true;
@@ -158,21 +168,25 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
 
         token.transfer(msg.sender, claimDistribution);
 
-        claimDay[currentDay].amountOfClaimers = claimDay[currentDay].amountOfClaimers.add(1);
-        claimDay[currentDay].claimAmount = claimDay[currentDay].claimAmount.add(claimDistribution);
+        claimDay[currentDay].amountOfClaimers = claimDay[currentDay].amountOfClaimers.add(
+            1
+        );
+        claimDay[currentDay].claimAmount = claimDay[currentDay].claimAmount.add(
+            claimDistribution
+        );
 
         lastClaimed[msg.sender] = now;
-        
+
         emit UBIClaimed(msg.sender, claimDistribution);
         return true;
     }
 }
 
+
 /* @title UBI scheme contract responsible for calculating a distribution
  * based on amount of whitelisted users
  */
 contract UBI is AbstractUBI {
-
     uint256 claimers;
 
     /* @dev Constructor. Checks if avatar is a zero address
@@ -188,10 +202,7 @@ contract UBI is AbstractUBI {
         uint256 _initialReserve,
         uint256 _periodStart,
         uint256 _periodEnd
-    )
-        public
-        AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd)
-    {
+    ) public AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd) {
         claimers = (identity.whitelistedCount()).sub(identity.whitelistedContracts());
     }
 
@@ -201,7 +212,10 @@ contract UBI is AbstractUBI {
      * @param reserve the account balance to calculate from
      * @return The reserve divided by the amount of registered claimers
      */
-    function distributionFormula(uint256 reserve, address /*user*/) internal returns(uint256) {
+    function distributionFormula(
+        uint256 reserve,
+        address /*user*/
+    ) internal returns (uint256) {
         return reserve.div(claimers);
     }
 
@@ -211,6 +225,9 @@ contract UBI is AbstractUBI {
         super.start();
 
         DAOToken token = avatar.nativeToken();
-        claimDistribution = distributionFormula(token.balanceOf(address(this)), address(0));
-    }    
+        claimDistribution = distributionFormula(
+            token.balanceOf(address(this)),
+            address(0)
+        );
+    }
 }

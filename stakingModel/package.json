@@ -15,9 +15,9 @@
     "minimize": "../scripts/minimize.sh 'build/contracts'",
     "deploy": "run-s migrate:full minimize",
     "test:tdd": "export NETWORK='test' && export ADMIN_MNEMONIC='myth like bonus scare over problem client lizard pioneer submit female collect' && export MNEMONIC='glad notable bullet donkey fall dolphin simple size stone evil slogan dinner' && run-p ganache:test test:wait:tdd",
-    "test:wait:tdd": "run-s wait && truffle test --network tdd && pkill -SIGQUIT -f ganache",
+    "test:wait:tdd": "run-s wait && truffle test --network tdd && pkill -SIGTERM -f ganache",
     "test:full": "export NETWORK='test' && export ADMIN_MNEMONIC='myth like bonus scare over problem client lizard pioneer submit female collect' && export MNEMONIC='glad notable bullet donkey fall dolphin simple size stone evil slogan dinner' && run-p ganache:test test:wait:full",
-    "test:wait:full": "run-p wait start:main && truffle test && pkill -SIGQUIT -f ganache",
+    "test:wait:full": "run-p wait start:main && truffle test && pkill -SIGTERM -f ganache",
     "test": "npm run test:full",
     "lint": "solhint --formatter codeframe develop/**/*.sol",
     "migrate:full": "truffle migrate --network ${NETWORK-develop} --reset"

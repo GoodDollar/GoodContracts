@@ -25,6 +25,7 @@ module.exports = {
     "mocks/ControllerMock.sol",
     "mocks/FirstClaimPoolMock.sol",
     "mocks/UBISchemeMock.sol",
+    "mocks/StakingMock.sol",
     "BancorFormula.sol"
   ]
 };

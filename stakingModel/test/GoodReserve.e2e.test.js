@@ -15,6 +15,7 @@ const AbsoluteVote = artifacts.require("AbsoluteVote");
 const SetMarketMaker = artifacts.require("SetMarketMaker");
 const SetBlockInterval = artifacts.require("SetBlockInterval");
 const SetContributionAddress = artifacts.require("SetContributionAddress");
+const AddMinter = artifacts.require("AddMinter");
 
 const fse = require("fs-extra");
 
@@ -32,7 +33,7 @@ async function proposeAndRegister(addr, registrar, proposalId, absoluteVote, ava
 
 contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
   let dai, cDAI, simpleStaking, goodReserve, goodDollar, marketMaker, contribution, controller;
-  let avatarAddress, registrar, absoluteVote, proposalId, setMarketMaker, setBlockInterval, setContributionAddress;
+  let avatarAddress, registrar, absoluteVote, proposalId, setMarketMaker, setBlockInterval, setContributionAddress, addMinter;
 
   before(async function() {
     const staking_file = await fse.readFile("releases/deployment.json", "utf8");
@@ -56,6 +57,7 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     setMarketMaker = await SetMarketMaker.new(avatarAddress, goodReserve.address, marketMaker.address);
     setBlockInterval = await SetBlockInterval.new(avatarAddress, goodReserve.address, 5759);
     setContributionAddress = await SetContributionAddress.new(avatarAddress, goodReserve.address, contribution.address);
+    addMinter = await AddMinter.new(avatarAddress, goodReserve.address);
     
   });
 
@@ -111,5 +113,81 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     expect(gdFloatPrice).to.be.equal(0.0001);
     expect(cdaiWorthInGD.toString()).to.be.equal("1000000000000"); //in 8 decimals precision
     expect(cdaiWorthInGD.toNumber() / 10 ** 8).to.be.equal(10000);
+  });
+
+  it("should be able to set the reserve as a minter", async () => {
+    const executeProposalEventExists = await proposeAndRegister(addMinter.address,
+    registrar, proposalId, absoluteVote, avatarAddress, founder);
+    // Verifies that the ExecuteProposal event has been emitted
+    expect(executeProposalEventExists).to.be.true;
+    await addMinter.addMinter();
+    const isMinter = await goodDollar.isMinter(goodReserve.address);
+    expect(isMinter).to.be.true;
+  });
+
+  it("should be able to buy gd with cDAI and reserve should be correct", async () => {
+    let amount = 1e8;
+    await dai.mint(web3.utils.toWei("100", "ether"));
+    dai.approve(cDAI.address, web3.utils.toWei("100", "ether"));
+    await cDAI.mint(web3.utils.toWei("100", "ether"));
+    let reserveToken = await marketMaker.reserveTokens(cDAI.address);
+    let reserveBalanceBefore = reserveToken.reserveSupply;
+    const cDAIBalanceReserveBefore = await cDAI.balanceOf(goodReserve.address);
+    await cDAI.approve(goodReserve.address, amount);
+    await goodReserve.buy(cDAI.address, amount, 0);
+    reserveToken = await marketMaker.reserveTokens(cDAI.address);
+    let reserveBalanceAfter = reserveToken.reserveSupply;
+    const cDAIBalanceReserveAfter = await cDAI.balanceOf(goodReserve.address);
+    expect((cDAIBalanceReserveAfter - cDAIBalanceReserveBefore).toString()).to.be.equal(
+      amount.toString()
+    );
+    expect((reserveBalanceAfter - reserveBalanceBefore).toString()).to.be.equal(
+      amount.toString()
+    );
+  });
+
+  it("should be able to buy gd with cDAI and the price should be the same", async () => {
+    let amount = 1e8;
+    await dai.mint(web3.utils.toWei("100", "ether"));
+    dai.approve(cDAI.address, web3.utils.toWei("100", "ether"));
+    await cDAI.mint(web3.utils.toWei("100", "ether"));
+    let reserveToken = await marketMaker.reserveTokens(cDAI.address);
+    const priceBefore = await goodReserve.currentPrice(cDAI.address);
+    await cDAI.approve(goodReserve.address, amount);
+    await goodReserve.buy(cDAI.address, amount, 0);
+    reserveToken = await marketMaker.reserveTokens(cDAI.address);
+    const priceAfter = await goodReserve.currentPrice(cDAI.address);
+    expect(
+      Math.floor(priceAfter.toNumber() / 100).toString()
+    ).to.be.equal(Math.floor(priceBefore.toNumber() / 100).toString());
+  });
+
+  it("should be able to sell gd to cDAI and reserve should be correct", async () => {
+    let amount = 1e4;
+    let reserveToken = await marketMaker.reserveTokens(cDAI.address);
+    const cDAIBalanceBefore = await cDAI.balanceOf(founder);
+    const cDAIBalanceReserveBefore = await cDAI.balanceOf(goodReserve.address);
+    await goodDollar.approve(goodReserve.address, amount);
+    await goodReserve.sell(cDAI.address, amount, 0);
+    reserveToken = await marketMaker.reserveTokens(cDAI.address);
+    const cDAIBalanceAfter = await cDAI.balanceOf(founder);
+    const cDAIBalanceReserveAfter = await cDAI.balanceOf(goodReserve.address);
+    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal("800000");
+    expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal(
+      "800000"
+    );
+  });
+
+  it("should be able to sell gd to cDAI and the price should be the same", async () => {
+    let amount = 1e4;
+    let reserveToken = await marketMaker.reserveTokens(cDAI.address);
+    const priceBefore = await goodReserve.currentPrice(cDAI.address);
+    await goodDollar.approve(goodReserve.address, amount);
+    await goodReserve.sell(cDAI.address, amount, 0);
+    reserveToken = await marketMaker.reserveTokens(cDAI.address);
+    const priceAfter = await goodReserve.currentPrice(cDAI.address);
+    expect(
+      Math.floor(priceAfter.toNumber() / 100).toString()
+    ).to.be.equal(Math.floor(priceBefore.toNumber() / 100).toString());
   });
 });

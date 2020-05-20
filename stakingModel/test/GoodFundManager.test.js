@@ -2,6 +2,7 @@ const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const GoodReserve = artifacts.require("GoodReserveCDai");
 const MarketMaker = artifacts.require("GoodMarketMaker");
 const GoodFundsManager = artifacts.require("GoodFundManager");
+const SimpleDAIStakingMock = artifacts.require("SimpleDAIStakingMock");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
@@ -181,6 +182,31 @@ contract(
       ).to.be.equal(cdaiGains.toString());
       expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
       expect(tx.logs[0].event).to.be.equal("FundsTransferred");
+    });
+
+    it("should create be able to stake dai", async () => {
+      const stakingMock = await SimpleDAIStakingMock.new(
+        dai.address,
+        cDAI.address,
+        goodFundManager.address,
+        0
+      );
+      await dai.mint(staker, web3.utils.toWei("100", "ether"));
+      await dai.approve(stakingMock.address, web3.utils.toWei("100", "ether"), {
+        from: staker
+      });
+      await stakingMock
+        .stakeDAI(web3.utils.toWei("100", "ether"), {
+          from: staker
+        })
+        .catch(console.log);
+        await cDAI.exchangeRateCurrent();
+        let stakingGDBalanceBefore = await goodDollar.balanceOf(stakingMock.address);
+        await goodFundManager.transferInterest(stakingMock.address);
+        let stakingGDBalanceAfter = await goodDollar.balanceOf(stakingMock.address);
+        expect(
+          stakingGDBalanceAfter.sub(stakingGDBalanceBefore).toString()
+        ).to.be.equal("190329"); // interest that the staking contract recieved
     });
 
     it("should set block interval by avatar", async () => {

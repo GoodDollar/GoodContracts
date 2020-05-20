@@ -223,7 +223,8 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account the address to add
      */
     function _addWhitelisted(address account) internal {
-        whitelist.add(account);
+        if (!whitelist.has(account))
+            whitelist.add(account);
 
         whitelistedCount += 1;
         dateAdded[account] = now;
@@ -254,7 +255,8 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      * @param account the address to add
      */
     function _removeWhitelisted(address account) internal {
-        whitelist.remove(account);
+        if (whitelist.has(account))
+            whitelist.remove(account);
 
         whitelistedCount -= 1;
         delete dateAuthenticated[account];

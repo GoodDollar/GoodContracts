@@ -5,7 +5,6 @@ const GoodReserve = artifacts.require("GoodReserveCDai");
 const MarketMaker = artifacts.require("GoodMarketMaker");
 const GoodDollar = artifacts.require("GoodDollar");
 const GoodFundsManager = artifacts.require("GoodFundManager");
-const ContributionCalculation = artifacts.require("ContributionCalculation");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const AbsoluteVote = artifacts.require("AbsoluteVote");
 const FundManagerSetReserve = artifacts.require("FundManagerSetReserve");
@@ -32,9 +31,9 @@ async function next_interval() {
     );
 }
 
-contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
+contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
   let dai, cDAI, simpleStaking, goodReserve, goodFundManager, goodDollar, marketMaker, contribution;
-  let deploy_settings, ubiBridgeRecipient, avatarAddress, registrar, absoluteVote, proposalId, setReserve;
+  let ubiBridgeRecipient, avatarAddress, registrar, absoluteVote, proposalId, setReserve;
 
   before(async function() {
     const staking_file = await fse.readFile("releases/deployment.json", "utf8");
@@ -51,17 +50,12 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     goodReserve = await GoodReserve.at(staking_addresses.Reserve);
     goodFundManager = await GoodFundsManager.at(staking_addresses.FundManager);
     marketMaker = await MarketMaker.at(staking_addresses.MarketMaker);
-    contribution = await ContributionCalculation.at(staking_addresses.Contribution);
     goodDollar = await GoodDollar.at(dao_addresses.GoodDollar);
     registrar = await SchemeRegistrar.at(dao_addresses.SchemeRegistrar);
     absoluteVote = await AbsoluteVote.at(dao_addresses.AbsoluteVote);
-    deploy_settings = await fse.readFile("../migrations/deploy-settings.json", "utf8");
-    console.log(deploy_settings);
     // schemes
     setReserve = await FundManagerSetReserve.new(avatarAddress, goodFundManager.address, goodReserve.address);
-  });
 
-  it("should mints cdai and updates exchange rate", async () => {
     await dai.mint(staker, web3.utils.toWei("100", "ether"));
     await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
       from: staker
@@ -72,8 +66,7 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     })
     .catch(console.log);
     await cDAI.exchangeRateCurrent();
-    let rate = await cDAI.exchangeRateStored();
-    expect(rate.toString()).to.be.equal("10201010101010101010101010101");
+    await cDAI.exchangeRateStored();
   });
 
   it("should be able to set the reserve", async () => {
@@ -93,7 +86,7 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     expect(error.message).to.have.string("wait for the next interval");
   });
 
-  it("should collect the interest and transfer it to the reserve and recieves minted gd back to the staking contract", async () => {
+  it("should collect the interest and transfer it to the reserve and the bridge recipient should recieves minted gd", async () => {
     await next_interval();
     await cDAI.exchangeRateCurrent();
     let recipientBefore = await goodDollar.balanceOf(ubiBridgeRecipient);
@@ -101,10 +94,10 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     let recipientAfter = await goodDollar.balanceOf(ubiBridgeRecipient);
     let stakingGDBalance = await goodDollar.balanceOf(simpleStaking.address);
     expect(stakingGDBalance.toString()).to.be.equal("0"); //100% of interest is donated, so nothing is returned to staking
-    expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal("1904085"); //970492 interest + 594 minted from expansion
+    expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal("1904085"); // total of interest + minted from expansion (received 100%)
   });
 
-  it("should keep the same price while collects interest and recieves minted gd back to the staking contract", async () => {
+  it("should retains the price while collects interest", async () => {
     await next_interval();
     await cDAI.exchangeRateCurrent();
     const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);

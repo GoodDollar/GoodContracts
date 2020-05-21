@@ -2,12 +2,10 @@ const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 const GoodReserve = artifacts.require("GoodReserveCDai");
-const MarketMaker = artifacts.require("GoodMarketMaker");
 const GoodDollar = artifacts.require("GoodDollar");
 const GoodFundsManager = artifacts.require("GoodFundManager");
 const Controller = artifacts.require("Controller");
 const Identity = artifacts.require("Identity");
-const ContributionCalculation = artifacts.require("ContributionCalculation");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const AbsoluteVote = artifacts.require("AbsoluteVote");
 const FundManagerSetReserve = artifacts.require("FundManagerSetReserve");
@@ -52,9 +50,18 @@ async function increaseDays(days=1) {
   );
 };
 
+async function next_interval() {
+  let blocks = 5760;
+  for (let i = 0; i < blocks; ++i)
+    await web3.currentProvider.send(
+      { jsonrpc: "2.0", method: "evm_mine", id: 123 },
+      () => {}
+    );
+}
+
 contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
-  let dai, cDAI, simpleStaking, goodReserve, goodFundManager, goodDollar, marketMaker, contribution, controller, ubi, firstClaimPool, identity;
-  let deploy_settings, ubiBridgeRecipient, avatarAddress, registrar, absoluteVote, proposalId, setReserve, addMinter;
+  let dai, cDAI, simpleStaking, goodReserve, goodFundManager, goodDollar, controller, ubi, firstClaimPool, identity;
+  let avatarAddress, registrar, absoluteVote, proposalId, setReserve, addMinter;
 
   before(async function() {
     const staking_file = await fse.readFile("releases/deployment.json", "utf8");
@@ -64,14 +71,11 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     const staking_addresses = staking_deployment[NETWORK];
     const dao_addresses = dao_deployment[NETWORK];
     avatarAddress = dao_addresses.Avatar;
-    ubiBridgeRecipient = staking_addresses.UBIScheme;
     dai = await DAIMock.at(staking_addresses.DAI);
     cDAI = await cDAIMock.at(staking_addresses.cDAI);
     simpleStaking = await SimpleDAIStaking.at(staking_addresses.DAIStaking);
     goodReserve = await GoodReserve.at(staking_addresses.Reserve);
     goodFundManager = await GoodFundsManager.at(staking_addresses.FundManager);
-    marketMaker = await MarketMaker.at(staking_addresses.MarketMaker);
-    contribution = await ContributionCalculation.at(staking_addresses.Contribution);
     controller = await Controller.at(dao_addresses.Controller);
     ubi = await UBI.at(staking_addresses.UBIScheme);
     firstClaimPool = await FirstClaimPool.at(staking_addresses.FirstClaimPool);
@@ -79,21 +83,14 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     goodDollar = await GoodDollar.at(dao_addresses.GoodDollar);
     registrar = await SchemeRegistrar.at(dao_addresses.SchemeRegistrar);
     absoluteVote = await AbsoluteVote.at(dao_addresses.AbsoluteVote);
-    deploy_settings = await fse.readFile("../migrations/deploy-settings.json", "utf8");
+    await identity.addWhitelisted(claimer);
     // schemes
-    setReserve = await FundManagerSetReserve.new(avatarAddress, goodFundManager.address, goodReserve.address);
     addMinter = await AddMinter.new(avatarAddress, goodReserve.address);
-  });
-  
-  it("should start the pool", async () => {
-    let isActive = await firstClaimPool.isActive();
-    if (!isActive)
-      await firstClaimPool.start();
-    isActive = await firstClaimPool.isActive();
-    expect(isActive).to.be.true;
-  });
-
-  it("should be able to set the reserve as a minter", async () => {
+    setReserve = await FundManagerSetReserve.new(avatarAddress, goodFundManager.address, goodReserve.address);
+    // sets the reserve in the fundmanager
+    await proposeAndRegister(setReserve.address, registrar, proposalId, absoluteVote, avatarAddress, founder);
+    await setReserve.setReserve();
+    // validates that the reserve is a minter
     let isMinter = await goodDollar.isMinter(goodReserve.address);
     if (!isMinter) {
       await proposeAndRegister(addMinter.address, 
@@ -107,18 +104,15 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     await cDAI.approve(goodReserve.address, amount);
     await goodReserve.buy(cDAI.address, amount, 0);
     let gdbalance = await goodDollar.balanceOf(founder);
-    await goodDollar.transfer(firstClaimPool.address, (Math.floor(gdbalance.toNumber() / 2)).toString());
-    await goodDollar.transfer(ubi.address, (Math.floor(gdbalance.toNumber() / 2)).toString());
-    expect((await goodDollar.balanceOf(ubi.address)).toNumber()).to.be.gt(0);
-    expect((await goodDollar.balanceOf(firstClaimPool.address)).toNumber()).to.be.gt(0);
+    await goodDollar.transfer(firstClaimPool.address, gdbalance.toString());
+    await next_interval();
+    // transfers funds to the ubi
+    await goodFundManager.transferInterest(simpleStaking.address);
   });
 
   it("should award a new user with the award amount on first time execute claim", async () => {
     await increaseDays();
-    let isWhitelisted = await identity.isWhitelisted(claimer);
-    if (!isWhitelisted)
-      await identity.addWhitelisted(claimer);
-    isWhitelisted = await identity.isWhitelisted(claimer);
+    await identity.authenticate(claimer);
     let claimerBalance1 = await goodDollar.balanceOf(claimer);
     let ce = await ubi.checkEntitlement({ from: claimer });
     await ubi.claim({ from: claimer });
@@ -128,14 +122,14 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
 
   it("should not be able to fish an active user", async () => {
     let error = await ubi.fish(claimer, { from: fisherman }).catch(e => e);
-    let fss = await goodDollar.balanceOf(fisherman);
+    await goodDollar.balanceOf(fisherman);
     expect(error.message).to.have.string("is not an inactive user");
   });
 
   it("should be able to fish inactive user", async () => {
     await increaseDays(MAX_INACTIVE_DAYS);
     let balance1 = await goodDollar.balanceOf(fisherman);
-    let tx = await ubi.fish(claimer, { from: fisherman });
+    await ubi.fish(claimer, { from: fisherman });
     let isFished = await ubi.fishedUsersAddresses(claimer);
     let balance2 = await goodDollar.balanceOf(fisherman);
     let dailyUbi = await ubi.dailyUbi();
@@ -150,12 +144,10 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     expect(error.message).to.have.string("already fished");
   });
 
-  it("should recieves a claim reward on claim after being fished", async () => {
+  it("should recieves a claim reward when call claim after being fished", async () => {
     let activeUsersCountBefore = await ubi.activeUsersCount();
     let claimerBalanceBefore = await goodDollar.balanceOf(claimer);
-    let isWhitelisted = await identity.isWhitelisted(claimer);
-    if (!isWhitelisted)
-      await identity.addWhitelisted(claimer);
+    await identity.authenticate(claimer);
     await ubi.claim({ from: claimer });
     let claimerBalanceAfter = await goodDollar.balanceOf(claimer);
     let activeUsersCountAfter = await ubi.activeUsersCount();
@@ -178,9 +170,7 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     let gdbalance = await goodDollar.balanceOf(founder);
     await goodDollar.transfer(firstClaimPool.address, (Math.floor(gdbalance.toNumber() / 2)).toString());
     await goodDollar.transfer(ubi.address, (Math.floor(gdbalance.toNumber() / 2)).toString());
-    let isWhitelisted = await identity.isWhitelisted(claimer);
-    if (!isWhitelisted)
-      await identity.addWhitelisted(claimer);
+    await identity.authenticate(claimer);
     let balanceBefore = await goodDollar.balanceOf(fisherman);
     await ubi.fishMulti([claimer], { from: fisherman });
     let balanceAfter = await goodDollar.balanceOf(fisherman);

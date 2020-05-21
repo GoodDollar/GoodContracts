@@ -25,31 +25,26 @@ contract("SimpleDAIStaking - `test` network e2e tests", ([founder, staker]) => {
     simpleStaking = await SimpleDAIStaking.at(STAKING_ADDRESS);
   });
 
-  it("should mint new dai", async () => {
-    let balance = await dai.balanceOf(founder);
-    expect(balance.toString()).to.be.equal("0");
+  it("should be able to stake dai", async () => {
     await dai.mint(staker, web3.utils.toWei("100", "ether"));
-    balance = await dai.balanceOf(staker);
-    expect(balance.toString()).to.be.at.equal(web3.utils.toWei("100", "ether"));
-  });
-
-  it("should mint new cdai", async () => {
-    await dai.approve(cDAI.address, web3.utils.toWei("100", "ether"), {
+    await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
       from: staker
     });
-    await cDAI.mint(web3.utils.toWei("100", "ether"), { from: staker });
-    let balance = await dai.balanceOf(staker);
-    expect(balance.toString()).to.be.equal("0");
-    let cdaiBalance = await cDAI.balanceOf(staker);
-    expect(cdaiBalance.toString()).to.be.equal(web3.utils.toWei("9900", "mwei"));
-  });
-
-  it("should redeem cdai", async () => {
-    let cdaiBalance = await cDAI.balanceOf(staker);
-    await cDAI.redeem(cdaiBalance.toString(), { from: staker });
-    let balance = await dai.balanceOf(staker);
-    expect(balance.toString()).to.be.equal(web3.utils.toWei("100", "ether"));
-    dai.transfer(dai.address, balance.toString(), { from: staker });
+    await simpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      })
+      .catch(console.log);
+    let balance = await simpleStaking.stakers(staker);
+    expect(balance.stakedDAI.toString()).to.be.equal(
+      web3.utils.toWei("100", "ether") //100 dai
+    );
+    let totalStaked = await simpleStaking.totalStaked();
+    expect(totalStaked.toString()).to.be.equal(web3.utils.toWei("100", "ether"));
+    let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
+    expect(stakedcDaiBalance.toString()).to.be.equal(
+      web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai because of the exchange rate dai <> cdai)
+    );
   });
 
   it("should be able to withdraw stake by staker", async () => {

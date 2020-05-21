@@ -184,7 +184,7 @@ contract(
       expect(tx.logs[0].event).to.be.equal("FundsTransferred");
     });
 
-    it("should create be able to stake dai", async () => {
+    it("should recieved gd tokens after the interest has transferred and toekns have minted by the reserve", async () => {
       const stakingMock = await SimpleDAIStakingMock.new(
         dai.address,
         cDAI.address,
@@ -204,9 +204,11 @@ contract(
         let stakingGDBalanceBefore = await goodDollar.balanceOf(stakingMock.address);
         await goodFundManager.transferInterest(stakingMock.address);
         let stakingGDBalanceAfter = await goodDollar.balanceOf(stakingMock.address);
+        // actual gdInterest - interest that the staking contract recieved since the
+        // donation in the mock is 20%
         expect(
           stakingGDBalanceAfter.sub(stakingGDBalanceBefore).toString()
-        ).to.be.equal("190329"); // interest that the staking contract recieved
+        ).to.be.equal("190329");
     });
 
     it("should set block interval by avatar", async () => {

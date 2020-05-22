@@ -200,6 +200,7 @@ contract(
           from: staker
         })
         .catch(console.log);
+        //this increases the exchangerate in our mock, so we can simulate interest
         await cDAI.exchangeRateCurrent();
         let stakingGDBalanceBefore = await goodDollar.balanceOf(stakingMock.address);
         await goodFundManager.transferInterest(stakingMock.address);

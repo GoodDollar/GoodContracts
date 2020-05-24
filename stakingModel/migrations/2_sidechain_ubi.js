@@ -48,24 +48,34 @@ module.exports = async function(deployer, network) {
 
   await ubi.transferOwnership(homedao.Avatar);
 
-  let transaction = await schemeRegistrar.proposeScheme(
-    homedao.Avatar,
-    ubi.address,
-    NULL_HASH,
-    "0x00000010",
-    NULL_HASH
-  );
+  const [p1, p2] = await Promise.all([
+    schemeRegistrar.proposeScheme(
+      homedao.Avatar,
+      ubi.address,
+      NULL_HASH,
+      "0x00000010",
+      NULL_HASH
+    ),
+    schemeRegistrar.proposeScheme(
+      homedao.Avatar,
+      ubiPool.address,
+      NULL_HASH,
+      "0x00000010",
+      NULL_HASH
+    )
+  ]);
 
-  let proposalId = transaction.logs[0].args._proposalId;
+  let proposalId1 = p1.logs[0].args._proposalId;
+  let proposalId2 = p2.logs[0].args._proposalId;
 
-  console.log("voting...", { proposalId });
-  const votingResults = await Promise.all(
-    founders.map(f => absoluteVote.vote(proposalId, 1, 0, f))
-  );
+  console.log("voting...");
+  await Promise.all([
+    ...founders.map(f => absoluteVote.vote(proposalId1, 1, 0, f)),
+    ...founders.map(f => absoluteVote.vote(proposalId2, 1, 0, f))
+  ]);
 
   console.log("starting...");
-
-  await ubi.start();
+  await Promise.all([ubi.start(), ubiPool.start()]);
 
   let releasedContracts = {
     ...networkAddresses,

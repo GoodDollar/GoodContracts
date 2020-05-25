@@ -90,19 +90,13 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
     await next_interval();
     await cDAI.exchangeRateCurrent();
     let recipientBefore = await goodDollar.balanceOf(ubiBridgeRecipient);
+    const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
     await goodFundManager.transferInterest(simpleStaking.address);
+    const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
     let recipientAfter = await goodDollar.balanceOf(ubiBridgeRecipient);
     let stakingGDBalance = await goodDollar.balanceOf(simpleStaking.address);
     expect(stakingGDBalance.toString()).to.be.equal("0"); //100% of interest is donated, so nothing is returned to staking
     expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal("1904085"); // total of interest + minted from expansion (received 100%)
-  });
-
-  it("should retains the price while collects interest", async () => {
-    await next_interval();
-    await cDAI.exchangeRateCurrent();
-    const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
-    await goodFundManager.transferInterest(simpleStaking.address);
-    const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
     expect(
       Math.floor(gdPriceAfter.toNumber() / 100).toString()
     ).to.be.equal(Math.floor(gdPriceBefore.toNumber() / 100).toString());

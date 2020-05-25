@@ -1,3 +1,4 @@
+const fse = require("fs-extra");
 const settings = require("./deploy-settings.json");
 const daoAddresses = require("../../releases/deployment.json");
 const UBIScheme = artifacts.require("./UBIScheme.sol");
@@ -20,7 +21,8 @@ module.exports = async function(deployer, network) {
   await deployer;
   const accounts = await web3.eth.getAccounts();
   const founders = [accounts[0]];
-  const previousDeployment = require("../releases/deployment.json");
+  const file = await fse.readFile("releases/deployment.json", "utf8");
+  const previousDeployment = JSON.parse(file);
   const networkAddresses = previousDeployment[network];
   const networkSettings = settings[network] || settings["default"];
   const homedao = daoAddresses[network];
@@ -83,6 +85,6 @@ module.exports = async function(deployer, network) {
     FirstClaimPool: ubiPool.address
   };
 
-  console.log("Writing deployment file...\n", { releasedContracts });
+  console.log("2_sidechain_ubi: Writing deployment file...\n", { releasedContracts });
   await releaser(releasedContracts, network);
 };

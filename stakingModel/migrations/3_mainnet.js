@@ -1,3 +1,4 @@
+const fse = require("fs-extra");
 const settings = require("./deploy-settings.json");
 const daoAddresses = require("../../releases/deployment.json");
 const StakingContract = artifacts.require("./SimpleDAIStaking.sol");
@@ -24,7 +25,8 @@ module.exports = async function(deployer, network) {
   await deployer;
   const accounts = await web3.eth.getAccounts();
   const founders = [accounts[0]];
-  const previousDeployment = require("../releases/deployment.json");
+  const file = await fse.readFile("releases/deployment.json", "utf8");
+  const previousDeployment = JSON.parse(file);
   const networkAddresses = previousDeployment[network];
 
   const homeNetwork = network.replace(/-?mainnet/, "");
@@ -161,6 +163,6 @@ module.exports = async function(deployer, network) {
     networkId: parseInt(deployer.network_id)
   };
 
-  console.log("Writing deployment file...\n", { releasedContracts });
+  console.log("3_mainnet: Writing deployment file...\n", { releasedContracts });
   await releaser(releasedContracts, network);
 };

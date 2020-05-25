@@ -14,6 +14,10 @@ contract("SimpleDAIStaking - `test` network e2e tests", ([founder, staker]) => {
   let simpleStaking;
 
   before(async function() {
+    let network = process.env.NETWORK;
+    if (network === "tdd") {
+      this.skip();
+    }
     const file = await fse.readFile("releases/deployment.json", "utf8");
     const deployment = await JSON.parse(file);
     const addresses = deployment[NETWORK];

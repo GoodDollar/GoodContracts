@@ -12,30 +12,56 @@ const FundManagerSetReserve = artifacts.require("FundManagerSetReserve");
 const fse = require("fs-extra");
 
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-export const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
+export const NULL_HASH =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
 const NETWORK = "test";
 
-async function proposeAndRegister(addr, registrar, proposalId, absoluteVote, avatarAddress, fnd) {
-  const transaction = await registrar.proposeScheme(avatarAddress, addr, NULL_HASH, "0x00000010", NULL_HASH);
+async function proposeAndRegister(
+  addr,
+  registrar,
+  proposalId,
+  absoluteVote,
+  avatarAddress,
+  fnd
+) {
+  const transaction = await registrar.proposeScheme(
+    avatarAddress,
+    addr,
+    NULL_HASH,
+    "0x00000010",
+    NULL_HASH
+  );
   proposalId = transaction.logs[0].args._proposalId;
   const voteResult = await absoluteVote.vote(proposalId, 1, 0, fnd);
-  return voteResult.logs.some(e => e.event === 'ExecuteProposal');
+  return voteResult.logs.some(e => e.event === "ExecuteProposal");
 }
 
 async function next_interval() {
   let blocks = 5760;
+  let ps = [];
   for (let i = 0; i < blocks; ++i)
-    await web3.currentProvider.send(
-      { jsonrpc: "2.0", method: "evm_mine", id: 123 },
-      () => {}
+    ps.push(
+      web3.currentProvider.send({ jsonrpc: "2.0", method: "evm_mine", id: 123 }, () => {})
     );
+  await Promise.all(ps);
 }
 
 contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
-  let dai, cDAI, simpleStaking, goodReserve, goodFundManager, goodDollar, marketMaker, contribution;
+  let dai,
+    cDAI,
+    simpleStaking,
+    goodReserve,
+    goodFundManager,
+    goodDollar,
+    marketMaker,
+    contribution;
   let ubiBridgeRecipient, avatarAddress, registrar, absoluteVote, proposalId, setReserve;
 
   before(async function() {
+    let network = process.env.NETWORK;
+    if (network === "tdd") {
+      this.skip();
+    }
     const staking_file = await fse.readFile("releases/deployment.json", "utf8");
     const dao_file = await fse.readFile("../releases/deployment.json", "utf8");
     const staking_deployment = await JSON.parse(staking_file);
@@ -54,29 +80,39 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
     registrar = await SchemeRegistrar.at(dao_addresses.SchemeRegistrar);
     absoluteVote = await AbsoluteVote.at(dao_addresses.AbsoluteVote);
     // schemes
-    setReserve = await FundManagerSetReserve.new(avatarAddress, goodFundManager.address, goodReserve.address);
+    setReserve = await FundManagerSetReserve.new(
+      avatarAddress,
+      goodFundManager.address,
+      goodReserve.address
+    );
 
     await dai.mint(staker, web3.utils.toWei("100", "ether"));
     await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
       from: staker
     });
     await simpleStaking
-    .stakeDAI(web3.utils.toWei("100", "ether"), {
-      from: staker
-    })
-    .catch(console.log);
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      })
+      .catch(console.log);
     await cDAI.exchangeRateCurrent();
     await cDAI.exchangeRateStored();
   });
 
   it("should be able to set the reserve", async () => {
-    const executeProposalEventExists = await proposeAndRegister(setReserve.address,
-      registrar, proposalId, absoluteVote, avatarAddress, founder);
+    const executeProposalEventExists = await proposeAndRegister(
+      setReserve.address,
+      registrar,
+      proposalId,
+      absoluteVote,
+      avatarAddress,
+      founder
+    );
     // Verifies that the ExecuteProposal event has been emitted
     expect(executeProposalEventExists).to.be.true;
     await setReserve.setReserve();
     const reserve1 = await goodFundManager.reserve();
-    expect(reserve1).to.be.equal(goodReserve.address)
+    expect(reserve1).to.be.equal(goodReserve.address);
   });
 
   it("should not mint UBI if not in the interval", async () => {
@@ -97,8 +133,8 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
     let stakingGDBalance = await goodDollar.balanceOf(simpleStaking.address);
     expect(stakingGDBalance.toString()).to.be.equal("0"); //100% of interest is donated, so nothing is returned to staking
     expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal("1904085"); // total of interest + minted from expansion (received 100%)
-    expect(
-      Math.floor(gdPriceAfter.toNumber() / 100).toString()
-    ).to.be.equal(Math.floor(gdPriceBefore.toNumber() / 100).toString());
+    expect(Math.floor(gdPriceAfter.toNumber() / 100).toString()).to.be.equal(
+      Math.floor(gdPriceBefore.toNumber() / 100).toString()
+    );
   });
 });

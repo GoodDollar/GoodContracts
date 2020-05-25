@@ -16,21 +16,46 @@ const fse = require("fs-extra");
 
 const BN = web3.utils.BN;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-export const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
+export const NULL_HASH =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
 const NETWORK = "test";
 
-async function proposeAndRegister(addr, registrar, proposalId, absoluteVote, avatarAddress, fnd) {
-  const transaction = await registrar.proposeScheme(avatarAddress, addr, NULL_HASH, "0x00000010", NULL_HASH);
+async function proposeAndRegister(
+  addr,
+  registrar,
+  proposalId,
+  absoluteVote,
+  avatarAddress,
+  fnd
+) {
+  const transaction = await registrar.proposeScheme(
+    avatarAddress,
+    addr,
+    NULL_HASH,
+    "0x00000010",
+    NULL_HASH
+  );
   proposalId = transaction.logs[0].args._proposalId;
   const voteResult = await absoluteVote.vote(proposalId, 1, 0, fnd);
-  return voteResult.logs.some(e => e.event === 'ExecuteProposal');
+  return voteResult.logs.some(e => e.event === "ExecuteProposal");
 }
 
 contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
   let dai, cDAI, goodReserve, goodDollar, marketMaker, contribution;
-  let avatarAddress, registrar, absoluteVote, proposalId, setMarketMaker, setBlockInterval, setContributionAddress, addMinter;
+  let avatarAddress,
+    registrar,
+    absoluteVote,
+    proposalId,
+    setMarketMaker,
+    setBlockInterval,
+    setContributionAddress,
+    addMinter;
 
   before(async function() {
+    let network = process.env.NETWORK;
+    if (network === "tdd") {
+      this.skip();
+    }
     const staking_file = await fse.readFile("releases/deployment.json", "utf8");
     const dao_file = await fse.readFile("../releases/deployment.json", "utf8");
     const staking_deployment = await JSON.parse(staking_file);
@@ -48,12 +73,31 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     absoluteVote = await AbsoluteVote.at(dao_addresses.AbsoluteVote);
 
     // schemes
-    setMarketMaker = await SetMarketMaker.new(avatarAddress, goodReserve.address, marketMaker.address);
-    setBlockInterval = await SetBlockInterval.new(avatarAddress, goodReserve.address, 5759);
-    setContributionAddress = await SetContributionAddress.new(avatarAddress, goodReserve.address, contribution.address);
+    setMarketMaker = await SetMarketMaker.new(
+      avatarAddress,
+      goodReserve.address,
+      marketMaker.address
+    );
+    setBlockInterval = await SetBlockInterval.new(
+      avatarAddress,
+      goodReserve.address,
+      5759
+    );
+    setContributionAddress = await SetContributionAddress.new(
+      avatarAddress,
+      goodReserve.address,
+      contribution.address
+    );
     addMinter = await AddMinter.new(avatarAddress, goodReserve.address);
 
-    await proposeAndRegister(addMinter.address, registrar, proposalId, absoluteVote, avatarAddress, founder);
+    await proposeAndRegister(
+      addMinter.address,
+      registrar,
+      proposalId,
+      absoluteVote,
+      avatarAddress,
+      founder
+    );
     await addMinter.addMinter();
   });
 
@@ -73,8 +117,14 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
   });
 
   it("should be able to set the marketmaker", async () => {
-    const executeProposalEventExists = await proposeAndRegister(setMarketMaker.address,
-      registrar, proposalId, absoluteVote, avatarAddress, founder);
+    const executeProposalEventExists = await proposeAndRegister(
+      setMarketMaker.address,
+      registrar,
+      proposalId,
+      absoluteVote,
+      avatarAddress,
+      founder
+    );
     // Verifies that the ExecuteProposal event has been emitted
     expect(executeProposalEventExists).to.be.true;
     await setMarketMaker.setMarketMaker();
@@ -83,18 +133,30 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
   });
 
   it("should be able to set the blockInterval", async () => {
-    const executeProposalEventExists = await proposeAndRegister(setBlockInterval.address,
-      registrar, proposalId, absoluteVote, avatarAddress, founder);
+    const executeProposalEventExists = await proposeAndRegister(
+      setBlockInterval.address,
+      registrar,
+      proposalId,
+      absoluteVote,
+      avatarAddress,
+      founder
+    );
     // Verifies that the ExecuteProposal event has been emitted
     expect(executeProposalEventExists).to.be.true;
     await setBlockInterval.setBlockInterval();
     const blockInterval = await goodReserve.blockInterval();
-    expect(blockInterval.toString()).to.be.equal('5759');
+    expect(blockInterval.toString()).to.be.equal("5759");
   });
 
   it("should be able to set the contribution address", async () => {
-    const executeProposalEventExists = await proposeAndRegister(setContributionAddress.address,
-      registrar, proposalId, absoluteVote, avatarAddress, founder);
+    const executeProposalEventExists = await proposeAndRegister(
+      setContributionAddress.address,
+      registrar,
+      proposalId,
+      absoluteVote,
+      avatarAddress,
+      founder
+    );
     // Verifies that the ExecuteProposal event has been emitted
     expect(executeProposalEventExists).to.be.true;
     await setContributionAddress.setContributionAddress();
@@ -157,9 +219,9 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     await goodReserve.buy(cDAI.address, amount, 0);
     reserveToken = await marketMaker.reserveTokens(cDAI.address);
     const priceAfter = await goodReserve.currentPrice(cDAI.address);
-    expect(
-      Math.floor(priceAfter.toNumber() / 100).toString()
-    ).to.be.equal(Math.floor(priceBefore.toNumber() / 100).toString());
+    expect(Math.floor(priceAfter.toNumber() / 100).toString()).to.be.equal(
+      Math.floor(priceBefore.toNumber() / 100).toString()
+    );
   });
 
   it("should be able to sell gd to cDAI and reserve should be correct", async () => {
@@ -179,7 +241,9 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     // the contribution ratio is 20%
     let expected = reserveBalance * (1 - (1 - amount / supply));
     expected = Math.floor(expected - 0.2 * expected);
-    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal(expected.toString());
+    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal(
+      expected.toString()
+    );
     expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal(
       expected.toString()
     );
@@ -193,8 +257,8 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     await goodReserve.sell(cDAI.address, amount, 0);
     reserveToken = await marketMaker.reserveTokens(cDAI.address);
     const priceAfter = await goodReserve.currentPrice(cDAI.address);
-    expect(
-      Math.floor(priceAfter.toNumber() / 100).toString()
-    ).to.be.equal(Math.floor(priceBefore.toNumber() / 100).toString());
+    expect(Math.floor(priceAfter.toNumber() / 100).toString()).to.be.equal(
+      Math.floor(priceBefore.toNumber() / 100).toString()
+    );
   });
 });

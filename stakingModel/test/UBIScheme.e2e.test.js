@@ -17,20 +17,34 @@ const fse = require("fs-extra");
 
 const BN = web3.utils.BN;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-export const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
+export const NULL_HASH =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
 const NETWORK = "test";
 const MAX_INACTIVE_DAYS = 15;
 
-async function proposeAndRegister(addr, registrar, proposalId, absoluteVote, avatarAddress, fnd) {
-  const transaction = await registrar.proposeScheme(avatarAddress, addr, NULL_HASH, "0x00000010", NULL_HASH);
+async function proposeAndRegister(
+  addr,
+  registrar,
+  proposalId,
+  absoluteVote,
+  avatarAddress,
+  fnd
+) {
+  const transaction = await registrar.proposeScheme(
+    avatarAddress,
+    addr,
+    NULL_HASH,
+    "0x00000010",
+    NULL_HASH
+  );
   proposalId = transaction.logs[0].args._proposalId;
   const voteResult = await absoluteVote.vote(proposalId, 1, 0, fnd);
-  return voteResult.logs.some(e => e.event === 'ExecuteProposal');
+  return voteResult.logs.some(e => e.event === "ExecuteProposal");
 }
 
-async function increaseDays(days=1) {
+async function increaseDays(days = 1) {
   const id = await Date.now();
-  const duration = days*86400;
+  const duration = days * 86400;
   await web3.currentProvider.send(
     {
       jsonrpc: "2.0",
@@ -48,7 +62,7 @@ async function increaseDays(days=1) {
     },
     () => {}
   );
-};
+}
 
 async function next_interval() {
   let blocks = 5760;
@@ -60,10 +74,23 @@ async function next_interval() {
 }
 
 contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
-  let dai, cDAI, simpleStaking, goodReserve, goodFundManager, goodDollar, controller, ubi, firstClaimPool, identity;
+  let dai,
+    cDAI,
+    simpleStaking,
+    goodReserve,
+    goodFundManager,
+    goodDollar,
+    controller,
+    ubi,
+    firstClaimPool,
+    identity;
   let avatarAddress, registrar, absoluteVote, proposalId, setReserve, addMinter;
 
   before(async function() {
+    let network = process.env.NETWORK;
+    if (network === "tdd") {
+      this.skip();
+    }
     const staking_file = await fse.readFile("releases/deployment.json", "utf8");
     const dao_file = await fse.readFile("../releases/deployment.json", "utf8");
     const staking_deployment = await JSON.parse(staking_file);
@@ -86,9 +113,20 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     await identity.addWhitelisted(claimer);
     // schemes
     addMinter = await AddMinter.new(avatarAddress, goodReserve.address);
-    setReserve = await FundManagerSetReserve.new(avatarAddress, goodFundManager.address, goodReserve.address);
+    setReserve = await FundManagerSetReserve.new(
+      avatarAddress,
+      goodFundManager.address,
+      goodReserve.address
+    );
     // sets the reserve in the fundmanager
-    await proposeAndRegister(setReserve.address, registrar, proposalId, absoluteVote, avatarAddress, founder);
+    await proposeAndRegister(
+      setReserve.address,
+      registrar,
+      proposalId,
+      absoluteVote,
+      avatarAddress,
+      founder
+    );
     await setReserve.setReserve();
     let amount = 1e8;
     await dai.mint(web3.utils.toWei("1000", "ether"));
@@ -127,9 +165,7 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     let balance2 = await goodDollar.balanceOf(fisherman);
     let dailyUbi = await ubi.dailyUbi();
     expect(isFished).to.be.true;
-    expect(
-      balance2.toNumber() - balance1.toNumber()
-    ).to.be.equal(dailyUbi.toNumber());
+    expect(balance2.toNumber() - balance1.toNumber()).to.be.equal(dailyUbi.toNumber());
   });
 
   it("should not be able to fish the same user twice", async () => {
@@ -147,9 +183,9 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     expect(
       activeUsersCountAfter.toNumber() - activeUsersCountBefore.toNumber()
     ).to.be.equal(1);
-    expect(
-      claimerBalanceAfter.toNumber() - claimerBalanceBefore.toNumber()
-    ).to.be.equal(100);
+    expect(claimerBalanceAfter.toNumber() - claimerBalanceBefore.toNumber()).to.be.equal(
+      100
+    );
   });
 
   it("should be able to fish by calling fishMulti", async () => {
@@ -161,15 +197,21 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     await cDAI.approve(goodReserve.address, amount);
     await goodReserve.buy(cDAI.address, amount, 0);
     let gdbalance = await goodDollar.balanceOf(founder);
-    await goodDollar.transfer(firstClaimPool.address, (Math.floor(gdbalance.toNumber() / 2)).toString());
-    await goodDollar.transfer(ubi.address, (Math.floor(gdbalance.toNumber() / 2)).toString());
+    await goodDollar.transfer(
+      firstClaimPool.address,
+      Math.floor(gdbalance.toNumber() / 2).toString()
+    );
+    await goodDollar.transfer(
+      ubi.address,
+      Math.floor(gdbalance.toNumber() / 2).toString()
+    );
     await identity.authenticate(claimer);
     let balanceBefore = await goodDollar.balanceOf(fisherman);
     await ubi.fishMulti([claimer], { from: fisherman });
     let balanceAfter = await goodDollar.balanceOf(fisherman);
     let dailyUbi = await ubi.dailyUbi();
-    expect(
-      balanceAfter.toNumber() - balanceBefore.toNumber()
-    ).to.be.equal(dailyUbi.toNumber());
+    expect(balanceAfter.toNumber() - balanceBefore.toNumber()).to.be.equal(
+      dailyUbi.toNumber()
+    );
   });
 });

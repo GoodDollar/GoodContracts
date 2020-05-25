@@ -8,6 +8,7 @@ import "../../contracts/mocks/AvatarMock.sol";
 import "../../contracts/identity/Identity.sol";
 import "../../contracts/dao/schemes/FeeFormula.sol";
 import "../../contracts/dao/DaoCreator.sol";
+import "../../contracts/dao/schemes/AddMinter.sol";
 
 
 contract Imports {}

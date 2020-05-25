@@ -115,7 +115,7 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      */
     function isWhitelisted(address account) public view returns (bool) {
         uint256 daysSinceAuthentication = (now.sub(dateAuthenticated[account])) / 1 days;
-        return daysSinceAuthentication <= authenticationPeriod && whitelist.has(account);
+        return (daysSinceAuthentication <= authenticationPeriod) && whitelist.has(account);
     }
 
     /* @dev Function that gives the date the given user was added

@@ -106,6 +106,12 @@ module.exports = async function(deployer, network) {
     networkSettings.blockInterval
   );
   const [stakingContract, reserve] = await Promise.all([stakingContractP, reserveP]);
+  await marketmaker.initializeToken(
+    cdaiAddress,
+    "100", //1gd
+    "10000", //0.0001 cDai
+    "1000000" //100% rr
+  );
   await marketmaker.transferOwnership(reserve.address);
 
   console.log("proposing reserve and fundmanager to DAO");

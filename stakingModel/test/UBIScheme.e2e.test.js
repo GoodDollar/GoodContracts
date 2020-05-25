@@ -90,13 +90,6 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     // sets the reserve in the fundmanager
     await proposeAndRegister(setReserve.address, registrar, proposalId, absoluteVote, avatarAddress, founder);
     await setReserve.setReserve();
-    // validates that the reserve is a minter
-    let isMinter = await goodDollar.isMinter(goodReserve.address);
-    if (!isMinter) {
-      await proposeAndRegister(addMinter.address, 
-        registrar, proposalId, absoluteVote, avatarAddress, founder);
-      await addMinter.addMinter();
-    }
     let amount = 1e8;
     await dai.mint(web3.utils.toWei("1000", "ether"));
     dai.approve(cDAI.address, web3.utils.toWei("1000", "ether"));

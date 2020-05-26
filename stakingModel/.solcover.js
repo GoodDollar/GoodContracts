@@ -27,5 +27,8 @@ module.exports = {
     "mocks/UBISchemeMock.sol",
     "mocks/StakingMock.sol",
     "BancorFormula.sol"
-  ]
+  ],
+  mocha: {
+    enableTimeouts: false
+  }
 };

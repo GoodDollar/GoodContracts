@@ -26,9 +26,18 @@ module.exports = {
     "mocks/FirstClaimPoolMock.sol",
     "mocks/UBISchemeMock.sol",
     "mocks/StakingMock.sol",
-    "BancorFormula.sol"
+    "mocks/cDAILowWorthMock.sol",
+    "mocks/cDAINonMintableMock.sol",
+    "BancorFormula.sol",
+    "Imports.sol",
+    "dao/schemes/EndContract.sol",
+    "dao/schemes/FundManagerSetReserve.sol",
+    "dao/schemes/SetBlockInterval.sol",
+    "dao/schemes/SetContributionAddress.sol",
+    "dao/schemes/SetMarketMaker.sol"
   ],
   mocha: {
-    enableTimeouts: false
+    enableTimeouts: false,
+    timeout: 3600000
   }
 };

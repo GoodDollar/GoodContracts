@@ -2,7 +2,7 @@ const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
-const cDAINonMitnableMock = artifacts.require("cDAINonMitnableMock");
+const cDAINonMintableMock = artifacts.require("cDAINonMintableMock");
 const cDAILowWorthMock = artifacts.require("cDAILowWorthMock");
 
 const BN = web3.utils.BN;
@@ -132,10 +132,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await dai.approve(simpleStaking1.address, weiAmount, {
       from: staker
     });
-    await simpleStaking1
-      .stakeDAI(weiAmount, {
-        from: staker
-      });
+    await simpleStaking1.stakeDAI(weiAmount, {
+      from: staker
+    });
     let balanceBefore = await simpleStaking1.stakers(staker); // user staked balance in GoodStaking
     let stakerDaiBalanceBefore = await dai.balanceOf(staker); // staker DAI balance
     await simpleStaking1.withdrawStake({ from: staker });
@@ -161,12 +160,11 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await dai.approve(simpleStaking1.address, weiAmount, {
       from: staker
     });
-    await simpleStaking1
-      .stakeDAI(weiAmount, {
-        from: staker
-      });
+    await simpleStaking1.stakeDAI(weiAmount, {
+      from: staker
+    });
     let gains = await simpleStaking1.currentUBIInterest();
-    
+
     expect(gains["0"].toString()).to.be.equal("0"); // cdaiGains
     expect(gains["1"].toString()).to.be.equal("0"); // daiGains
     expect(gains["2"].toString()).to.be.equal("0"); // precisionLossDai
@@ -395,7 +393,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   });
 
   it("should not be able to stake if the getting an error while minting new cdai", async () => {
-    let cDAI1 = await cDAINonMitnableMock.new(dai.address);
+    let cDAI1 = await cDAINonMintableMock.new(dai.address);
     dai.mint(cDAI1.address, web3.utils.toWei("100000000", "ether"));
     let simpleStaking1 = await SimpleDAIStaking.new(
       dai.address,

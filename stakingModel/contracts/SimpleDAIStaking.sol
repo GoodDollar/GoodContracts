@@ -63,10 +63,12 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         _;
     }
 
-    constructor(address _dai, address _cDai, address _fundManager, uint256 _blockInterval)
-        public
-        SchemeGuard(Avatar(address(0)))
-    {
+    constructor(
+        address _dai,
+        address _cDai,
+        address _fundManager,
+        uint256 _blockInterval
+    ) public SchemeGuard(Avatar(address(0))) {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
         blockInterval = _blockInterval;
@@ -133,10 +135,18 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         return daiBalance;
     }
 
-    function currentUBIInterest() public view returns (uint256, uint256, uint256) {
+    function currentUBIInterest()
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         uint256 er = cDai.exchangeRateStored();
         uint256 daiWorth = currentDAIWorth();
-        if (daiWorth < totalStaked) {
+        if (daiWorth <= totalStaked) {
             return (0, 0, 0);
         }
         uint256 daiGains = daiWorth.sub(totalStaked);
@@ -157,7 +167,12 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     function collectUBIInterest(address recipient)
         public
         onlyFundManager
-        returns (uint256, uint256, uint256, uint32)
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint32
+        )
     {
         require(recipient != address(this), "Recipient cannot be the staking contract"); // otherwise fund manager has to wait for the next interval
 

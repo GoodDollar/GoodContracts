@@ -66,10 +66,12 @@ async function increaseDays(days = 1) {
 
 async function next_interval() {
   let blocks = 5760;
-  let batch = web3.createBatch();
+  let ps = [];
   for (let i = 0; i < blocks; ++i)
-    batch.add(web3.currentProvider.send({ jsonrpc: "2.0", method: "evm_mine", id: 123 }, () => {}));
-  batch.execute();
+    ps.push(
+      web3.currentProvider.send({ jsonrpc: "2.0", method: "evm_mine", id: 123 }, () => {})
+    );
+  await Promise.all(ps);
 }
 
 contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {

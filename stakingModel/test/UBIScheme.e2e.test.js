@@ -12,6 +12,7 @@ const FundManagerSetReserve = artifacts.require("FundManagerSetReserve");
 const UBI = artifacts.require("UBIScheme");
 const FirstClaimPool = artifacts.require("FirstClaimPoolMock");
 const AddMinter = artifacts.require("AddMinter");
+const { increase_days, next_interval } = require("./helpers");
 
 const fse = require("fs-extra");
 
@@ -40,38 +41,6 @@ async function proposeAndRegister(
   proposalId = transaction.logs[0].args._proposalId;
   const voteResult = await absoluteVote.vote(proposalId, 1, 0, fnd);
   return voteResult.logs.some(e => e.event === "ExecuteProposal");
-}
-
-async function increaseDays(days = 1) {
-  const id = await Date.now();
-  const duration = days * 86400;
-  await web3.currentProvider.send(
-    {
-      jsonrpc: "2.0",
-      method: "evm_increaseTime",
-      params: [duration],
-      id: id + 1
-    },
-    () => {}
-  );
-  await web3.currentProvider.send(
-    {
-      jsonrpc: "2.0",
-      method: "evm_mine",
-      id: id + 1
-    },
-    () => {}
-  );
-}
-
-async function next_interval() {
-  let blocks = 5760;
-  let ps = [];
-  for (let i = 0; i < blocks; ++i)
-    ps.push(
-      web3.currentProvider.send({ jsonrpc: "2.0", method: "evm_mine", id: 123 }, () => {})
-    );
-  await Promise.all(ps);
 }
 
 contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
@@ -143,7 +112,7 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
   });
 
   it("should award a new user with the award amount on first time execute claim", async () => {
-    await increaseDays();
+    await increase_days();
     await identity.authenticate(claimer);
     let claimerBalance1 = await goodDollar.balanceOf(claimer);
     let ce = await ubi.checkEntitlement({ from: claimer });
@@ -159,7 +128,7 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
   });
 
   it("should be able to fish inactive user", async () => {
-    await increaseDays(MAX_INACTIVE_DAYS);
+    await increase_days(MAX_INACTIVE_DAYS);
     let balance1 = await goodDollar.balanceOf(fisherman);
     await ubi.fish(claimer, { from: fisherman });
     let isFished = await ubi.fishedUsersAddresses(claimer);
@@ -190,7 +159,7 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
   });
 
   it("should be able to fish by calling fishMulti", async () => {
-    await increaseDays(MAX_INACTIVE_DAYS);
+    await increase_days(MAX_INACTIVE_DAYS);
     let amount = 1e8;
     await dai.mint(web3.utils.toWei("1000", "ether"));
     dai.approve(cDAI.address, web3.utils.toWei("1000", "ether"));

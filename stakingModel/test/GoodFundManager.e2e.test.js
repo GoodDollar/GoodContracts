@@ -8,6 +8,7 @@ const GoodFundsManager = artifacts.require("GoodFundManager");
 const SchemeRegistrar = artifacts.require("SchemeRegistrar");
 const AbsoluteVote = artifacts.require("AbsoluteVote");
 const FundManagerSetReserve = artifacts.require("FundManagerSetReserve");
+const { next_interval } = require("./helpers");
 
 const fse = require("fs-extra");
 
@@ -34,16 +35,6 @@ async function proposeAndRegister(
   proposalId = transaction.logs[0].args._proposalId;
   const voteResult = await absoluteVote.vote(proposalId, 1, 0, fnd);
   return voteResult.logs.some(e => e.event === "ExecuteProposal");
-}
-
-async function next_interval() {
-  let blocks = 5760;
-  let ps = [];
-  for (let i = 0; i < blocks; ++i)
-    ps.push(
-      web3.currentProvider.send({ jsonrpc: "2.0", method: "evm_mine", id: 123 }, () => {})
-    );
-  await Promise.all(ps);
 }
 
 contract("GoodFundManager - network e2e tests", ([founder, staker]) => {

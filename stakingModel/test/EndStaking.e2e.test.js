@@ -14,6 +14,7 @@ const UBI = artifacts.require("UBIScheme");
 const FirstClaimPool = artifacts.require("FirstClaimPool");
 const AddMinter = artifacts.require("AddMinter");
 const EndContract = artifacts.require("EndContract");
+const { increase_days } = require("./helpers");
 
 const fse = require("fs-extra");
 
@@ -42,28 +43,6 @@ async function proposeAndRegister(
   proposalId = transaction.logs[0].args._proposalId;
   const voteResult = await absoluteVote.vote(proposalId, 1, 0, fnd);
   return voteResult.logs.some(e => e.event === "ExecuteProposal");
-}
-
-async function increaseDays(days = 1) {
-  const id = await Date.now();
-  const duration = days * 86400;
-  await web3.currentProvider.send(
-    {
-      jsonrpc: "2.0",
-      method: "evm_increaseTime",
-      params: [duration],
-      id: id + 1
-    },
-    () => {}
-  );
-  await web3.currentProvider.send(
-    {
-      jsonrpc: "2.0",
-      method: "evm_mine",
-      id: id + 1
-    },
-    () => {}
-  );
 }
 
 contract(
@@ -277,7 +256,7 @@ contract(
     });
 
     it("should be able to make the ubi contract inactive and the avatar should recieved the funds from the contract", async () => {
-      await increaseDays(365); // the period has been ended before executing `end`
+      await increase_days(365); // the period has been ended before executing `end`
       let contractbalance = await goodDollar.balanceOf(ubi.address);
       let avatarbalance1 = await goodDollar.balanceOf(avatarAddress);
       await proposeAndRegister(

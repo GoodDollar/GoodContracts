@@ -8,7 +8,7 @@ const Formula = artifacts.require("FeeFormula");
 const avatarMock = artifacts.require("AvatarMock");
 const UBIMock = artifacts.require("UBISchemeMock");
 const ControllerMock = artifacts.require("ControllerMock");
-const FirstClaimPool = artifacts.require("FirstClaimPoolMock");
+const FirstClaimPool = artifacts.require("FirstClaimPool");
 const BN = web3.utils.BN;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -437,6 +437,63 @@ contract(
       expect(res).to.be.true;
     });
 
+    it("should return the reward value for entitlement user", async () => {
+      await increaseTime(ONE_DAY);
+      await goodDollar.mint(ubi.address, "10000000");
+      let amount = await ubi.checkEntitlement({ from: claimer2 });
+      let balance = await goodDollar.balanceOf(ubi.address);
+      let activeUsersCount = await ubi.activeUsersCount();
+      expect(amount.toString()).to.be.equal(balance.div(activeUsersCount).toString());
+    });
+
+    it("should set the ubi claim amount by avatar", async () => {
+      let encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "setClaimAmount",
+          type: "function",
+          inputs: [
+            {
+              type: "uint256",
+              name: "_claimAmount"
+            }
+          ]
+        },
+        [200]
+      );
+      await controller.genericCall(
+        firstClaimPool.address,
+        encodedCall,
+        avatar.address,
+        0
+      );
+      const claimAmount = await firstClaimPool.claimAmount();
+      expect(claimAmount.toString()).to.be.equal("200");
+    });
+
+    it("should set if withdraw from the dao or not", async () => {
+      let encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "setShouldWithdrawFromDAO",
+          type: "function",
+          inputs: [
+            {
+              type: "bool",
+              name: "_shouldWithdraw"
+            }
+          ]
+        },
+        [true]
+      );
+      await controller.genericCall(
+        ubi.address,
+        encodedCall,
+        avatar.address,
+        0
+      );
+      const shouldWithdrawFromDAO = await ubi.shouldWithdrawFromDAO();
+      expect(shouldWithdrawFromDAO).to.be.equal(true);
+    });
+
     it("should not be able to destroy the ubi contract if not avatar", async () => {
       await increaseTime(10 * ONE_DAY);
       let avatarBalanceBefore = await goodDollar.balanceOf(avatar.address);
@@ -472,6 +529,27 @@ contract(
         contractBalanceBefore.toString()
       );
       expect(contractBalanceAfter.toString()).to.be.equal("0");
+      expect(code.toString()).to.be.equal("0x");
+    });
+
+    it("should be able to destroy an empty pool contract", async () => {
+      let firstClaimPool1 = await FirstClaimPool.new(100, avatar.address, identity.address);
+      await firstClaimPool1.start();
+      let encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "end",
+          type: "function",
+          inputs: []
+        },
+        []
+      );
+      await controller.genericCall(
+        firstClaimPool1.address,
+        encodedCall,
+        avatar.address,
+        0
+      );
+      let code = await web3.eth.getCode(firstClaimPool1.address);
       expect(code.toString()).to.be.equal("0x");
     });
 

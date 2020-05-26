@@ -38,12 +38,10 @@ async function proposeAndRegister(
 
 async function next_interval() {
   let blocks = 5760;
-  let ps = [];
+  let batch = web3.createBatch();
   for (let i = 0; i < blocks; ++i)
-    ps.push(
-      web3.currentProvider.send({ jsonrpc: "2.0", method: "evm_mine", id: 123 }, () => {})
-    );
-  await Promise.all(ps);
+    batch.add(web3.currentProvider.send({ jsonrpc: "2.0", method: "evm_mine", id: 123 }, () => {}));
+  batch.execute();
 }
 
 contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
@@ -136,5 +134,16 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
     expect(Math.floor(gdPriceAfter.toNumber() / 100).toString()).to.be.equal(
       Math.floor(gdPriceBefore.toNumber() / 100).toString()
     );
+  });
+
+  it("should retains the price while collects interest", async () => {
+    await next_interval();
+    await cDAI.exchangeRateCurrent();
+    const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
+    await goodFundManager.transferInterest(simpleStaking.address);
+    const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
+    expect(
+      Math.floor(gdPriceAfter.toNumber() / 100).toString()
+    ).to.be.equal(Math.floor(gdPriceBefore.toNumber() / 100).toString());
   });
 });

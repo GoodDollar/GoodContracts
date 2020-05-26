@@ -2,6 +2,8 @@ const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
+const cDAINonMitnableMock = artifacts.require("cDAINonMitnableMock");
+const cDAILowWorthMock = artifacts.require("cDAILowWorthMock");
 
 const BN = web3.utils.BN;
 export const BLOCK_INTERVAL = 5;
@@ -114,6 +116,60 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     expect(transaction.logs[0].args.daiValue.toString()).to.be.equal(
       (stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString()
     );
+  });
+
+  it("should be able to withdraw stake by staker when the worth is lower than the actual staked", async () => {
+    let cDAI1 = await cDAILowWorthMock.new(dai.address);
+    dai.mint(cDAI1.address, web3.utils.toWei("100000000", "ether"));
+    let simpleStaking1 = await SimpleDAIStaking.new(
+      dai.address,
+      cDAI1.address,
+      founder,
+      BLOCK_INTERVAL
+    );
+    const weiAmount = web3.utils.toWei("1000", "ether");
+    await dai.mint(staker, weiAmount);
+    await dai.approve(simpleStaking1.address, weiAmount, {
+      from: staker
+    });
+    await simpleStaking1
+      .stakeDAI(weiAmount, {
+        from: staker
+      });
+    let balanceBefore = await simpleStaking1.stakers(staker); // user staked balance in GoodStaking
+    let stakerDaiBalanceBefore = await dai.balanceOf(staker); // staker DAI balance
+    await simpleStaking1.withdrawStake({ from: staker });
+    let balanceAfter = await simpleStaking.stakers(staker); // user staked balance in GoodStaking
+    let stakerDaiBalanceAfter = await dai.balanceOf(staker); // staker DAI balance
+    expect(balanceAfter.stakedDAI.toString()).to.be.equal("0");
+    expect(balanceBefore.stakedDAI.div(new BN(2)).toString()).to.be.equal(
+      (stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString()
+    );
+  });
+
+  it("should return 0s for gains when the current cdai worth is lower than the inital worth", async () => {
+    let cDAI1 = await cDAILowWorthMock.new(dai.address);
+    dai.mint(cDAI1.address, web3.utils.toWei("100000000", "ether"));
+    let simpleStaking1 = await SimpleDAIStaking.new(
+      dai.address,
+      cDAI1.address,
+      founder,
+      BLOCK_INTERVAL
+    );
+    const weiAmount = web3.utils.toWei("1000", "ether");
+    await dai.mint(staker, weiAmount);
+    await dai.approve(simpleStaking1.address, weiAmount, {
+      from: staker
+    });
+    await simpleStaking1
+      .stakeDAI(weiAmount, {
+        from: staker
+      });
+    let gains = await simpleStaking1.currentUBIInterest();
+    
+    expect(gains["0"].toString()).to.be.equal("0"); // cdaiGains
+    expect(gains["1"].toString()).to.be.equal("0"); // daiGains
+    expect(gains["2"].toString()).to.be.equal("0"); // precisionLossDai
   });
 
   it("should convert user staked DAI to the equal value of cDAI owned by the staking contract", async () => {
@@ -338,6 +394,28 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     });
   });
 
+  it("should not be able to stake if the getting an error while minting new cdai", async () => {
+    let cDAI1 = await cDAINonMitnableMock.new(dai.address);
+    dai.mint(cDAI1.address, web3.utils.toWei("100000000", "ether"));
+    let simpleStaking1 = await SimpleDAIStaking.new(
+      dai.address,
+      cDAI1.address,
+      founder,
+      BLOCK_INTERVAL
+    );
+    const weiAmount = web3.utils.toWei("1000", "ether");
+    await dai.mint(staker, weiAmount);
+    await dai.approve(simpleStaking1.address, weiAmount, {
+      from: staker
+    });
+    const error = await simpleStaking1
+      .stakeDAI(weiAmount, {
+        from: staker
+      })
+      .catch(e => e);
+    expect(error.message).to.have.string("Minting cDai failed, funds returned");
+  });
+
   it("should mock cdai updated exchange rate", async () => {
     await cDAI.exchangeRateCurrent();
     let rate = await cDAI.exchangeRateStored();
@@ -363,6 +441,11 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await simpleStaking.withdrawStake({
       from: staker
     });
+  });
+
+  it("should return for canCollect", async () => {
+    let canCollect = await simpleStaking.canCollect();
+    expect(canCollect).to.be.true;
   });
 
   it("should withdraw interest to owner", async () => {

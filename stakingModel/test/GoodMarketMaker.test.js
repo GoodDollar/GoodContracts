@@ -38,6 +38,31 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
     );
   });
 
+  it("should initialize a token with 0 ratio and the ratio should calculate as 100% by default", async () => {
+    let dai1 = await DAIMock.new();
+    await marketMaker.initializeToken(
+      dai1.address,
+      "100",
+      "10000",
+      "0" //0% rr
+    );
+    const newreserveratio = await marketMaker.calculateNewReserveRatio(dai1.address);
+    expect(newreserveratio.toString()).to.be.equal("999388"); // result of initial expansion rate * 100% ratio
+  });
+
+  it("should initialize a token with 0 ratio and the ratio should be updated as it was 100% by default", async () => {
+    let dai1 = await DAIMock.new();
+    await marketMaker.initializeToken(
+      dai1.address,
+      "100",
+      "10000",
+      "0" //0% rr
+    );
+    await marketMaker.expandReserveRatio(dai1.address);
+    const rr = await marketMaker.reserveTokens(dai1.address);
+    expect(rr["1"].toString()).to.be.equal("999388"); // result of initial expansion rate * 100% ratio
+  });
+
   it("should initialize token with price", async () => {
     const expansion = await marketMaker.initializeToken(
       cDAI.address,

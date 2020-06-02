@@ -11,13 +11,13 @@ const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 const GoodDollar = artifacts.require("./GoodDollar.sol");
 
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
-const DAI_FAUCET_ADDRESS = process.env.DAI_FAUCET_ADDRESS;
 
 module.exports = async function(deployer, network) {
   if (network.indexOf("fuse") < 0 && network.indexOf("staging") < 0) {
     return;
   }  
   await deployer;
+  const networkSettings = settings[network] || settings["default"];
   const accounts = await web3.eth.getAccounts();
   const staking_file = await fse.readFile("releases/deployment.json", "utf8");
   const dao_file = await fse.readFile("../releases/deployment.json", "utf8");
@@ -50,7 +50,7 @@ module.exports = async function(deployer, network) {
     await goodDollar.mint(accounts[0], "10000000");
   }
   else {
-    const faucet = await DaiFaucet.at(DAI_FAUCET_ADDRESS);
+    const faucet = await DaiFaucet.at(networkSettings.daiFaucetAddress);
     const dai = await DAIMock.at(staing_mainnet_addresses.DAI);
     const cDAI = await cDAIMock.at(staing_mainnet_addresses.cDAI);
     const simpleStaking = await StakingContract.at(staing_mainnet_addresses.DAIStaking);
@@ -79,11 +79,11 @@ module.exports = async function(deployer, network) {
 
     const preloadStaking = cDAI.transfer(
       simpleStaking.address, 
-      (floor(totalMinted.div(2))).toString());
+      (Math.floor(totalMinted.toNumber() / 2)).toString());
 
     const approveCdai = cDAI.approve(
       goodReserve.address,
-      (floor(totalMinted.div(2))).toString());
+      (Math.floor(totalMinted.toNumber() / 2)).toString());
     
     console.log("preload staking contract and increase the cdai allowance to preload the reserve contract...");
     await Promise.all([preloadStaking, approveCdai]);

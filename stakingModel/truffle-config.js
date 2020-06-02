@@ -84,7 +84,7 @@ module.exports = {
           10
         );
       },
-      gas: 8000000,
+      gas: 800000,
       gasPrice: 40000000000,
       network_id: 3,
       skipDryRun: true
@@ -120,6 +120,36 @@ module.exports = {
       gas: 8500000,
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei
+    },
+    "fuse-mainnet": {
+      provider: function() {
+        return new HDWalletProvider(
+          mnemonic,
+          "https://ropsten.infura.io/v3/" + infura_api,
+          0,
+          10
+        );
+      },
+      gas: 3000000,
+      timeoutBlocks: 4000,
+      gasPrice: 25000000000,
+      network_id: 3,
+      skipDryRun: true
+    },
+    "staging-mainnet": {
+      provider: function() {
+        return new HDWalletProvider(
+          mnemonic,
+          "https://ropsten.infura.io/v3/" + infura_api,
+          0,
+          10
+        );
+      },
+      gas: 6000000,
+      timeoutBlocks: 4000,
+      gasPrice: 2000000000,
+      network_id: 3,
+      skipDryRun: true
     },
     etoro: {
       provider: function() {

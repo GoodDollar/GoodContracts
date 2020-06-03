@@ -188,6 +188,7 @@ contract(
     });
 
     it("should returns a valid distribution calculation when the current balance is lower than the number of daily claimers", async () => {
+      // there is 0.01 gd and 2 claimers
       await goodDollar.mint(avatar.address, "1");
       await increaseTime(ONE_DAY);
       await ubi.claim({ from: claimer1 });
@@ -422,6 +423,23 @@ contract(
       ).to.be.equal(dailyUbi.toNumber());
     });
 
+    it("should calcualte the correct distribution formula and transfer the correct amount when the ubi has a large amount of tokens", async () => {
+      await increaseTime(ONE_DAY);
+      await goodDollar.mint(avatar.address, "948439324829"); // checking claim with a random number
+      await increaseTime(ONE_DAY);
+      await identity.authenticate(claimer1);
+      // first claim
+      await ubi.claim({ from: claimer1 });
+      await increaseTime(ONE_DAY);
+      let claimer1Balance1 = await goodDollar.balanceOf(claimer1);
+      // regular claim
+      await ubi.claim({ from: claimer1 });
+      let claimer1Balance2 = await goodDollar.balanceOf(claimer1);
+      // there are 3 claimers and the total ubi balance after the minting include the previous balance and
+      // the 948439324829 minting tokens. that divides into 3
+      expect(claimer1Balance2.sub(claimer1Balance1).toString()).to.be.equal("316146441647");
+    });
+
     it("should be able to iterate over all accounts if enough gas in fishMulti", async () => {
       //should not reach fishin first user because atleast 150k gas is required
       let tx = await ubi
@@ -439,11 +457,12 @@ contract(
 
     it("should return the reward value for entitlement user", async () => {
       await increaseTime(ONE_DAY);
-      await goodDollar.mint(ubi.address, "10000000");
-      let amount = await ubi.checkEntitlement({ from: claimer2 });
-      let balance = await goodDollar.balanceOf(ubi.address);
+      await ubi.claim({ from: claimer1 });
+      await increaseTime(ONE_DAY);
+      let amount = await ubi.checkEntitlement({ from: claimer1 });
+      let balance2 = await goodDollar.balanceOf(ubi.address);
       let activeUsersCount = await ubi.activeUsersCount();
-      expect(amount.toString()).to.be.equal(balance.div(activeUsersCount).toString());
+      expect(amount.toString()).to.be.equal((balance2).div(activeUsersCount).toString());
     });
 
     it("should set the ubi claim amount by avatar", async () => {

@@ -129,8 +129,7 @@ module.exports = async function(deployer, network) {
       identity.transferOwnership(await avatar.address /* owner */),
       feeFormula.transferOwnership(await avatar.address /* .owner() */)
     ]);
-    
-    // if not staging or ropsten renonuce the minter
+
     if (network.indexOf("production") >= 0)
       await token.renounceMinter(), // TODO: renounce all founders
 

@@ -81,12 +81,15 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
 
   it("should update reserve ratio by yearly rate", async () => {
     const expansion = await marketMaker.reserveRatioDailyExpansion();
+    // 20% yearly. set up in the constructor
     expect(expansion.toString()).to.be.equal("999388834642296000000000000");
     await marketMaker.expandReserveRatio(cDAI.address);
     const daytwoRR = await marketMaker.reserveTokens(cDAI.address);
+    // after interval expansion
     expect(daytwoRR["1"].toString()).to.be.equal("999388");
     await marketMaker.expandReserveRatio(cDAI.address);
     const daythreeRR = await marketMaker.reserveTokens(cDAI.address);
+    // after interval expansion
     expect(daythreeRR["1"].toString()).to.be.equal("998777");
   });
 

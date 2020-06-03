@@ -189,6 +189,7 @@ contract(
 
     it("should returns a valid distribution calculation when the current balance is lower than the number of daily claimers", async () => {
       // there is 0.01 gd and 2 claimers
+      // this is an edge case
       await goodDollar.mint(avatar.address, "1");
       await increaseTime(ONE_DAY);
       await ubi.claim({ from: claimer1 });
@@ -204,18 +205,19 @@ contract(
 
     it("should calculate the daily distribution and withdraw balance from the dao when an active user executes claim", async () => {
       await increaseTime(ONE_DAY);
-      await goodDollar.mint(avatar.address, "1");
-      //ubi will have 2GD in pool so daily ubi is now also 1
+      await goodDollar.mint(avatar.address, "901");
+      //ubi will have 902GD in pool so daily ubi is now also 451
       await ubi.claim({ from: claimer1 });
       await ubi.claim({ from: claimer2 });
       await increaseTime(ONE_DAY);
       await goodDollar.mint(avatar.address, "1");
       //daily ubi is 0 since only 1 GD is in pool and can't be divided
+      // an edge case
       await ubi.claim({ from: claimer1 });
       let avatarBalance = await goodDollar.balanceOf(avatar.address);
       let claimer1Balance = await goodDollar.balanceOf(claimer1);
       expect(avatarBalance.toString()).to.be.equal("0");
-      expect(claimer1Balance.toString()).to.be.equal("1"); //so just 1 GD from first day claimed in this test
+      expect(claimer1Balance.toString()).to.be.equal("451"); //so just 451 GD from first day claimed in this test
     });
 
     it("should return the reward value for entitlement user", async () => {

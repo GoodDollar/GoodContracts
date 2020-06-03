@@ -49,7 +49,7 @@ module.exports = async function(deployer, network) {
     daiAddress = networkSettings.daiAddress;
     cdaiAddress = networkSettings.cdaiAddress;
   }
-  const ubiBridgeRecipient = foreignBridgeAddr;
+  const ubiBridgeRecipient = networkAddresses.UBIScheme;
   const homeAvatar = homedao.Avatar;
 
   console.log("deploying stand alone contracts");
@@ -78,7 +78,7 @@ module.exports = async function(deployer, network) {
     networkSettings.expansionRatio.nom,
     networkSettings.expansionRatio.denom,
     maindao.Avatar,
-    { gas: network.indexOf("mainnet") >= 0 ? 8000000 : undefined }
+    { gas: network.indexOf("mainnet") >= 0 ? 4000000 : undefined }
   );
 
   const [fundManager, contribcalc, marketmaker] = await Promise.all([

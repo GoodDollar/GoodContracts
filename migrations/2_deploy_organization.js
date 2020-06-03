@@ -50,7 +50,7 @@ module.exports = async function(deployer, network) {
     const accounts = await web3.eth.getAccounts();
     const founders = [accounts[0]];
     const feeFormula = await deployer.deploy(FeeFormula, networkSettings.txFeePercentage);
-    const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar, { gas: isMainNet ? 8000000 : undefined });
+    const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar, { gas: isMainNet ? 4000000 : undefined });
     const addFoundersGoodDollar = await deployer.deploy(
       AddFoundersGoodDollar,
       controllerCreator.address
@@ -131,7 +131,7 @@ module.exports = async function(deployer, network) {
     ]);
     
     // if not staging or ropsten renonuce the minter
-    if (network.indexOf("fuse") < 0 || network.indexOf("staging") < 0)
+    if (network.indexOf("production") >= 0)
       await token.renounceMinter(), // TODO: renounce all founders
 
     //Transfer ownership to controller

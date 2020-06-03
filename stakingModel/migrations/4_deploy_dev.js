@@ -5,15 +5,10 @@ const Reserve = artifacts.require("./GoodReserveCDai.sol");
 const DAIMock = artifacts.require("./DAIMock.sol");
 const cDAIMock = artifacts.require("./cDAIMock.sol");
 const DaiFaucet = artifacts.require("./RopstenDaiFaucetMock.sol");
-const AddMinter = artifacts.require("./AddMinter.sol");
-const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
-const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 const GoodDollar = artifacts.require("./GoodDollar.sol");
 
-const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
-
 module.exports = async function(deployer, network) {
-  if (network.indexOf("fuse") < 0 && network.indexOf("staging") < 0) {
+  if (network.indexOf("production") >= 0) {
     return;
   }  
   await deployer;
@@ -23,38 +18,20 @@ module.exports = async function(deployer, network) {
   const dao_file = await fse.readFile("../releases/deployment.json", "utf8");
   const staking_deployment = await JSON.parse(staking_file);
   const dao_deployment = await JSON.parse(dao_file);
-  const staing_mainnet_addresses = staking_deployment["fuse-mainnet"];
-  const dao_sidechain_addresses = dao_deployment["fuse"];
+  const staking_mainnet_addresses = staking_deployment[network + "-mainnet"];
+  const dao_sidechain_addresses = dao_deployment[network];
 
   if (network.indexOf("mainnet") < 0) {
-    const registrar = await SchemeRegistrar.at(dao_sidechain_addresses.SchemeRegistrar);
-    const absoluteVote = await AbsoluteVote.at(dao_sidechain_addresses.AbsoluteVote);
     const goodDollar = await GoodDollar.at(dao_sidechain_addresses.GoodDollar);
-
-    const addMinterSelf = await deployer.deploy(AddMinter, dao_sidechain_addresses.Avatar, accounts[0]);
-    
-    const p = await registrar.proposeScheme(
-      dao_sidechain_addresses.Avatar,
-      addMinterSelf.address,
-      NULL_HASH,
-      "0x00000010",
-      NULL_HASH
-    )
-
-    let proposalId = p.logs[0].args._proposalId;
-
-    await absoluteVote.vote(proposalId, 1, 0, accounts[0])
-
-    await addMinterSelf.addMinter();
 
     await goodDollar.mint(accounts[0], "10000000");
   }
   else {
     const faucet = await DaiFaucet.at(networkSettings.daiFaucetAddress);
-    const dai = await DAIMock.at(staing_mainnet_addresses.DAI);
-    const cDAI = await cDAIMock.at(staing_mainnet_addresses.cDAI);
-    const simpleStaking = await StakingContract.at(staing_mainnet_addresses.DAIStaking);
-    const goodReserve = await Reserve.at(staing_mainnet_addresses.Reserve);
+    const dai = await DAIMock.at(staking_mainnet_addresses.DAI);
+    const cDAI = await cDAIMock.at(staking_mainnet_addresses.cDAI);
+    const simpleStaking = await StakingContract.at(staking_mainnet_addresses.DAIStaking);
+    const goodReserve = await Reserve.at(staking_mainnet_addresses.Reserve);
 
     console.log("get dai from faucet");
     await faucet.allocateTo(accounts[0], web3.utils.toWei("100", "ether"));
@@ -70,11 +47,11 @@ module.exports = async function(deployer, network) {
     const staking = simpleStaking.stakeDAI(web3.utils.toWei("80", "ether"));
     const minting = cDAI.mint(web3.utils.toWei("20", "ether"));
 
-    let ownercDaiBalanceAfter = await cDAI.balanceOf(accounts[0]);
-    
     console.log("staking and minting...");
     await Promise.all([staking, minting]);
 
+    let ownercDaiBalanceAfter = await cDAI.balanceOf(accounts[0]);
+    
     let totalMinted = ownercDaiBalanceAfter.sub(ownercDaiBalanceBefore);
 
     const preloadStaking = cDAI.transfer(

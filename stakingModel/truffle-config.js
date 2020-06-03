@@ -17,6 +17,22 @@ const privateKey = process.env.PRIVATE_KEY;
 const infura_api = process.env.INFURA_API;
 const admin_mnemonic = process.env.ADMIN_MNEMONIC;
 
+const ropsten_settings = {
+  provider: function() {
+    return new HDWalletProvider(
+      mnemonic,
+      "https://ropsten.infura.io/v3/" + infura_api,
+      0,
+      10
+    );
+  },
+  gas: 3000000,
+  timeoutBlocks: 4000,
+  gasPrice: 25000000000,
+  network_id: 3,
+  skipDryRun: true
+};
+
 console.log({ mnemonic, admin_mnemonic, privateKey, infura_api });
 
 module.exports = {
@@ -75,20 +91,7 @@ module.exports = {
       gas: 8000000,
       gasPrice: 10000000000
     },
-    ropsten: {
-      provider: function() {
-        return new HDWalletProvider(
-          mnemonic,
-          "https://ropsten.infura.io/v3/" + infura_api,
-          0,
-          10
-        );
-      },
-      gas: 800000,
-      gasPrice: 40000000000,
-      network_id: 3,
-      skipDryRun: true
-    },
+    ropsten: ropsten_settings,
     kovan: {
       provider: function() {
         return new HDWalletProvider(
@@ -121,36 +124,8 @@ module.exports = {
       skipDryRun: true,
       gasPrice: 2000000000 //1 gwei
     },
-    "fuse-mainnet": {
-      provider: function() {
-        return new HDWalletProvider(
-          mnemonic,
-          "https://ropsten.infura.io/v3/" + infura_api,
-          0,
-          10
-        );
-      },
-      gas: 3000000,
-      timeoutBlocks: 4000,
-      gasPrice: 25000000000,
-      network_id: 3,
-      skipDryRun: true
-    },
-    "staging-mainnet": {
-      provider: function() {
-        return new HDWalletProvider(
-          mnemonic,
-          "https://ropsten.infura.io/v3/" + infura_api,
-          0,
-          10
-        );
-      },
-      gas: 6000000,
-      timeoutBlocks: 4000,
-      gasPrice: 2000000000,
-      network_id: 3,
-      skipDryRun: true
-    },
+    "fuse-mainnet": ropsten_settings,
+    "staging-mainnet": ropsten_settings,
     etoro: {
       provider: function() {
         return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");

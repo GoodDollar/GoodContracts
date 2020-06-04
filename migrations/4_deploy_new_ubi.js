@@ -11,8 +11,7 @@ const releaser = require("../scripts/releaser.js");
 const fse = require("fs-extra");
 
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-const NULL_HASH =
-  "0x0000000000000000000000000000000000000000000000000000000000000000";
+const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
   if (network.indexOf("mainnet") >= 0) {
@@ -58,8 +57,6 @@ module.exports = async function(deployer, network) {
     endUBI,
     toGD(networkSettings.dailyUBI)
   );
-
-  await ubi.transferOwnership(avataraddr);
 
   let transaction = await schemeRegistrar.proposeScheme(
     avatar.address,

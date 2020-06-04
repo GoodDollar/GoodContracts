@@ -111,10 +111,11 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
      * @param staking contract that implements `collectUBIInterest` and transfer cdai to
      * a given address.
      */
-    function transferInterest(StakingContract staking)
+    function transferInterest(StakingContract _staking)
         public
         requireActive
         reserveHasInitialized
+        requireDAOContract(staking)
     {
         require(
             canRun()
@@ -127,7 +128,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         uint256 currentBalance = cDai.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract
         //collectUBIInterest returns (cdaigains, daigains, precission loss, donation ratio)
-        (, , , uint32 donationRatio) = staking.collectUBIInterest(
+        (, , , uint32 donationRatio) = _staking.collectUBIInterest(
             address(reserve)
         );
 
@@ -147,7 +148,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             // transfers the minted tokens to the given staking contract
             GoodDollar token = GoodDollar(address(avatar.nativeToken()));
             if(gdInterest > 0 )
-                token.transfer(address(staking), gdInterest);
+                token.transfer(address(_staking), gdInterest);
             if(gdUBI > 0)
                 //transfer ubi to avatar on sidechain via bridge
                 token.transferAndCall(
@@ -157,7 +158,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
                 );
             emit FundsTransferred(
                 msg.sender,
-                address(staking),
+                address(_staking),
                 address(reserve),
                 interest,
                 interestDonated,

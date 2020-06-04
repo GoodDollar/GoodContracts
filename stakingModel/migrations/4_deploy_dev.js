@@ -22,7 +22,7 @@ module.exports = async function(deployer, network) {
 
   let staking_mainnet_addresses, staking_sidechain_addresses, dao_sidechain_addresses;
 
-  if (network === "test") {
+  if (network === "develop") {
     staking_mainnet_addresses = staking_deployment[network];
     staking_sidechain_addresses = staking_deployment[network];
     dao_sidechain_addresses = dao_deployment[network];
@@ -33,7 +33,7 @@ module.exports = async function(deployer, network) {
     dao_sidechain_addresses = dao_deployment[network];
   }
 
-  // not mainnet, including test
+  // not mainnet, including develop
   if (network.indexOf("mainnet") < 0) {
     const goodDollar = await GoodDollar.at(dao_sidechain_addresses.GoodDollar);
     const ubi = await UBIScheme.at(staking_sidechain_addresses.UBIScheme);
@@ -42,7 +42,7 @@ module.exports = async function(deployer, network) {
     await goodDollar.transfer(ubi.address, "5000000");
   }
   
-  if (network.indexOf("mainnet") >= 0 || network === "test") {
+  if (network.indexOf("mainnet") >= 0 || network === "develop") {
     const dai = await DAIMock.at(staking_mainnet_addresses.DAI);
     const cDAI = await cDAIMock.at(staking_mainnet_addresses.cDAI);
     const simpleStaking = await StakingContract.at(staking_mainnet_addresses.DAIStaking);

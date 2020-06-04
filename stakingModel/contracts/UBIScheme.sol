@@ -67,6 +67,16 @@ contract UBIScheme is AbstractUBI {
         uint256 claimAmount
     );
 
+    // emits when finishing a `multi fish` execution.
+    // indicates the number of users from the given
+    // array who actually been tried being fished.
+    // it might not be finished going over all the
+    // array if there no gas left.
+    event TotalFished(
+        uint256 userLastIndex,
+        uint256 numberOfUsers
+    );
+
     /**
      * @dev Constructor
      * @param _avatar The avatar of the DAO
@@ -300,13 +310,17 @@ contract UBIScheme is AbstractUBI {
         return true;
     }
 
-    /* @dev executes `fish` with multiple addresses
+    /* @dev executes `fish` with multiple addresses. emits the number of users from the given
+     * array who actually been tried being fished.
      * @param accounts to fish
      * @return A bool indicating if all the UBIs were fished
      */
     function fishMulti(address[] memory accounts) public requireActive returns (uint256) {
         for (uint256 i = 0; i < accounts.length; ++i) {
-            if (gasleft() < iterationGasLimit) return i;
+            if (gasleft() < iterationGasLimit) {
+                emit TotalFished(i, accounts.length);
+                return i;
+            }
             if (
                 isNotNewUser(accounts[i]) &&
                 !isActiveUser(accounts[i]) &&
@@ -315,6 +329,7 @@ contract UBIScheme is AbstractUBI {
                 fish(accounts[i]);
             }
         }
+        emit TotalFished(accounts.length - 1, accounts.length);
         return accounts.length - 1;
     }
 

@@ -302,10 +302,16 @@ contract(
       let tx = await ubi.fishMulti([claimer2, claimer3], { from: claimer4 });
       let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
       let dailyUbi = await ubi.dailyUbi();
+      const totalFishedEventExists = tx.logs.some(
+        e => e.event === "TotalFished" &&
+        e.args['userLastIndex'].toNumber() === 1 &&
+        e.args['numberOfUsers'].toNumber() === 2
+      );
       expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
       expect(
         claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
       ).to.be.equal(2 * dailyUbi.toNumber());
+      expect(totalFishedEventExists).to.be.true;
     });
 
     it("should not be able to remove active user that no longer whitelisted", async () => {

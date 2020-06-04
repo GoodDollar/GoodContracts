@@ -99,6 +99,11 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         blockInterval = _blockInterval;
     }
 
+    function canRun() public view returns(bool)
+    {
+        return block.number.sub(lastTransferred) > blockInterval;
+    }
+
     /**
      * @dev collects ubi interest in cdai from from a given staking and transfer it to
      * the reserve contract. then transfer the given gd which recieved from the reserve
@@ -112,7 +117,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         reserveHasInitialized
     {
         require(
-            block.number.sub(lastTransferred) > blockInterval,
+            canRun()
             "Need to wait for the next interval"
         );
         

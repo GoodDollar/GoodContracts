@@ -113,7 +113,7 @@ module.exports = async function(deployer, network) {
     ]);
 
     //for testing we give founders some tokens
-    if (["test", "coverage", "soliditycoverage"].includes(network)) {
+    if (["test", "develop", "coverage", "soliditycoverage"].includes(network)) {
       await Promise.all(founders.map(f => token.mint(f, initTokenInWei)));
     }
 

@@ -19,7 +19,7 @@ const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
-  if (network.indexOf("mainnet") < 0 && network !== "test") {
+  if (network.indexOf("mainnet") < 0 && network !== "test" && network !== "develop") {
     return;
   }
   await deployer;
@@ -35,7 +35,7 @@ module.exports = async function(deployer, network) {
   const homedao = daoAddresses[homeNetwork];
 
   let foreignBridgeAddr, daiAddress, cdaiAddress;
-  if (network == "test") {
+  if (network == "test" || network == "develop") {
     const [foreignBridge, dai] = await Promise.all([
       deployer.deploy(BridgeMock, maindao.GoodDollar),
       deployer.deploy(DAIMock)

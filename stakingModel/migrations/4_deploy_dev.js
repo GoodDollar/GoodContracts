@@ -20,21 +20,10 @@ module.exports = async function(deployer, network) {
   const staking_deployment = await JSON.parse(staking_file);
   const dao_deployment = await JSON.parse(dao_file);
 
-  let staking_mainnet_addresses, staking_sidechain_addresses, dao_sidechain_addresses;
-
-  if (network === "develop") {
-    staking_mainnet_addresses = staking_deployment[network];
-    staking_sidechain_addresses = staking_deployment[network];
-    dao_sidechain_addresses = dao_deployment[network];
-  }
-  else {
-    staking_mainnet_addresses = staking_deployment[network + "-mainnet"];
-    staking_sidechain_addresses = staking_deployment[network];
-    dao_sidechain_addresses = dao_deployment[network];
-  }
-
   // not mainnet, including develop
   if (network.indexOf("mainnet") < 0) {
+    let dao_sidechain_addresses = dao_deployment[network];
+    let staking_sidechain_addresses = staking_deployment[network];
     const goodDollar = await GoodDollar.at(dao_sidechain_addresses.GoodDollar);
     const ubi = await UBIScheme.at(staking_sidechain_addresses.UBIScheme);
 
@@ -43,6 +32,7 @@ module.exports = async function(deployer, network) {
   }
   
   if (network.indexOf("mainnet") >= 0 || network === "develop") {
+    let staking_mainnet_addresses = staking_deployment[network];
     const dai = await DAIMock.at(staking_mainnet_addresses.DAI);
     const cDAI = await cDAIMock.at(staking_mainnet_addresses.cDAI);
     const simpleStaking = await StakingContract.at(staking_mainnet_addresses.DAIStaking);

@@ -13,16 +13,8 @@ module.exports = async function(deployer, network) {
   const staking_file = await fse.readFile("releases/deployment.json", "utf8");
   const staking_deployment = await JSON.parse(staking_file);
 
-  let staking_mainnet_addresses;
-
-  if (network === "develop") {
-    staking_mainnet_addresses = staking_deployment[network];
-  }
-  else if (network.indexOf("mainnet") >= 0) {
-    staking_mainnet_addresses = staking_deployment[network + "-mainnet"];
-  }
-
   if (network.indexOf("mainnet") >= 0 || network === "develop") {
+    let staking_mainnet_addresses = staking_deployment[network];
     const simpleStaking = await StakingContract.at(staking_mainnet_addresses.DAIStaking);
     const goodFundManager = await GoodFundsManager.at(staking_mainnet_addresses.FundManager);
 

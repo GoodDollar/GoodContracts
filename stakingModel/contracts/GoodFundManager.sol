@@ -148,14 +148,14 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             // transfers the minted tokens to the given staking contract
             GoodDollar token = GoodDollar(address(avatar.nativeToken()));
             if(gdInterest > 0 )
-                token.transfer(address(_staking), gdInterest);
+                require(token.transfer(address(_staking), gdInterest),"interest transfer failed");
             if(gdUBI > 0)
                 //transfer ubi to avatar on sidechain via bridge
-                token.transferAndCall(
+                require(token.transferAndCall(
                     bridgeContract,
                     gdUBI,
                     abi.encodePacked(bytes32(uint256(ubiRecipient)))
-                );
+                ),"ubi bridge transfer failed");
             emit FundsTransferred(
                 msg.sender,
                 address(_staking),
@@ -175,12 +175,12 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     function end() public onlyAvatar {
         uint256 remainingCDaiReserve = cDai.balanceOf(address(this));
         if (remainingCDaiReserve > 0) {
-            cDai.transfer(address(avatar), remainingCDaiReserve);
+            require(cDai.transfer(address(avatar), remainingCDaiReserve),"cdai transfer failed");
         }
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
         uint256 remainingGDReserve = token.balanceOf(address(this));
         if (remainingGDReserve > 0) {
-            token.transfer(address(avatar), remainingGDReserve);
+            require(token.transfer(address(avatar), remainingGDReserve),"gd transfer failed");
         }
         super.internalEnd(avatar);
     }

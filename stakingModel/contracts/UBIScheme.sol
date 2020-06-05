@@ -192,15 +192,16 @@ contract UBIScheme is AbstractUBI {
      * @param amount the amount to transfer
      * @param isClaimed true for claimed
      */
-    function _transferTokens(address account, uint256 amount, bool isClaimed)
-        private
-        requireActive
-    {
+    function _transferTokens(
+        address account,
+        uint256 amount,
+        bool isClaimed
+    ) private requireActive {
         Day storage day = claimDay[currentDay];
         day.amountOfClaimers = day.amountOfClaimers.add(1);
         day.claimAmount = day.claimAmount.add(amount);
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        token.transfer(account, amount);
+        require(token.transfer(account, amount), "claim transfer failed");
         if (isClaimed) {
             emit UBIClaimed(account, amount);
         }

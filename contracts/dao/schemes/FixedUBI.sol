@@ -3,6 +3,7 @@ pragma solidity 0.5.4;
 import "./UBI.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /* @title Fixed amount-per-day UBI scheme allowing multiple claims
  * during a longer period
  */
@@ -24,16 +25,7 @@ contract FixedUBI is AbstractUBI {
         uint256 _periodStart,
         uint256 _periodEnd,
         uint256 _claimDistribution
-    )
-        public
-        AbstractUBI(
-            _avatar,
-            _identity,
-            _initialReserve,
-            _periodStart,
-            _periodEnd
-        )
-    {
+    ) public AbstractUBI(_avatar, _identity, _initialReserve, _periodStart, _periodEnd) {
         require(_claimDistribution > 0, "Distribution cannot be zero");
 
         claimDistribution = _claimDistribution;
@@ -93,15 +85,11 @@ contract FixedUBI is AbstractUBI {
      * @return A bool indicating if UBI was claimed
      */
     function claim() public requireActive onlyWhitelisted returns (bool) {
-        uint256 newDistribution = distributionFormula(
-            claimDistribution,
-            msg.sender
-        );
+        uint256 newDistribution = distributionFormula(claimDistribution, msg.sender);
         lastClaimed[msg.sender] = now;
         setDay();
 
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        token.transfer(msg.sender, newDistribution);
 
         Day memory day = claimDay[currentDay];
 
@@ -109,7 +97,7 @@ contract FixedUBI is AbstractUBI {
         day.claimAmount = day.claimAmount.add(newDistribution);
 
         claimDay[currentDay] = day;
-
+        require(token.transfer(msg.sender, newDistribution), "ubi transfer failed");
         emit UBIClaimed(msg.sender, newDistribution);
 
         return true;

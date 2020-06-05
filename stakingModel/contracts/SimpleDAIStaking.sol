@@ -127,8 +127,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         if (daiActual < daiWithdraw) {
             daiWithdraw = daiActual;
         }
-        //TODO: handle transfer failure
-        dai.transfer(msg.sender, daiWithdraw);
+        require(dai.transfer(msg.sender, daiWithdraw), "withdraw transfer failed");
         emit DAIStakeWithdraw(msg.sender, daiWithdraw, daiActual);
     }
 
@@ -191,8 +190,9 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
             uint256 daiGains,
             uint256 precisionLossDai
         ) = currentUBIInterest();
-        cDai.transfer(recipient, cdaiGains);
         lastUBICollection = block.number;
+        if (cdaiGains > 0)
+            require(cDai.transfer(recipient, cdaiGains), "collect transfer failed");
         emit InterestCollected(recipient, cdaiGains, daiGains, precisionLossDai);
         return (cdaiGains, daiGains, precisionLossDai, avgInterestDonatedRatio);
     }

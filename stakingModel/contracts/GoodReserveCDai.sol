@@ -189,12 +189,11 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * @param minReturn the minimum allowed return in G$ tokens
      * @return (gdReturn) how much G$ tokens were transferred
      */
-    function buy(ERC20 buyWith, uint256 tokenAmount, uint256 minReturn)
-        public
-        requireActive
-        onlyCDai(buyWith)
-        returns (uint256)
-    {
+    function buy(
+        ERC20 buyWith,
+        uint256 tokenAmount,
+        uint256 minReturn
+    ) public requireActive onlyCDai(buyWith) returns (uint256) {
         require(
             buyWith.allowance(msg.sender, address(this)) >= tokenAmount,
             "You need to approve cDAI transfer first"
@@ -226,12 +225,11 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * @param minReturn the minimum allowed return in `sellTo` tokens
      * @return (tokenReturn) how much `sellTo` tokens were transferred
      */
-    function sell(ERC20 sellTo, uint256 gdAmount, uint256 minReturn)
-        public
-        requireActive
-        onlyCDai(sellTo)
-        returns (uint256)
-    {
+    function sell(
+        ERC20 sellTo,
+        uint256 gdAmount,
+        uint256 minReturn
+    ) public requireActive onlyCDai(sellTo) returns (uint256) {
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
         uint256 contributionAmount = contribution.calculateContribution(
             marketMaker,
@@ -274,7 +272,11 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * @param interest out of total transfered how much is the interest (in interestToken) that needs to be paid back (some interest might be donated)
      * @return (gdInterest, gdUBI) how much G$ interest was minted and how much G$ UBI was minted
      */
-    function mintInterestAndUBI(ERC20 interestToken, uint256 transfered, uint256 interest)
+    function mintInterestAndUBI(
+        ERC20 interestToken,
+        uint256 transfered,
+        uint256 interest
+    )
         public
         requireActive
         onlyCDai(interestToken)
@@ -316,7 +318,10 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     function end() public onlyAvatar {
         uint256 remainingReserve = cDai.balanceOf(address(this));
         if (remainingReserve > 0) {
-            cDai.transfer(address(avatar), remainingReserve);
+            require(
+                cDai.transfer(address(avatar), remainingReserve),
+                "cdai transfer failed"
+            );
         }
         require(cDai.balanceOf(address(this)) == 0, "Funds transfer has failed");
         marketMaker.transferOwnership(address(avatar));

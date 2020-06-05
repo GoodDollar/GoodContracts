@@ -27,11 +27,11 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         _;
     }
 
-    constructor(uint256 _claimAmount, Avatar _avatar, Identity _identity)
-        public
-        FeelessScheme(_identity, _avatar)
-        ActivePeriod(now, now * 2, _avatar)
-    {
+    constructor(
+        uint256 _claimAmount,
+        Avatar _avatar,
+        Identity _identity
+    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2, _avatar) {
         claimAmount = _claimAmount;
     }
 
@@ -74,7 +74,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         DAOToken token = avatar.nativeToken();
         uint256 balance = token.balanceOf(address(this));
         if (balance >= claimAmount) {
-            token.transfer(account, claimAmount);
+            require(token.transfer(account, claimAmount), "award transfer failed");
             return claimAmount;
         }
         return 0;
@@ -88,7 +88,10 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         DAOToken token = avatar.nativeToken();
         uint256 remainingGDReserve = token.balanceOf(address(this));
         if (remainingGDReserve > 0) {
-            token.transfer(address(avatar), remainingGDReserve);
+            require(
+                token.transfer(address(avatar), remainingGDReserve),
+                "end transfer failed"
+            );
         }
         removeRights();
         super.internalEnd(avatar);

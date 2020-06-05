@@ -108,17 +108,17 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
      * @dev collects ubi interest in cdai from from a given staking and transfer it to
      * the reserve contract. then transfer the given gd which recieved from the reserve
      * back to the staking contract.
-     * @param staking contract that implements `collectUBIInterest` and transfer cdai to
+     * @param _staking contract that implements `collectUBIInterest` and transfer cdai to
      * a given address.
      */
     function transferInterest(StakingContract _staking)
         public
         requireActive
         reserveHasInitialized
-        requireDAOContract(staking)
+        requireDAOContract(address(_staking))
     {
         require(
-            canRun()
+            canRun(),
             "Need to wait for the next interval"
         );
         

@@ -92,7 +92,9 @@ module.exports = async function(deployer, network) {
     daiAddress,
     cdaiAddress,
     fundManager.address,
-    networkSettings.blockInterval
+    networkSettings.blockInterval,
+    maindao.Avatar,
+    maindao.Identity
   );
 
   const reserveP = deployer.deploy(
@@ -120,7 +122,7 @@ module.exports = async function(deployer, network) {
   const absoluteVote = await AbsoluteVote.at(maindao.AbsoluteVote);
   const schemeRegistrar = await SchemeRegistrar.at(maindao.SchemeRegistrar);
 
-  const [p1, p2] = await Promise.all([
+  const [p1, p2, p3] = await Promise.all([
     schemeRegistrar.proposeScheme(
       maindao.Avatar,
       reserve.address,
@@ -134,20 +136,29 @@ module.exports = async function(deployer, network) {
       NULL_HASH,
       "0x00000010",
       NULL_HASH
+    ),
+    schemeRegistrar.proposeScheme(
+      maindao.Avatar,
+      stakingContract.address,
+      NULL_HASH,
+      "0x00000010",
+      NULL_HASH
     )
   ]);
 
   let proposalId1 = p1.logs[0].args._proposalId;
   let proposalId2 = p2.logs[0].args._proposalId;
+  let proposalId3 = p3.logs[0].args._proposalId;
 
   console.log("voting...");
   await Promise.all([
     ...founders.map(f => absoluteVote.vote(proposalId1, 1, 0, f)),
-    ...founders.map(f => absoluteVote.vote(proposalId2, 1, 0, f))
+    ...founders.map(f => absoluteVote.vote(proposalId2, 1, 0, f)),
+    ...founders.map(f => absoluteVote.vote(proposalId3, 1, 0, f))
   ]);
 
   console.log("starting...");
-  await Promise.all([reserve.start(), fundManager.start()]);
+  await Promise.all([reserve.start(), fundManager.start(), stakingContract.start()]);
 
   let releasedContracts = {
     ...networkAddresses,

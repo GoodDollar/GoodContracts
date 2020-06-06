@@ -117,7 +117,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         reserveHasInitialized
     {
         require(
-            canRun()
+            canRun(),
             "Need to wait for the next interval"
         );
         

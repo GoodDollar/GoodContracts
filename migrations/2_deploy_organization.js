@@ -49,9 +49,8 @@ module.exports = async function(deployer, network) {
   deployer.deploy(Identity).then(async identity => {
     const accounts = await web3.eth.getAccounts();
     const founders = [accounts[0]];
-
     const feeFormula = await deployer.deploy(FeeFormula, networkSettings.txFeePercentage);
-    const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar);
+    const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar, { gas: isMainNet ? 4000000 : undefined });
     const addFoundersGoodDollar = await deployer.deploy(
       AddFoundersGoodDollar,
       controllerCreator.address
@@ -59,7 +58,8 @@ module.exports = async function(deployer, network) {
 
     const daoCreator = await deployer.deploy(
       DaoCreatorGoodDollar,
-      addFoundersGoodDollar.address
+      addFoundersGoodDollar.address,
+      { gas: isMainNet ? 8000000 : undefined }
     );
 
     console.log({
@@ -113,7 +113,7 @@ module.exports = async function(deployer, network) {
     ]);
 
     //for testing we give founders some tokens
-    if (["test", "coverage", "soliditycoverage"].includes(network)) {
+    if (["test", "develop", "coverage", "soliditycoverage"].includes(network)) {
       await Promise.all(founders.map(f => token.mint(f, initTokenInWei)));
     }
 
@@ -127,9 +127,11 @@ module.exports = async function(deployer, network) {
 
     await Promise.all([
       identity.transferOwnership(await avatar.address /* owner */),
-      token.renounceMinter(),
       feeFormula.transferOwnership(await avatar.address /* .owner() */)
     ]);
+
+    if (network.indexOf("production") >= 0)
+      await token.renounceMinter(), // TODO: renounce all founders
 
     //Transfer ownership to controller
     //await token.transferOwnership(await avatar.owner());

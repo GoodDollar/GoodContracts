@@ -41,6 +41,9 @@ module.exports = {
 
   networks: {
     develop: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "http://localhost:9545/", 0, 10);
+      },
       // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
       port: 9545, // "truffle develop" runs on 9545

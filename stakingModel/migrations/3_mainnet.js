@@ -32,7 +32,7 @@ module.exports = async function(deployer, network) {
   const networkAddresses = previousDeployment[network];
 
   const homeNetwork = network.replace(/-?mainnet/, "");
-  const networkSettings = settings[network] || settings["default"];
+  const networkSettings = { ...settings["default"], ...settings[network] };
   const maindao = daoAddresses[network];
   const homedao = daoAddresses[homeNetwork];
 
@@ -172,9 +172,7 @@ module.exports = async function(deployer, network) {
   let proposalId3 = p3.logs[0].args._proposalId;
 
   console.log("voting...");
-  await Promise.all([
-    ...founders.map(f => absoluteVote.vote(proposalId3, 1, 0, f))
-  ]);
+  await Promise.all([...founders.map(f => absoluteVote.vote(proposalId3, 1, 0, f))]);
 
   console.log("setting the reserve...");
   await setReserve.setReserve();

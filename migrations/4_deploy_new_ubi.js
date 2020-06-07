@@ -11,15 +11,14 @@ const releaser = require("../scripts/releaser.js");
 const fse = require("fs-extra");
 
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-const NULL_HASH =
-  "0x0000000000000000000000000000000000000000000000000000000000000000";
+const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
   if (network.indexOf("mainnet") >= 0) {
     console.log("Skipping UBI for mainnet");
     return;
   }
-  const networkSettings = settings[network] || settings["default"];
+  const networkSettings = { ...settings["default"], ...settings[network] };
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = await JSON.parse(file);
   const networkAddresses = previousDeployment[network];

@@ -28,13 +28,10 @@ module.exports = {
       provider: function() {
         return new HDWalletProvider(mnemonic, "http://localhost:9545/", 0, 10);
       },
-      // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
       host: "127.0.0.1",
-      port: 9545, // "truffle develop" runs on 9545
-      network_id: "4447", // Match any network id,
-      gas: 6000000,
-      gasPrice: 1000000000 //1 gwei
-      // from: '0x8ae536FAcb8C89163A0c5A5817Aaa75F65F1bcA6' // should be equal to first address in truffle UI list - address[0]
+      port: 9545,
+      network_id: "4447",
+      gas: 8000000
     },
     ganache: {
       host: "127.0.0.1",

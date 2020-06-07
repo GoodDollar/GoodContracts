@@ -32,7 +32,7 @@ const NULL_HASH = "0x00000000000000000000000000000000000000000000000000000000000
 
 module.exports = async function(deployer, network) {
   const isMainNet = network.indexOf("mainnet") >= 0;
-  const networkSettings = settings[network] || settings["default"];
+  const networkSettings = { ...settings["default"], ...settings[network] };
   const walletToppingAmount = web3.utils.toWei(
     networkSettings.walletToppingAmount,
     networkSettings.walletToppingUnits
@@ -50,7 +50,9 @@ module.exports = async function(deployer, network) {
     const accounts = await web3.eth.getAccounts();
     const founders = [accounts[0]];
     const feeFormula = await deployer.deploy(FeeFormula, networkSettings.txFeePercentage);
-    const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar, { gas: isMainNet ? 4000000 : undefined });
+    const controllerCreator = await deployer.deploy(ControllerCreatorGoodDollar, {
+      gas: isMainNet ? 4000000 : undefined
+    });
     const addFoundersGoodDollar = await deployer.deploy(
       AddFoundersGoodDollar,
       controllerCreator.address
@@ -131,8 +133,9 @@ module.exports = async function(deployer, network) {
     ]);
 
     if (network.indexOf("production") >= 0)
+    {
       await token.renounceMinter(), // TODO: renounce all founders
-
+    }
     //Transfer ownership to controller
     //await token.transferOwnership(await avatar.owner());
     //await reputation.transferOwnership(await avatar.owner());

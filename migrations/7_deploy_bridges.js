@@ -10,11 +10,10 @@ const releaser = require("../scripts/releaser.js");
 const fse = require("fs-extra");
 
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-const NULL_HASH =
-  "0x0000000000000000000000000000000000000000000000000000000000000000";
+const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
-  const networkSettings = settings[network] || settings["default"];
+  const networkSettings = { ...settings["default"], ...settings[network] };
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = await JSON.parse(file);
   const networkAddresses = previousDeployment[network];
@@ -56,9 +55,7 @@ module.exports = async function(deployer, network) {
 
     let proposalId = transaction.logs[0].args._proposalId;
 
-    await Promise.all(
-      founders.map(f => absoluteVote.vote(proposalId, 1, 0, f))
-    );
+    await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
 
     const isAlreadyMinter = await gd.isMinter(
       "0xb895638fb3870AD5832402a5BcAa64A044687db0"
@@ -105,9 +102,7 @@ module.exports = async function(deployer, network) {
 
     let proposalId = transaction.logs[0].args._proposalId;
 
-    await Promise.all(
-      founders.map(f => absoluteVote.vote(proposalId, 1, 0, f))
-    );
+    await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
 
     console.log("creating foreign bridge");
     let transaction2 = await factory.setBridge();

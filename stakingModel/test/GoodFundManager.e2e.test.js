@@ -114,7 +114,7 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
   });
 
   it("should collect the interest and transfer it to the reserve and the bridge recipient should recieves minted gd", async () => {
-    await next_interval();
+    await next_interval(await goodFundManager.blockInterval());
     await cDAI.exchangeRateCurrent();
     let recipientBefore = await goodDollar.balanceOf(ubiBridgeRecipient);
     const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);

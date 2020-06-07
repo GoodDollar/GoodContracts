@@ -363,6 +363,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
     let supplyBefore = reserveToken.gdSupply;
+    let reserveRatio = reserveToken.reserveRatio;
     const gdBalanceBefore = await goodDollar.balanceOf(founder);
     const cDAIBalanceBefore = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveBefore = await cDAI.balanceOf(goodReserve.address);
@@ -374,13 +375,19 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     const gdBalanceAfter = await goodDollar.balanceOf(founder);
     const cDAIBalanceAfter = await cDAI.balanceOf(founder);
     const cDAIBalanceReserveAfter = await cDAI.balanceOf(goodReserve.address);
-    // according to the initialization settings we should expect 1000000
-    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal("1000000");
+    // according to the initialization settings reserve ratio is 100%. the calculation is:
+    // Return = _reserveBalance * (1 - (1 - _sellAmount / _supply) ^ (1000000 / _reserveRatio))
+    const expectedReturn = await marketMaker.calculateSaleReturn(
+      supplyBefore.toString(),
+      reserveBalanceBefore.toString(),
+      reserveRatio.toString(),
+      amount);
+    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal(expectedReturn.toString());
     expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal(
-      "1000000"
+      expectedReturn.toString()
     );
     expect(reserveBalanceBefore.sub(reserveBalanceAfter).toString()).to.be.equal(
-      "1000000"
+      expectedReturn.toString()
     );
     // 1e4 gd sold (burn from the supply)
     expect((supplyBefore - supplyAfter).toString()).to.be.equal(amount.toString());

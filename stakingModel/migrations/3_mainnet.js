@@ -186,7 +186,7 @@ module.exports = async function(deployer, network) {
     Contribution: contribcalc.address,
     DAI: daiAddress,
     cDAI: cdaiAddress,
-    MainnetBridge: foreignBridgeAddr,
+    ForeignBridge: foreignBridgeAddr,
     network,
     networkId: parseInt(deployer.network_id)
   };

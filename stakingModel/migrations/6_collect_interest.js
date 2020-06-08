@@ -4,6 +4,11 @@ const StakingContract = artifacts.require("./SimpleDAIStaking.sol");
 const GoodFundsManager = artifacts.require("./GoodFundManager.sol");
 
 module.exports = async function(deployer, network) {
+  //currently this is disabled
+  if (network) {
+    console.log("this migration is disabled");
+    return;
+  }
   if (network.indexOf("production") >= 0 || network.indexOf("test") >= 0) {
     return;
   }

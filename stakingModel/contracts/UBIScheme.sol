@@ -76,7 +76,7 @@ contract UBIScheme is AbstractUBI {
 
     // emits when daily ubi is calculated
     event UBICalculated(uint256 day, uint256 dailyUbi, uint256 blockNumber);
-    
+
     /**
      * @dev Constructor
      * @param _avatar The avatar of the DAO
@@ -145,7 +145,7 @@ contract UBIScheme is AbstractUBI {
             if (activeUsersCount > 0) {
                 dailyUbi = currentBalance.div(activeUsersCount);
             }
-            emit UBICalculated(currentDay,dailyUbi, block.number)
+            emit UBICalculated(currentDay, dailyUbi, block.number);
         }
 
         return dailyUbi;

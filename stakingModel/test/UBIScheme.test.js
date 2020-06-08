@@ -188,6 +188,8 @@ contract(
     });
 
     it("should returns a valid distribution calculation when the current balance is lower than the number of daily claimers", async () => {
+      // there is 0.01 gd and 2 claimers
+      // this is an edge case
       await goodDollar.mint(avatar.address, "1");
       await increaseTime(ONE_DAY);
       await ubi.claim({ from: claimer1 });
@@ -202,19 +204,25 @@ contract(
     });
 
     it("should calculate the daily distribution and withdraw balance from the dao when an active user executes claim", async () => {
+      // checking that the distirbution works ok also when not all claimers claim
+      // achieving that goal by leaving the claimed amount of the second claimer
+      // in the ubi and in the next day after transferring the balances from the
+      // dao, making sure that the tokens that have not been claimed are
+      // taken by the formula as expected.
       await increaseTime(ONE_DAY);
-      await goodDollar.mint(avatar.address, "1");
-      //ubi will have 2GD in pool so daily ubi is now also 1
+      await goodDollar.mint(avatar.address, "901");
+      //ubi will have 902GD in pool so daily ubi is now also 451
       await ubi.claim({ from: claimer1 });
-      await ubi.claim({ from: claimer2 });
       await increaseTime(ONE_DAY);
       await goodDollar.mint(avatar.address, "1");
       //daily ubi is 0 since only 1 GD is in pool and can't be divided
+      // an edge case
       await ubi.claim({ from: claimer1 });
       let avatarBalance = await goodDollar.balanceOf(avatar.address);
       let claimer1Balance = await goodDollar.balanceOf(claimer1);
       expect(avatarBalance.toString()).to.be.equal("0");
-      expect(claimer1Balance.toString()).to.be.equal("1"); //so just 1 GD from first day claimed in this test
+      // 451 GD from first day and 226 from the second day claimed in this test
+      expect(claimer1Balance.toString()).to.be.equal("677");
     });
 
     it("should return the reward value for entitlement user", async () => {
@@ -234,12 +242,6 @@ contract(
       expect(error.message).to.have.string("is not an inactive use");
     });
 
-    it("should return the daily ubi for entitlement user", async () => {
-      let amount = await ubi.checkEntitlement({ from: claimer4 });
-      let dailyUbi = await ubi.dailyUbi();
-      expect(amount.toString()).to.be.equal(dailyUbi.toString());
-    });
-
     it("should not be able to execute claim twice a day", async () => {
       await goodDollar.mint(avatar.address, "20");
       await increaseTime(ONE_DAY);
@@ -257,7 +259,16 @@ contract(
       );
     });
 
+    it("should return the daily ubi for entitlement user", async () => {
+      // claimer3 hasn't claimed during that interval so that user
+      // may have the dailyUbi
+      let amount = await ubi.checkEntitlement({ from: claimer3 });
+      let dailyUbi = await ubi.dailyUbi();
+      expect(amount.toString()).to.be.equal(dailyUbi.toString());
+    });
+
     it("should return 0 for entitlement if the user has already claimed for today", async () => {
+      await ubi.claim({ from: claimer4 });
       let amount = await ubi.checkEntitlement({ from: claimer4 });
       expect(amount.toString()).to.be.equal("0");
     });
@@ -312,7 +323,7 @@ contract(
       expect(totalFishedEventExists).to.be.true;
     });
 
-    it("should not be able to remove active user that no longer whitelisted", async () => {
+    it("should not be able to remove an active user that no longer whitelisted", async () => {
       await goodDollar.mint(avatar.address, "20");
       await ubi.claim({ from: claimer2 }); // makes sure that the user is active
       await identity.removeWhitelisted(claimer2);
@@ -426,6 +437,23 @@ contract(
       ).to.be.equal(dailyUbi.toNumber());
     });
 
+    it("should calcualte the correct distribution formula and transfer the correct amount when the ubi has a large amount of tokens", async () => {
+      await increaseTime(ONE_DAY);
+      await goodDollar.mint(avatar.address, "948439324829"); // checking claim with a random number
+      await increaseTime(ONE_DAY);
+      await identity.authenticate(claimer1);
+      // first claim
+      await ubi.claim({ from: claimer1 });
+      await increaseTime(ONE_DAY);
+      let claimer1Balance1 = await goodDollar.balanceOf(claimer1);
+      // regular claim
+      await ubi.claim({ from: claimer1 });
+      let claimer1Balance2 = await goodDollar.balanceOf(claimer1);
+      // there are 3 claimers and the total ubi balance after the minting include the previous balance and
+      // the 948439324829 minting tokens. that divides into 3
+      expect(claimer1Balance2.sub(claimer1Balance1).toString()).to.be.equal("316146441648");
+    });
+
     it("should be able to iterate over all accounts if enough gas in fishMulti", async () => {
       //should not reach fishin first user because atleast 150k gas is required
       let tx = await ubi
@@ -443,11 +471,12 @@ contract(
 
     it("should return the reward value for entitlement user", async () => {
       await increaseTime(ONE_DAY);
-      await goodDollar.mint(ubi.address, "10000000");
-      let amount = await ubi.checkEntitlement({ from: claimer2 });
-      let balance = await goodDollar.balanceOf(ubi.address);
+      await ubi.claim({ from: claimer1 });
+      await increaseTime(ONE_DAY);
+      let amount = await ubi.checkEntitlement({ from: claimer1 });
+      let balance2 = await goodDollar.balanceOf(ubi.address);
       let activeUsersCount = await ubi.activeUsersCount();
-      expect(amount.toString()).to.be.equal(balance.div(activeUsersCount).toString());
+      expect(amount.toString()).to.be.equal((balance2).div(activeUsersCount).toString());
     });
 
     it("should set the ubi claim amount by avatar", async () => {

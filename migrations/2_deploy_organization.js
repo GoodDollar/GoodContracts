@@ -132,9 +132,8 @@ module.exports = async function(deployer, network) {
       feeFormula.transferOwnership(await avatar.address /* .owner() */)
     ]);
 
-    if (network.indexOf("production") >= 0)
-    {
-      await token.renounceMinter(), // TODO: renounce all founders
+    if (network.indexOf("production") >= 0) {
+      await token.renounceMinter(); // TODO: renounce all founders
     }
     //Transfer ownership to controller
     //await token.transferOwnership(await avatar.owner());

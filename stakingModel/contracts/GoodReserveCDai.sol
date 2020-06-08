@@ -189,12 +189,11 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * @param minReturn the minimum allowed return in G$ tokens
      * @return (gdReturn) how much G$ tokens were transferred
      */
-    function buy(ERC20 buyWith, uint256 tokenAmount, uint256 minReturn)
-        public
-        requireActive
-        onlyCDai(buyWith)
-        returns (uint256)
-    {
+    function buy(
+        ERC20 buyWith,
+        uint256 tokenAmount,
+        uint256 minReturn
+    ) public requireActive onlyCDai(buyWith) returns (uint256) {
         require(
             buyWith.allowance(msg.sender, address(this)) >= tokenAmount,
             "You need to approve cDAI transfer first"
@@ -226,12 +225,11 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * @param minReturn the minimum allowed return in `sellTo` tokens
      * @return (tokenReturn) how much `sellTo` tokens were transferred
      */
-    function sell(ERC20 sellTo, uint256 gdAmount, uint256 minReturn)
-        public
-        requireActive
-        onlyCDai(sellTo)
-        returns (uint256)
-    {
+    function sell(
+        ERC20 sellTo,
+        uint256 gdAmount,
+        uint256 minReturn
+    ) public requireActive onlyCDai(sellTo) returns (uint256) {
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
         uint256 contributionAmount = contribution.calculateContribution(
             marketMaker,
@@ -274,17 +272,18 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * @param interest out of total transfered how much is the interest (in interestToken) that needs to be paid back (some interest might be donated)
      * @return (gdInterest, gdUBI) how much G$ interest was minted and how much G$ UBI was minted
      */
-    function mintInterestAndUBI(ERC20 interestToken, uint256 transfered, uint256 interest)
+    function mintInterestAndUBI(
+        ERC20 interestToken,
+        uint256 transfered,
+        uint256 interest
+    )
         public
         requireActive
         onlyCDai(interestToken)
         onlyFundManager
         returns (uint256, uint256)
     {
-        require(
-            block.number.sub(lastMinted) > blockInterval,
-            "Need to wait for the next interval"
-        );
+        require(canMint(), "Need to wait for the next interval");
         uint256 price = currentPrice(interestToken);
         uint256 gdInterestToMint = marketMaker.mintInterest(interestToken, transfered);
         uint256 precisionLoss = uint256(27).sub(uint256(gooddollar.decimals()));
@@ -294,7 +293,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         gdUBI = gdUBI.add(gdExpansionToMint);
         uint256 toMint = gdUBI.add(gdInterest);
         if (toMint > 0) ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
-        lastMinted = block.number;
+        lastMinted = block.number.div(blockInterval);
         emit GDInterestAndExpansionMinted(
             msg.sender,
             address(fundManager),
@@ -322,5 +321,9 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         marketMaker.transferOwnership(address(avatar));
         gooddollar.renounceMinter();
         super.internalEnd(avatar);
+    }
+
+    function canMint() public view returns (bool) {
+        return block.number.div(blockInterval) > lastMinted;
     }
 }

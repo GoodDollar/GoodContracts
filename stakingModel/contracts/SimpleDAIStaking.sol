@@ -72,7 +72,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
         blockInterval = _blockInterval;
-        lastUBICollection = block.number;
+        lastUBICollection = block.number.div(blockInterval);
         transferOwnership(_fundManager);
     }
 
@@ -176,10 +176,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     {
         require(recipient != address(this), "Recipient cannot be the staking contract"); // otherwise fund manager has to wait for the next interval
 
-        require(
-            block.number.sub(lastUBICollection) > blockInterval,
-            "Need to wait for the next interval"
-        );
+        require(canCollect(), "Need to wait for the next interval");
 
         (
             uint256 cdaiGains,
@@ -187,7 +184,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
             uint256 precisionLossDai
         ) = currentUBIInterest();
         cDai.transfer(recipient, cdaiGains);
-        lastUBICollection = block.number;
+        lastUBICollection = block.number.div(blockInterval);
         emit InterestCollected(recipient, cdaiGains, daiGains, precisionLossDai);
         return (cdaiGains, daiGains, precisionLossDai, avgInterestDonatedRatio);
     }
@@ -197,6 +194,6 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
      * @return bool - true if enough time has passed (counted in blocks)
      */
     function canCollect() public view returns (bool) {
-        return block.number.sub(lastUBICollection) > blockInterval;
+        return block.number.div(blockInterval) > lastUBICollection;
     }
 }

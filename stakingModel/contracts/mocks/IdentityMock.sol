@@ -29,4 +29,10 @@ contract IdentityMock is Identity {
     function removeContract(address account)
         public
     {}
+
+    function authenticate(address account)
+        public
+    {
+        dateAuthenticated[account] = now;
+    }
 }

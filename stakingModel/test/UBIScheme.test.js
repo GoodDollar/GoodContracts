@@ -303,9 +303,7 @@ contract(
       let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
       let dailyUbi = await ubi.dailyUbi();
       const totalFishedEventExists = tx.logs.some(
-        e => e.event === "TotalFished" &&
-        e.args['userLastIndex'].toNumber() === 1 &&
-        e.args['numberOfUsers'].toNumber() === 2
+        e => e.event === "TotalFished" && e.args["total"].toNumber() === 1
       );
       expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
       expect(
@@ -490,12 +488,7 @@ contract(
         },
         [true]
       );
-      await controller.genericCall(
-        ubi.address,
-        encodedCall,
-        avatar.address,
-        0
-      );
+      await controller.genericCall(ubi.address, encodedCall, avatar.address, 0);
       const shouldWithdrawFromDAO = await ubi.shouldWithdrawFromDAO();
       expect(shouldWithdrawFromDAO).to.be.equal(true);
     });
@@ -539,7 +532,11 @@ contract(
     });
 
     it("should be able to destroy an empty pool contract", async () => {
-      let firstClaimPool1 = await FirstClaimPool.new(100, avatar.address, identity.address);
+      let firstClaimPool1 = await FirstClaimPool.new(
+        100,
+        avatar.address,
+        identity.address
+      );
       await firstClaimPool1.start();
       let encodedCall = web3.eth.abi.encodeFunctionCall(
         {

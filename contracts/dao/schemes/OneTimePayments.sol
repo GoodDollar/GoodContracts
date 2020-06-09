@@ -6,6 +6,7 @@ import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 
 import "./FeelessScheme.sol";
 
+
 /* @title One Time payment scheme
  * Scheme that allows address to deposit tokens for any address to withdraw
  */
@@ -22,28 +23,27 @@ contract OneTimePayments is FeelessScheme {
 
     event PaymentDeposit(address indexed from, address paymentId, uint256 amount);
     event PaymentCancel(address indexed from, address paymentId, uint256 amount);
-    event PaymentWithdraw(address indexed from, address indexed to, address indexed paymentId, uint256 amount);
+    event PaymentWithdraw(
+        address indexed from,
+        address indexed to,
+        address indexed paymentId,
+        uint256 amount
+    );
 
     /* @dev Constructor
      * @param _avatar The avatar of the DAO
      * @param _identity The identity contract
      * @param _gasLimit The gas limit
      */
-    constructor(
-        Avatar _avatar,
-        Identity _identity
-    )
+    constructor(Avatar _avatar, Identity _identity)
         public
         FeelessScheme(_identity, _avatar)
-    { }
-    
+    {}
+
     /* @dev Start function. Adds this contract to identity as a feeless scheme.
      * Can only be called if scheme is registered
      */
-    function start()
-        public
-        onlyRegistered
-    {
+    function start() public onlyRegistered {
         addRights();
     }
 
@@ -54,11 +54,11 @@ contract OneTimePayments is FeelessScheme {
      * @param value the amount to deposit
      * @param data The given paymentId which should be a fresh address of a wallet
      */
-    function onTokenTransfer(address sender, uint256 value, bytes calldata data)
-        external
-        onlyRegistered
-        returns (bool)
-    {
+    function onTokenTransfer(
+        address sender,
+        uint256 value,
+        bytes calldata data
+    ) external onlyRegistered returns (bool) {
         address paymentId = abi.decode(data, (address));
 
         require(!payments[paymentId].hasPayment, "paymentId already in use");
@@ -71,18 +71,17 @@ contract OneTimePayments is FeelessScheme {
         return true;
     }
 
-    /* @dev Withdrawal function. 
+    /* @dev Withdrawal function.
      * allows the sender that proves ownership of paymentId to withdraw
-     * @param paymentId the address of the public key that the 
+     * @param paymentId the address of the public key that the
      *   rightful receiver of the payment knows the private key to
      * @param signature the signature of a the message containing the msg.sender address signed
      *   with the private key.
      */
     function withdraw(address paymentId, bytes memory signature) public onlyRegistered {
-
         address signer = signerOfAddress(msg.sender, signature);
         require(signer == paymentId, "Signature is not correct");
-        
+
         uint256 value = payments[paymentId].paymentAmount;
         address sender = payments[paymentId].paymentSender;
 
@@ -95,9 +94,11 @@ contract OneTimePayments is FeelessScheme {
      * @param paymentId The paymentId of the payment to cancelæ
      */
     function cancel(address paymentId) public {
+        require(
+            payments[paymentId].paymentSender == msg.sender,
+            "Can only be called by creator"
+        );
 
-        require(payments[paymentId].paymentSender == msg.sender, "Can only be called by creator");
-        
         uint256 value = payments[paymentId].paymentAmount;
 
         _withdraw(paymentId, value);
@@ -113,7 +114,10 @@ contract OneTimePayments is FeelessScheme {
 
         payments[paymentId].hasPayment = false;
 
-        avatar.nativeToken().transfer(msg.sender, value);
+        require(
+            avatar.nativeToken().transfer(msg.sender, value),
+            "withdraw transfer failed"
+        );
     }
 
     /* @dev function to check if a payment hash is in use
@@ -123,17 +127,18 @@ contract OneTimePayments is FeelessScheme {
         return payments[paymentId].hasPayment;
     }
 
-
     /* @dev gives the signer address of the signature and the message
      * @param message the plain-text message that is signed by the signature
      * @param signature the signature of the plain-text message
      */
-    function signerOfAddress(address message, bytes memory signature) 
-        internal 
-        pure 
-        returns (address) 
+    function signerOfAddress(address message, bytes memory signature)
+        internal
+        pure
+        returns (address)
     {
-        bytes32 signedMessage = ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(message)));
+        bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
+            keccak256(abi.encodePacked(message))
+        );
         address signer = ECDSA.recover(signedMessage, signature);
         return signer;
     }

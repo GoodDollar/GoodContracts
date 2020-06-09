@@ -41,8 +41,6 @@ module.exports = async function(deployer, network, accounts) {
     identity.address
   );
 
-  await oneTimePayments.transferOwnership(avataraddr);
-
   let transaction = await schemeRegistrar.proposeScheme(
     avatar.address,
     oneTimePayments.address,

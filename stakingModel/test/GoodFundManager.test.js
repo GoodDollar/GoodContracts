@@ -14,7 +14,7 @@ const ContributionCalculation = artifacts.require("ContributionCalculation");
 const TransferAndCallMock = artifacts.require("TransferAndCallMock");
 
 const BN = web3.utils.BN;
-export const BLOCK_INTERVAL = 0;
+export const BLOCK_INTERVAL = 1;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract(
@@ -70,7 +70,9 @@ contract(
           dai.address,
           cDAI.address,
           goodFundManager.address,
-          BLOCK_INTERVAL
+          BLOCK_INTERVAL,
+          avatar.address,
+          identity.address
         ),
         MarketMaker.new(goodDollar.address, 999388834642296, 1e15, avatar.address),
         ContributionCalculation.new(avatar.address, 0, 1e15)
@@ -164,7 +166,15 @@ contract(
       );
     });
 
+    it("should not be able to transfer intreset from non whitelisted contracts", async () => {
+      let error = await goodFundManager
+        .transferInterest(simpleStaking.address)
+        .catch(e => e);
+      expect(error.message).to.have.string("is not whitelisted contract");
+    });
+
     it("should transfer ubi interest to the reserve and recieves minted gd back to the staking contract", async () => {
+      const addContract = await identity.addContract(simpleStaking.address);
       await cDAI.exchangeRateCurrent();
       const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
       let gains = await simpleStaking.currentUBIInterest();
@@ -189,27 +199,30 @@ contract(
         dai.address,
         cDAI.address,
         goodFundManager.address,
-        0
+        1,
+        avatar.address,
+        identity.address
       );
       await dai.mint(staker, web3.utils.toWei("100", "ether"));
       await dai.approve(stakingMock.address, web3.utils.toWei("100", "ether"), {
         from: staker
       });
+      await identity.addContract(stakingMock.address);
       await stakingMock
         .stakeDAI(web3.utils.toWei("100", "ether"), {
           from: staker
         })
         .catch(console.log);
-        //this increases the exchangerate in our mock, so we can simulate interest
-        await cDAI.exchangeRateCurrent();
-        let stakingGDBalanceBefore = await goodDollar.balanceOf(stakingMock.address);
-        await goodFundManager.transferInterest(stakingMock.address);
-        let stakingGDBalanceAfter = await goodDollar.balanceOf(stakingMock.address);
-        // actual gdInterest - interest that the staking contract recieved since the
-        // donation in the mock is 20%
-        expect(
-          stakingGDBalanceAfter.sub(stakingGDBalanceBefore).toString()
-        ).to.be.equal("190329");
+      //this increases the exchangerate in our mock, so we can simulate interest
+      await cDAI.exchangeRateCurrent();
+      let stakingGDBalanceBefore = await goodDollar.balanceOf(stakingMock.address);
+      await goodFundManager.transferInterest(stakingMock.address);
+      let stakingGDBalanceAfter = await goodDollar.balanceOf(stakingMock.address);
+      // actual gdInterest - interest that the staking contract recieved since the
+      // donation in the mock is 20%
+      expect(stakingGDBalanceAfter.sub(stakingGDBalanceBefore).toString()).to.be.equal(
+        "190329"
+      );
     });
 
     it("should set block interval by avatar", async () => {

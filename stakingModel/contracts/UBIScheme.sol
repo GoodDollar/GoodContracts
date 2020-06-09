@@ -212,7 +212,7 @@ contract UBIScheme is AbstractUBI {
         day.amountOfClaimers = day.amountOfClaimers.add(1);
         day.claimAmount = day.claimAmount.add(amount);
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        token.transfer(account, amount);
+        require(token.transfer(account, amount), "claim transfer failed");
         if (isClaimed) {
             emit UBIClaimed(account, amount);
         }

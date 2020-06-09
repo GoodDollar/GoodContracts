@@ -137,6 +137,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
         blockInterval = _blockInterval;
+        lastMinted = block.number.div(blockInterval);
         contribution = _contribution;
     }
 
@@ -315,7 +316,10 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     function end() public onlyAvatar {
         uint256 remainingReserve = cDai.balanceOf(address(this));
         if (remainingReserve > 0) {
-            cDai.transfer(address(avatar), remainingReserve);
+            require(
+                cDai.transfer(address(avatar), remainingReserve),
+                "cdai transfer failed"
+            );
         }
         require(cDai.balanceOf(address(this)) == 0, "Funds transfer has failed");
         marketMaker.transferOwnership(address(avatar));

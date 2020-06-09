@@ -6,6 +6,7 @@ const cDAINonMintableMock = artifacts.require("cDAINonMintableMock");
 const cDAILowWorthMock = artifacts.require("cDAILowWorthMock");
 const Identity = artifacts.require("IdentityMock");
 const Formula = artifacts.require("FeeFormula");
+const avatarMock = artifacts.require("AvatarMock");
 
 const BN = web3.utils.BN;
 export const BLOCK_INTERVAL = 5;

@@ -3,18 +3,21 @@ const DAIMock = artifacts.require("./DAIMock.sol");
 const cDAIMock = artifacts.require("./cDAIMock.sol");
 const StakingContract = artifacts.require("./SimpleDAIStaking.sol");
 
-const { networks } = require("../stakingModel/truffle-config.js");
-
-async function getNetworkName() {
-  const networkId = await web3.eth.net.getId();
-  for (let name in networks) {
-    if (networks[name].network_id === networkId.toString())
-      return name;
+const getNetworkName = () => {
+  const argslist = process.argv;
+  for (let item of argslist) {
+    if (item.indexOf("network=") > 0)
+      return item.substring(item.indexOf('=') + 1, item.length);
   }
+  return "develop";
 };
 
-module.exports = async function() {
-  const network = await getNetworkName();
+/**
+ * helper script to simulate interest that can be collected from
+ * the staking contract
+ */
+const simulate = async function() {
+  const network = getNetworkName();
   const accounts = await web3.eth.getAccounts();
   const staking_file = await fse.readFile("../stakingModel/releases/deployment.json", "utf8");
   const staking_deployment = await JSON.parse(staking_file);
@@ -26,8 +29,7 @@ module.exports = async function() {
     const simpleStaking = await StakingContract.at(staking_mainnet_addresses.DAIStaking);
 
     console.log("minting dai");
-    await dai.mint(accounts[0], web3.utils.toWei("100", "ether"));
-    // await dai.allocateTo(accounts[0], web3.utils.toWei("100", "ether"));
+    await dai.allocateTo(accounts[0], web3.utils.toWei("100", "ether"));
     console.log("approving...");
     await dai.approve(cDAI.address, web3.utils.toWei("100", "ether"));
     await cDAI.mint(web3.utils.toWei("100", "ether"));
@@ -39,4 +41,10 @@ module.exports = async function() {
       .then(_ => _.toString());
     console.log({ stakingBalance });
   }
+};
+
+module.exports = done => {
+  simulate()
+    .catch(console.log)
+    .then(done);
 };

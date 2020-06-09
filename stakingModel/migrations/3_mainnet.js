@@ -172,7 +172,7 @@ module.exports = async function(deployer, network) {
   );
 
   console.log("proposing setReserve...");
-  let p3 = await schemeRegistrar.proposeScheme(
+  let p4 = await schemeRegistrar.proposeScheme(
     maindao.Avatar,
     setReserve.address,
     NULL_HASH,
@@ -180,10 +180,10 @@ module.exports = async function(deployer, network) {
     NULL_HASH
   );
 
-  let proposalId3 = p3.logs[0].args._proposalId;
+  let proposalId4 = p4.logs[0].args._proposalId;
 
   console.log("voting...");
-  await Promise.all([...founders.map(f => absoluteVote.vote(proposalId3, 1, 0, f))]);
+  await Promise.all([...founders.map(f => absoluteVote.vote(proposalId4, 1, 0, f))]);
 
   console.log("setting the reserve...");
   await setReserve.setReserve();

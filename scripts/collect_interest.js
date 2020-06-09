@@ -3,18 +3,20 @@ const settings = require("../stakingModel/migrations/deploy-settings.json");
 const StakingContract = artifacts.require("./SimpleDAIStaking.sol");
 const GoodFundsManager = artifacts.require("./GoodFundManager.sol");
 
-const { networks } = require("../stakingModel/truffle-config.js");
-
-async function getNetworkName() {
-  const networkId = await web3.eth.net.getId();
-  for (let name in networks) {
-    if (networks[name].network_id === networkId.toString())
-      return name;
+const getNetworkName = () => {
+  const argslist = process.argv;
+  for (let item of argslist) {
+    if (item.indexOf("network=") > 0)
+      return item.substring(item.indexOf('=') + 1, item.length);
   }
+  return "develop";
 };
 
-module.exports = async function() {
-  const network = await getNetworkName();
+/**
+ * helper script to simulate collecting interest from the staking contract
+ */
+const simulate = async function() {
+  const network = getNetworkName();
   if (network.indexOf("production") >= 0 || network.indexOf("test") >= 0) {
     return;
   }
@@ -45,3 +47,10 @@ module.exports = async function() {
     await goodFundManager.transferInterest(simpleStaking.address);
   }
 };
+
+module.exports = done => {
+  simulate()
+    .catch(console.log)
+    .then(done);
+};
+

@@ -284,7 +284,7 @@ contract(
       let dailyUbi = await ubi.dailyUbi();
       expect(isFishedBefore).to.be.false;
       expect(isFishedAfter).to.be.true;
-      expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
+      expect(tx.logs.some(e => e.event === "InactiveUserFished")).to.be.true;
       expect(
         claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
       ).to.be.equal(dailyUbi.toNumber());
@@ -314,9 +314,9 @@ contract(
       let claimer4BalanceAfter = await goodDollar.balanceOf(claimer4);
       let dailyUbi = await ubi.dailyUbi();
       const totalFishedEventExists = tx.logs.some(
-        e => e.event === "TotalFished" && e.args["total"].toNumber() === 1
+        e => e.event === "TotalFished" && e.args["total"].toNumber() === 2
       );
-      expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
+      expect(tx.logs.some(e => e.event === "InactiveUserFished")).to.be.true;
       expect(
         claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
       ).to.be.equal(2 * dailyUbi.toNumber());
@@ -351,7 +351,7 @@ contract(
       let dailyUbi = await ubi.dailyUbi();
       expect(isFishedBefore).to.be.false;
       expect(isFishedAfter).to.be.true;
-      expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
+      expect(tx.logs.some(e => e.event === "InactiveUserFished")).to.be.true;
       expect(
         claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
       ).to.be.equal(dailyUbi.toNumber());
@@ -371,7 +371,7 @@ contract(
       let dailyUbi = await ubi.dailyUbi();
       expect(isFishedBefore).to.be.false;
       expect(isFishedAfter).to.be.true;
-      expect(tx.logs[1].event).to.be.equal("InactiveUserFished");
+      expect(tx.logs.some(e => e.event === "InactiveUserFished")).to.be.true;
       expect(
         claimer4BalanceAfter.toNumber() - claimer4BalanceBefore.toNumber()
       ).to.be.equal(dailyUbi.toNumber());

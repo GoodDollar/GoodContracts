@@ -58,8 +58,6 @@ module.exports = async function(deployer, network) {
     toGD(networkSettings.dailyUBI)
   );
 
-  await ubi.transferOwnership(avataraddr);
-
   let transaction = await schemeRegistrar.proposeScheme(
     avatar.address,
     ubi.address,

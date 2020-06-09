@@ -2,6 +2,8 @@ const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
+const Identity = artifacts.require("Identity");
+const Avatar = artifacts.require("Avatar");
 
 const fse = require("fs-extra");
 
@@ -16,7 +18,7 @@ export const cDAI_ADDRESS = "0xe7bc397dbd069fc7d0109c0636d06888bb50668c";
 contract("SimpleDAIStaking - kovan e2e test", ([founder, staker]) => {
   let dai;
   let cDAI;
-  let simpleStaking;
+  let simpleStaking, avatar, identity;
 
   before(async function() {
     let network = process.env.NETWORK;
@@ -25,11 +27,15 @@ contract("SimpleDAIStaking - kovan e2e test", ([founder, staker]) => {
     }
     dai = await DAIMock.at(DAI_ADDRESS);
     cDAI = await cDAIMock.at(cDAI_ADDRESS);
+    avatar = await Avatar.deployed();
+    (identity = await Identity), deployed();
     simpleStaking = await SimpleDAIStaking.new(
       DAI_ADDRESS,
       cDAI_ADDRESS,
       founder,
-      BLOCK_INTERVAL
+      BLOCK_INTERVAL,
+      avatar.address,
+      identity.address
     );
   });
 

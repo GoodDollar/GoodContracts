@@ -4,7 +4,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
-import "../../contracts/dao/schemes/SchemeGuard.sol";
+import "../../contracts/dao/schemes/FeelessScheme.sol";
+import "../../contracts/identity/Identity.sol";
 import "../../contracts/DSMath.sol";
 
 
@@ -27,9 +28,9 @@ interface cERC20 {
  * @title Staking contract that donates earned interest to the DAO
  * allowing stakers to deposit DAI/ETH
  * or withdraw their stake in DAI
- * the contracts buy cDai and can transfer the daily interest to the owner (DAO)
+ * the contracts buy cDai and can transfer the daily interest to the  DAO
  */
-contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
+contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
     using SafeMath for uint256;
 
     struct Staker {
@@ -58,8 +59,10 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     //100% for phase0 POC
     uint32 public avgInterestDonatedRatio = 1e6;
 
+    address fundManager;
+
     modifier onlyFundManager {
-        require(msg.sender == owner(), "Only FundManager can call this method");
+        require(msg.sender == fundManager, "Only FundManager can call this method");
         _;
     }
 
@@ -67,13 +70,15 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         address _dai,
         address _cDai,
         address _fundManager,
-        uint256 _blockInterval
-    ) public SchemeGuard(Avatar(address(0))) {
+        uint256 _blockInterval,
+        Avatar _avatar,
+        Identity _identity
+    ) public FeelessScheme(_identity, _avatar) {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
         blockInterval = _blockInterval;
         lastUBICollection = block.number.div(blockInterval);
-        transferOwnership(_fundManager);
+        fundManager = _fundManager;
     }
 
     /**
@@ -122,8 +127,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
         if (daiActual < daiWithdraw) {
             daiWithdraw = daiActual;
         }
-        //TODO: handle transfer failure
-        dai.transfer(msg.sender, daiWithdraw);
+        require(dai.transfer(msg.sender, daiWithdraw), "withdraw transfer failed");
         emit DAIStakeWithdraw(msg.sender, daiWithdraw, daiActual);
     }
 
@@ -161,7 +165,7 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
     }
 
     /**
-     * @dev collect gained interest by owner(fundmanager)
+     * @dev collect gained interest by fundmanager
      * @param recipient of cDAI gains
      */
     function collectUBIInterest(address recipient)
@@ -183,8 +187,9 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
             uint256 daiGains,
             uint256 precisionLossDai
         ) = currentUBIInterest();
-        cDai.transfer(recipient, cdaiGains);
         lastUBICollection = block.number.div(blockInterval);
+        if (cdaiGains > 0)
+            require(cDai.transfer(recipient, cdaiGains), "collect transfer failed");
         emit InterestCollected(recipient, cdaiGains, daiGains, precisionLossDai);
         return (cdaiGains, daiGains, precisionLossDai, avgInterestDonatedRatio);
     }
@@ -195,5 +200,20 @@ contract SimpleDAIStaking is DSMath, Pausable, SchemeGuard {
      */
     function canCollect() public view returns (bool) {
         return block.number.div(blockInterval) > lastUBICollection;
+    }
+
+    /**
+     * @dev making the contract active
+     */
+    function start() public onlyRegistered {
+        addRights();
+    }
+
+    /**
+     * @dev making the contract inactive
+     */
+    function end() public onlyAvatar {
+        pause();
+        removeRights();
     }
 }

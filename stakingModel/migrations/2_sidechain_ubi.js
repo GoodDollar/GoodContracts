@@ -48,8 +48,6 @@ module.exports = async function(deployer, network) {
   const absoluteVote = await AbsoluteVote.at(homedao.AbsoluteVote);
   const schemeRegistrar = await SchemeRegistrar.at(homedao.SchemeRegistrar);
 
-  await ubi.transferOwnership(homedao.Avatar);
-
   const [p1, p2] = await Promise.all([
     schemeRegistrar.proposeScheme(
       homedao.Avatar,

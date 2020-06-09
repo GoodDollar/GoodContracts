@@ -1,25 +1,22 @@
 pragma solidity 0.5.4;
 
 import "openzeppelin-solidity/contracts/access/Roles.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-import "../identity/Identity.sol";
+import "../identity/IdentityGuard.sol";
 import "../dao/schemes/SignUpBonus.sol";
 
 
 /* @title Admin wallet contract allowing whitelisting and topping up of
  * addresses
  */
-contract AdminWallet is Ownable {
+contract AdminWallet is IdentityGuard {
     using Roles for Roles.Role;
     using SafeMath for uint256;
 
     Roles.Role private admins;
 
     address payable[] adminlist;
-
-    Identity identity;
 
     SignUpBonus bonus = SignUpBonus(0);
 
@@ -47,9 +44,7 @@ contract AdminWallet is Ownable {
         uint256 _toppingAmount,
         uint256 _toppingTimes,
         Identity _identity
-    ) public {
-        identity = _identity;
-
+    ) public IdentityGuard(_identity) {
         toppingAmount = _toppingAmount;
         adminToppingAmount = 1e9 * 9e6; //1gwei gas price * 9000000 gas limit
         toppingTimes = _toppingTimes;
@@ -69,10 +64,7 @@ contract AdminWallet is Ownable {
 
     modifier reimburseGas() {
         _;
-        if (
-            msg.sender.balance <= adminToppingAmount.div(2) &&
-            isAdmin(msg.sender)
-        ) {
+        if (msg.sender.balance <= adminToppingAmount.div(2) && isAdmin(msg.sender)) {
             _topWallet(msg.sender);
         }
     }
@@ -116,16 +108,9 @@ contract AdminWallet is Ownable {
     /**
      * @dev top admins
      */
-    function topAdmins(uint256 startIndex, uint256 endIndex)
-        public
-        reimburseGas
-    {
+    function topAdmins(uint256 startIndex, uint256 endIndex) public reimburseGas {
         require(adminlist.length > startIndex, "Admin list is empty");
-        for (
-            uint256 i = startIndex;
-            (i < adminlist.length && i < endIndex);
-            i++
-        ) {
+        for (uint256 i = startIndex; (i < adminlist.length && i < endIndex); i++) {
             if (adminlist[i].balance <= adminToppingAmount.div(2)) {
                 _topWallet(adminlist[i]);
             }
@@ -150,11 +135,7 @@ contract AdminWallet is Ownable {
     /* @dev Function to add given address to whitelist of identity contract
      * can only be done by admins of wallet and if wallet is an IdentityAdmin
      */
-    function whitelist(address _user, string memory _did)
-        public
-        onlyAdmin
-        reimburseGas
-    {
+    function whitelist(address _user, string memory _did) public onlyAdmin reimburseGas {
         identity.addWhitelistedWithDID(_user, _did);
     }
 
@@ -231,11 +212,7 @@ contract AdminWallet is Ownable {
      * @param _user The address to transfer to and whitelist
      * @param _amount the bonus amount to give
      */
-    function awardUser(address _user, uint256 _amount)
-        public
-        onlyAdmin
-        reimburseGas
-    {
+    function awardUser(address _user, uint256 _amount) public onlyAdmin reimburseGas {
         require(bonus != SignUpBonus(0), "SignUp bonus has not been set yet");
         if (_amount > 0) {
             bonus.awardUser(_user, _amount);
@@ -250,12 +227,11 @@ contract AdminWallet is Ownable {
      * @return bool    success or fail
      *         bytes - the return bytes of the called contract's function.
      */
-    function genericCall(address _contract, bytes memory _data, uint256 _value)
-        public
-        onlyAdmin
-        reimburseGas
-        returns (bool success, bytes memory returnValue)
-    {
+    function genericCall(
+        address _contract,
+        bytes memory _data,
+        uint256 _value
+    ) public onlyAdmin reimburseGas returns (bool success, bytes memory returnValue) {
         // solhint-disable-next-line avoid-call-value
         (success, returnValue) = _contract.call.value(_value)(_data);
         emit GenericCall(_contract, _data, _value, success);

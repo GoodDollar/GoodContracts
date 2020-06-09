@@ -5,11 +5,13 @@ import "./SchemeGuard.sol";
 import "../../identity/Identity.sol";
 import "../../identity/IdentityGuard.sol";
 
-/* @title Contract for letting scheme add itself to identity
+
+/**
+ * @dev Contract for letting scheme add itself to identity
  * to allow transferring GoodDollar without paying fees
+ * and transfer ownership to Avatar
  */
 contract FeelessScheme is SchemeGuard, IdentityGuard {
-
     /* @dev Constructor
      * @param _identity The identity contract
      * @param _avatar The avatar of the DAO
@@ -28,7 +30,9 @@ contract FeelessScheme is SchemeGuard, IdentityGuard {
             address(identity),
             abi.encodeWithSignature("addContract(address)", address(this)),
             avatar,
-            0);
+            0
+        );
+        transferOwnership(address(avatar));
     }
 
     /* @dev Internal function to remove contract from identity.
@@ -39,6 +43,7 @@ contract FeelessScheme is SchemeGuard, IdentityGuard {
             address(identity),
             abi.encodeWithSignature("removeContract(address)", address(this)),
             avatar,
-            0);    
+            0
+        );
     }
 }

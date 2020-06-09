@@ -142,7 +142,10 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         uint256 remainingReserve = token.balanceOf(address(this));
 
         if (remainingReserve > 0) {
-            token.transfer(address(avatar), remainingReserve);
+            require(
+                token.transfer(address(avatar), remainingReserve),
+                "end transfer failed"
+            );
         }
 
         removeRights();
@@ -166,8 +169,6 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
 
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
 
-        token.transfer(msg.sender, claimDistribution);
-
         claimDay[currentDay].amountOfClaimers = claimDay[currentDay].amountOfClaimers.add(
             1
         );
@@ -176,7 +177,7 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         );
 
         lastClaimed[msg.sender] = now;
-
+        require(token.transfer(msg.sender, claimDistribution), "claim transfer failed");
         emit UBIClaimed(msg.sender, claimDistribution);
         return true;
     }

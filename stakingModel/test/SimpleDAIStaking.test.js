@@ -4,6 +4,8 @@ const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 const cDAINonMintableMock = artifacts.require("cDAINonMintableMock");
 const cDAILowWorthMock = artifacts.require("cDAILowWorthMock");
+const Identity = artifacts.require("IdentityMock");
+const Formula = artifacts.require("FeeFormula");
 
 const BN = web3.utils.BN;
 export const BLOCK_INTERVAL = 5;
@@ -21,16 +23,32 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   let dai;
   let cDAI;
   let simpleStaking;
+  let avatar, goodDollar, identity, formula;
 
   before(async () => {
     dai = await DAIMock.new();
     cDAI = await cDAIMock.new(dai.address);
-    dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether"));
+    [, formula, identity] = await Promise.all([
+      dai.mint(cDAI.address, web3.utils.toWei("100000000", "ether")),
+      Formula.new(0),
+      Identity.new()
+    ]);
+    goodDollar = await GoodDollar.new(
+      "GoodDollar",
+      "GDD",
+      "0",
+      formula.address,
+      identity.address,
+      NULL_ADDRESS
+    );
+    avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
     simpleStaking = await SimpleDAIStaking.new(
       dai.address,
       cDAI.address,
       founder,
-      BLOCK_INTERVAL
+      BLOCK_INTERVAL,
+      avatar.address,
+      identity.address
     );
   });
 
@@ -125,7 +143,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       dai.address,
       cDAI1.address,
       founder,
-      BLOCK_INTERVAL
+      BLOCK_INTERVAL,
+      avatar.address,
+      identity.address
     );
     const weiAmount = web3.utils.toWei("1000", "ether");
     await dai.mint(staker, weiAmount);
@@ -153,7 +173,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       dai.address,
       cDAI1.address,
       founder,
-      BLOCK_INTERVAL
+      BLOCK_INTERVAL,
+      avatar.address,
+      identity.address
     );
     const weiAmount = web3.utils.toWei("1000", "ether");
     await dai.mint(staker, weiAmount);
@@ -201,7 +223,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       dai.address,
       fakecDAI.address,
       founder,
-      BLOCK_INTERVAL
+      BLOCK_INTERVAL,
+      avatar.address,
+      identity.address
     ); // staking should failed
     await dai.mint(staker, web3.utils.toWei("100", "ether"));
     await dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
@@ -228,7 +252,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       dai.address,
       fakecDAI.address,
       founder,
-      BLOCK_INTERVAL
+      BLOCK_INTERVAL,
+      avatar.address,
+      identity.address
     ); // staking should failed
     await dai.mint(staker, web3.utils.toWei("100", "ether"));
     await dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
@@ -253,7 +279,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       dai.address,
       fakecDAI.address,
       founder,
-      BLOCK_INTERVAL
+      BLOCK_INTERVAL,
+      avatar.address,
+      identity.address
     ); // staking should failed
     await dai.mint(staker, web3.utils.toWei("100", "ether"));
     await dai.approve(fakeSimpleStaking.address, web3.utils.toWei("100", "ether"), {
@@ -399,7 +427,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       dai.address,
       cDAI1.address,
       founder,
-      BLOCK_INTERVAL
+      BLOCK_INTERVAL,
+      avatar.address,
+      identity.address
     );
     const weiAmount = web3.utils.toWei("1000", "ether");
     await dai.mint(staker, weiAmount);
@@ -484,6 +514,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   });
 
   it("should be able to be called once per withdrawInterval", async () => {
+    // the block number difference between the calls are less then the block interval
+    await simpleStaking.collectUBIInterest(founder).catch(e => e);
     const error = await simpleStaking.collectUBIInterest(founder).catch(e => e);
     expect(error.message).to.have.string("Need to wait for the next interval");
   });

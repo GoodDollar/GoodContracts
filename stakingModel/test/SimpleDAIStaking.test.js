@@ -514,6 +514,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   });
 
   it("should be able to be called once per withdrawInterval", async () => {
+    // the block number difference between the calls are less then the block interval
+    await simpleStaking.collectUBIInterest(founder).catch(e => e);
     const error = await simpleStaking.collectUBIInterest(founder).catch(e => e);
     expect(error.message).to.have.string("Need to wait for the next interval");
   });

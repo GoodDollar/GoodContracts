@@ -137,6 +137,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
         blockInterval = _blockInterval;
+        lastMinted = block.number.div(blockInterval);
         contribution = _contribution;
     }
 

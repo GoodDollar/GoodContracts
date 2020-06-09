@@ -14,7 +14,7 @@ const ContributionCalculation = artifacts.require("ContributionCalculation");
 const TransferAndCallMock = artifacts.require("TransferAndCallMock");
 
 const BN = web3.utils.BN;
-export const BLOCK_INTERVAL = 0;
+export const BLOCK_INTERVAL = 1;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract(
@@ -199,7 +199,7 @@ contract(
         dai.address,
         cDAI.address,
         goodFundManager.address,
-        0,
+        1,
         avatar.address,
         identity.address
       );

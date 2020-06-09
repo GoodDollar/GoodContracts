@@ -13,7 +13,7 @@ const Formula = artifacts.require("FeeFormula");
 const ContributionCalculation = artifacts.require("ContributionCalculation");
 
 const BN = web3.utils.BN;
-export const BLOCK_INTERVAL = 0;
+export const BLOCK_INTERVAL = 1;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
@@ -161,7 +161,6 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let reserveBalanceBefore = reserveToken.reserveSupply;
     let supplyBefore = reserveToken.gdSupply;
-    let rrBefore = reserveToken.reserveRatio;
     const gdBalanceFundBefore = await goodDollar.balanceOf(founder);
     const gdBalanceAvatarBefore = await goodDollar.balanceOf(avatar.address);
     const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);

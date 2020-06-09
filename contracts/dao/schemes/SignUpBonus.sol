@@ -82,7 +82,10 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
 
         uint256 remainingReserve = token.balanceOf(address(this));
         if (remainingReserve > 0) {
-            token.transfer(address(avatar), remainingReserve);
+            require(
+                token.transfer(address(avatar), remainingReserve),
+                "end transfer failed"
+            );
         }
 
         removeRights();
@@ -103,7 +106,7 @@ contract SignUpBonus is ActivePeriod, FeelessScheme {
         require(rewarded[_user].add(_amount) <= maxBonus, "Cannot award user beyond max");
 
         rewarded[_user] = rewarded[_user].add(_amount);
-        token.transfer(_user, _amount);
+        require(token.transfer(_user, _amount), "award transfer failed");
 
         emit BonusClaimed(_user, _amount);
     }

@@ -12,9 +12,6 @@ module.exports = async function(deployer, network) {
   if (network.indexOf("production") >= 0 || network.indexOf("test") >= 0) {
     return;
   }
-
-  const batch = new web3.BatchRequest();
-  await deployer;
   const networkSettings = { ...settings["default"], ...settings[network] };
   const accounts = await web3.eth.getAccounts();
   const staking_file = await fse.readFile("releases/deployment.json", "utf8");

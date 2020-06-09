@@ -106,7 +106,7 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     await goodReserve.buy(cDAI.address, amount, 0);
     let gdbalance = await goodDollar.balanceOf(founder);
     await goodDollar.transfer(firstClaimPool.address, gdbalance.toString());
-    await next_interval();
+    await next_interval(await goodFundManager.blockInterval());
     // transfers funds to the ubi
     await goodFundManager.transferInterest(simpleStaking.address);
   });

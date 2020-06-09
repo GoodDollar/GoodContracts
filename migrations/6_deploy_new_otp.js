@@ -17,7 +17,7 @@ module.exports = async function(deployer, network, accounts) {
     console.log("Skipping OTPL for mainnet");
     return;
   }
-  const networkSettings = settings[network] || settings["default"];
+  const networkSettings = { ...settings["default"], ...settings[network] };
 
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = await JSON.parse(file);

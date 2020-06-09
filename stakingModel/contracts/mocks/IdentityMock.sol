@@ -29,4 +29,14 @@ contract IdentityMock is Identity {
     function isDAOContract(address account) public view returns (bool) {
         return contracts[account];
     }
+
+    function removeContract(address account)
+        public
+    {}
+
+    function authenticate(address account)
+        public
+    {
+        dateAuthenticated[account] = now;
+    }
 }

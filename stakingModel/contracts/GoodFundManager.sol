@@ -59,7 +59,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         bridgeContract = _bridgeContract;
         ubiRecipient = _ubiRecipient;
         blockInterval = _blockInterval;
-        lastTransferred = block.number;
+        lastTransferred = block.number.div(blockInterval);
     }
 
     /* @dev Start function. Adds this contract to identity as a feeless scheme.
@@ -101,7 +101,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
 
     function canRun() public view returns(bool)
     {
-        return block.number.sub(lastTransferred) > blockInterval;
+        return block.number.div(blockInterval) > lastTransferred;
     }
 
     /**
@@ -122,7 +122,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             "Need to wait for the next interval"
         );
         
-        lastTransferred = block.number;
+        lastTransferred = block.number.div(blockInterval);
 
         // cdai balance of the reserve contract
         uint256 currentBalance = cDai.balanceOf(address(reserve));

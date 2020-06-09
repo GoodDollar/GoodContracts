@@ -18,7 +18,7 @@ module.exports = async function(deployer, network) {
     console.log("Skipping signup bonus for mainnet");
     return;
   }
-  const networkSettings = settings[network] || settings["default"];
+  const networkSettings = { ...settings["default"], ...settings[network] };
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = await JSON.parse(file);
   const networkAddresses = previousDeployment[network];

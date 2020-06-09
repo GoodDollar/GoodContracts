@@ -13,13 +13,15 @@ const cDAIMock = artifacts.require("./cDAIMock.sol");
 const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 
+const FundManagerSetReserve = artifacts.require("FundManagerSetReserve");
+
 const releaser = require("../../scripts/releaser.js");
 
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
-  if (network.indexOf("mainnet") < 0 && network !== "test") {
+  if (network.indexOf("mainnet") < 0 && network !== "test" && network !== "develop") {
     return;
   }
   await deployer;
@@ -30,12 +32,12 @@ module.exports = async function(deployer, network) {
   const networkAddresses = previousDeployment[network];
 
   const homeNetwork = network.replace(/-?mainnet/, "");
-  const networkSettings = settings[network] || settings["default"];
+  const networkSettings = { ...settings["default"], ...settings[network] };
   const maindao = daoAddresses[network];
   const homedao = daoAddresses[homeNetwork];
 
   let foreignBridgeAddr, daiAddress, cdaiAddress;
-  if (network == "test") {
+  if (network == "test" || network == "develop") {
     const [foreignBridge, dai] = await Promise.all([
       deployer.deploy(BridgeMock, maindao.GoodDollar),
       deployer.deploy(DAIMock)
@@ -77,7 +79,8 @@ module.exports = async function(deployer, network) {
     maindao.GoodDollar,
     networkSettings.expansionRatio.nom,
     networkSettings.expansionRatio.denom,
-    maindao.Avatar
+    maindao.Avatar,
+    { gas: network.indexOf("mainnet") >= 0 ? 4000000 : undefined }
   );
 
   const [fundManager, contribcalc, marketmaker] = await Promise.all([
@@ -160,6 +163,31 @@ module.exports = async function(deployer, network) {
   console.log("starting...");
   await Promise.all([reserve.start(), fundManager.start(), stakingContract.start()]);
 
+  console.log("deploying fund manager setReserve scheme...");
+  const setReserve = await deployer.deploy(
+    FundManagerSetReserve,
+    maindao.Avatar,
+    fundManager.address,
+    reserve.address
+  );
+
+  console.log("proposing setReserve...");
+  let p3 = await schemeRegistrar.proposeScheme(
+    maindao.Avatar,
+    setReserve.address,
+    NULL_HASH,
+    "0x00000010",
+    NULL_HASH
+  );
+
+  let proposalId3 = p3.logs[0].args._proposalId;
+
+  console.log("voting...");
+  await Promise.all([...founders.map(f => absoluteVote.vote(proposalId3, 1, 0, f))]);
+
+  console.log("setting the reserve...");
+  await setReserve.setReserve();
+
   let releasedContracts = {
     ...networkAddresses,
     FundManager: fundManager.address,
@@ -169,7 +197,7 @@ module.exports = async function(deployer, network) {
     Contribution: contribcalc.address,
     DAI: daiAddress,
     cDAI: cdaiAddress,
-    MainnetBridge: foreignBridgeAddr,
+    ForeignBridge: foreignBridgeAddr,
     network,
     networkId: parseInt(deployer.network_id)
   };

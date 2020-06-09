@@ -24,7 +24,7 @@ module.exports = async function(deployer, network) {
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = JSON.parse(file);
   const networkAddresses = previousDeployment[network];
-  const networkSettings = settings[network] || settings["default"];
+  const networkSettings = { ...settings["default"], ...settings[network] };
   const homedao = daoAddresses[network];
 
   const ubiPool = await deployer.deploy(

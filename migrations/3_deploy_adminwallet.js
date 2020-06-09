@@ -17,7 +17,7 @@ module.exports = async function(deployer, network, accounts) {
   }
   if (network != "ganache" && network != "test" && network != "coverage") {
     const adminWallet = await AdminWallet.deployed();
-    const networkSettings = settings[network] || settings["default"];
+    const networkSettings = { ...settings["default"], ...settings[network] };
 
     let adminProvider;
 
@@ -35,9 +35,7 @@ module.exports = async function(deployer, network, accounts) {
         from: accounts[0],
         value: adminWalletValue
       });
-      adminWalletBalance = await web3.eth
-        .getBalance(adminWallet.address)
-        .then(parseInt);
+      adminWalletBalance = await web3.eth.getBalance(adminWallet.address).then(parseInt);
       console.log("adminwallet balance after top:", { adminWalletBalance });
     }
 
@@ -49,12 +47,7 @@ module.exports = async function(deployer, network, accounts) {
         10
       );
     } else {
-      adminProvider = new HDWalletProvider(
-        admin_mnemonic,
-        "https://rpc.fuse.io/",
-        0,
-        10
-      );
+      adminProvider = new HDWalletProvider(admin_mnemonic, "https://rpc.fuse.io/", 0, 10);
     }
 
     const adminsWeb3 = new Web3(adminProvider);
@@ -64,8 +57,6 @@ module.exports = async function(deployer, network, accounts) {
       .addAdmins(admins)
       .then(_ => console.log({ admins }))
       .catch(e => console.log("addAdmin failed:", e));
-    await adminWallet
-      .topAdmins(0)
-      .catch(e => console.log("topAdmins failed:", e));
+    await adminWallet.topAdmins(0).catch(e => console.log("topAdmins failed:", e));
   }
 };

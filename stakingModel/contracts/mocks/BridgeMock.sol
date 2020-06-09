@@ -1,6 +1,7 @@
 pragma solidity 0.5.4;
 
 import "../../../contracts/token/ERC677/ERC677Receiver.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 
 contract BridgeMock is ERC677Receiver {
@@ -20,6 +21,8 @@ contract BridgeMock is ERC677Receiver {
         value = _value;
 
         to = parse32BytesToAddress(_data);
+        IERC20 token = IERC20(msg.sender);
+        token.transfer(to, value);
         return true;
     }
 

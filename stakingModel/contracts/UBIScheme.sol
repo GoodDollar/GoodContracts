@@ -67,6 +67,16 @@ contract UBIScheme is AbstractUBI {
         uint256 claimAmount
     );
 
+    // emits when finishing a `multi fish` execution.
+    // indicates the number of users from the given
+    // array who actually been tried being fished.
+    // it might not be finished going over all the
+    // array if there no gas left.
+    event TotalFished(uint256 total);
+
+    // emits when daily ubi is calculated
+    event UBICalculated(uint256 day, uint256 dailyUbi, uint256 blockNumber);
+
     /**
      * @dev Constructor
      * @param _avatar The avatar of the DAO
@@ -135,15 +145,16 @@ contract UBIScheme is AbstractUBI {
             if (activeUsersCount > 0) {
                 dailyUbi = currentBalance.div(activeUsersCount);
             }
+            emit UBICalculated(currentDay, dailyUbi, block.number);
         }
 
         return dailyUbi;
     }
 
     /* @dev Sets the currentDay variable to amount of days
-     * since start of contract. Internal function
+     * since start of contract.
      */
-    function setDay() internal {
+    function setDay() public {
         currentDay = (now.sub(periodStart)) / 1 days;
     }
 
@@ -235,7 +246,7 @@ contract UBIScheme is AbstractUBI {
      * @param claimer account
      * @return A bool indicating if UBI was claimed
      */
-    function _claim(address account) private returns (bool) {
+    function _claim(address account) internal returns (bool) {
         // calculating the formula up today ie on day 0 there are no active users, on day 1 any user
         // (new or active) will trigger the calculation with the active users count of the day before
         // and so on. the new or inactive users that will become active today, will not take into account
@@ -301,13 +312,17 @@ contract UBIScheme is AbstractUBI {
         return true;
     }
 
-    /* @dev executes `fish` with multiple addresses
+    /* @dev executes `fish` with multiple addresses. emits the number of users from the given
+     * array who actually been tried being fished.
      * @param accounts to fish
      * @return A bool indicating if all the UBIs were fished
      */
     function fishMulti(address[] memory accounts) public requireActive returns (uint256) {
         for (uint256 i = 0; i < accounts.length; ++i) {
-            if (gasleft() < iterationGasLimit) return i;
+            if (gasleft() < iterationGasLimit) {
+                emit TotalFished(i);
+                return i;
+            }
             if (
                 isNotNewUser(accounts[i]) &&
                 !isActiveUser(accounts[i]) &&
@@ -316,7 +331,8 @@ contract UBIScheme is AbstractUBI {
                 fish(accounts[i]);
             }
         }
-        return accounts.length - 1;
+        emit TotalFished(accounts.length);
+        return accounts.length;
     }
 
     /**

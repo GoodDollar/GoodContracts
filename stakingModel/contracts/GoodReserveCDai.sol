@@ -283,10 +283,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         onlyFundManager
         returns (uint256, uint256)
     {
-        require(
-            block.number.sub(lastMinted) > blockInterval,
-            "Need to wait for the next interval"
-        );
+        require(canMint(), "Need to wait for the next interval");
         uint256 price = currentPrice(interestToken);
         uint256 gdInterestToMint = marketMaker.mintInterest(interestToken, transfered);
         uint256 precisionLoss = uint256(27).sub(uint256(gooddollar.decimals()));
@@ -296,7 +293,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         gdUBI = gdUBI.add(gdExpansionToMint);
         uint256 toMint = gdUBI.add(gdInterest);
         if (toMint > 0) ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
-        lastMinted = block.number;
+        lastMinted = block.number.div(blockInterval);
         emit GDInterestAndExpansionMinted(
             msg.sender,
             address(fundManager),
@@ -327,5 +324,9 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         marketMaker.transferOwnership(address(avatar));
         gooddollar.renounceMinter();
         super.internalEnd(avatar);
+    }
+
+    function canMint() public view returns (bool) {
+        return block.number.div(blockInterval) > lastMinted;
     }
 }

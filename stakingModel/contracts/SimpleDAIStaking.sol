@@ -77,7 +77,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         dai = ERC20(_dai);
         cDai = cERC20(_cDai);
         blockInterval = _blockInterval;
-        lastUBICollection = block.number;
+        lastUBICollection = block.number.div(blockInterval);
         fundManager = _fundManager;
     }
 
@@ -180,17 +180,14 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
     {
         require(recipient != address(this), "Recipient cannot be the staking contract"); // otherwise fund manager has to wait for the next interval
 
-        require(
-            block.number.sub(lastUBICollection) > blockInterval,
-            "Need to wait for the next interval"
-        );
+        require(canCollect(), "Need to wait for the next interval");
 
         (
             uint256 cdaiGains,
             uint256 daiGains,
             uint256 precisionLossDai
         ) = currentUBIInterest();
-        lastUBICollection = block.number;
+        lastUBICollection = block.number.div(blockInterval);
         if (cdaiGains > 0)
             require(cDai.transfer(recipient, cdaiGains), "collect transfer failed");
         emit InterestCollected(recipient, cdaiGains, daiGains, precisionLossDai);
@@ -202,7 +199,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
      * @return bool - true if enough time has passed (counted in blocks)
      */
     function canCollect() public view returns (bool) {
-        return block.number.sub(lastUBICollection) > blockInterval;
+        return block.number.div(blockInterval) > lastUBICollection;
     }
 
     /**

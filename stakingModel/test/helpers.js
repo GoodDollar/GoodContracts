@@ -25,8 +25,8 @@ const delay = async timeout => {
     setTimeout(res, timeout);
   });
 };
-export const next_interval_reg = async function() {
-  let blocks = 5760;
+export const next_interval_reg = async function(interval) {
+  let blocks = interval;
   for (let i = 0; i < blocks; ++i)
     await web3.currentProvider.send(
       { jsonrpc: "2.0", method: "evm_mine", id: 12345 + i },
@@ -34,8 +34,8 @@ export const next_interval_reg = async function() {
     );
 };
 
-export const next_interval = async function() {
-  let blocks = 5760;
+export const next_interval = async function(interval = 5760) {
+  let blocks = interval;
   let ps = [];
   for (let i = 0; i < blocks; ++i) {
     ps.push(
@@ -52,8 +52,8 @@ export const next_interval = async function() {
   return Promise.all(ps);
 };
 
-export const next_interval_batch = async function() {
-  let blocks = 5760;
+export const next_interval_batch = async function(interval) {
+  let blocks = interval;
   let batch = web3.BatchRequest();
   for (let i = 0; i < blocks; ++i)
     batch.add(

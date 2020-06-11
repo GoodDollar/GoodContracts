@@ -21,6 +21,7 @@ const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
+  if (network === "tdd") return;
   if (network.indexOf("mainnet") < 0 && network !== "test" && network !== "develop") {
     return;
   }

@@ -8,7 +8,11 @@ const GoodDollar = artifacts.require("./GoodDollar.sol");
 const UBIScheme = artifacts.require("./UBIScheme.sol");
 
 module.exports = async function(deployer, network) {
-  if (network.indexOf("production") >= 0 || network.indexOf("test") >= 0) {
+  if (
+    network.indexOf("tdd") >= 0 ||
+    network.indexOf("production") >= 0 ||
+    network.indexOf("test") >= 0
+  ) {
     return;
   }
   await deployer;

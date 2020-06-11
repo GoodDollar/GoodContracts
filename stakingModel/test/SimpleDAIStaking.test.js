@@ -491,6 +491,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     const gains = await simpleStaking.currentUBIInterest();
     const cdaiGains = gains["0"];
     const precisionLossDai = gains["2"].toString(); //last 10 decimals since cdai is only 8 decimals while dai is 18
+    const canCollect = await simpleStaking.canCollect();
+    expect(canCollect).to.be.equal(true);
     const res = await simpleStaking.collectUBIInterest(founder);
     const fundBalance = await cDAI.balanceOf(founder);
     const fundDaiWorth = await simpleStaking.currentDAIWorth();
@@ -515,10 +517,12 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   });
 
   it("should be able to be called once per withdrawInterval", async () => {
+    const canCollect = await simpleStaking.canCollect();
+    expect(canCollect).to.be.equal(false);
     // the block number difference between the calls are less then the block interval
     await simpleStaking.collectUBIInterest(founder).catch(e => e);
     const error = await simpleStaking.collectUBIInterest(founder).catch(e => e);
-    expect(error.message).to.have.string("Need to wait for the next interval");
+    expect(error).to.have.string("Need to wait for the next interval");
   });
 
   it("should not be able to double withdraw stake", async () => {

@@ -522,7 +522,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     // the block number difference between the calls are less then the block interval
     await simpleStaking.collectUBIInterest(founder).catch(e => e);
     const error = await simpleStaking.collectUBIInterest(founder).catch(e => e);
-    expect(error).to.have.string("Need to wait for the next interval");
+    expect(error.message).to.have.string("Need to wait for the next interval");
   });
 
   it("should not be able to double withdraw stake", async () => {

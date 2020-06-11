@@ -1,30 +1,32 @@
 const fse = require("fs-extra");
-const settings = require("./deploy-settings.json");
-const StakingContract = artifacts.require("./SimpleDAIStaking.sol");
-const Reserve = artifacts.require("./GoodReserveCDai.sol");
 const DAIMock = artifacts.require("./DAIMock.sol");
 const cDAIMock = artifacts.require("./cDAIMock.sol");
-const GoodDollar = artifacts.require("./GoodDollar.sol");
-const UBIScheme = artifacts.require("./UBIScheme.sol");
+const StakingContract = artifacts.require("./SimpleDAIStaking.sol");
 
-const { networks } = require("../truffle-config.js");
-module.exports = async function(deployer, network) {
-  if (network.indexOf("production") >= 0 || network.indexOf("test") >= 0) {
-    return;
+const getNetworkName = () => {
+  const argslist = process.argv;
+  for (let item of argslist) {
+    if (item.indexOf("network=") > 0)
+      return item.substring(item.indexOf('=') + 1, item.length);
   }
-  const networkSettings = { ...settings["default"], ...settings[network] };
-  const accounts = await web3.eth.getAccounts();
-  const staking_file = await fse.readFile("releases/deployment.json", "utf8");
-  const dao_file = await fse.readFile("../releases/deployment.json", "utf8");
-  const staking_deployment = await JSON.parse(staking_file);
-  const dao_deployment = await JSON.parse(dao_file);
+  return "develop";
+};
 
+/**
+ * helper script to simulate interest that can be collected from
+ * the staking contract
+ */
+const simulate = async function() {
+  const network = getNetworkName();
+  const accounts = await web3.eth.getAccounts();
+  const staking_file = await fse.readFile("../stakingModel/releases/deployment.json", "utf8");
+  const staking_deployment = await JSON.parse(staking_file);
+  
   if (network.indexOf("mainnet") >= 0 || network === "develop") {
     let staking_mainnet_addresses = staking_deployment[network];
     const dai = await DAIMock.at(staking_mainnet_addresses.DAI);
     const cDAI = await cDAIMock.at(staking_mainnet_addresses.cDAI);
     const simpleStaking = await StakingContract.at(staking_mainnet_addresses.DAIStaking);
-    const goodReserve = await Reserve.at(staking_mainnet_addresses.Reserve);
 
     console.log("minting dai");
     await dai.allocateTo(accounts[0], web3.utils.toWei("100", "ether"));
@@ -39,4 +41,10 @@ module.exports = async function(deployer, network) {
       .then(_ => _.toString());
     console.log({ stakingBalance });
   }
+};
+
+module.exports = done => {
+  simulate()
+    .catch(console.log)
+    .then(done);
 };

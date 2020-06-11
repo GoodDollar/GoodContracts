@@ -52,6 +52,9 @@ contract UBIScheme is AbstractUBI {
     // double fishing
     mapping(address => bool) public fishedUsersAddresses;
 
+    //total claims per user stat
+    mapping(address => uint256) public totalClaimsPerUser;
+
     // emits when a withdraw has been succeded
     event WithdrawFromDao(uint256 prevBalance, uint256 newBalance);
 
@@ -261,6 +264,7 @@ contract UBIScheme is AbstractUBI {
         ) {
             lastClaimed[account] = now;
             claimDay[currentDay].hasClaimed[account] = true;
+            totalClaimsPerUser[account].add(1);
             _transferTokens(account, newDistribution, true);
             return true;
         } else if (!isNotNewUser(account) || fishedUsersAddresses[account]) {
@@ -269,6 +273,7 @@ contract UBIScheme is AbstractUBI {
             fishedUsersAddresses[account] = false;
             lastClaimed[account] = now; // marks last claimed as today
             claimDay[currentDay].hasClaimed[account] = true;
+            totalClaimsPerUser[account].add(1);
             uint256 awardAmount = firstClaimPool.awardUser(account);
             emit UBIClaimed(account, awardAmount);
             emit ActivatedUser(account);

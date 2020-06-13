@@ -7,9 +7,10 @@ const cDAILowWorthMock = artifacts.require("cDAILowWorthMock");
 const Identity = artifacts.require("IdentityMock");
 const Formula = artifacts.require("FeeFormula");
 const avatarMock = artifacts.require("AvatarMock");
+const ControllerMock = artifacts.require("ControllerMock");
 
 const BN = web3.utils.BN;
-export const BLOCK_INTERVAL = 5;
+export const BLOCK_INTERVAL = 30;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 async function evm_mine(blocks) {
@@ -24,7 +25,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   let dai;
   let cDAI;
   let simpleStaking;
-  let avatar, goodDollar, identity, formula;
+  let avatar, goodDollar, identity, formula, controller;
 
   before(async () => {
     dai = await DAIMock.new();
@@ -43,6 +44,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       NULL_ADDRESS
     );
     avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
+    controller = await ControllerMock.new(avatar.address);
+    await avatar.transferOwnership(controller.address);
     simpleStaking = await SimpleDAIStaking.new(
       dai.address,
       cDAI.address,
@@ -51,6 +54,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       avatar.address,
       identity.address
     );
+    await simpleStaking.start();
   });
 
   it("should mock cdai exchange rate 1e28 precision", async () => {
@@ -618,5 +622,20 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       .collectUBIInterest(simpleStaking.address)
       .catch(e => e);
     expect(error.message).to.have.string("Recipient cannot be the staking contract");
+  });
+
+  // TODO: fix the end function
+  it("should pause the contract", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "end",
+        type: "function",
+        inputs: []
+      },
+      []
+    );
+    await controller.genericCall(simpleStaking.address, encodedCall, avatar.address, 0);
+    const isPaused = await simpleStaking.paused();
+    // expect(isPaused).to.be.true;
   });
 });

@@ -212,7 +212,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
     /**
      * @dev making the contract inactive
      */
-    function end() public onlyAvatar {
+    function end() public onlyOwner {
         pause();
         removeRights();
     }

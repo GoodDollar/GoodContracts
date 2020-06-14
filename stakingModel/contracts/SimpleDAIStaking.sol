@@ -211,6 +211,8 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
 
     /**
      * @dev making the contract inactive
+     * NOTICE: this could theoretically result in future interest earned in cdai to remain locked
+     * but we dont expect any other stakers but us in SimpleDAIStaking
      */
     function end() public onlyOwner {
         pause();

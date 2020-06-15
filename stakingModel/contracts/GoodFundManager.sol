@@ -154,7 +154,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
                 require(token.transferAndCall(
                     bridgeContract,
                     gdUBI,
-                    abi.encodePacked(bytes32(uint256(ubiRecipient)))
+                    abi.encodePacked(ubiRecipient)
                 ),"ubi bridge transfer failed");
             emit FundsTransferred(
                 msg.sender,

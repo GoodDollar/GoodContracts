@@ -85,7 +85,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
     @dev allow the DAO to change the fund manager contract
     @param _fundManager address of the new contract
     */
-    function setFundManager(address _fundManager) public onlyAvatar {
+    function setFundManager(address _fundManager) public onlyOwner {
         fundManager = _fundManager;
     }
 

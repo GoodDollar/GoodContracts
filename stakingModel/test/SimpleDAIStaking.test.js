@@ -7,6 +7,7 @@ const cDAILowWorthMock = artifacts.require("cDAILowWorthMock");
 const Identity = artifacts.require("IdentityMock");
 const Formula = artifacts.require("FeeFormula");
 const avatarMock = artifacts.require("AvatarMock");
+const ControllerMock = artifacts.require("ControllerMock");
 
 const BN = web3.utils.BN;
 export const BLOCK_INTERVAL = 5;
@@ -24,7 +25,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   let dai;
   let cDAI;
   let simpleStaking;
-  let avatar, goodDollar, identity, formula;
+  let avatar, goodDollar, identity, formula, controller;
 
   before(async () => {
     dai = await DAIMock.new();
@@ -43,6 +44,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       NULL_ADDRESS
     );
     avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
+    controller = await ControllerMock.new(avatar.address);
+    await avatar.transferOwnership(controller.address);
     simpleStaking = await SimpleDAIStaking.new(
       dai.address,
       cDAI.address,
@@ -51,6 +54,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       avatar.address,
       identity.address
     );
+    await simpleStaking.start();
   });
 
   it("should mock cdai exchange rate 1e28 precision", async () => {
@@ -517,7 +521,6 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   });
 
   it("should be able to be called once per withdrawInterval", async () => {
-    // the block number difference between the calls are less then the block interval
     const canCollect = await simpleStaking.canCollect();
     expect(canCollect).to.be.equal(false);
     const error = await simpleStaking.collectUBIInterest(founder).catch(e => e);
@@ -618,5 +621,24 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       .collectUBIInterest(simpleStaking.address)
       .catch(e => e);
     expect(error.message).to.have.string("Recipient cannot be the staking contract");
+  });
+
+  it("should be able to change the fund manager address", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "setFundManager",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_fundManager"
+          }
+        ]
+      },
+      [NULL_ADDRESS]
+    );
+    await controller.genericCall(simpleStaking.address, encodedCall, avatar.address, 0);
+    const newFM = await simpleStaking.fundManager();
+    expect(newFM.toString()).to.be.equal(NULL_ADDRESS);
   });
 });

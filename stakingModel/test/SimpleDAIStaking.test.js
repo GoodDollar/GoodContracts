@@ -623,6 +623,13 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     expect(error.message).to.have.string("Recipient cannot be the staking contract");
   });
 
+  it("should not be able to change the fund manager address if not owner", async () => {
+    const e = await simpleStaking.setFundManager(NULL_ADDRESS).catch(e => e);
+    const newFM = await simpleStaking.fundManager();
+    expect(e.message).to.not.be.empty;
+    expect(newFM.toString()).to.not.be.equal(NULL_ADDRESS);
+  });
+
   it("should be able to change the fund manager address", async () => {
     let encodedCall = web3.eth.abi.encodeFunctionCall(
       {

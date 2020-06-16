@@ -29,7 +29,7 @@ contract BridgeMock is ERC677Receiver {
     function parse32BytesToAddress(bytes memory data) public returns (address) {
         address parsed;
         assembly {
-            parsed := mload(add(data, 32))
+            parsed := mload(data)
         }
         return parsed;
     }

@@ -40,7 +40,7 @@ export const increaseTime = async function(duration) {
 
 contract(
   "UBIScheme",
-  ([founder, claimer1, claimer2, claimer3, claimer4, fisherman, claimer5, claimer6]) => {
+  ([founder, claimer1, claimer2, claimer3, claimer4, fisherman, claimer5, claimer6, claimer7]) => {
     let goodDollar, identity, formula, avatar, ubi, controller, firstClaimPool;
 
     before(async () => {
@@ -265,6 +265,11 @@ contract(
       let amount = await ubi.checkEntitlement({ from: claimer4 });
       let claimAmount = await firstClaimPool.claimAmount();
       expect(amount.toString()).to.be.equal(claimAmount.toString());
+    });
+
+    it("should return that a new user is not an active user", async () => {
+      let isActiveUser = await ubi.isActiveUser(claimer7);
+      expect(isActiveUser).to.be.false;
     });
 
     it("should not be able to fish an active user", async () => {

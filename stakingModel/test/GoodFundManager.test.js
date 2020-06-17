@@ -12,7 +12,7 @@ const Formula = artifacts.require("FeeFormula");
 const avatarMock = artifacts.require("AvatarMock");
 const ControllerMock = artifacts.require("ControllerMock");
 const ContributionCalculation = artifacts.require("ContributionCalculation");
-const TransferAndCallMock = artifacts.require("TransferAndCallMock");
+const BridgeMock = artifacts.require("BridgeMock");
 
 const BN = web3.utils.BN;
 export const BLOCK_INTERVAL = 1;
@@ -52,7 +52,7 @@ contract(
         NULL_ADDRESS
       );
       [bridge, avatar] = await Promise.all([
-        TransferAndCallMock.new(goodDollar.address),
+        BridgeMock.new(),
         avatarMock.new("", goodDollar.address, NULL_ADDRESS)
       ]);
       controller = await ControllerMock.new(avatar.address);

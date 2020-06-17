@@ -521,7 +521,6 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   });
 
   it("should be able to be called once per withdrawInterval", async () => {
-    // the block number difference between the calls are less then the block interval
     const canCollect = await simpleStaking.canCollect();
     expect(canCollect).to.be.equal(false);
     const error = await simpleStaking.collectUBIInterest(founder).catch(e => e);
@@ -636,6 +635,32 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     );
     await controller.genericCall(simpleStaking.address, encodedCall, avatar.address, 0);
     const isPaused = await simpleStaking.paused();
-    // expect(isPaused).to.be.true;
+    expect(isPaused).to.be.true;
+  });
+
+  it("should not be able to change the fund manager address if not owner", async () => {
+    const e = await simpleStaking.setFundManager(NULL_ADDRESS).catch(e => e);
+    const newFM = await simpleStaking.fundManager();
+    expect(e.message).to.not.be.empty;
+    expect(newFM.toString()).to.not.be.equal(NULL_ADDRESS);
+  });
+
+  it("should be able to change the fund manager address", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "setFundManager",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_fundManager"
+          }
+        ]
+      },
+      [NULL_ADDRESS]
+    );
+    await controller.genericCall(simpleStaking.address, encodedCall, avatar.address, 0);
+    const newFM = await simpleStaking.fundManager();
+    expect(newFM.toString()).to.be.equal(NULL_ADDRESS);
   });
 });

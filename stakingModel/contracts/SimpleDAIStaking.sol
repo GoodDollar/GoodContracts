@@ -59,7 +59,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
     //100% for phase0 POC
     uint32 public avgInterestDonatedRatio = 1e6;
 
-    address fundManager;
+    address public fundManager;
 
     modifier onlyFundManager {
         require(msg.sender == fundManager, "Only FundManager can call this method");
@@ -78,6 +78,14 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         cDai = cERC20(_cDai);
         blockInterval = _blockInterval;
         lastUBICollection = block.number.div(blockInterval);
+        fundManager = _fundManager;
+    }
+
+    /**
+    @dev allow the DAO to change the fund manager contract
+    @param _fundManager address of the new contract
+    */
+    function setFundManager(address _fundManager) public onlyAvatar {
         fundManager = _fundManager;
     }
 
@@ -214,7 +222,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
      * NOTICE: this could theoretically result in future interest earned in cdai to remain locked
      * but we dont expect any other stakers but us in SimpleDAIStaking
      */
-    function end() public onlyOwner {
+    function end() public onlyAvatar {
         pause();
         removeRights();
     }

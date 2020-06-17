@@ -5,11 +5,13 @@ const StakingContract = artifacts.require("./SimpleDAIStaking.sol");
 
 const getNetworkName = () => {
   const argslist = process.argv;
-  for (let item of argslist) {
-    if (item.indexOf("network=") > 0)
-      return item.substring(item.indexOf('=') + 1, item.length);
+  let found = false;
+  for (let i in argslist) {
+    const item = argslist[i];
+    if (found) return item;
+    if (item && item.indexOf("network") >= 0) found = true;
   }
-  return "develop";
+  return;
 };
 
 /**
@@ -19,9 +21,12 @@ const getNetworkName = () => {
 const simulate = async function() {
   const network = getNetworkName();
   const accounts = await web3.eth.getAccounts();
-  const staking_file = await fse.readFile("../stakingModel/releases/deployment.json", "utf8");
+  const staking_file = await fse.readFile(
+    "../stakingModel/releases/deployment.json",
+    "utf8"
+  );
   const staking_deployment = await JSON.parse(staking_file);
-  
+  console.log({ staking_deployment, network });
   if (network.indexOf("mainnet") >= 0 || network === "develop") {
     let staking_mainnet_addresses = staking_deployment[network];
     const dai = await DAIMock.at(staking_mainnet_addresses.DAI);

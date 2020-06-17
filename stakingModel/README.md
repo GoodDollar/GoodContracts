@@ -1,5 +1,7 @@
 ## GoodDollar Staking Model
 
+![Model](./model.png "Staking Model")
+
 ### Install
 
 ```

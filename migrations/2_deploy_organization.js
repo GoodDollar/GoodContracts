@@ -47,6 +47,7 @@ module.exports = async function(deployer, network) {
   const initTokenInWei = initToken;
 
   deployer.deploy(Identity).then(async identity => {
+    await identity.setAuthenticationPeriod(networkSettings.identityAuthenticationPeriod);
     const accounts = await web3.eth.getAccounts();
     const founders = [accounts[0]];
     const feeFormula = await deployer.deploy(FeeFormula, networkSettings.txFeePercentage);

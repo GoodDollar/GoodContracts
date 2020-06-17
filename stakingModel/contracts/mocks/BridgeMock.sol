@@ -3,7 +3,6 @@ pragma solidity 0.5.4;
 import "../../../contracts/token/ERC677/ERC677Receiver.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
-
 contract BridgeMock is ERC677Receiver {
     address public sender;
     uint256 public value;
@@ -28,9 +27,11 @@ contract BridgeMock is ERC677Receiver {
 
     function parse32BytesToAddress(bytes memory data) public returns (address) {
         address parsed;
+
         assembly {
-            parsed := mload(add(data, 32))
+            parsed := div(mload(add(data, 32))), 0x1000000000000000000000000)
         }
+
         return parsed;
     }
 }

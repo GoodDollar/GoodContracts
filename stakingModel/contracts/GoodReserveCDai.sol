@@ -164,6 +164,14 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     }
 
     /**
+    @dev allow the DAO to change the fund manager contract
+    @param _fundManager address of the new contract
+    */
+    function setFundManager(address _fundManager) public onlyAvatar {
+        fundManager = _fundManager;
+    }
+
+    /**
     @dev allow the DAO to change the block interval
     @param _blockInterval the new value
     */

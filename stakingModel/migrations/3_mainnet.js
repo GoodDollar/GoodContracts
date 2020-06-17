@@ -6,7 +6,7 @@ const FundManager = artifacts.require("./GoodFundManager.sol");
 const MarketMaker = artifacts.require("./GoodMarketMaker.sol");
 const Reserve = artifacts.require("./GoodReserveCDai.sol");
 const Contribution = artifacts.require("./ContributionCalculation.sol");
-const BridgeMock = artifacts.require("./TransferAndCallMock.sol");
+const BridgeMock = artifacts.require("./BridgeMock.sol");
 const DAIMock = artifacts.require("./DAIMock.sol");
 const cDAIMock = artifacts.require("./cDAIMock.sol");
 

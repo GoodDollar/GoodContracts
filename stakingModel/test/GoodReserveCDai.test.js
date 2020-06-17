@@ -51,7 +51,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       dai.address,
       cDAI.address,
       goodDollar.address,
-      founder,
+      NULL_ADDRESS,
       avatar.address,
       identity.address,
       marketMaker.address,
@@ -88,6 +88,25 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     const newMM = await goodReserve.marketMaker();
     expect(newMM.toString()).to.be.equal(marketMaker.address);
+  });
+
+  it("should set fundManager in the reserve by avatar", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "setFundManager",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_fundManager"
+          }
+        ]
+      },
+      [founder]
+    );
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
+    const newFM = await goodReserve.fundManager();
+    expect(newFM.toString()).to.be.equal(founder);
   });
 
   it("should returned true for isActive", async () => {

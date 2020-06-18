@@ -51,7 +51,7 @@ const simulate = async function () {
 
   for (let day = 0; day < 16; day++) {
     console.log("minting dai and approving day:", { day });
-    await Promisea.all([
+    await Promise.all([
       dai.allocateTo(accounts[0], web3.utils.toWei("100", "ether")),
       dai.approve(cDAI.address, web3.utils.toWei("100", "ether")),
     ]);

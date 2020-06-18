@@ -1,6 +1,6 @@
 {
   "name": "@gooddollar/goodcontracts-stakingmodel",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0-beta.2",
   "description": "GoodDollar Contracts",
   "scripts": {
     "setenv": "set -o allexport; source ../.env; set +o allexport",
@@ -21,7 +21,8 @@
     "test:wait:full": "run-p wait start:main && truffle test && pkill -SIGTERM -f ganache",
     "test": "npm run test:full",
     "lint": "solhint --formatter codeframe develop/**/*.sol",
-    "migrate:full": "truffle migrate --network ${NETWORK-develop} --reset"
+    "migrate:full": "truffle migrate --network ${NETWORK-develop} --reset",
+    "simulate:interest": "truffle exec scripts/simulateInterestDays.js --network develop"
   },
   "files": [
     "build",
@@ -30,7 +31,8 @@
     "releases",
     "scripts",
     "truffle-config.js",
-    "package-lock.json"
+    "package-lock.json",
+    "package.json"
   ],
   "repository": {
     "type": "git",

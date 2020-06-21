@@ -623,7 +623,6 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     expect(error.message).to.have.string("Recipient cannot be the staking contract");
   });
 
-  // TODO: fix the end function
   it("should pause the contract", async () => {
     let encodedCall = web3.eth.abi.encodeFunctionCall(
       {

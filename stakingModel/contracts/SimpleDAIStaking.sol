@@ -215,6 +215,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
      * @dev making the contract active
      */
     function start() public onlyRegistered {
+        addPauser(address(avatar));
         addRights();
     }
 

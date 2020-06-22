@@ -13,7 +13,6 @@ import "../../contracts/token/GoodDollar.sol";
 
 import "./GoodMarketMaker.sol";
 
-
 interface cERC20 {
     function mint(uint256 mintAmount) external returns (uint256);
 
@@ -28,7 +27,6 @@ interface cERC20 {
     function transfer(address to, uint256 amount) external returns (bool);
 }
 
-
 interface ContributionCalc {
     function calculateContribution(
         GoodMarketMaker _marketMaker,
@@ -38,7 +36,6 @@ interface ContributionCalc {
         uint256 _gdAmount
     ) external view returns (uint256);
 }
-
 
 /**
 @title Reserve based on cDAI and dynamic reserve ratio market maker
@@ -337,5 +334,16 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
 
     function canMint() public view returns (bool) {
         return block.number.div(blockInterval) > lastMinted;
+    }
+
+    /**
+     * @dev method to recover any stuck erc20 tokens (ie  compound COMP)
+     * @param token the ERC20 token to recover
+     */
+    function recover(ERC20 token) public onlyAvatar {
+        require(
+            token.transfer(_avatar, token.balanceOf(address(this))),
+            "recover transfer failed"
+        );
     }
 }

@@ -79,6 +79,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         blockInterval = _blockInterval;
         lastUBICollection = block.number.div(blockInterval);
         fundManager = _fundManager;
+        addPauser(address(avatar));
     }
 
     /**
@@ -215,7 +216,6 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
      * @dev making the contract active
      */
     function start() public onlyRegistered {
-        addPauser(address(avatar));
         addRights();
     }
 

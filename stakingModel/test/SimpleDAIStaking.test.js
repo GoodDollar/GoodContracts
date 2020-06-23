@@ -10,7 +10,7 @@ const avatarMock = artifacts.require("AvatarMock");
 const ControllerMock = artifacts.require("ControllerMock");
 
 const BN = web3.utils.BN;
-export const BLOCK_INTERVAL = 5;
+export const BLOCK_INTERVAL = 30;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 async function evm_mine(blocks) {
@@ -621,6 +621,20 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       .collectUBIInterest(simpleStaking.address)
       .catch(e => e);
     expect(error.message).to.have.string("Recipient cannot be the staking contract");
+  });
+
+  it("should pause the contract", async () => {
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "end",
+        type: "function",
+        inputs: []
+      },
+      []
+    );
+    await controller.genericCall(simpleStaking.address, encodedCall, avatar.address, 0);
+    const isPaused = await simpleStaking.paused();
+    expect(isPaused).to.be.true;
   });
 
   it("should not be able to change the fund manager address if not owner", async () => {

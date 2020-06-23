@@ -301,7 +301,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 gdUBI = gdInterestToMint.sub(gdInterest);
         gdUBI = gdUBI.add(gdExpansionToMint);
         uint256 toMint = gdUBI.add(gdInterest);
-        if (toMint > 0) ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
+        ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
         lastMinted = block.number.div(blockInterval);
         emit GDInterestAndExpansionMinted(
             msg.sender,

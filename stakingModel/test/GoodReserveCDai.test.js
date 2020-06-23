@@ -630,6 +630,40 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     expect(code.toString()).to.be.equal("0x");
   });
 
+  it("should destroy the reserve contract when it holds 0 cdai", async () => {
+    const marketMaker1 = await MarketMaker.new(
+      goodDollar.address,
+      999388834642296,
+      1e15,
+      avatar.address
+    );
+    const goodReserve1 = await GoodReserve.new(
+      dai.address,
+      cDAI.address,
+      goodDollar.address,
+      founder,
+      avatar.address,
+      identity.address,
+      marketMaker1.address,
+      contribution.address,
+      BLOCK_INTERVAL
+    );
+    goodDollar.addMinter(goodReserve1.address);
+    await marketMaker1.transferOwnership(goodReserve1.address);
+    await goodReserve1.start();
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "end",
+        type: "function",
+        inputs: []
+      },
+      []
+    );
+    await controller.genericCall(goodReserve1.address, encodedCall, avatar.address, 0);
+    let code = await web3.eth.getCode(goodReserve1.address);
+    expect(code.toString()).to.be.equal("0x");
+  });
+
   it("should not be able to call destory twice", async () => {
     let avatarBalanceBefore = await cDAI.balanceOf(avatar.address);
     let reserveBalanceBefore = await cDAI.balanceOf(goodReserve.address);

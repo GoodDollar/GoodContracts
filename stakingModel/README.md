@@ -1,6 +1,6 @@
 ## GoodDollar Staking Model
 
-![Model](./model.png "Staking Model")
+![Model](./model.jpg "Staking Model")
 
 ### Install
 

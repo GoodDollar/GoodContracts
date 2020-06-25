@@ -61,7 +61,7 @@ contract AbstractGoodStaking {
 
     /**
      * @dev calculates the holding of intrestToken by staking contract in terms of token value.
-     * @returns It will return the token worth of intrest token that contract is holding.
+     * @return It will return the token worth of intrest token that contract is holding.
      */
     function currentDAIWorth() external view returns (uint256) {
 
@@ -69,9 +69,9 @@ contract AbstractGoodStaking {
 
     /**
      * @dev calculates the tokenGain, intrestTokenGain and precisionLossToken
-     * @returns Intrest gained on lending the tokens.
-     * @returns Intrest gained on lending the tokens in terms of token rate.
-     * @returns Token's precision loss due to decimal difference.
+     * @return Intrest gained on lending the tokens.
+     * @return Intrest gained on lending the tokens in terms of token rate.
+     * @return Token's precision loss due to decimal difference.
      */
     function currentUBIInterest()
         external
@@ -88,10 +88,10 @@ contract AbstractGoodStaking {
     /**
      * @dev collect gained interest by fundmanager
      * @param recipient of intrestToken gains
-     * @returns Intrest gained on lending the tokens.
-     * @returns Intrest gained on lending the tokens in terms of token rate.
-     * @returns Token's precision loss due to decimal difference.
-     * @returns average intrest donation ratio.
+     * @return Intrest gained on lending the tokens.
+     * @return Intrest gained on lending the tokens in terms of token rate.
+     * @return Token's precision loss due to decimal difference.
+     * @return average intrest donation ratio.
      */
     function collectUBIInterest(address recipient)
         external

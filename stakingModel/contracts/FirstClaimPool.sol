@@ -14,7 +14,11 @@ import "./UBIScheme.sol";
 contract FirstClaimPool is FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
+    // The whitelisted ubi scheme contrat
     UBIScheme public ubi;
+
+    // The transfer amount to a
+    // given user address
     uint256 public claimAmount;
 
     modifier onlyUBIScheme {
@@ -27,16 +31,26 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         _;
     }
 
+    /**
+     * @dev Constructor
+     * @param _avatar The avatar of the DAO
+     * @param _identity The identity contract
+     * @param _claimAmount The transfer amount to a given user
+     */
     constructor(
-        uint256 _claimAmount,
         Avatar _avatar,
-        Identity _identity
-    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2, _avatar) {
+        Identity _identity,
+        uint256 _claimAmount
+    )
+        public
+        FeelessScheme(_identity, _avatar)
+        ActivePeriod(now, now * 2, _avatar)
+    {
         claimAmount = _claimAmount;
     }
 
     /* @dev Start function. Adds this contract to identity as a feeless scheme.
-     * Can only be called if scheme is registered
+     * Can only be called if scheme is registered.
      */
     function start() public onlyRegistered {
         addRights();
@@ -44,27 +58,30 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
     }
 
     /**
-     * @dev sets the ubi scheme
-     * @param _ubi contract
+     * @dev Sets the whitelisted ubi scheme. Only Avatar
+     * can call this method.
+     * @param _ubi The new ubi scheme to be whitelisted
      */
     function setUBIScheme(UBIScheme _ubi) public onlyAvatar {
         ubi = _ubi;
     }
 
     /**
-     * @dev sets the claim amount
-     * @param _claimAmount the new claim amount
+     * @dev Sets the claim amount. Only Avatar
+     * can call this method.
+     * @param _claimAmount The new claim amount
      */
     function setClaimAmount(uint256 _claimAmount) public onlyAvatar {
         claimAmount = _claimAmount;
     }
 
     /**
-     * @dev transfers claimAmount to the given account address
-     * @param account recieves the claimAmount
-     * a given address.
+     * @dev Transfers claimAmount to the given account address.
+     * Only the whitelisted ubi scheme can call this method.
+     * @param _account Recieves the claimAmount
+     * @return (claimAmount) The amount that was transferred to the given _account
      */
-    function awardUser(address account)
+    function awardUser(address _account)
         public
         requireActive
         ubiHasInitialized
@@ -74,7 +91,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         DAOToken token = avatar.nativeToken();
         uint256 balance = token.balanceOf(address(this));
         if (balance >= claimAmount) {
-            require(token.transfer(account, claimAmount), "award transfer failed");
+            require(token.transfer(_account, claimAmount), "award transfer failed");
             return claimAmount;
         }
         return 0;
@@ -82,7 +99,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
 
     /**
      * @dev making the contract inactive after it has transferred funds to `_avatar`
-     * only the avatar can destroy the contract.
+     * Only the avatar can destroy the contract.
      */
     function end() public onlyAvatar {
         DAOToken token = avatar.nativeToken();

@@ -57,7 +57,7 @@ contract(
       avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
       controller = await ControllerMock.new(avatar.address);
       await avatar.transferOwnership(controller.address);
-      firstClaimPool = await FirstClaimPool.new(100, avatar.address, identity.address);
+      firstClaimPool = await FirstClaimPool.new(avatar.address, identity.address, 100);
       await firstClaimPool.start();
     });
 
@@ -562,9 +562,9 @@ contract(
 
     it("should be able to destroy an empty pool contract", async () => {
       let firstClaimPool1 = await FirstClaimPool.new(
-        100,
         avatar.address,
-        identity.address
+        identity.address,
+        100
       );
       await firstClaimPool1.start();
       let encodedCall = web3.eth.abi.encodeFunctionCall(

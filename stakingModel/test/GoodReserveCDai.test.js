@@ -41,10 +41,9 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       NULL_ADDRESS
     );
     marketMaker = await MarketMaker.new(
-      goodDollar.address,
+      avatar.address,
       999388834642296,
-      1e15,
-      avatar.address
+      1e15
     );
     contribution = await ContributionCalculation.new(avatar.address, 0, 1e15);
     goodReserve = await GoodReserve.new(

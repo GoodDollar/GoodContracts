@@ -57,9 +57,9 @@ contract(
       controller = await ControllerMock.new(avatar.address);
       await avatar.transferOwnership(controller.address);
       goodFundManager = await GoodFundsManager.new(
-        cDAI.address,
         avatar.address,
         identity.address,
+        cDAI.address,
         bridge.address,
         ubirecipient,
         BLOCK_INTERVAL
@@ -74,7 +74,7 @@ contract(
           avatar.address,
           identity.address
         ),
-        MarketMaker.new(goodDollar.address, 999388834642296, 1e15, avatar.address),
+        MarketMaker.new(avatar.address, 999388834642296, 1e15),
         ContributionCalculation.new(avatar.address, 0, 1e15)
       ]);
       goodReserve = await GoodReserve.new(

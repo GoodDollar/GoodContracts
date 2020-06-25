@@ -1,4 +1,5 @@
 const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
+const SimpleDAIStakingNoDonation = artifacts.require("SimpleDAIStakingNoDonation");
 const GoodReserve = artifacts.require("GoodReserveCDai");
 const MarketMaker = artifacts.require("GoodMarketMaker");
 const GoodFundsManager = artifacts.require("GoodFundManager");
@@ -174,7 +175,7 @@ contract(
     });
 
     it("should transfer ubi interest to the reserve and recieves minted gd back to the staking contract", async () => {
-      const addContract = await identity.addContract(simpleStaking.address);
+      await identity.addContract(simpleStaking.address);
       await cDAI.exchangeRateCurrent();
       const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
       let gains = await simpleStaking.currentUBIInterest();
@@ -223,6 +224,60 @@ contract(
       expect(stakingGDBalanceAfter.sub(stakingGDBalanceBefore).toString()).to.be.equal(
         "190329"
       );
+    });
+
+    it("should transfer all interest to the staking contract", async () => {
+      // changes the ratio to 100% so there won't be expansion minted tokens
+      let encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "setReserveRatioDailyExpansion",
+          type: "function",
+          inputs: [
+            {
+              type: "uint256",
+              name: "_nom"
+            },
+            {
+              type: "uint256",
+              name: "_denom"
+            }
+          ]
+        },
+        ["1", "1"]
+      );
+      await controller.genericCall(
+        marketMaker.address,
+        encodedCall,
+        avatar.address,
+        0
+      );
+      // a new staking contract with 0% donation. all the interest
+      // is transferred back to the staking contract
+      const staking1 = await SimpleDAIStakingNoDonation.new(
+                              dai.address,
+                              cDAI.address,
+                              goodFundManager.address,
+                              BLOCK_INTERVAL,
+                              avatar.address,
+                              identity.address
+                            );
+      await dai.mint(staker, web3.utils.toWei("100", "ether"));
+      await dai.approve(staking1.address, web3.utils.toWei("100", "ether"), {
+        from: staker
+      });
+      await staking1
+        .stakeDAI(web3.utils.toWei("100", "ether"), {
+          from: staker
+        })
+        .catch(console.log);
+      await identity.addContract(staking1.address);
+      await cDAI.exchangeRateCurrent();
+      let recipientBefore = await goodDollar.balanceOf(ubirecipient);
+      await goodFundManager.transferInterest(staking1.address);
+      let recipientAfter = await goodDollar.balanceOf(ubirecipient);
+      let stakingGDBalance = await goodDollar.balanceOf(staking1.address);
+      expect(stakingGDBalance.toString()).to.be.equal("933070"); // 100% of interest is returned to the staking
+      expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal("0"); // 0 interest + 0 minted from expansion (the ratio changed to 100%)
     });
 
     it("should set block interval by avatar", async () => {

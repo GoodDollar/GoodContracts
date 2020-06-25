@@ -40,7 +40,7 @@ export const increaseTime = async function(duration) {
 
 contract(
   "UBIScheme",
-  ([founder, claimer1, claimer2, claimer3, claimer4, fisherman, claimer5, claimer6]) => {
+  ([founder, claimer1, claimer2, claimer3, claimer4, fisherman, claimer5, claimer6, claimer7]) => {
     let goodDollar, identity, formula, avatar, ubi, controller, firstClaimPool;
 
     before(async () => {
@@ -100,30 +100,6 @@ contract(
       expect(error.message).to.have.string("only Avatar");
     });
 
-    it("should set the ubi scheme by avatar", async () => {
-      let encodedCall = web3.eth.abi.encodeFunctionCall(
-        {
-          name: "setUBIScheme",
-          type: "function",
-          inputs: [
-            {
-              type: "address",
-              name: "_ubi"
-            }
-          ]
-        },
-        [founder]
-      );
-      await controller.genericCall(
-        firstClaimPool.address,
-        encodedCall,
-        avatar.address,
-        0
-      );
-      const newUbi = await firstClaimPool.ubi();
-      expect(newUbi.toString()).to.be.equal(founder);
-    });
-
     it("should not be able to execute claiming when start has not been executed yet", async () => {
       let error = await ubi.claim().catch(e => e);
       expect(error.message).to.have.string("is not active");
@@ -152,8 +128,69 @@ contract(
       expect(error.message).to.have.string("is not whitelisted");
     });
 
-    it("should award a new user with 0 on first time execute claim if the first claim contract has no balance", async () => {
+    it("should not be able to claim when the claim pool is not active", async () => {
       await identity.addWhitelisted(claimer1);
+      let error = await ubi.claim({ from: claimer1 }).catch(e => e);
+      expect(error.message).to.have.string("is not active");
+    });
+
+    it("should set the ubi scheme by avatar", async () => {
+      let encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "setUBIScheme",
+          type: "function",
+          inputs: [
+            {
+              type: "address",
+              name: "_ubi"
+            }
+          ]
+        },
+        [NULL_ADDRESS]
+      );
+      await controller.genericCall(
+        firstClaimPool.address,
+        encodedCall,
+        avatar.address,
+        0
+      );
+      const newUbi = await firstClaimPool.ubi();
+      expect(newUbi.toString()).to.be.equal(NULL_ADDRESS);
+    });
+
+    it("should not be able to claim when the ubi is not initialized", async () => {
+      await firstClaimPool.start();
+      let error = await ubi.claim({ from: claimer1 }).catch(e => e);
+      expect(error.message).to.have.string("ubi has not initialized");
+
+      // initializing the ubi
+      let encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "setUBIScheme",
+          type: "function",
+          inputs: [
+            {
+              type: "address",
+              name: "_ubi"
+            }
+          ]
+        },
+        [ubi.address]
+      );
+      await controller.genericCall(
+        firstClaimPool.address,
+        encodedCall,
+        avatar.address,
+        0
+      );
+    });
+
+    it("should not be able to call award user if the caller is not the ubi", async () => {
+      let error = await firstClaimPool.awardUser(claimer1).catch(e => e);
+      expect(error.message).to.have.string("Only UBIScheme can call this method");
+    });
+
+    it("should award a new user with 0 on first time execute claim if the first claim contract has no balance", async () => {
       let tx = await ubi.claim({ from: claimer1 });
       let claimer1Balance = await goodDollar.balanceOf(claimer1);
       expect(claimer1Balance.toNumber()).to.be.equal(0);
@@ -229,6 +266,11 @@ contract(
       let amount = await ubi.checkEntitlement({ from: claimer4 });
       let claimAmount = await firstClaimPool.claimAmount();
       expect(amount.toString()).to.be.equal(claimAmount.toString());
+    });
+
+    it("should return that a new user is not an active user", async () => {
+      let isActiveUser = await ubi.isActiveUser(claimer7);
+      expect(isActiveUser).to.be.false;
     });
 
     it("should not be able to fish an active user", async () => {

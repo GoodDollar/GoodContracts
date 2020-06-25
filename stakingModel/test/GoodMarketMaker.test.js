@@ -100,12 +100,69 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
     expect(toMint.toString()).to.be.equal((expectedTotalMinted * 100).toString()); //add 2 decimals precision
   });
 
+  it("should not return a sell contribution if the given gd is less than the given contribution amount", async () => {
+    const marketMaker1 = await MarketMaker.new(
+      goodDollar.address,
+      999388834642296,
+      1e15,
+      avatar.address
+    );
+    await marketMaker1.initializeToken(
+      dai.address,
+      "100", //1gd
+      web3.utils.toWei("0.0001", "ether"), //0.0001 dai
+      "800000" //80% rr
+    );
+    const error = await marketMaker1
+    .sellWithContribution(dai.address, web3.utils.toWei("1", "ether"), web3.utils.toWei("2", "ether")).catch(e => e);
+    expect(error.message).to.have.string("GD amount is lower than the contribution amount");
+  });
+
+  it("should not return a sell contribution if the given gd is less than the the total supply", async () => {
+    const marketMaker1 = await MarketMaker.new(
+      goodDollar.address,
+      999388834642296,
+      1e15,
+      avatar.address
+    );
+    await marketMaker1.initializeToken(
+      dai.address,
+      "100", //1gd
+      web3.utils.toWei("0.0001", "ether"), //0.0001 dai
+      "800000" //80% rr
+    );
+    const error = await marketMaker1
+    .sellWithContribution(dai.address, web3.utils.toWei("1", "ether"), web3.utils.toWei("1", "ether")).catch(e => e);
+    expect(error.message).to.have.string("GD amount is higher than the total supply");
+  });
+
   it("should be able to calculate and update bonding curve gd balance based on oncoming cDAI and the price stays the same", async () => {
     const priceBefore = await marketMaker.currentPrice(cDAI.address);
     await marketMaker.mintInterest(cDAI.address, web3.utils.numberToHex(1e8));
     expect(
       Math.floor((await marketMaker.currentPrice(cDAI.address)) / 100).toString()
     ).to.be.equal(Math.floor(priceBefore.toNumber() / 100).toString());
+  });
+
+  it("should not be able to mint interest by a non owner", async () => {
+    let error = await marketMaker
+      .mintInterest(
+        cDAI.address,
+        web3.utils.numberToHex(1e8),
+        {
+          from: staker
+        }).catch(e => e);
+    expect(error.message).not.to.be.empty;
+  });
+
+  it("should not be able to mint expansion by a non owner", async () => {
+    let error = await marketMaker
+      .mintExpansion(
+        cDAI.address,
+        {
+          from: staker
+        }).catch(e => e);
+    expect(error.message).not.to.be.empty;
   });
 
   it("should mint 0 gd tokens if the add token supply is 0", async () => {
@@ -312,6 +369,15 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
     expect(error.message).not.to.be.empty;
   });
 
+  it("should not be able to calculate the sellWithContribution return in reserve token and update the bonding curve params by a non-owner account", async () => {
+    let error = await marketMaker
+      .sellWithContribution(dai.address, 100, 80, {
+        from: staker
+      })
+      .catch(e => e);
+    expect(error.message).not.to.be.empty;
+  });
+
   it("should be able to buy only with active token", async () => {
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     let gdSupplyBefore = reserveToken.gdSupply;
@@ -335,9 +401,36 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
     );
   });
 
-  it("should be able to buy only with active token", async () => {
+  it("should be able to sell only with active token", async () => {
     let error = await marketMaker
       .sell(NULL_ADDRESS, web3.utils.toWei("1", "ether"))
+      .catch(e => e);
+    expect(error.message).to.have.string("Reserve token not initialized");
+  });
+
+  // it("should be able to get the current price only with active token", async () => {
+  //   await marketMaker
+  //     .currentPrice(NULL_ADDRESS, web3.utils.toWei("1", "ether"))
+  //     .should.be.rejectedWith("Reserve token not initialized");
+  // });
+
+  // it("should be able to calculate the minted interest only with active token", async () => {
+  //   let error = await marketMaker
+  //     .calculateMintInterest(NULL_ADDRESS, web3.utils.numberToHex(1e18))
+  //     .catch(e => e);
+  //   expect(error.message).to.have.string("Reserve token not initialized");
+  // });
+
+  // it("should be able to calculate the minted expansion only with active token", async () => {
+  //   let error = await marketMaker
+  //     .calculateMintExpansion(NULL_ADDRESS, web3.utils.numberToHex(1e18))
+  //     .catch(e => e);
+  //   expect(error.message).to.have.string("Reserve token not initialized");
+  // });
+
+  it("should be able to sellWithContribution only with active token", async () => {
+    let error = await marketMaker
+      .sellWithContribution(NULL_ADDRESS, web3.utils.toWei("1", "ether"), web3.utils.toWei("1", "ether"))
       .catch(e => e);
     expect(error.message).to.have.string("Reserve token not initialized");
   });

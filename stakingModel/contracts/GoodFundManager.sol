@@ -114,7 +114,8 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         lastTransferred = block.number.div(blockInterval);
     }
 
-    /* @dev Start function. Adds this contract to identity as a feeless scheme.
+    /**
+     * @dev Start function. Adds this contract to identity as a feeless scheme.
      * Can only be called if scheme is registered
      */
     function start() public onlyRegistered {

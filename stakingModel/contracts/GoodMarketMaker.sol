@@ -134,6 +134,7 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         public
         onlyAvatar
     {
+        require(_denom > 0, "denominator must be above 0");
         reserveRatioDailyExpansion = rdiv(_nom, _denom);
         emit ReserveRatioUpdated(msg.sender, _nom, _denom);
     }

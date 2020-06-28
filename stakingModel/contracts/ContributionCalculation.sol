@@ -48,6 +48,7 @@ contract ContributionCalculation is DSMath, SchemeGuard {
     * @param _denom the denominator
     */
     function setContributionRatio(uint256 _nom, uint256 _denom) external onlyAvatar {
+        require(_denom > 0, "denominator must be above 0");
         sellContributionRatio = rdiv(_nom, _denom);
         emit SellContributionRatioUpdated(msg.sender, _nom, _denom);
     }

@@ -24,14 +24,11 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
 
   before(async () => {
     dai = await DAIMock.new();
-    [cDAI, avatar, identity, formula] = await Promise.all([
+    [cDAI, identity, formula] = await Promise.all([
       cDAIMock.new(dai.address),
-      avatarMock.new("", NULL_ADDRESS, NULL_ADDRESS),
       Identity.new(),
       Formula.new(0)
     ]);
-    controller = await ControllerMock.new(avatar.address);
-    await avatar.transferOwnership(controller.address);
     goodDollar = await GoodDollar.new(
       "GoodDollar",
       "GDD",
@@ -40,6 +37,9 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       identity.address,
       NULL_ADDRESS
     );
+    avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
+    controller = await ControllerMock.new(avatar.address);
+    await avatar.transferOwnership(controller.address);
     marketMaker = await MarketMaker.new(
       avatar.address,
       999388834642296,
@@ -631,10 +631,9 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
 
   it("should destroy the reserve contract when it holds 0 cdai", async () => {
     const marketMaker1 = await MarketMaker.new(
-      goodDollar.address,
+      avatar.address,
       999388834642296,
-      1e15,
-      avatar.address
+      1e15
     );
     const goodReserve1 = await GoodReserve.new(
       dai.address,

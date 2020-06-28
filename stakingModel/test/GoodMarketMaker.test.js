@@ -102,10 +102,9 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
 
   it("should not return a sell contribution if the given gd is less than the given contribution amount", async () => {
     const marketMaker1 = await MarketMaker.new(
-      goodDollar.address,
+      avatar.address,
       999388834642296,
-      1e15,
-      avatar.address
+      1e15
     );
     await marketMaker1.initializeToken(
       dai.address,
@@ -120,10 +119,9 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
 
   it("should not return a sell contribution if the given gd is less than the the total supply", async () => {
     const marketMaker1 = await MarketMaker.new(
-      goodDollar.address,
+      avatar.address,
       999388834642296,
-      1e15,
-      avatar.address
+      1e15
     );
     await marketMaker1.initializeToken(
       dai.address,

@@ -58,7 +58,6 @@ contract(
       controller = await ControllerMock.new(avatar.address);
       await avatar.transferOwnership(controller.address);
       firstClaimPool = await FirstClaimPool.new(avatar.address, identity.address, 100);
-      await firstClaimPool.start();
     });
 
     it("should not accept 0 inactive days in the constructor", async () => {

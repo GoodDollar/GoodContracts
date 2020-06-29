@@ -14,7 +14,7 @@ import "./UBIScheme.sol";
 contract FirstClaimPool is FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
-    // The whitelisted ubi scheme contrat
+    // The whitelisted ubi scheme contract
     UBIScheme public ubi;
 
     // The transfer amount to a

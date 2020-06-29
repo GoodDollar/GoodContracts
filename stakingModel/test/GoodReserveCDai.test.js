@@ -49,7 +49,6 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     goodReserve = await GoodReserve.new(
       dai.address,
       cDAI.address,
-      goodDollar.address,
       NULL_ADDRESS,
       avatar.address,
       identity.address,
@@ -638,7 +637,6 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     const goodReserve1 = await GoodReserve.new(
       dai.address,
       cDAI.address,
-      goodDollar.address,
       founder,
       avatar.address,
       identity.address,

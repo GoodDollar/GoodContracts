@@ -362,7 +362,6 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         returns (uint256)
     {
         ReserveToken memory rtoken = reserveTokens[address(_token)];
-        require(rtoken.gdSupply > 0, "Reserve token not initialized");
         GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
         return
             calculateSaleReturn(

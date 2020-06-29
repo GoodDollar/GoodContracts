@@ -104,7 +104,6 @@ module.exports = async function(deployer, network) {
     Reserve,
     daiAddress,
     cdaiAddress,
-    maindao.GoodDollar,
     fundManager.address,
     maindao.Avatar,
     maindao.Identity,

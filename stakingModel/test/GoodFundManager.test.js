@@ -81,7 +81,6 @@ contract(
       goodReserve = await GoodReserve.new(
         dai.address,
         cDAI.address,
-        goodDollar.address,
         goodFundManager.address,
         avatar.address,
         identity.address,

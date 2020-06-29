@@ -50,9 +50,6 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     // cDAI token address
     cERC20 public cDai;
 
-    // GD token address
-    GoodDollar public gooddollar;
-
     // The address of the market maker contract
     // which makes the calculations and holds
     // the token and accounts info
@@ -169,7 +166,6 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * @dev Constructor
      * @param _dai The address of DAI
      * @param _cDai The address of cDAI
-     * @param _gooddollar The address of GD
      * @param _fundManager The address of the fund manager contract
      * @param _avatar The avatar of the DAO
      * @param _identity The identity contract
@@ -180,7 +176,6 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     constructor(
         ERC20 _dai,
         cERC20 _cDai,
-        GoodDollar _gooddollar,
         address _fundManager,
         Avatar _avatar,
         Identity _identity,
@@ -194,7 +189,6 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     {
         dai = _dai;
         cDai = _cDai;
-        gooddollar = _gooddollar;
         fundManager = _fundManager;
         marketMaker = GoodMarketMaker(_marketMaker);
         blockInterval = _blockInterval;
@@ -208,6 +202,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      */
     function start() public onlyRegistered {
         addRights();
+        GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
 
         // Adds the reserve as a minter of the GD token
         controller.genericCall(
@@ -284,6 +279,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         );
         uint256 gdReturn = marketMaker.buy(_buyWith, _tokenAmount);
         require(gdReturn >= _minReturn, "GD return must be above the minReturn");
+        GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
         ERC20Mintable(address(gooddollar)).mint(msg.sender, gdReturn);
         emit TokenPurchased(
             msg.sender,
@@ -317,6 +313,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         onlyCDai(_sellTo)
         returns (uint256)
     {
+        GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, _gdAmount);
         uint256 contributionAmount = contribution.calculateContribution(
             marketMaker,
@@ -388,6 +385,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         require(canMint(), "Need to wait for the next interval");
         uint256 price = currentPrice(_interestToken);
         uint256 gdInterestToMint = marketMaker.mintInterest(_interestToken, _transfered);
+        GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
         uint256 precisionLoss = uint256(27).sub(uint256(gooddollar.decimals()));
         uint256 gdInterest = rdiv(_interest, price).div(10**precisionLoss);
         uint256 gdExpansionToMint = marketMaker.mintExpansion(_interestToken);
@@ -424,6 +422,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
             );
         }
         require(cDai.balanceOf(address(this)) == 0, "Funds transfer has failed");
+        GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
         marketMaker.transferOwnership(address(avatar));
         gooddollar.renounceMinter();
         super.internalEnd(avatar);

@@ -123,4 +123,8 @@ contract AbstractGoodStaking {
      * @return exchange rate.
      */
     function exchangeRate() internal view returns(uint) {}
+
+    function tokenDecimal() internal view returns(uint) {}
+
+    function iTokenDecimal() internal view returns(uint) {}
 }

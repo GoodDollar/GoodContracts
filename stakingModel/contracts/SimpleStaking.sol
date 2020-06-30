@@ -105,10 +105,34 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     function currentTokenWorth() public view returns (uint256) {
         uint256 er = exchangeRate();
 
-        //TODO: why 1e10? cDai is e8 so we should convert it to e28 like exchange rate
-        //TODO need to make it generic..because decimals may vary in other defi protocol
-        uint256 tokenBalance = rmul(iToken.balanceOf(address(this)) * 1e10, er).div(10);
+        (uint decimalDifference, bool caseType) = tokenDecimalPrecision();
+        uint256 tokenBalance;
+        if(caseType) {
+            tokenBalance = rmul(iToken.balanceOf(address(this)).mul(10 ** decimalDifference), er).div(10);
+        } else {
+            tokenBalance = rmul(iToken.balanceOf(address(this)).div(10 ** decimalDifference), er).div(10);
+        }
         return tokenBalance;
+    }
+
+    // @dev To find difference in token's decimal and iToken's decimal
+    // @return difference in decimals.
+    // @return true if token's decimal is more than iToken's
+    function tokenDecimalPrecision() internal view returns(uint, bool)
+    {
+
+        uint tokenDecimal = tokenDecimal();
+        uint iTokenDecimal = iTokenDecimal();
+        uint decimalDifference;
+        // Need to find easy way to do it.
+        if(tokenDecimal > iTokenDecimal)
+        {
+            decimalDifference = tokenDecimal.sub(iTokenDecimal);
+    
+        } else {
+            decimalDifference = iTokenDecimal.sub(tokenDecimal);
+        }
+        return (decimalDifference, tokenDecimal > iTokenDecimal);
     }
 
     function currentUBIInterest()
@@ -126,14 +150,28 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
             return (0, 0, 0);
         }
         uint256 tokenGains = tokenWorth.sub(totalStaked);
+        (uint decimalDifference, bool caseType) = tokenDecimalPrecision();
         //mul by 1e10 to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
-        uint256 iTokenGains = rdiv(tokenGains * 1e10, er);
+        uint256 iTokenGains;
+        if(caseType) {
+        
+            iTokenGains = rdiv(tokenGains.mul(10 ** decimalDifference), er);
+
+        } else {
+            iTokenGains = rdiv(tokenGains.div(10 ** decimalDifference), er);
+        }
         //get right most bits not covered by precision of cdai which is only 8 decimals while RAY is 27
-        uint256 precisionLossITokenRay = iTokenGains % 1e19;
+        uint256 precisionDecimal = uint(27).sub(iTokenDecimal());
+        uint256 precisionLossITokenRay = iTokenGains % (precisionDecimal);
          // lower back to 8 decimals
-        iTokenGains = iTokenGains.div(1e19);
+        iTokenGains = iTokenGains.div(precisionDecimal);
         //div by 1e10 to get results in dai precision 1e18
-        uint256 precisionLossToken = rmul(precisionLossITokenRay, er).div(1e10);
+        uint256 precisionLossToken;
+        if(caseType) {
+            precisionLossToken = rmul(precisionLossITokenRay, er).div(10 ** decimalDifference);
+        } else {
+            precisionLossToken = rmul(precisionLossITokenRay, er).mul(10 ** decimalDifference);
+        }
         return (iTokenGains, tokenGains, precisionLossToken);
     }
 

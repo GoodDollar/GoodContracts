@@ -1,7 +1,7 @@
 const fse = require("fs-extra");
 const settings = require("./deploy-settings.json");
 const daoAddresses = require("../../releases/deployment.json");
-const StakingContract = artifacts.require("./SimpleDAIStaking.sol");
+const GoodCompoundStaking = artifacts.require("./GoodCompoundStaking.sol");
 const FundManager = artifacts.require("./GoodFundManager.sol");
 const MarketMaker = artifacts.require("./GoodMarketMaker.sol");
 const Reserve = artifacts.require("./GoodReserveCDai.sol");
@@ -91,8 +91,8 @@ module.exports = async function(deployer, network) {
   ]);
 
   console.log("deploying staking contract and reserve");
-  const stakingContractP = deployer.deploy(
-    StakingContract,
+  const GoodCompoundStakingP = deployer.deploy(
+    GoodCompoundStaking,
     daiAddress,
     cdaiAddress,
     fundManager.address,
@@ -113,7 +113,7 @@ module.exports = async function(deployer, network) {
     contribcalc.address,
     networkSettings.blockInterval
   );
-  const [stakingContract, reserve] = await Promise.all([stakingContractP, reserveP]);
+  const [GoodCompoundStaking, reserve] = await Promise.all([GoodCompoundStakingP, reserveP]);
   await marketmaker.initializeToken(
     cdaiAddress,
     "100", //1gd
@@ -143,7 +143,7 @@ module.exports = async function(deployer, network) {
     ),
     schemeRegistrar.proposeScheme(
       maindao.Avatar,
-      stakingContract.address,
+      GoodCompoundStaking.address,
       NULL_HASH,
       "0x00000010",
       NULL_HASH
@@ -162,7 +162,7 @@ module.exports = async function(deployer, network) {
   ]);
 
   console.log("starting...");
-  await Promise.all([reserve.start(), fundManager.start(), stakingContract.start()]);
+  await Promise.all([reserve.start(), fundManager.start(), GoodCompoundStaking.start()]);
 
   console.log("deploying fund manager setReserve scheme...");
   const setReserve = await deployer.deploy(
@@ -194,7 +194,7 @@ module.exports = async function(deployer, network) {
   let releasedContracts = {
     ...networkAddresses,
     FundManager: fundManager.address,
-    DAIStaking: stakingContract.address,
+    DAIStaking: GoodCompoundStaking.address,
     Reserve: reserve.address,
     MarketMaker: marketmaker.address,
     Contribution: contribcalc.address,

@@ -202,11 +202,10 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      */
     function start() public onlyRegistered {
         addRights();
-        GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
 
         // Adds the reserve as a minter of the GD token
         controller.genericCall(
-            address(gooddollar),
+            address(avatar.nativeToken()),
             abi.encodeWithSignature("addMinter(address)", address(this)),
             avatar,
             0
@@ -279,8 +278,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         );
         uint256 gdReturn = marketMaker.buy(_buyWith, _tokenAmount);
         require(gdReturn >= _minReturn, "GD return must be above the minReturn");
-        GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
-        ERC20Mintable(address(gooddollar)).mint(msg.sender, gdReturn);
+        ERC20Mintable(address(avatar.nativeToken())).mint(msg.sender, gdReturn);
         emit TokenPurchased(
             msg.sender,
             address(_buyWith),
@@ -313,8 +311,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         onlyCDai(_sellTo)
         returns (uint256)
     {
-        GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
-        ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, _gdAmount);
+        ERC20Burnable(address(avatar.nativeToken())).burnFrom(msg.sender, _gdAmount);
         uint256 contributionAmount = contribution.calculateContribution(
             marketMaker,
             this,
@@ -392,7 +389,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 gdUBI = gdInterestToMint.sub(gdInterest);
         gdUBI = gdUBI.add(gdExpansionToMint);
         uint256 toMint = gdUBI.add(gdInterest);
-        ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
+        ERC20Mintable(address(avatar.nativeToken())).mint(fundManager, toMint);
         lastMinted = block.number.div(blockInterval);
         emit GDInterestAndExpansionMinted(
             msg.sender,

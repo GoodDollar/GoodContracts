@@ -337,12 +337,12 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     }
 
     /**
-     * @dev method to recover any stuck erc20 tokens (ie  compound COMP)
-     * @param token the ERC20 token to recover
+     * @dev method to recover any stuck erc20 tokens (ie compound COMP)
+     * @param _token the ERC20 token to recover
      */
-    function recover(ERC20 token) public onlyAvatar {
+    function recover(ERC20 _token) public onlyAvatar {
         require(
-            token.transfer(_avatar, token.balanceOf(address(this))),
+            _token.transfer(address(avatar), _token.balanceOf(address(this))),
             "recover transfer failed"
         );
     }

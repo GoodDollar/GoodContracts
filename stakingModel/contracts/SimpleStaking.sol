@@ -92,14 +92,14 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         require(staker.stakedToken > 0, "No DAI staked");
         uint256 tokenWithdraw = staker.stakedToken;
         uint256 tokenActual = token.balanceOf(address(this));
+        redeem(tokenWithdraw);
         if (tokenActual < tokenWithdraw) {
             tokenWithdraw = tokenActual;
         }
-        redeem(tokenWithdraw);
         staker.stakedToken = staker.stakedToken.sub(tokenWithdraw); // update balance before transfer to prevent re-entry
         totalStaked = totalStaked.sub(tokenWithdraw);
         require(token.transfer(msg.sender, tokenWithdraw), "withdraw transfer failed");
-        emit StakeWithdraw(msg.sender, address(token), tokenWithdraw, tokenActual);
+        emit StakeWithdraw(msg.sender, address(token), tokenWithdraw, token.balanceOf(address(this)));
     }
 
     function currentTokenWorth() public view returns (uint256) {
@@ -201,7 +201,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         lastUBICollection = block.number.div(blockInterval);
         if (iTokenGains > 0)
             require(iToken.transfer(recipient, iTokenGains), "collect transfer failed");
-        emit InterestCollected(recipient, address(token), iTokenGains, tokenGains, precisionLossToken);
+        emit InterestCollected(recipient, address(token), address(iToken), iTokenGains, tokenGains, precisionLossToken);
         return (iTokenGains, tokenGains, precisionLossToken, avgInterestDonatedRatio);
     }
 

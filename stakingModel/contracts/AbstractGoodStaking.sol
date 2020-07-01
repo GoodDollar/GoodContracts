@@ -28,10 +28,10 @@ contract AbstractGoodStaking {
     event Staked(address indexed staker, address token, uint256 value);
 
     /**
-     * @dev Emitted when `staker` withdraws their stake `value` tokens from 
-     * `startingBalance` of contract.
+     * @dev Emitted when `staker` withdraws their stake `value` tokens and contracts balance will 
+     * be reduced to`remainingBalance`.
      */
-    event StakeWithdraw(address indexed staker, address token, uint256 value, uint256 startingBalance);
+    event StakeWithdraw(address indexed staker, address token, uint256 value, uint256 remainingBalance);
 
     /**
      * @dev Emitted when fundmanager transfers intrest collected from defi protrocol.
@@ -40,6 +40,7 @@ contract AbstractGoodStaking {
     event InterestCollected(
         address recipient,
         address token,
+        address intrestToken,
         uint256 intrestTokenValue,
         uint256 tokenValue,
         uint256 tokenPrecisionLoss
@@ -124,7 +125,13 @@ contract AbstractGoodStaking {
      */
     function exchangeRate() internal view returns(uint) {}
 
+    /**
+     * @dev Returns decimal value for token.
+     */
     function tokenDecimal() internal view returns(uint) {}
 
+    /**
+     * @dev Returns decimal value for intrest token.
+     */
     function iTokenDecimal() internal view returns(uint) {}
 }

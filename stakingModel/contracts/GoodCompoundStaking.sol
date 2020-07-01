@@ -28,6 +28,19 @@ interface cERC20 {
 contract GoodCompoundStaking is SimpleStaking {
 
 
+
+
+    constructor(
+        address _token,
+        address _iToken,
+        address _fundManager,
+        uint256 _blockInterval,
+        Avatar _avatar,
+        Identity _identity
+    ) public SimpleStaking(_token, _iToken, _fundManager, _blockInterval, _avatar, _identity) {
+        
+    }
+
     /**
      * @dev stake some DAI
      * @param amount of dai to stake

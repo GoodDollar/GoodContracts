@@ -23,15 +23,16 @@ contract AbstractGoodStaking {
     mapping(address => Staker) public stakers;
 
     /**
-     * @dev Emitted when `staker` stake `value` tokens
+     * @dev Emitted when `staker` stake `value` tokens of `token`
      */
-    event Staked(address indexed staker, uint256 value);
+    event Staked(address indexed staker, address token, uint256 value);
 
     /**
-     * @dev Emitted when `staker` withdraws their stake `value` tokens from 
-     * `actual` contract balance.
+     * @dev Emitted when `staker` withdraws their stake `value` tokens and contracts balance will 
+     * be reduced to`remainingBalance`.
      */
-    event StakeWithdraw(address indexed staker, uint256 value, uint256 actual);
+    event StakeWithdraw(address indexed staker, address token, uint256 value, uint256 remainingBalance);
+
 
     /**
      * @dev Emitted when fundmanager transfers intrest collected from defi protrocol.
@@ -39,6 +40,8 @@ contract AbstractGoodStaking {
      */
     event InterestCollected(
         address recipient,
+        address token,
+        address intrestToken,
         uint256 intrestTokenValue,
         uint256 tokenValue,
         uint256 tokenPrecisionLoss
@@ -63,7 +66,7 @@ contract AbstractGoodStaking {
      * @dev calculates the holding of intrestToken by staking contract in terms of token value.
      * @return It will return the token worth of intrest token that contract is holding.
      */
-    function currentDAIWorth() external view returns (uint256) {
+    function currentTokenWorth() external view returns (uint256) {
 
     }
 
@@ -104,4 +107,32 @@ contract AbstractGoodStaking {
     {
         
     }
+
+    /**
+     * @dev Invests staked tokens to defi protocol.
+     * @param amount tokens staked.
+     */
+    function mint(uint amount) internal {}
+
+    /**
+     * @dev Redeem invested tokens from defi protocol.
+     * @param amount tokens to be redeemed.
+     */
+    function redeem(uint amount) internal {}
+
+    /**
+     * @dev Calculates exchange rate for token to intrest token from defi protocol.
+     * @return exchange rate.
+     */
+    function exchangeRate() internal view returns(uint) {}
+
+    /**
+     * @dev Returns decimal value for token.
+     */
+    function tokenDecimal() internal view returns(uint) {}
+
+    /**
+     * @dev Returns decimal value for intrest token.
+     */
+    function iTokenDecimal() internal view returns(uint) {}
 }

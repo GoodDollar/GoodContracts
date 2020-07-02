@@ -91,8 +91,8 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         Staker storage staker = stakers[msg.sender];
         require(staker.stakedToken > 0, "No DAI staked");
         uint256 tokenWithdraw = staker.stakedToken;
-        uint256 tokenActual = token.balanceOf(address(this));
         redeem(tokenWithdraw);
+        uint256 tokenActual = token.balanceOf(address(this));
         if (tokenActual < tokenWithdraw) {
             tokenWithdraw = tokenActual;
         }
@@ -162,9 +162,9 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         }
         //get right most bits not covered by precision of cdai which is only 8 decimals while RAY is 27
         uint256 precisionDecimal = uint(27).sub(iTokenDecimal());
-        uint256 precisionLossITokenRay = iTokenGains % (precisionDecimal);
+        uint256 precisionLossITokenRay = iTokenGains % (10 ** precisionDecimal);
          // lower back to 8 decimals
-        iTokenGains = iTokenGains.div(precisionDecimal);
+        iTokenGains = iTokenGains.div(10 ** precisionDecimal);
         //div by 1e10 to get results in dai precision 1e18
         uint256 precisionLossToken;
         if(caseType) {
@@ -192,7 +192,6 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         require(recipient != address(this), "Recipient cannot be the staking contract"); // otherwise fund manager has to wait for the next interval
 
         require(canCollect(), "Need to wait for the next interval");
-
         (
             uint256 iTokenGains,
             uint256 tokenGains,

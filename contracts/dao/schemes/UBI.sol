@@ -13,7 +13,6 @@ import "../../token/GoodDollar.sol";
 import "./ActivePeriod.sol";
 import "./FeelessScheme.sol";
 
-
 /* @title Base contract template for UBI scheme
  */
 contract AbstractUBI is ActivePeriod, FeelessScheme {
@@ -86,12 +85,12 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         return claimDay[day].claimAmount;
     }
 
-    /* @dev function that gets count of claimers and amount claimed for the most recent
-     * day where claiming transpired.
+    /* @dev function that gets count of claimers and amount claimed for the current day
      * @return the amount of claimers and the amount claimed.
      */
     function getDailyStats() public view returns (uint256 count, uint256 amount) {
-        return (getClaimerCount(currentDay), getClaimAmount(currentDay));
+        uint256 today = (now.sub(periodStart)) / 1 days;
+        return (getClaimerCount(today), getClaimAmount(today));
     }
 
     /* @dev Function that commences distribution period on contract.
@@ -182,7 +181,6 @@ contract AbstractUBI is ActivePeriod, FeelessScheme {
         return true;
     }
 }
-
 
 /* @title UBI scheme contract responsible for calculating a distribution
  * based on amount of whitelisted users

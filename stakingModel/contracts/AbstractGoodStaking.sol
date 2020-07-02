@@ -33,6 +33,7 @@ contract AbstractGoodStaking {
      */
     event StakeWithdraw(address indexed staker, address token, uint256 value, uint256 remainingBalance);
 
+
     /**
      * @dev Emitted when fundmanager transfers intrest collected from defi protrocol.
      * `recipient` will receive `intrestTokenValue` as intrest.

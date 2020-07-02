@@ -1,4 +1,4 @@
-const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
+const GoodCompoundStaking = artifacts.require("GoodCompoundStaking");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 const GoodReserve = artifacts.require("GoodReserveCDai");
@@ -70,7 +70,7 @@ contract("UBIScheme - network e2e tests", ([founder, claimer, fisherman]) => {
     avatarAddress = dao_addresses.Avatar;
     dai = await DAIMock.at(staking_addresses.DAI);
     cDAI = await cDAIMock.at(staking_addresses.cDAI);
-    simpleStaking = await SimpleDAIStaking.at(staking_addresses.DAIStaking);
+    simpleStaking = await GoodCompoundStaking.at(staking_addresses.DAIStaking);
     goodReserve = await GoodReserve.at(staking_addresses.Reserve);
     goodFundManager = await GoodFundsManager.at(staking_addresses.FundManager);
     controller = await Controller.at(dao_addresses.Controller);

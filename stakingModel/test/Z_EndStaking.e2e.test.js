@@ -1,5 +1,5 @@
 //filename starts with Z so it runs last. since this ends all schemes
-const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
+const GoodCompoundStaking = artifacts.require("GoodCompoundStaking");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 const GoodReserve = artifacts.require("GoodReserveCDai");
@@ -88,7 +88,7 @@ contract(
       ubiBridgeRecipient = staking_addresses.UBIScheme;
       dai = await DAIMock.at(staking_addresses.DAI);
       cDAI = await cDAIMock.at(staking_addresses.cDAI);
-      simpleStaking = await SimpleDAIStaking.at(staking_addresses.DAIStaking);
+      simpleStaking = await GoodCompoundStaking.at(staking_addresses.DAIStaking);
       goodReserve = await GoodReserve.at(staking_addresses.Reserve);
       goodFundManager = await GoodFundsManager.at(staking_addresses.FundManager);
       marketMaker = await MarketMaker.at(staking_addresses.MarketMaker);

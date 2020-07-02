@@ -1,4 +1,4 @@
-const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
+const GoodCompoundStaking = artifacts.require("GoodCompoundStaking");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 const GoodReserve = artifacts.require("GoodReserveCDai");

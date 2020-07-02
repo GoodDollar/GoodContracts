@@ -91,7 +91,7 @@ module.exports = async function(deployer, network) {
   ]);
 
   console.log("deploying staking contract and reserve");
-  const GoodCompoundStakingP = deployer.deploy(
+  const goodCompoundStakingP = deployer.deploy(
     GoodCompoundStaking,
     daiAddress,
     cdaiAddress,
@@ -113,7 +113,7 @@ module.exports = async function(deployer, network) {
     contribcalc.address,
     networkSettings.blockInterval
   );
-  const [GoodCompoundStaking, reserve] = await Promise.all([GoodCompoundStakingP, reserveP]);
+  const [goodCompoundStaking, reserve] = await Promise.all([goodCompoundStakingP, reserveP]);
   await marketmaker.initializeToken(
     cdaiAddress,
     "100", //1gd
@@ -143,7 +143,7 @@ module.exports = async function(deployer, network) {
     ),
     schemeRegistrar.proposeScheme(
       maindao.Avatar,
-      GoodCompoundStaking.address,
+      goodCompoundStaking.address,
       NULL_HASH,
       "0x00000010",
       NULL_HASH
@@ -162,7 +162,7 @@ module.exports = async function(deployer, network) {
   ]);
 
   console.log("starting...");
-  await Promise.all([reserve.start(), fundManager.start(), GoodCompoundStaking.start()]);
+  await Promise.all([reserve.start(), fundManager.start(), goodCompoundStaking.start()]);
 
   console.log("deploying fund manager setReserve scheme...");
   const setReserve = await deployer.deploy(
@@ -194,7 +194,7 @@ module.exports = async function(deployer, network) {
   let releasedContracts = {
     ...networkAddresses,
     FundManager: fundManager.address,
-    DAIStaking: GoodCompoundStaking.address,
+    DAIStaking: goodCompoundStaking.address,
     Reserve: reserve.address,
     MarketMaker: marketmaker.address,
     Contribution: contribcalc.address,

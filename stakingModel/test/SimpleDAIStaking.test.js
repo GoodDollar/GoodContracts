@@ -1,4 +1,4 @@
-const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
+const GoodCompoundStaking = artifacts.require("GoodCompoundStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
@@ -46,7 +46,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
     controller = await ControllerMock.new(avatar.address);
     await avatar.transferOwnership(controller.address);
-    simpleStaking = await SimpleDAIStaking.new(
+    simpleStaking = await GoodCompoundStaking.new(
       dai.address,
       cDAI.address,
       founder,
@@ -96,12 +96,12 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     await simpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), {
         from: staker
       })
       .catch(console.log);
     let balance = await simpleStaking.stakers(staker);
-    expect(balance.stakedDAI.toString()).to.be.equal(
+    expect(balance.stakedToken.toString()).to.be.equal(
       web3.utils.toWei("100", "ether") //100 dai
     );
     let totalStaked = await simpleStaking.totalStaked();
@@ -126,17 +126,17 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     let totalStakedAfter = await simpleStaking.totalStaked(); // total staked in GoodStaking
     expect(stakedcDaiBalanceAfter.lt(stakedcDaiBalanceBefore)).to.be.true;
     expect(stakerDaiBalanceAfter.gt(stakerDaiBalanceBefore)).to.be.true;
-    expect(balanceBefore.stakedDAI.toString()).to.be.equal(
+    expect(balanceBefore.stakedToken.toString()).to.be.equal(
       (stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString()
     );
     expect((totalStakedBefore - totalStakedAfter).toString()).to.be.equal(
-      balanceBefore.stakedDAI.toString()
+      balanceBefore.stakedToken.toString()
     );
-    expect(balanceAfter.stakedDAI.toString()).to.be.equal("0");
+    expect(balanceAfter.stakedToken.toString()).to.be.equal("0");
     expect(stakedcDaiBalanceAfter.toString()).to.be.equal("0");
-    expect(transaction.logs[0].event).to.be.equal("DAIStakeWithdraw");
+    expect(transaction.logs[0].event).to.be.equal("StakeWithdraw");
     expect(transaction.logs[0].args.staker).to.be.equal(staker);
-    expect(transaction.logs[0].args.daiValue.toString()).to.be.equal(
+    expect(transaction.logs[0].args.value.toString()).to.be.equal(
       (stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString()
     );
   });
@@ -144,7 +144,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   it("should be able to withdraw stake by staker when the worth is lower than the actual staked", async () => {
     let cDAI1 = await cDAILowWorthMock.new(dai.address);
     dai.mint(cDAI1.address, web3.utils.toWei("100000000", "ether"));
-    let simpleStaking1 = await SimpleDAIStaking.new(
+    let simpleStaking1 = await GoodCompoundStaking.new(
       dai.address,
       cDAI1.address,
       founder,
@@ -157,7 +157,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await dai.approve(simpleStaking1.address, weiAmount, {
       from: staker
     });
-    await simpleStaking1.stakeDAI(weiAmount, {
+    await simpleStaking1.stake(weiAmount, {
       from: staker
     });
     let balanceBefore = await simpleStaking1.stakers(staker); // user staked balance in GoodStaking
@@ -165,8 +165,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await simpleStaking1.withdrawStake({ from: staker });
     let balanceAfter = await simpleStaking.stakers(staker); // user staked balance in GoodStaking
     let stakerDaiBalanceAfter = await dai.balanceOf(staker); // staker DAI balance
-    expect(balanceAfter.stakedDAI.toString()).to.be.equal("0");
-    expect(balanceBefore.stakedDAI.div(new BN(2)).toString()).to.be.equal(
+    expect(balanceAfter.stakedToken.toString()).to.be.equal("0");
+    expect(balanceBefore.stakedToken.div(new BN(2)).toString()).to.be.equal(
       (stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString()
     );
   });
@@ -174,7 +174,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   it("should return 0s for gains when the current cdai worth is lower than the inital worth", async () => {
     let cDAI1 = await cDAILowWorthMock.new(dai.address);
     dai.mint(cDAI1.address, web3.utils.toWei("100000000", "ether"));
-    let simpleStaking1 = await SimpleDAIStaking.new(
+    let simpleStaking1 = await GoodCompoundStaking.new(
       dai.address,
       cDAI1.address,
       founder,
@@ -187,7 +187,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await dai.approve(simpleStaking1.address, weiAmount, {
       from: staker
     });
-    await simpleStaking1.stakeDAI(weiAmount, {
+    await simpleStaking1.stake(weiAmount, {
       from: staker
     });
     let gains = await simpleStaking1.currentUBIInterest();
@@ -203,7 +203,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     await simpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), {
         from: staker
       })
       .catch(console.log);
@@ -224,7 +224,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     let fakeDai = await DAIMock.new();
     let fakecDAI = await cDAIMock.new(fakeDai.address);
     await fakeDai.mint(fakecDAI.address, web3.utils.toWei("100000000", "ether"));
-    let fakeSimpleStaking = await SimpleDAIStaking.new(
+    let fakeSimpleStaking = await GoodCompoundStaking.new(
       dai.address,
       fakecDAI.address,
       founder,
@@ -238,7 +238,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     });
     let stakerDaiBalanceBefore = await dai.balanceOf(staker);
     const error = await fakeSimpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), {
         from: staker
       })
       .catch(e => e);
@@ -253,7 +253,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     let fakeDai = await DAIMock.new();
     let fakecDAI = await cDAIMock.new(fakeDai.address);
     await fakeDai.mint(fakecDAI.address, web3.utils.toWei("100000000", "ether"));
-    let fakeSimpleStaking = await SimpleDAIStaking.new(
+    let fakeSimpleStaking = await GoodCompoundStaking.new(
       dai.address,
       fakecDAI.address,
       founder,
@@ -267,7 +267,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     });
     let totalStakedBefore = await fakeSimpleStaking.totalStaked();
     const error = await fakeSimpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), {
         from: staker
       })
       .catch(e => e);
@@ -280,7 +280,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     let fakeDai = await DAIMock.new();
     let fakecDAI = await cDAIMock.new(fakeDai.address);
     await fakeDai.mint(fakecDAI.address, web3.utils.toWei("100000000", "ether"));
-    let fakeSimpleStaking = await SimpleDAIStaking.new(
+    let fakeSimpleStaking = await GoodCompoundStaking.new(
       dai.address,
       fakecDAI.address,
       founder,
@@ -293,20 +293,20 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     const error = await fakeSimpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), {
         from: staker
       })
       .catch(e => e);
     expect(error.message).not.to.be.empty;
     let balance = await fakeSimpleStaking.stakers(staker);
-    expect(balance.stakedDAI.toString()).to.be.equal(
+    expect(balance.stakedToken.toString()).to.be.equal(
       web3.utils.toWei("0", "ether") //100 dai
     );
   });
 
   it("should not be able to stake 0 dai", async () => {
     const error = await simpleStaking
-      .stakeDAI(web3.utils.toWei("0", "ether"), {
+      .stake(web3.utils.toWei("0", "ether"), {
         from: staker
       })
       .catch(e => e);
@@ -323,13 +323,13 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     let stakedcDaiBalanceBefore = await cDAI.balanceOf(simpleStaking.address);
 
     await simpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), {
         from: staker
       })
       .catch(console.log);
 
     let balanceAfter = await simpleStaking.stakers(staker);
-    expect((balanceAfter.stakedDAI - balanceBefore.stakedDAI).toString()).to.be.equal(
+    expect((balanceAfter.stakedToken - balanceBefore.stakedToken).toString()).to.be.equal(
       web3.utils.toWei("100", "ether") //100 dai
     );
 
@@ -353,11 +353,11 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     });
 
     const error = await simpleStaking
-      .stakeDAI(weiAmount, {
+      .stake(weiAmount, {
         from: staker
       })
       .catch(e => e);
-    expect(error.message).to.have.string("You need to approve DAI transfer first");
+    expect(error);
   });
 
   it("should not be able to stake when staker dai balance is too low", async () => {
@@ -370,7 +370,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     });
 
     const error = await simpleStaking
-      .stakeDAI(approvedAmount, {
+      .stake(approvedAmount, {
         from: staker
       })
       .catch(e => e);
@@ -386,13 +386,13 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     });
 
     const transaction = await simpleStaking
-      .stakeDAI(weiAmount, {
+      .stake(weiAmount, {
         from: staker
       })
       .catch(console.log);
 
-    assert(transaction.logs[0].event === "DAIStaked");
-    assert.equal(transaction.logs[0].args.daiValue.valueOf(), weiAmount);
+    assert(transaction.logs[0].event === "Staked");
+    assert.equal(transaction.logs[0].args.value.valueOf(), weiAmount);
 
     await simpleStaking.withdrawStake({
       from: staker
@@ -406,7 +406,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     await simpleStaking
-      .stakeDAI(weiAmount, {
+      .stake(weiAmount, {
         from: staker
       })
       .catch(console.log);
@@ -428,7 +428,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
   it("should not be able to stake if the getting an error while minting new cdai", async () => {
     let cDAI1 = await cDAINonMintableMock.new(dai.address);
     dai.mint(cDAI1.address, web3.utils.toWei("100000000", "ether"));
-    let simpleStaking1 = await SimpleDAIStaking.new(
+    let simpleStaking1 = await GoodCompoundStaking.new(
       dai.address,
       cDAI1.address,
       founder,
@@ -442,7 +442,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     const error = await simpleStaking1
-      .stakeDAI(weiAmount, {
+      .stake(weiAmount, {
         from: staker
       })
       .catch(e => e);
@@ -461,7 +461,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     await simpleStaking
-      .stakeDAI(web3.utils.toWei("400", "ether"), {
+      .stake(web3.utils.toWei("400", "ether"), {
         from: staker
       })
       .catch(console.log);
@@ -488,7 +488,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     await simpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), {
         from: staker
       })
       .catch(console.log);
@@ -499,8 +499,8 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     expect(canCollect).to.be.equal(true);
     const res = await simpleStaking.collectUBIInterest(founder);
     const fundBalance = await cDAI.balanceOf(founder);
-    const fundDaiWorth = await simpleStaking.currentDAIWorth();
-    const fundDaiWorth11 = await simpleStaking.currentDAIWorth();
+    const fundDaiWorth = await simpleStaking.currentTokenWorth();
+    const fundDaiWorth11 = await simpleStaking.currentTokenWorth();
     expect(cdaiGains.toString()).to.be.equal(fundBalance.toString());
     expect(fundDaiWorth.toString()).to.be.equal(
       //10 gwei = 10 decimals + precisionLoss = 20 decimals = 100 ether of DAI
@@ -532,7 +532,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
       from: staker
     });
-    await simpleStaking.stakeDAI(web3.utils.toWei("100", "ether"), {
+    await simpleStaking.stake(web3.utils.toWei("100", "ether"), {
       from: staker
     });
     await simpleStaking
@@ -577,7 +577,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     await simpleStaking
-      .stakeDAI(weiAmount, {
+      .stake(weiAmount, {
         from: staker
       })
       .catch(console.log);
@@ -597,7 +597,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       from: staker
     });
     await simpleStaking
-      .stakeDAI(weiAmount, {
+      .stake(weiAmount, {
         from: staker
       })
       .catch(console.log);
@@ -607,7 +607,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await evm_mine(BLOCK_INTERVAL);
     const res = await simpleStaking.collectUBIInterest(staker);
     const fundBalance = await cDAI.balanceOf(staker);
-    const fundDaiWorth = await simpleStaking.currentDAIWorth();
+    const fundDaiWorth = await simpleStaking.currentTokenWorth();
     expect(cdaiGains.toString()).to.be.equal(fundBalance.toString());
     expect(fundDaiWorth.toString()).to.be.equal(
       // 10 gwei = 10 decimals + precisionLoss = 20 decimals = 100 ether of DAI

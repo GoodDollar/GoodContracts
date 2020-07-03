@@ -340,7 +340,9 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         onlyOwner
         returns (uint256)
     {
-        require(_addTokenSupply > 0, "added supply must be above 0");
+        if(_addTokenSupply == 0) {
+            return 0;
+        }
         uint256 toMint = calculateMintInterest(_token, _addTokenSupply);
         ReserveToken storage reserveToken = reserveTokens[address(_token)];
         uint256 gdSupply = reserveToken.gdSupply;

@@ -167,8 +167,12 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
   });
 
   it("should mint 0 gd tokens if the add token supply is 0", async () => {
-    const error = await marketMaker.mintInterest(cDAI.address, "0").catch(e => e);
-    expect(error.message).to.have.string("added supply must be above 0");
+    let reserveTokenBefore = await marketMaker.reserveTokens(cDAI.address);
+    let gdSupplyBefore = reserveTokenBefore.gdSupply;
+    await marketMaker.mintInterest(cDAI.address, "0");
+    let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
+    let gdSupplyAfter = reserveTokenAfter.gdSupply;
+    expect(gdSupplyAfter.toString()).to.be.equal(gdSupplyBefore.toString());
   });
 
   it("should be able to update the reserve ratio only by the owner", async () => {

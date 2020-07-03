@@ -173,7 +173,7 @@ contract(
         .catch(e => e);
       expect(error.message).to.have.string("is not whitelisted contract");
     });
-
+  
     it("should transfer ubi interest to the reserve and recieves minted gd back to the staking contract", async () => {
       await identity.addContract(simpleStaking.address);
       await cDAI.exchangeRateCurrent();
@@ -278,6 +278,49 @@ contract(
       let stakingGDBalance = await goodDollar.balanceOf(staking1.address);
       expect(stakingGDBalance.toString()).to.be.equal("933070"); // 100% of interest is returned to the staking
       expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal("0"); // 0 interest + 0 minted from expansion (the ratio changed to 100%)
+    });
+
+    it("should transfer expansion minted tokens to the recipient when the interest is equal to 0", async () => {
+      // changes the ratio to less than 100% so there will be expansion minted tokens
+      let encodedCall = web3.eth.abi.encodeFunctionCall(
+        {
+          name: "setReserveRatioDailyExpansion",
+          type: "function",
+          inputs: [
+            {
+              type: "uint256",
+              name: "_nom"
+            },
+            {
+              type: "uint256",
+              name: "_denom"
+            }
+          ]
+        },
+        ["1", "2"]
+      );
+      await controller.genericCall(
+        marketMaker.address,
+        encodedCall,
+        avatar.address,
+        0
+      );
+
+      // a new staking contract with no interest
+      const staking1 = await SimpleDAIStakingNoDonation.new(
+        dai.address,
+        cDAI.address,
+        goodFundManager.address,
+        BLOCK_INTERVAL,
+        avatar.address,
+        identity.address
+      );
+      await identity.addContract(staking1.address);
+      let expansionTokens = await marketMaker.calculateMintExpansion(cDAI.address);
+      let recipientBefore = await goodDollar.balanceOf(ubirecipient);
+      await goodFundManager.transferInterest(staking1.address);
+      let recipientAfter = await goodDollar.balanceOf(ubirecipient);
+      expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal(expansionTokens.toString());
     });
 
     it("should set block interval by avatar", async () => {

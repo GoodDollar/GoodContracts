@@ -78,14 +78,6 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         _;
     }
 
-    event UBIMinted(
-        uint256 indexed day,
-        uint256 cDaiValue,
-        uint256 daiValue,
-        uint256 gdInterest,
-        uint256 gdUBI
-    );
-
     event TokenPurchased(
         address indexed caller,
         address indexed reserveToken,
@@ -109,10 +101,13 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         address newAddress
     );
 
-    event GDInterestAndExpansionMinted(
-        address indexed caller,
-        address indexed interestCollector,
-        address indexed ubiCollector,
+    event UBIMinted(
+        uint256 indexed day,
+        address indexed manager,
+        address indexed interestReceipient,
+        address indexed ubiReceipient,
+        address indexed interestToken
+        uint256 interestReceived,
         uint256 gdInterestMinted,
         uint256 gdExpansionMinted,
         uint256 gdInterestTransferred,
@@ -303,10 +298,13 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 toMint = gdUBI.add(gdInterest);
         ERC20Mintable(address(gooddollar)).mint(fundManager, toMint);
         lastMinted = block.number.div(blockInterval);
-        emit GDInterestAndExpansionMinted(
+        emit UBIMinted(
+            lastMinted,
             msg.sender,
             address(fundManager),
             address(avatar),
+            address(interestToken),
+            interestTransfered,
             gdInterestToMint,
             gdExpansionToMint,
             gdInterest,

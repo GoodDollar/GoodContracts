@@ -9,7 +9,6 @@ import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../dao/schemes/SchemeGuard.sol";
 import "./IdentityAdminRole.sol";
 
-
 /* @title Identity contract responsible for whitelisting
  * and keeping track of amount of whitelisted users
  */
@@ -115,7 +114,8 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
      */
     function isWhitelisted(address account) public view returns (bool) {
         uint256 daysSinceAuthentication = (now.sub(dateAuthenticated[account])) / 1 days;
-        return (daysSinceAuthentication <= authenticationPeriod) && whitelist.has(account);
+        return
+            (daysSinceAuthentication <= authenticationPeriod) && whitelist.has(account);
     }
 
     /* @dev Function that gives the date the given user was added
@@ -126,31 +126,33 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         return dateAuthenticated[account];
     }
 
-    /* @dev Function to transfer whitelisted privilege to another address
+    /**
+     * @depracated
+     * @dev Function to transfer whitelisted privilege to another address
      * relocates did of sender to give address
      * @param account The address to transfer to
      */
-    function transferAccount(address account) public whenNotPaused {
-        ERC20 token = avatar.nativeToken();
+    // function transferAccount(address account) public whenNotPaused {
+    //     ERC20 token = avatar.nativeToken();
+    //     require(!isBlacklisted(account), "Cannot transfer to blacklisted");
+    //     require(token.balanceOf(account) == 0, "Account is already in use");
+    //     require(isWhitelisted(msg.sender), "Requester need to be whitelisted");
 
-        require(!isBlacklisted(account), "Cannot transfer to blacklisted");
-        require(token.balanceOf(account) == 0, "Account is already in use");
+    //     require(
+    //         keccak256(bytes(addrToDID[account])) == keccak256(bytes("")),
+    //         "address already has DID"
+    //     );
 
-        require(
-            keccak256(bytes(addrToDID[account])) == keccak256(bytes("")),
-            "address already has DID"
-        );
+    //     string memory did = addrToDID[msg.sender];
+    //     bytes32 pHash = keccak256(bytes(did));
 
-        string memory did = addrToDID[msg.sender];
-        bytes32 pHash = keccak256(bytes(did));
-
-        uint256 balance = token.balanceOf(msg.sender);
-        token.transferFrom(msg.sender, account, balance);
-        _removeWhitelisted(msg.sender);
-        _addWhitelisted(account);
-        addrToDID[account] = did;
-        didHashToAddress[pHash] = account;
-    }
+    //     uint256 balance = token.balanceOf(msg.sender);
+    //     token.transferFrom(msg.sender, account, balance);
+    //     _removeWhitelisted(msg.sender);
+    //     _addWhitelisted(account);
+    //     addrToDID[account] = did;
+    //     didHashToAddress[pHash] = account;
+    // }
 
     /* @dev Adds an address to blacklist.
      * Can only be called by Identity Administrators.

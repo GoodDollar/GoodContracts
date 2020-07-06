@@ -105,6 +105,9 @@ In this document, we present the on going development efforts and specification 
 
 This text introduces the core components of the GoodDollar contract system and is intended as a brief overview of the current status of development. This specification is subject to ongoing development and frequent review. This text may not reflect the most recent commit.
 
+## GoodDollar Economic Model and Contracts
+[Staking Model](/stakingModel)
+
 ## GoodDollar Design Overview
 
 In the Table presented below, we provide an overview of the extended design of the GoodDollar contract system suggested for this specification.

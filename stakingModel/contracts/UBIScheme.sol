@@ -301,6 +301,8 @@ contract UBIScheme is AbstractUBI {
      * @return A bool indicating if UBI was fished
      */
     function fish(address account) public requireActive returns (bool) {
+        // checking if the account exists. that's been done because that
+        // will prevent trying to fish non-existence accounts in the system
         require(
             isNotNewUser(account) && !isActiveUser(account),
             "is not an inactive user"

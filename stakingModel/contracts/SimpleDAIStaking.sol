@@ -77,6 +77,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         blockInterval = _blockInterval;
         lastUBICollection = block.number.div(blockInterval);
         fundManager = _fundManager;
+        addPauser(address(avatar));
     }
 
     /**
@@ -160,13 +161,14 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
             return (0, 0, 0);
         }
         uint256 daiGains = daiWorth.sub(totalStaked);
-        uint256 cdaiGains = rdiv(daiGains * 1e10, er); //mul by 1e10 to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
-        uint256 precisionLossCDaiRay = cdaiGains % 1e19; //get right most bits not covered by precision of cdai which is only 8 decimals while RAY is 27
-        if (cdaiGains > 0) {
-            // dividing 0 returns unexpected result
-            cdaiGains = cdaiGains.div(1e19); //lower back to 8 decimals
-        }
-        uint256 precisionLossDai = rmul(precisionLossCDaiRay, er).div(1e10); //div by 1e10 to get results in dai precision 1e18
+        //mul by 1e10 to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
+        uint256 cdaiGains = rdiv(daiGains * 1e10, er);
+        //get right most bits not covered by precision of cdai which is only 8 decimals while RAY is 27
+        uint256 precisionLossCDaiRay = cdaiGains % 1e19;
+         // lower back to 8 decimals
+        cdaiGains = cdaiGains.div(1e19);
+        //div by 1e10 to get results in dai precision 1e18
+        uint256 precisionLossDai = rmul(precisionLossCDaiRay, er).div(1e10);
         return (cdaiGains, daiGains, precisionLossDai);
     }
 

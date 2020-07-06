@@ -58,9 +58,9 @@ module.exports = async function(deployer, network) {
   console.log("deploying stand alone contracts");
   const fundManagerP = deployer.deploy(
     FundManager,
-    cdaiAddress,
     maindao.Avatar,
     maindao.Identity,
+    cdaiAddress,
     foreignBridgeAddr,
     ubiBridgeRecipient,
     networkSettings.blockInterval
@@ -77,10 +77,9 @@ module.exports = async function(deployer, network) {
   );
   const marketmakerP = deployer.deploy(
     MarketMaker,
-    maindao.GoodDollar,
+    maindao.Avatar,
     networkSettings.expansionRatio.nom,
     networkSettings.expansionRatio.denom,
-    maindao.Avatar,
     { gas: network.indexOf("mainnet") >= 0 ? 4000000 : undefined }
   );
 
@@ -105,7 +104,6 @@ module.exports = async function(deployer, network) {
     Reserve,
     daiAddress,
     cdaiAddress,
-    maindao.GoodDollar,
     fundManager.address,
     maindao.Avatar,
     maindao.Identity,

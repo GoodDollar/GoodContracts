@@ -76,15 +76,18 @@ module.exports = async function(deployer, network) {
     );
 
     console.log(
-      "preload staking contract and increase the cdai allowance to preload the reserve contract..."
+      "preload staking (fake interest) contract and increase the cdai allowance to preload the reserve contract..."
     );
     await Promise.all([preloadStaking, approveCdai]);
 
-    console.log("preload reserve with CDAI");
+    console.log("preload reserve with CDAI (buying GD from reserve)");
     await goodReserve.buy(
       cDAI.address,
       Math.floor(totalMinted.toNumber() / 2).toString(),
       0
     );
+
+    //TODO: call transferInterest so UBIScheme is loaded
+    //TODO: bridge bought gooddollars and transfer to firstclaimpool
   }
 };

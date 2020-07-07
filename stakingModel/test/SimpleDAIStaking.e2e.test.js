@@ -1,4 +1,4 @@
-const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
+const GoodCompoundStaking = artifacts.require("GoodCompoundStaking");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
@@ -29,7 +29,7 @@ contract("SimpleDAIStaking - kovan e2e test", ([founder, staker]) => {
     cDAI = await cDAIMock.at(cDAI_ADDRESS);
     avatar = await Avatar.deployed();
     (identity = await Identity), deployed();
-    simpleStaking = await SimpleDAIStaking.new(
+    simpleStaking = await GoodCompoundStaking.new(
       DAI_ADDRESS,
       cDAI_ADDRESS,
       founder,
@@ -46,7 +46,7 @@ contract("SimpleDAIStaking - kovan e2e test", ([founder, staker]) => {
     let balanceBefore = (await simpleStaking.stakers(staker)).stakedDAI;
     let totalStakedBefore = await simpleStaking.totalStaked();
     await simpleStaking
-      .stakeDAI(web3.utils.toWei("500", "gwei"), {
+      .stake(web3.utils.toWei("500", "gwei"), {
         from: staker
       })
       .catch(console.log);
@@ -63,7 +63,7 @@ contract("SimpleDAIStaking - kovan e2e test", ([founder, staker]) => {
     const fundBalanceBefore = await cDAI.balanceOf(founder);
     await simpleStaking.collectUBIInterest(founder);
     const fundBalanceAfter = await cDAI.balanceOf(founder);
-    const fundDaiWorth = await simpleStaking.currentDAIWorth();
+    const fundDaiWorth = await simpleStaking.currentTokenWorth();
     expect(cdaiGains.toString()).to.be.equal(
       (fundBalanceAfter - fundBalanceBefore).toString()
     );

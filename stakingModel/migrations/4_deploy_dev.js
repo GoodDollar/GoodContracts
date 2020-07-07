@@ -1,6 +1,6 @@
 const fse = require("fs-extra");
 const settings = require("./deploy-settings.json");
-const StakingContract = artifacts.require("./SimpleDAIStaking.sol");
+const GoodCompoundStaking = artifacts.require("./GoodCompoundStaking.sol");
 const Reserve = artifacts.require("./GoodReserveCDai.sol");
 const DAIMock = artifacts.require("./DAIMock.sol");
 const cDAIMock = artifacts.require("./cDAIMock.sol");
@@ -38,7 +38,7 @@ module.exports = async function(deployer, network) {
     let staking_mainnet_addresses = staking_deployment[network];
     const dai = await DAIMock.at(staking_mainnet_addresses.DAI);
     const cDAI = await cDAIMock.at(staking_mainnet_addresses.cDAI);
-    const simpleStaking = await StakingContract.at(staking_mainnet_addresses.DAIStaking);
+    const simpleStaking = await GoodCompoundStaking.at(staking_mainnet_addresses.DAIStaking);
     const goodReserve = await Reserve.at(staking_mainnet_addresses.Reserve);
 
     console.log("minting dai");
@@ -55,7 +55,7 @@ module.exports = async function(deployer, network) {
 
     let ownercDaiBalanceBefore = await cDAI.balanceOf(accounts[0]);
 
-    const staking = simpleStaking.stakeDAI(web3.utils.toWei("80", "ether"));
+    const staking = simpleStaking.stake(web3.utils.toWei("80", "ether"));
     const minting = cDAI.mint(web3.utils.toWei("20", "ether"));
 
     console.log("staking and minting...");

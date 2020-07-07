@@ -1,4 +1,4 @@
-const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
+const GoodCompoundStaking = artifacts.require("GoodCompoundStaking");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 const GoodReserve = artifacts.require("GoodReserveCDai");
@@ -40,7 +40,7 @@ async function proposeAndRegister(
 contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
   let dai,
     cDAI,
-    simpleStaking,
+    goodCompoundStaking,
     goodReserve,
     goodFundManager,
     goodDollar,
@@ -63,7 +63,7 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
     ubiBridgeRecipient = staking_addresses.UBIScheme;
     dai = await DAIMock.at(staking_addresses.DAI);
     cDAI = await cDAIMock.at(staking_addresses.cDAI);
-    simpleStaking = await SimpleDAIStaking.at(staking_addresses.DAIStaking);
+    goodCompoundStaking = await GoodCompoundStaking.at(staking_addresses.DAIStaking);
     goodReserve = await GoodReserve.at(staking_addresses.Reserve);
     goodFundManager = await GoodFundsManager.at(staking_addresses.FundManager);
     marketMaker = await MarketMaker.at(staking_addresses.MarketMaker);
@@ -78,11 +78,11 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
     );
 
     await dai.mint(staker, web3.utils.toWei("100", "ether"));
-    await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
+    await dai.approve(goodCompoundStaking.address, web3.utils.toWei("100", "ether"), {
       from: staker
     });
-    await simpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
+    await goodCompoundStaking
+      .stake(web3.utils.toWei("100", "ether"), {
         from: staker
       })
       .catch(console.log);
@@ -108,7 +108,7 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
 
   it("should not mint UBI if not in the interval", async () => {
     const error = await goodFundManager
-      .transferInterest(simpleStaking.address)
+      .transferInterest(goodCompoundStaking.address)
       .catch(e => e);
     expect(error.message).to.have.string("wait for the next interval");
   });
@@ -118,10 +118,10 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
     await cDAI.exchangeRateCurrent();
     let recipientBefore = await goodDollar.balanceOf(ubiBridgeRecipient);
     const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
-    await goodFundManager.transferInterest(simpleStaking.address);
+    await goodFundManager.transferInterest(goodCompoundStaking.address);
     const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
     let recipientAfter = await goodDollar.balanceOf(ubiBridgeRecipient);
-    let stakingGDBalance = await goodDollar.balanceOf(simpleStaking.address);
+    let stakingGDBalance = await goodDollar.balanceOf(goodCompoundStaking.address);
     expect(stakingGDBalance.toString()).to.be.equal("0"); //100% of interest is donated, so nothing is returned to staking
     expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal("1904085"); // total of interest + minted from expansion (received 100%)
     expect(Math.floor(gdPriceAfter.toNumber() / 100).toString()).to.be.equal(

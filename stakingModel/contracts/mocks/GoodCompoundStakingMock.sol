@@ -1,23 +1,23 @@
 pragma solidity 0.5.4;
 
-import "../SimpleDAIStaking.sol";
+import "../GoodCompoundStaking.sol";
 
 
 /**
- * @title A SimpleDAIStaking mock.
+ * @title A GoodCompoundStaking mock.
  * return different donation ratio on collect.
  */
-contract SimpleDAIStakingMock is SimpleDAIStaking {
+contract GoodCompoundStakingMock is GoodCompoundStaking {
     constructor(
-        address _dai,
-        address _cDai,
+        address _token,
+        address _iToken,
         address _fundManager,
         uint256 _blockInterval,
         Avatar _avatar,
         Identity _identity
     )
         public
-        SimpleDAIStaking(_dai, _cDai, _fundManager, _blockInterval, _avatar, _identity)
+        GoodCompoundStaking(_token, _iToken, _fundManager, _blockInterval, _avatar, _identity)
     {}
 
     function collectUBIInterest(address recipient)
@@ -30,8 +30,8 @@ contract SimpleDAIStakingMock is SimpleDAIStaking {
             uint32
         )
     {
-        (uint256 cdaiGains, uint256 daiGains, uint256 precisionLossDai, ) = super
+        (uint256 iTokenGains, uint256 tokenGains, uint256 precisionLossToken, ) = super
             .collectUBIInterest(recipient);
-        return (cdaiGains, daiGains, precisionLossDai, 8e5);
+        return (iTokenGains, tokenGains, precisionLossToken, 8e5);
     }
 }

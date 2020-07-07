@@ -126,12 +126,12 @@ contract Identity is IdentityAdminRole, SchemeGuard, Pausable {
         return dateAuthenticated[account];
     }
 
-    /**
-     * @depracated
-     * @dev Function to transfer whitelisted privilege to another address
-     * relocates did of sender to give address
-     * @param account The address to transfer to
-     */
+    // /**
+    //  *
+    //  * @dev Function to transfer whitelisted privilege to another address
+    //  * relocates did of sender to give address
+    //  * @param account The address to transfer to
+    //  */
     // function transferAccount(address account) public whenNotPaused {
     //     ERC20 token = avatar.nativeToken();
     //     require(!isBlacklisted(account), "Cannot transfer to blacklisted");

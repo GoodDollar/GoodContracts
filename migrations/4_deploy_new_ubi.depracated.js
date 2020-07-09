@@ -16,6 +16,7 @@ const NULL_HASH = "0x00000000000000000000000000000000000000000000000000000000000
 module.exports = async function(deployer, network) {
   if (network.indexOf("test") < 0) {
     console.log("Depracted old UBI scheme");
+    return;
   }
   if (network.indexOf("mainnet") >= 0) {
     console.log("Skipping UBI for mainnet");

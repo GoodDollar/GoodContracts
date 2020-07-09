@@ -20,9 +20,9 @@ contract mDAINonMintableMock is DSMath, ERC20, ERC20Detailed, Ownable {
 
     function mint(uint256 daiAmount) public returns (uint256) {
         dai.transferFrom(msg.sender, address(this), daiAmount);
-        
-        _mint(msg.sender, rdiv(daiAmount, exchangeRateStored()).div(1e9)); 
-        return 1;
+        uint mintAmount = rdiv(daiAmount, exchangeRateStored()).div(1e9);
+        _mint(msg.sender, mintAmount); 
+        return mintAmount;
     }
 
     function redeem(uint256 mdaiAmount) public returns (uint256) {
@@ -33,14 +33,14 @@ contract mDAINonMintableMock is DSMath, ERC20, ERC20Detailed, Ownable {
         
         _burn(msg.sender, mdaiAmount);
         dai.transfer(msg.sender, daiAmount);
-        return 0;
+        return daiAmount;
     }
 
     function redeemUnderlying(uint256 daiAmount) public returns (uint256) {
         uint256 mdaiAmount = rdiv(daiAmount, exchangeRateStored()).div(1e9);
         _burn(msg.sender, mdaiAmount);
         dai.transfer(msg.sender, daiAmount);
-        return 0;
+        return daiAmount;
     }
 
     function exchangeRateCurrent() public returns (uint256) {

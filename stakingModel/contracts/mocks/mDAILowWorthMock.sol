@@ -22,12 +22,12 @@ contract mDAILowWorthMock is DSMath, ERC20, ERC20Detailed, Ownable {
     }
     function mint(uint256 daiAmount) public returns (uint256) {
         dai.transferFrom(msg.sender, address(this), daiAmount);
-        
+        uint mintAmount = rdiv(daiAmount, exchangeRateStored()).div(1e9);
         _mint(
             msg.sender,
-            rdiv(daiAmount, exchangeRateStored()).div(1e9)
+            mintAmount
         ); 
-        return 0;
+        return mintAmount;
     }
 
     function redeem(uint256 mdaiAmount) public returns (uint256) {
@@ -38,7 +38,7 @@ contract mDAILowWorthMock is DSMath, ERC20, ERC20Detailed, Ownable {
 
         _burn(msg.sender, mdaiAmount);
         dai.transfer(msg.sender, daiAmount);
-        return 0;
+        return daiAmount;
     }
 
     function redeemUnderlying(uint256 daiAmount) public returns (uint256) {
@@ -47,7 +47,7 @@ contract mDAILowWorthMock is DSMath, ERC20, ERC20Detailed, Ownable {
         );
         _burn(msg.sender, mdaiAmount);
         dai.transfer(msg.sender, daiAmount.div(2));
-        return 0;
+        return daiAmount;
     }
 
     function exchangeRateCurrent() public returns (uint256) {

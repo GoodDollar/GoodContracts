@@ -1,4 +1,4 @@
-const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
+const GoodCompoundStaking = artifacts.require("GoodCompoundStaking");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
 
@@ -26,7 +26,7 @@ contract("SimpleDAIStaking - `test` network e2e tests", ([founder, staker]) => {
     const STAKING_ADDRESS = addresses["DAIStaking"];
     dai = await DAIMock.at(DAI_ADDRESS);
     cDAI = await cDAIMock.at(cDAI_ADDRESS);
-    simpleStaking = await SimpleDAIStaking.at(STAKING_ADDRESS);
+    simpleStaking = await GoodCompoundStaking.at(STAKING_ADDRESS);
   });
 
   it("should be able to stake dai", async () => {
@@ -35,12 +35,12 @@ contract("SimpleDAIStaking - `test` network e2e tests", ([founder, staker]) => {
       from: staker
     });
     await simpleStaking
-      .stakeDAI(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), {
         from: staker
       })
       .catch(console.log);
     let balance = await simpleStaking.stakers(staker);
-    expect(balance.stakedDAI.toString()).to.be.equal(
+    expect(balance.stakedToken.toString()).to.be.equal(
       web3.utils.toWei("100", "ether") //100 dai
     );
     let totalStaked = await simpleStaking.totalStaked();
@@ -58,7 +58,7 @@ contract("SimpleDAIStaking - `test` network e2e tests", ([founder, staker]) => {
       from: staker
     });
     let stakerDaiBalanceAfter = await dai.balanceOf(staker); // staker DAI balance
-    expect(balanceBefore.stakedDAI.toString()).to.be.equal(
+    expect(balanceBefore.stakedToken.toString()).to.be.equal(
       (stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString()
     );
   });

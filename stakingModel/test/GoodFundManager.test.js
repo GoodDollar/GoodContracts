@@ -1,9 +1,9 @@
-const SimpleDAIStaking = artifacts.require("SimpleDAIStaking");
-const SimpleDAIStakingNoDonation = artifacts.require("SimpleDAIStakingNoDonation");
+const GoodCompoundStaking = artifacts.require("GoodCompoundStaking");
+const GoodCompoundStakingNoDonation = artifacts.require("GoodCompoundStakingNoDonation");
 const GoodReserve = artifacts.require("GoodReserveCDai");
 const MarketMaker = artifacts.require("GoodMarketMaker");
 const GoodFundsManager = artifacts.require("GoodFundManager");
-const SimpleDAIStakingMock = artifacts.require("SimpleDAIStakingMock");
+const GoodCompoundStakingMock = artifacts.require("GoodCompoundStakingMock");
 const GoodDollar = artifacts.require("GoodDollar");
 const DAIMock = artifacts.require("DAIMock");
 const cDAIMock = artifacts.require("cDAIMock");
@@ -67,7 +67,7 @@ contract(
       );
       [, simpleStaking, marketMaker, contribution] = await Promise.all([
         goodFundManager.start(),
-        SimpleDAIStaking.new(
+        GoodCompoundStaking.new(
           dai.address,
           cDAI.address,
           goodFundManager.address,
@@ -151,12 +151,12 @@ contract(
         from: staker
       });
       await simpleStaking
-        .stakeDAI(web3.utils.toWei("100", "ether"), {
+        .stake(web3.utils.toWei("100", "ether"), {
           from: staker
         })
         .catch(console.log);
       let balance = await simpleStaking.stakers(staker);
-      expect(balance.stakedDAI.toString()).to.be.equal(
+      expect(balance.stakedToken.toString()).to.be.equal(
         web3.utils.toWei("100", "ether") //100 dai
       );
       let totalStaked = await simpleStaking.totalStaked();
@@ -196,7 +196,7 @@ contract(
     });
 
     it("should recieved gd tokens after the interest has transferred and toekns have minted by the reserve", async () => {
-      const stakingMock = await SimpleDAIStakingMock.new(
+      const stakingMock = await GoodCompoundStakingMock.new(
         dai.address,
         cDAI.address,
         goodFundManager.address,
@@ -210,7 +210,7 @@ contract(
       });
       await identity.addContract(stakingMock.address);
       await stakingMock
-        .stakeDAI(web3.utils.toWei("100", "ether"), {
+        .stake(web3.utils.toWei("100", "ether"), {
           from: staker
         })
         .catch(console.log);
@@ -253,7 +253,7 @@ contract(
       );
       // a new staking contract with 0% donation. all the interest
       // is transferred back to the staking contract
-      const staking1 = await SimpleDAIStakingNoDonation.new(
+      const staking1 = await GoodCompoundStakingNoDonation.new(
                               dai.address,
                               cDAI.address,
                               goodFundManager.address,
@@ -266,7 +266,7 @@ contract(
         from: staker
       });
       await staking1
-        .stakeDAI(web3.utils.toWei("100", "ether"), {
+        .stake(web3.utils.toWei("100", "ether"), {
           from: staker
         })
         .catch(console.log);

@@ -80,7 +80,6 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         _;
     }
 
-
     // Emits when GD tokens are purchased
     event TokenPurchased(
         // The initiate of the action
@@ -134,7 +133,6 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         address newAddress
     );
 
-
     // Emits when new GD tokens minted
     event UBIMinted(
         //epoch of UBI
@@ -148,7 +146,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         //tokens were minted to
         address indexed ubiRecipient,
         //the token paid as interest
-        address indexed interestToken
+        address indexed interestToken,
         //wei amount of interest paid in interestToken
         uint256 interestReceived,
         // Amount of GD tokens that was

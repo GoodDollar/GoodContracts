@@ -316,9 +316,12 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
     function recover(ERC20 _token) public onlyAvatar {
         uint256 toWithdraw = _token.balanceOf(address(this));
 
-        // transfers only excessive funds
-        if (_token == dai) {
-            toWithdraw.sub(totalStaked);
+        // recover left cDai(stakers token) only when all stakes have been withdrawn
+        if (_token == cDai) {
+            require(
+                totalStaked == 0 && isPaused(),
+                "can recover cDai only when stakes have been withdrawn"
+            );
         }
         require(_token.transfer(address(avatar), toWithdraw), "recover transfer failed");
     }

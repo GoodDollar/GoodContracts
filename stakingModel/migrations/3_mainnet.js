@@ -47,10 +47,12 @@ module.exports = async function(deployer, network) {
     foreignBridgeAddr = foreignBridge.address;
     daiAddress = dai.address;
     cdaiAddress = cdai.address;
+    reserveTokenAddress = cdaiAddress;
   } else {
     foreignBridgeAddr = maindao.ForeignBridge._foreignBridge;
     daiAddress = networkSettings.daiAddress;
     cdaiAddress = networkSettings.cdaiAddress;
+    reserveTokenAddress = networkSettings.reserveToken.address;
   }
   const ubiBridgeRecipient = networkAddresses.UBIScheme;
   const homeAvatar = homedao.Avatar;
@@ -113,9 +115,9 @@ module.exports = async function(deployer, network) {
   );
   const [stakingContract, reserve] = await Promise.all([stakingContractP, reserveP]);
   await marketmaker.initializeToken(
-    cdaiAddress,
-    "100", //1gd
-    "10000", //0.0001 cDai
+    reserveTokenAddress,
+    "100", //1 gd
+    networkSettings.reserveToken.gdPriceWei, //"500000" 0.005 cDai = 0.0001 DAI($) (1 cDAI = 0.02$(DAI))
     "1000000" //100% rr
   );
   await marketmaker.transferOwnership(reserve.address);

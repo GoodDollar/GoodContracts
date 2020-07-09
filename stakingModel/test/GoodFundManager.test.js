@@ -58,7 +58,6 @@ contract(
       controller = await ControllerMock.new(avatar.address);
       await avatar.transferOwnership(controller.address);
       goodFundManager = await GoodFundsManager.new(
-        cDAI.address,
         avatar.address,
         identity.address,
         bridge.address,
@@ -80,7 +79,6 @@ contract(
       ]);
       goodReserve = await GoodReserve.new(
         dai.address,
-        cDAI.address,
         goodDollar.address,
         goodFundManager.address,
         avatar.address,
@@ -342,7 +340,7 @@ contract(
     });
 
     it("should not be able to destroy the contract if the caller is not the dao", async () => {
-      let error = await goodFundManager.end().catch(e => e);
+      let error = await goodFundManager.end([cDAI.address]).catch(e => e);
       expect(error.message).to.have.string("only Avatar can call this method");
     });
 
@@ -357,9 +355,14 @@ contract(
         {
           name: "end",
           type: "function",
-          inputs: []
+          inputs: [
+            {
+              type: "address[]",
+              name: "_allITokens"
+            }
+          ]
         },
-        []
+        [[cDAI.address]]
       );
       await controller.genericCall(
         goodFundManager.address,

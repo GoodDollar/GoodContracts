@@ -58,7 +58,6 @@ module.exports = async function(deployer, network) {
   console.log("deploying stand alone contracts");
   const fundManagerP = deployer.deploy(
     FundManager,
-    cdaiAddress,
     maindao.Avatar,
     maindao.Identity,
     foreignBridgeAddr,
@@ -104,7 +103,6 @@ module.exports = async function(deployer, network) {
   const reserveP = deployer.deploy(
     Reserve,
     daiAddress,
-    cdaiAddress,
     maindao.GoodDollar,
     fundManager.address,
     maindao.Avatar,

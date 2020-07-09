@@ -49,7 +49,6 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     contribution = await ContributionCalculation.new(avatar.address, 0, 1e15);
     goodReserve = await GoodReserve.new(
       dai.address,
-      cDAI.address,
       goodDollar.address,
       NULL_ADDRESS,
       avatar.address,
@@ -335,14 +334,14 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     let amount = 1e8;
     await dai.approve(goodReserve.address, amount);
     let error = await goodReserve.buy(dai.address, amount, 0).catch(e => e);
-    expect(error.message).to.have.string("Only cDAI is supported");
+    expect(error.message).to.have.string("Only active tokens are supported");
   });
 
   it("should not be able to buy gd without cDAI allowance", async () => {
     let amount = 1e8;
     await cDAI.approve(goodReserve.address, "0");
     let error = await goodReserve.buy(cDAI.address, amount, 0).catch(e => e);
-    expect(error.message).to.have.string("You need to approve cDAI transfer first");
+    expect(error.message).to.have.string("You need to approve token transfer first");
   });
 
   it("should not be able to buy gd without enough cDAI funds", async () => {
@@ -544,7 +543,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     let amount = 1e8;
     await dai.approve(goodReserve.address, amount);
     let error = await goodReserve.sell(dai.address, amount, 0).catch(e => e);
-    expect(error.message).to.have.string("Only cDAI is supported");
+    expect(error.message).to.have.string("Only active tokens are supported");
   });
 
   it("should not be able to sell gd without gd allowance", async () => {
@@ -594,7 +593,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
   it("should not be able to destroy if not avatar", async () => {
     let avatarBalanceBefore = await cDAI.balanceOf(avatar.address);
     let reserveBalanceBefore = await cDAI.balanceOf(goodReserve.address);
-    let error = await goodReserve.end().catch(e => e);
+    let error = await goodReserve.end([cDAI.address]).catch(e => e);
     expect(error.message).to.have.string("only Avatar can call this method");
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
     let reserveBalanceAfter = await cDAI.balanceOf(goodReserve.address);
@@ -613,9 +612,14 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       {
         name: "end",
         type: "function",
-        inputs: []
+        inputs: [
+            {
+              type: "address[]",
+              name: "_allITokens"
+            }
+        ]
       },
-      []
+      [[cDAI.address]]
     );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);
@@ -639,7 +643,6 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     );
     const goodReserve1 = await GoodReserve.new(
       dai.address,
-      cDAI.address,
       goodDollar.address,
       founder,
       avatar.address,
@@ -655,9 +658,14 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       {
         name: "end",
         type: "function",
-        inputs: []
+        inputs: [
+          {
+              type: "address[]",
+              name: "_allITokens"
+          }
+        ]
       },
-      []
+      [[cDAI.address]]
     );
     await controller.genericCall(goodReserve1.address, encodedCall, avatar.address, 0);
     let code = await web3.eth.getCode(goodReserve1.address);
@@ -671,9 +679,14 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       {
         name: "end",
         type: "function",
-        inputs: []
+        inputs: [
+            {
+              type: "address[]",
+              name: "_allITokens"
+            }
+        ]
       },
-      []
+      [[cDAI.address]]
     );
     await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
     let avatarBalanceAfter = await cDAI.balanceOf(avatar.address);

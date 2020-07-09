@@ -355,11 +355,11 @@ contract(
     //   expect(transferstring).to.be.equal("testString");
     // });
 
-    it("should not keep did after transferring account", async () => {
-      const emptyString = await identity.addrToDID(whitelisted);
+    // it("should not keep did after transferring account", async () => {
+    //   const emptyString = await identity.addrToDID(whitelisted);
 
-      expect(emptyString).to.be.equal("");
-    });
+    //   expect(emptyString).to.be.equal("");
+    // });
 
     it("should not allow setting non-registered identity contract", async () => {
       await helpers.assertVMException(

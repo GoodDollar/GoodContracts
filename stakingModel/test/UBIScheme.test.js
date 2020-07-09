@@ -40,7 +40,7 @@ export const increaseTime = async function(duration) {
 
 contract(
   "UBIScheme",
-  ([founder, claimer1, claimer2, claimer3, claimer4, fisherman, claimer5, claimer6, claimer7]) => {
+  ([founder, claimer1, claimer2, claimer3, claimer4, fisherman, claimer5, claimer6, claimer7, claimer8]) => {
     let goodDollar, identity, formula, avatar, ubi, controller, firstClaimPool;
 
     before(async () => {
@@ -211,6 +211,18 @@ contract(
       expect(activatedUserEventExists).to.be.true;
     });
 
+    it("should updates the daily stats when a new user is getting an award", async () => {
+      await identity.addWhitelisted(claimer8);
+      const currentDay = await ubi.currentDay();
+      const amountOfClaimersBefore = await ubi.getClaimerCount(currentDay.toString());
+      const claimAmountBefore = await ubi.getClaimAmount(currentDay.toString());
+      await ubi.claim({ from: claimer8 });
+      const amountOfClaimersAfter = await ubi.getClaimerCount(currentDay.toString());;
+      const claimAmountAfter = await ubi.getClaimAmount(currentDay.toString());
+      expect(amountOfClaimersAfter.sub(amountOfClaimersBefore).toString()).to.be.equal("1");
+      expect(claimAmountAfter.sub(claimAmountBefore).toString()).to.be.equal("100");
+    });
+
     it("should not be able to fish a new user", async () => {
       let error = await ubi.fish(claimer1, { from: fisherman }).catch(e => e);
       expect(error.message).to.have.string("is not an inactive user");
@@ -247,7 +259,7 @@ contract(
       // taken by the formula as expected.
       await increaseTime(ONE_DAY);
       await goodDollar.mint(avatar.address, "901");
-      //ubi will have 902GD in pool so daily ubi is now also 451
+      //ubi will have 902GD in pool so daily ubi is now also 300
       await ubi.claim({ from: claimer1 });
       await increaseTime(ONE_DAY);
       await goodDollar.mint(avatar.address, "1");
@@ -257,8 +269,8 @@ contract(
       let avatarBalance = await goodDollar.balanceOf(avatar.address);
       let claimer1Balance = await goodDollar.balanceOf(claimer1);
       expect(avatarBalance.toString()).to.be.equal("0");
-      // 451 GD from first day and 226 from the second day claimed in this test
-      expect(claimer1Balance.toString()).to.be.equal("677");
+      // 300 GD from first day and 201 from the second day claimed in this test
+      expect(claimer1Balance.toString()).to.be.equal("501");
     });
 
     it("should return the reward value for entitlement user", async () => {
@@ -490,9 +502,9 @@ contract(
       // regular claim
       await ubi.claim({ from: claimer1 });
       let claimer1Balance2 = await goodDollar.balanceOf(claimer1);
-      // there are 3 claimers and the total ubi balance after the minting include the previous balance and
-      // the 948439324829 minting tokens. that divides into 3
-      expect(claimer1Balance2.sub(claimer1Balance1).toString()).to.be.equal("316146441648");
+      // there are 4 claimers and the total ubi balance after the minting include the previous balance and
+      // the 948439324829 minting tokens. that divides into 4
+      expect(claimer1Balance2.sub(claimer1Balance1).toString()).to.be.equal("237109831254");
     });
 
     it("should be able to iterate over all accounts if enough gas in fishMulti", async () => {

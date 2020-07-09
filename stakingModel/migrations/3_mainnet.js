@@ -36,6 +36,7 @@ module.exports = async function(deployer, network) {
   const networkSettings = { ...settings["default"], ...settings[network] };
   const maindao = daoAddresses[network];
   const homedao = daoAddresses[homeNetwork];
+  const homeAddresses = previousDeployment[homeNetwork];
 
   let foreignBridgeAddr, daiAddress, cdaiAddress;
   if (network == "test" || network == "develop") {
@@ -54,7 +55,7 @@ module.exports = async function(deployer, network) {
     cdaiAddress = networkSettings.cdaiAddress;
     reserveTokenAddress = networkSettings.reserveToken.address;
   }
-  const ubiBridgeRecipient = networkAddresses.UBIScheme;
+  const ubiBridgeRecipient = homeAddresses.UBIScheme;
   const homeAvatar = homedao.Avatar;
 
   console.log("deploying stand alone contracts");
@@ -82,13 +83,22 @@ module.exports = async function(deployer, network) {
     maindao.Avatar,
     networkSettings.expansionRatio.nom,
     networkSettings.expansionRatio.denom,
-    { gas: network.indexOf("mainnet") >= 0 ? 4000000 : undefined }
+    { gas: network.indexOf("mainnet") >= 0 ? 5000000 : undefined }
   );
 
   const [fundManager, contribcalc, marketmaker] = await Promise.all([
-    fundManagerP,
-    contribcalcP,
-    marketmakerP
+    fundManagerP.then(c => {
+      console.log("fundmanager:", c.address);
+      return c;
+    }),
+    contribcalcP.then(c => {
+      console.log("contribution calc:", c.address);
+      return c;
+    }),
+    marketmakerP.then(c => {
+      console.log("marketmaker:", c.address);
+      return c;
+    })
   ]);
 
   console.log("deploying staking contract and reserve");
@@ -113,7 +123,18 @@ module.exports = async function(deployer, network) {
     contribcalc.address,
     networkSettings.blockInterval
   );
-  const [stakingContract, reserve] = await Promise.all([stakingContractP, reserveP]);
+  const [stakingContract, reserve] = await Promise.all([
+    stakingContractP.then(c => {
+      console.log("staking:", c.address);
+      return c;
+    }),
+    reserveP.then(c => {
+      console.log("reserve:", c.address);
+      return c;
+    })
+  ]);
+
+  console.log("initializing reserve token and transfering marketmaker to reserve");
   await marketmaker.initializeToken(
     reserveTokenAddress,
     "100", //1 gd

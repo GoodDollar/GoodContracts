@@ -317,9 +317,9 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         uint256 toWithdraw = _token.balanceOf(address(this));
 
         // recover left cDai(stakers token) only when all stakes have been withdrawn
-        if (_token == cDai) {
+        if (address(_token) == address(cDai)) {
             require(
-                totalStaked == 0 && isPaused(),
+                totalStaked == 0 && paused(),
                 "can recover cDai only when stakes have been withdrawn"
             );
         }

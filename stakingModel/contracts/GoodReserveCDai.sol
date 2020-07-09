@@ -134,15 +134,13 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     );
 
     // Emits when new GD tokens minted
-    event GDInterestAndExpansionMinted(
-        // The initiate of the action
-        address indexed caller,
-        // The address which the interest GD
-        //tokens were minted to
-        address indexed interestCollector,
-        // The address which the UBI GD
-        //tokens were minted to
-        address indexed ubiCollector,
+    event UBIMinted(
+        //epoch of UBI
+        uint256 indexed day,
+        //the token paid as interest
+        address indexed interestToken,
+        //wei amount of interest paid in interestToken
+        uint256 interestReceived,
         // Amount of GD tokens that was
         // added to the supply as a result
         // of `mintInterest`
@@ -370,10 +368,10 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 toMint = gdUBI.add(gdInterest);
         ERC20Mintable(address(avatar.nativeToken())).mint(fundManager, toMint);
         lastMinted = block.number.div(blockInterval);
-        emit GDInterestAndExpansionMinted(
-            msg.sender,
-            address(fundManager),
-            address(avatar),
+        emit UBIMinted(
+            lastMinted,
+            address(_interestToken),
+            _transfered,
             gdInterestToMint,
             gdExpansionToMint,
             gdInterest,

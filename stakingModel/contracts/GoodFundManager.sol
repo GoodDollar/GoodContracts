@@ -12,6 +12,8 @@ interface StakingContract {
     function collectUBIInterest(address recipient)
         external
         returns (uint256, uint256, uint256, uint32);
+
+    function iToken() external view returns(address); 
 }
 
 
@@ -24,7 +26,6 @@ interface StakingContract {
 contract GoodFundManager is FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
-    ERC20 cDai;
     GoodReserveCDai public reserve;
     address public bridgeContract;
     address public ubiRecipient;
@@ -47,7 +48,6 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     }
 
     constructor(
-        address _cDai,
         Avatar _avatar,
         Identity _identity,
         address _bridgeContract,
@@ -55,7 +55,6 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         uint256 _blockInterval
 
     ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2, _avatar) {
-        cDai = ERC20(_cDai);
         bridgeContract = _bridgeContract;
         ubiRecipient = _ubiRecipient;
         blockInterval = _blockInterval;
@@ -105,7 +104,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     }
 
     /**
-     * @dev collects ubi interest in cdai from from a given staking and transfer it to
+     * @dev collects ubi interest in iToken from a given staking and transfer it to
      * the reserve contract. then transfer the given gd which recieved from the reserve
      * back to the staking contract.
      * @param _staking contract that implements `collectUBIInterest` and transfer cdai to
@@ -123,17 +122,17 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         );
         
         lastTransferred = block.number.div(blockInterval);
-
-        // cdai balance of the reserve contract
-        uint256 currentBalance = cDai.balanceOf(address(reserve));
+        ERC20 iToken = ERC20(_staking.iToken());
+        // iToken balance of the reserve contract
+        uint256 currentBalance = iToken.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract
-        //collectUBIInterest returns (cdaigains, daigains, precission loss, donation ratio)
+        //collectUBIInterest returns (iTokengains, tokengains, precission loss, donation ratio)
         (, , , uint32 donationRatio) = _staking.collectUBIInterest(
             address(reserve)
         );
 
-        // finds the actual transferred cdai
-        uint256 interest = cDai.balanceOf(address(reserve)).sub(
+        // finds the actual transferred iToken
+        uint256 interest = iToken.balanceOf(address(reserve)).sub(
             currentBalance
         );
         if (interest > 0) {
@@ -141,7 +140,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             uint256 afterDonation = interest.sub(interestDonated);
             // mints gd while the interest amount is equal to the transferred amount
             (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(
-                cDai,
+                iToken,
                 interest,
                 afterDonation
             );
@@ -171,12 +170,19 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     /**
      * @dev making the contract inactive after it has transferred funds to `_avatar`
      * only the avatar can destroy the contract.
+     * @param _allITokens array of addrese of all iTokens 
      */
-    function end() public onlyAvatar {
-        uint256 remainingCDaiReserve = cDai.balanceOf(address(this));
-        if (remainingCDaiReserve > 0) {
-            require(cDai.transfer(address(avatar), remainingCDaiReserve),"cdai transfer failed");
+    function end(address[] memory _allITokens) public onlyAvatar {
+        // We can pass all "i token" addresses or we can store them in global variable. Let me know if need to implement it in other way.
+        for(uint i=0; i < _allITokens.length; i++)
+        {
+            ERC20 iToken = ERC20(_allITokens[i]);
+            uint256 remainingITokenReserve = iToken.balanceOf(address(this));
+            if (remainingITokenReserve > 0) {
+                require(iToken.transfer(address(avatar), remainingITokenReserve),"iToken transfer failed");
+            }
         }
+        
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
         uint256 remainingGDReserve = token.balanceOf(address(this));
         if (remainingGDReserve > 0) {

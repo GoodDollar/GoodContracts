@@ -19,7 +19,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     using SafeMath for uint256;
 
     ERC20 token;
-    ERC20 iToken;
+    ERC20 public iToken;
 
     uint256 public blockInterval;
     uint256 lastUBICollection;

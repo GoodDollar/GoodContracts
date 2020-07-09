@@ -137,14 +137,6 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     event UBIMinted(
         //epoch of UBI
         uint256 indexed day,
-        // The initiate of the action
-        address indexed manager,
-        // The address which the interest GD
-        //tokens were minted to
-        address indexed interestRecipient,
-        // The address which the UBI GD
-        //tokens were minted to
-        address indexed ubiRecipient,
         //the token paid as interest
         address indexed interestToken,
         //wei amount of interest paid in interestToken
@@ -378,11 +370,8 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         lastMinted = block.number.div(blockInterval);
         emit UBIMinted(
             lastMinted,
-            msg.sender,
-            address(fundManager),
-            address(avatar),
-            address(interestToken),
-            interestTransfered,
+            address(_interestToken),
+            _transfered,
             gdInterestToMint,
             gdExpansionToMint,
             gdInterest,

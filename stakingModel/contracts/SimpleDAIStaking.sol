@@ -8,7 +8,6 @@ import "../../contracts/dao/schemes/FeelessScheme.sol";
 import "../../contracts/identity/Identity.sol";
 import "../../contracts/DSMath.sol";
 
-
 interface cERC20 {
     function mint(uint256 mintAmount) external returns (uint256);
 
@@ -22,7 +21,6 @@ interface cERC20 {
 
     function transfer(address to, uint256 amount) external returns (bool);
 }
-
 
 /**
  * @title Staking contract that donates earned interest to the DAO
@@ -146,10 +144,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
      * Can be executed only when the contract is not paused.
      * @param _amount The amount of DAI to stake
      */
-    function stakeDAI(uint256 _amount)
-        public
-        whenNotPaused
-    {
+    function stakeDAI(uint256 _amount) public whenNotPaused {
         require(_amount > 0, "You need to stake a positive token amount");
         require(
             dai.allowance(msg.sender, address(this)) >= _amount,
@@ -169,8 +164,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         // cDAI returns >0 if error happened while minting.
         // Makes sure that there are no errors. If an error
         // has occurred, DAI funds shall be returned.
-        if (res > 0)
-        {
+        if (res > 0) {
             require(res == 0, "Minting cDai failed, funds returned");
         }
 
@@ -188,9 +182,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
     /**
      * @dev Withdraws the sender staked DAI.
      */
-    function withdrawStake()
-        public
-    {
+    function withdrawStake() public {
         Staker storage staker = stakers[msg.sender];
         require(staker.stakedDAI > 0, "No DAI staked");
         require(cDai.redeemUnderlying(staker.stakedDAI) == 0, "Failed to redeem cDai");
@@ -200,6 +192,9 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         staker.stakedDAI = 0;
 
         totalStaked = totalStaked.sub(daiWithdraw);
+
+        //redeeming in compound may result in a tiny fraction of precission error
+        //so if we redeem 100 DAI we might get something like 99.9999999999
         uint256 daiActual = dai.balanceOf(address(this));
         if (daiActual < daiWithdraw) {
             daiWithdraw = daiActual;
@@ -212,11 +207,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
      * @dev Calculates the worth of the staked cDAI tokens in DAI.
      * @return (uint256) The worth in DAI
      */
-    function currentDAIWorth()
-        public
-        view
-        returns (uint256)
-    {
+    function currentDAIWorth() public view returns (uint256) {
         uint256 er = cDai.exchangeRateStored();
 
         //TODO: why 1e10? cDai is e8 so we should convert it to e28 like exchange rate

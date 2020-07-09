@@ -11,7 +11,7 @@ import "../DSMath.sol";
 contract mDAIMock is DSMath, ERC20, ERC20Detailed, Ownable {
     ERC20 dai;
 
-    uint256 exchangeRate = uint256(100e28).div(99);
+    uint256 exchangeRate = uint256(100e20).div(99);
 
     constructor(ERC20 _dai)
         public
@@ -22,12 +22,12 @@ contract mDAIMock is DSMath, ERC20, ERC20Detailed, Ownable {
     }
     function mint(uint256 daiAmount) public returns (uint256) {
         dai.transferFrom(msg.sender, address(this), daiAmount);
-        
+        uint mintAmount = rdiv(daiAmount, getCurrentExchangeRate()).div(1e9); //div to reduce precision from RAY 1e27 to 1e18 precision of mDAI
         _mint(
             msg.sender,
-            rdiv(daiAmount, getCurrentExchangeRate()).div(1e9)
-        ); //div to reduce precision from RAY 1e27 to 1e18 precision of mDAI
-        return 0;
+            mintAmount
+        ); 
+        return mintAmount;
     }
 
     function redeem(uint256 mdaiAmount) public returns (uint256) {
@@ -37,7 +37,7 @@ contract mDAIMock is DSMath, ERC20, ERC20Detailed, Ownable {
         );
         _burn(msg.sender, mdaiAmount);
         dai.transfer(msg.sender, daiAmount);
-        return 0;
+        return daiAmount;
     }
 
     function redeemUnderlying(uint256 daiAmount) public returns (uint256) {
@@ -46,7 +46,7 @@ contract mDAIMock is DSMath, ERC20, ERC20Detailed, Ownable {
         );
         _burn(msg.sender, mdaiAmount);
         dai.transfer(msg.sender, daiAmount);
-        return 0;
+        return daiAmount;
     }
 
     function exchangeRateCurrent() public returns (uint256) {

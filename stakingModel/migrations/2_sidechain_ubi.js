@@ -29,9 +29,9 @@ module.exports = async function(deployer, network) {
 
   const ubiPool = await deployer.deploy(
     UBIPool,
-    networkSettings.firstClaimAmount,
     homedao.Avatar,
-    homedao.Identity
+    homedao.Identity,
+    networkSettings.firstClaimAmount
   );
 
   const ubi = await deployer.deploy(

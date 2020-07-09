@@ -11,7 +11,6 @@ import "../../contracts/DSMath.sol";
 import "../../contracts/token/GoodDollar.sol";
 import "./GoodMarketMaker.sol";
 
-
 interface cERC20 {
     function mint(uint256 mintAmount) external returns (uint256);
 
@@ -26,7 +25,6 @@ interface cERC20 {
     function transfer(address to, uint256 amount) external returns (bool);
 }
 
-
 interface ContributionCalc {
     function calculateContribution(
         GoodMarketMaker _marketMaker,
@@ -36,7 +34,6 @@ interface ContributionCalc {
         uint256 _gdAmount
     ) external view returns (uint256);
 }
-
 
 /**
 @title Reserve based on cDAI and dynamic reserve ratio market maker
@@ -88,8 +85,8 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         // The initiate of the action
         address indexed caller,
         // The convertible token address
-         // which the GD tokens were
-         // purchased with
+        // which the GD tokens were
+        // purchased with
         address indexed reserveToken,
         // Reserve tokens amount
         uint256 reserveAmount,
@@ -106,8 +103,8 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         // The initiate of the action
         address indexed caller,
         // The convertible token address
-         // which the GD tokens were
-         // sold to
+        // which the GD tokens were
+        // sold to
         address indexed reserveToken,
         // GD tokens amount
         uint256 gdAmount,
@@ -182,11 +179,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         address _marketMaker,
         ContributionCalc _contribution,
         uint256 _blockInterval
-    )
-        public
-        FeelessScheme(_identity, _avatar)
-        ActivePeriod(now, now * 2, _avatar)
-    {
+    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2, _avatar) {
         dai = _dai;
         cDai = _cDai;
         fundManager = _fundManager;
@@ -262,12 +255,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         ERC20 _buyWith,
         uint256 _tokenAmount,
         uint256 _minReturn
-    )
-        public
-        requireActive
-        onlyCDai(_buyWith)
-        returns (uint256)
-    {
+    ) public requireActive onlyCDai(_buyWith) returns (uint256) {
         require(
             _buyWith.allowance(msg.sender, address(this)) >= _tokenAmount,
             "You need to approve cDAI transfer first"
@@ -305,12 +293,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         ERC20 _sellTo,
         uint256 _gdAmount,
         uint256 _minReturn
-    )
-        public
-        requireActive
-        onlyCDai(_sellTo)
-        returns (uint256)
-    {
+    ) public requireActive onlyCDai(_sellTo) returns (uint256) {
         ERC20Burnable(address(avatar.nativeToken())).burnFrom(msg.sender, _gdAmount);
         uint256 contributionAmount = contribution.calculateContribution(
             marketMaker,
@@ -337,16 +320,12 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         return tokenReturn;
     }
 
-     /**
-    * @dev Current price of GD in `token`. currently only cDAI is supported.
-    * @param _token The desired reserve token to have
-    * @return price of GD
-    */
-    function currentPrice(ERC20 _token)
-        public
-        view
-        returns (uint256)
-    {
+    /**
+     * @dev Current price of GD in `token`. currently only cDAI is supported.
+     * @param _token The desired reserve token to have
+     * @return price of GD
+     */
+    function currentPrice(ERC20 _token) public view returns (uint256) {
         return marketMaker.currentPrice(_token);
     }
 
@@ -423,5 +402,16 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         marketMaker.transferOwnership(address(avatar));
         gooddollar.renounceMinter();
         super.internalEnd(avatar);
+    }
+
+    /**
+     * @dev method to recover any stuck erc20 tokens (ie compound COMP)
+     * @param _token the ERC20 token to recover
+     */
+    function recover(ERC20 _token) public onlyAvatar {
+        require(
+            _token.transfer(address(avatar), _token.balanceOf(address(this))),
+            "recover transfer failed"
+        );
     }
 }

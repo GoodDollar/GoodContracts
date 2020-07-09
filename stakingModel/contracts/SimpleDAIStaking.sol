@@ -8,7 +8,6 @@ import "../../contracts/dao/schemes/FeelessScheme.sol";
 import "../../contracts/identity/Identity.sol";
 import "../../contracts/DSMath.sol";
 
-
 interface cERC20 {
     function mint(uint256 mintAmount) external returns (uint256);
 
@@ -22,7 +21,6 @@ interface cERC20 {
 
     function transfer(address to, uint256 amount) external returns (bool);
 }
-
 
 /**
  * @title Staking contract that donates earned interest to the DAO
@@ -316,5 +314,19 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
     function end() public onlyAvatar {
         pause();
         removeRights();
+    }
+
+    /**
+     * @dev method to recover any stuck erc20 tokens (ie  compound COMP)
+     * @param _token the ERC20 token to recover
+     */
+    function recover(ERC20 _token) public onlyAvatar {
+        uint256 toWithdraw = _token.balanceOf(address(this));
+
+        // transfers only excessive funds
+        if (_token == dai) {
+            toWithdraw.sub(totalStaked);
+        }
+        require(_token.transfer(address(avatar), toWithdraw), "recover transfer failed");
     }
 }

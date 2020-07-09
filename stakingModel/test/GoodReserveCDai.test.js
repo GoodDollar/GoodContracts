@@ -589,6 +589,60 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     expect(cDAIBalanceAfter.toString()).to.be.equal(cDAIBalanceBefore.toString());
   });
 
+  it("should return an error if non avatar account is trying to execute recover", async () => {
+    const cdai1 = await cDAIMock.new(dai.address);
+    let error = await goodReserve.recover(cdai1.address).catch(e => e);
+    expect(error.message).to.have.string("only Avatar can call this method");
+  });
+
+  it("should not transfer any funds if trying to execute recover of token without balance", async () => {
+    const cdai1 = await cDAIMock.new(dai.address);
+    await dai.mint(cdai1.address, web3.utils.toWei("100", "ether"));
+    let balanceBefore = await cdai1.balanceOf(avatar.address);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "recover",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_token"
+          }
+        ]
+      },
+      [cdai1.address]
+    );
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
+    let balanceAfter = await cdai1.balanceOf(avatar.address);
+    expect(balanceAfter.toString()).to.be.equal(balanceBefore.toString());
+  });
+
+  it("should transfer funds when execute recover of token which the reserve has some balance", async () => {
+    const cdai1 = await cDAIMock.new(dai.address);
+    await dai.mint(cdai1.address, web3.utils.toWei("100", "ether"));
+    const cdai1BalanceFounder = await cdai1.balanceOf(founder);
+    await cdai1.transfer(goodReserve.address, cdai1BalanceFounder.toString());
+    let balanceBefore = await cdai1.balanceOf(avatar.address);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "recover",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_token"
+          }
+        ]
+      },
+      [cdai1.address]
+    );
+    await controller.genericCall(goodReserve.address, encodedCall, avatar.address, 0);
+    let balanceAfter = await cdai1.balanceOf(avatar.address);
+    expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(
+      cdai1BalanceFounder.toString()
+    );
+  });
+
   it("should not be able to destroy if not avatar", async () => {
     let avatarBalanceBefore = await cDAI.balanceOf(avatar.address);
     let reserveBalanceBefore = await cDAI.balanceOf(goodReserve.address);

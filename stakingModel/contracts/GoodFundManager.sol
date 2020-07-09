@@ -219,38 +219,34 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             currentBalance
         );
 
-        if (interest > 0) {
-            uint256 interestDonated = interest.mul(donationRatio).div(1e6);
-            uint256 afterDonation = interest.sub(interestDonated);
-
-            // Mints GD while the interest amount is equal to the transferred amount
-            (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(
-                cDai,
-                interest,
-                afterDonation
-            );
-
-            // Transfers the minted tokens to the given staking contract
-            GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-            if(gdInterest > 0 )
-                require(token.transfer(address(_staking), gdInterest),"interest transfer failed");
-            if(gdUBI > 0)
-                // Transfers UBI to avatar on sidechain via bridge
-                require(token.transferAndCall(
-                    bridgeContract,
-                    gdUBI,
-                    abi.encodePacked(ubiRecipient)
-                ),"ubi bridge transfer failed");
-            emit FundsTransferred(
-                msg.sender,
-                address(_staking),
-                address(reserve),
-                interest,
-                interestDonated,
-                gdInterest,
-                gdUBI
-            );
-        }
+        uint256 interestDonated = interest.mul(donationRatio).div(1e6);
+        uint256 afterDonation = interest.sub(interestDonated);
+        // Mints gd while the interest amount is equal to the transferred amount
+        (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(
+            cDai,
+            interest,
+            afterDonation
+        );
+        // Transfers the minted tokens to the given staking contract
+        GoodDollar token = GoodDollar(address(avatar.nativeToken()));
+        if(gdInterest > 0)
+            require(token.transfer(address(_staking), gdInterest),"interest transfer failed");
+        if(gdUBI > 0)
+            //transfer ubi to avatar on sidechain via bridge
+            require(token.transferAndCall(
+                bridgeContract,
+                gdUBI,
+                abi.encodePacked(ubiRecipient)
+            ),"ubi bridge transfer failed");
+        emit FundsTransferred(
+            msg.sender,
+            address(_staking),
+            address(reserve),
+            interest,
+            interestDonated,
+            gdInterest,
+            gdUBI
+        );
     }
 
     /**

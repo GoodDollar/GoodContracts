@@ -314,52 +314,52 @@ contract(
       );
     });
 
-    it("should not allow transferring account to blacklisted", async () => {
-      await helpers.assertVMException(
-        identity.transferAccount(blacklisted2, { from: whitelisted }),
-        "Cannot transfer to blacklisted"
-      );
-    });
+    // xit("should not allow transferring account to blacklisted", async () => {
+    //   await helpers.assertVMException(
+    //     identity.transferAccount(blacklisted2, { from: whitelisted }),
+    //     "Cannot transfer to blacklisted"
+    //   );
+    // });
 
-    it("should not allow transferring account to address with funds", async () => {
-      await token.transfer(outsider, helpers.toGD("1"));
-      await helpers.assertVMException(
-        identity.transferAccount(outsider, { from: whitelisted }),
-        "Account is already in use"
-      );
-    });
+    // xit("should not allow transferring account to address with funds", async () => {
+    //   await token.transfer(outsider, helpers.toGD("1"));
+    //   await helpers.assertVMException(
+    //     identity.transferAccount(outsider, { from: whitelisted }),
+    //     "Account is already in use"
+    //   );
+    // });
 
-    it("should not allow transferring account to address with did", async () => {
-      const newUser = await web3.eth.personal.newAccount("123");
-      await web3.eth.personal.unlockAccount(newUser, "123", 6000);
+    // xit("should not allow transferring account to address with did", async () => {
+    //   const newUser = await web3.eth.personal.newAccount("123");
+    //   await web3.eth.personal.unlockAccount(newUser, "123", 6000);
 
-      await identity.addWhitelistedWithDID(newUser, "testString2");
+    //   await identity.addWhitelistedWithDID(newUser, "testString2");
 
-      await helpers.assertVMException(
-        identity.transferAccount(newUser, { from: whitelisted }),
-        "address already has DID"
-      );
-    });
+    //   await helpers.assertVMException(
+    //     identity.transferAccount(newUser, { from: whitelisted }),
+    //     "address already has DID"
+    //   );
+    // });
 
-    it("should transfer account to new address", async () => {
-      const newUser2 = await web3.eth.personal.newAccount("123");
-      await web3.eth.personal.unlockAccount(newUser2, "123", 6000);
+    // xit("should transfer account to new address", async () => {
+    //   const newUser2 = await web3.eth.personal.newAccount("123");
+    //   await web3.eth.personal.unlockAccount(newUser2, "123", 6000);
 
-      const bal = await token.balanceOf(newUser2);
-      expect(bal.toString()).to.be.equal(helpers.toGD("0"));
+    //   const bal = await token.balanceOf(newUser2);
+    //   expect(bal.toString()).to.be.equal(helpers.toGD("0"));
 
-      await identity.transferAccount(newUser2, { from: whitelisted });
+    //   await identity.transferAccount(newUser2, { from: whitelisted });
 
-      assert(await identity.isWhitelisted(newUser2));
-      const transferstring = await identity.addrToDID(newUser2);
-      expect(transferstring).to.be.equal("testString");
-    });
+    //   assert(await identity.isWhitelisted(newUser2));
+    //   const transferstring = await identity.addrToDID(newUser2);
+    //   expect(transferstring).to.be.equal("testString");
+    // });
 
-    it("should not keep did after transferring account", async () => {
-      const emptyString = await identity.addrToDID(whitelisted);
+    // it("should not keep did after transferring account", async () => {
+    //   const emptyString = await identity.addrToDID(whitelisted);
 
-      expect(emptyString).to.be.equal("");
-    });
+    //   expect(emptyString).to.be.equal("");
+    // });
 
     it("should not allow setting non-registered identity contract", async () => {
       await helpers.assertVMException(

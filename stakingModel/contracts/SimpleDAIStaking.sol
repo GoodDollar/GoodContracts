@@ -308,4 +308,18 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         pause();
         removeRights();
     }
+
+    /**
+     * @dev method to recover any stuck erc20 tokens (ie  compound COMP)
+     * @param _token the ERC20 token to recover
+     */
+    function recover(ERC20 _token) public onlyAvatar {
+        uint256 toWithdraw = _token.balanceOf(address(this));
+
+        // transfers only excessive funds
+        if (_token == dai) {
+            toWithdraw.sub(totalStaked);
+        }
+        require(_token.transfer(address(avatar), toWithdraw), "recover transfer failed");
+    }
 }

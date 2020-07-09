@@ -4,8 +4,8 @@ const Identity = artifacts.require("./Identity");
 const Avatar = artifacts.require("./Avatar.sol");
 const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
-const SignupBonus = artifacts.require("./SignUpBonus.sol");
-const AdminWallet = artifacts.require("./AdminWallet.sol");
+
+const UBI = artifacts.require("./FixedUBI.sol");
 
 const releaser = require("../scripts/releaser.js");
 const fse = require("fs-extra");
@@ -14,8 +14,11 @@ const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 module.exports = async function(deployer, network) {
+  if (network.indexOf("test") < 0) {
+    console.log("Depracted old UBI scheme");
+  }
   if (network.indexOf("mainnet") >= 0) {
-    console.log("Skipping signup bonus for mainnet");
+    console.log("Skipping UBI for mainnet");
     return;
   }
   const networkSettings = { ...settings["default"], ...settings[network] };
@@ -27,7 +30,6 @@ module.exports = async function(deployer, network) {
   const voteaddr = await networkAddresses.AbsoluteVote;
   const schemeaddr = await networkAddresses.SchemeRegistrar;
   const identityaddr = await networkAddresses.Identity;
-  const walletaddr = await networkAddresses.AdminWallet;
 
   await web3.eth.getAccounts(function(err, res) {
     accounts = res;
@@ -38,21 +40,30 @@ module.exports = async function(deployer, network) {
   const identity = await Identity.at(identityaddr);
   const absoluteVote = await AbsoluteVote.at(voteaddr);
   const schemeRegistrar = await SchemeRegistrar.at(schemeaddr);
-  const adminWallet = await AdminWallet.at(walletaddr);
 
-  const signupBonus = await deployer.deploy(
-    SignupBonus,
+  const now = new Date();
+  const startUBI = (now.getTime() / 1000 - 1).toFixed(0);
+  now.setFullYear(now.getFullYear() + 1);
+  const endUBI = (now.getTime() / 1000).toFixed(0);
+  console.log({
+    total: toGD(networkSettings.totalUBI),
+    startUBI,
+    endUBI,
+    daily: toGD(networkSettings.dailyUBI)
+  });
+  const ubi = await deployer.deploy(
+    UBI,
     avatar.address,
     identity.address,
-    toGD(networkSettings.totalRewards),
-    toGD(networkSettings.maxUserRewards)
+    toGD(networkSettings.totalUBI),
+    startUBI,
+    endUBI,
+    toGD(networkSettings.dailyUBI)
   );
-
-  await adminWallet.setBonusContract(await signupBonus.address);
 
   let transaction = await schemeRegistrar.proposeScheme(
     avatar.address,
-    signupBonus.address,
+    ubi.address,
     NULL_HASH,
     "0x00000010",
     NULL_HASH
@@ -62,11 +73,11 @@ module.exports = async function(deployer, network) {
 
   await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
 
-  await signupBonus.start();
+  await ubi.start();
 
   let releasedContracts = {
     ...networkAddresses,
-    SignupBonus: await signupBonus.address
+    UBI: await ubi.address
   };
 
   console.log("Rewriting deployment file...\n", { releasedContracts });

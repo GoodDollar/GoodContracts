@@ -216,22 +216,38 @@ contract UBIScheme is AbstractUBI {
     /**
      * @dev Transfers `amount` DAO tokens to `account`. Updates stats
      * and emits an event in case of claimed.
+     * In case that `isFirstTime` is true, it awards the user.
      * @param _account the account which recieves the funds
      * @param _amount the amount to transfer
      * @param _isClaimed true for claimed
+     * @param _isFirstTime true for new user or fished user
      */
     function _transferTokens(
         address _account,
         uint256 _amount,
-        bool _isClaimed
+        bool _isClaimed,
+        bool _isFirstTime
     ) private requireActive {
+        // updates the stats
         Day storage day = claimDay[currentDay];
         day.amountOfClaimers = day.amountOfClaimers.add(1);
-        day.claimAmount = day.claimAmount.add(_amount);
-        GoodDollar token = GoodDollar(address(avatar.nativeToken()));
-        require(token.transfer(_account, _amount), "claim transfer failed");
-        if (_isClaimed) {
-            emit UBIClaimed(_account, _amount);
+        day.hasClaimed[_account] = true;
+        lastClaimed[_account] = now;
+        totalClaimsPerUser[_account].add(1);
+
+        // awards a new user or a fished user
+        if (_isFirstTime) {
+            uint256 awardAmount = firstClaimPool.awardUser(_account);
+            day.claimAmount = day.claimAmount.add(awardAmount);
+            emit UBIClaimed(_account, awardAmount);
+        }
+        else {
+            day.claimAmount = day.claimAmount.add(_amount);
+            GoodDollar token = GoodDollar(address(avatar.nativeToken()));
+            require(token.transfer(_account, _amount), "claim transfer failed");
+            if (_isClaimed) {
+                emit UBIClaimed(_account, _amount);
+            }
         }
     }
 
@@ -282,21 +298,13 @@ contract UBIScheme is AbstractUBI {
             !fishedUsersAddresses[_account] &&
             !hasClaimed(_account)
         ) {
-            lastClaimed[_account] = now;
-            claimDay[currentDay].hasClaimed[_account] = true;
-            totalClaimsPerUser[_account].add(1);
-            _transferTokens(_account, newDistribution, true);
+            _transferTokens(_account, newDistribution, true, false);
             return true;
         } else if (!isNotNewUser(_account) || fishedUsersAddresses[_account]) {
             // a unregistered or fished user
             activeUsersCount = activeUsersCount.add(1);
             fishedUsersAddresses[_account] = false;
-            // marks last claimed as today
-            lastClaimed[_account] = now;
-            claimDay[currentDay].hasClaimed[_account] = true;
-            totalClaimsPerUser[_account].add(1);
-            uint256 awardAmount = firstClaimPool.awardUser(_account);
-            emit UBIClaimed(_account, awardAmount);
+            _transferTokens(_account, 0, false, true);
             emit ActivatedUser(_account);
             return true;
         }
@@ -337,7 +345,7 @@ contract UBIScheme is AbstractUBI {
         // that the fisher is the first to make the calculation today
         uint256 newDistribution = distributionFormula(0, _account);
         activeUsersCount = activeUsersCount.sub(1);
-        _transferTokens(msg.sender, newDistribution, false);
+        _transferTokens(msg.sender, newDistribution, false, false);
         emit InactiveUserFished(msg.sender, _account, newDistribution);
         return true;
     }

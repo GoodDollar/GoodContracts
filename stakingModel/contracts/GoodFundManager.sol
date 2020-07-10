@@ -26,6 +26,7 @@ interface StakingContract {
 contract GoodFundManager is FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
+    ERC20 cDai;
     GoodReserveCDai public reserve;
     address public bridgeContract;
     address public ubiRecipient;
@@ -48,6 +49,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     }
 
     constructor(
+        address _cDai,
         Avatar _avatar,
         Identity _identity,
         address _bridgeContract,
@@ -55,6 +57,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         uint256 _blockInterval
 
     ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2, _avatar) {
+        cDai = ERC20(_cDai);
         bridgeContract = _bridgeContract;
         ubiRecipient = _ubiRecipient;
         blockInterval = _blockInterval;
@@ -167,22 +170,15 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         }
     }
 
-    /**
+     /**
      * @dev making the contract inactive after it has transferred funds to `_avatar`
      * only the avatar can destroy the contract.
-     * @param _allITokens array of addrese of all iTokens 
      */
-    function end(address[] memory _allITokens) public onlyAvatar {
-        // We can pass all "i token" addresses or we can store them in global variable. Let me know if need to implement it in other way.
-        for(uint i=0; i < _allITokens.length; i++)
-        {
-            ERC20 iToken = ERC20(_allITokens[i]);
-            uint256 remainingITokenReserve = iToken.balanceOf(address(this));
-            if (remainingITokenReserve > 0) {
-                require(iToken.transfer(address(avatar), remainingITokenReserve),"iToken transfer failed");
-            }
+    function end() public onlyAvatar {
+        uint256 remainingCDaiReserve = cDai.balanceOf(address(this));
+        if (remainingCDaiReserve > 0) {
+            require(cDai.transfer(address(avatar), remainingCDaiReserve),"cdai transfer failed");
         }
-        
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
         uint256 remainingGDReserve = token.balanceOf(address(this));
         if (remainingGDReserve > 0) {

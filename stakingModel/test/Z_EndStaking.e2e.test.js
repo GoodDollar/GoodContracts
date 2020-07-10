@@ -175,12 +175,12 @@ contract(
     });
 
     it("should not be able to make the reserve contract inactive by calling end if the sender is not the avatar", async () => {
-      let error = await goodReserve.end([cDAI.address]).catch(e => e);
+      let error = await goodReserve.end().catch(e => e);
       expect(error.message).to.have.string("only Avatar");
     });
 
     it("should not be able to make the fundmanager contract inactive by calling end if the sender is not the avatar", async () => {
-      let error = await goodFundManager.end([cDAI.address]).catch(e => e);
+      let error = await goodFundManager.end().catch(e => e);
       expect(error.message).to.have.string("only Avatar");
     });
 
@@ -200,7 +200,7 @@ contract(
         avatarAddress,
         founder
       );
-      await endReserve.end([cDAI.address]);
+      await endReserve.end();
       let avatarbalance2 = await cDAI.balanceOf(avatarAddress);
       let code = await web3.eth.getCode(goodReserve.address);
       expect(code.toString()).to.be.equal("0x");
@@ -223,7 +223,7 @@ contract(
         avatarAddress,
         founder
       );
-      await endFundManager.end([cDAI.address]);
+      await endFundManager.end();
       let avatarcdaibalance2 = await cDAI.balanceOf(avatarAddress);
       let avatargdbalance2 = await goodDollar.balanceOf(avatarAddress);
       let code = await web3.eth.getCode(goodFundManager.address);
@@ -247,7 +247,7 @@ contract(
         avatarAddress,
         founder
       );
-      await endUbiPool.end([cDAI.address]);
+      await endUbiPool.end();
       let avatarbalance2 = await goodDollar.balanceOf(avatarAddress);
       let code = await web3.eth.getCode(firstClaimPool.address);
       expect(code.toString()).to.be.equal("0x");

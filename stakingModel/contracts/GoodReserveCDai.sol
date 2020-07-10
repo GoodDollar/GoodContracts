@@ -47,6 +47,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
     ERC20 dai;
+    cERC20 cDai;
 
     GoodDollar gooddollar;
 
@@ -120,6 +121,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
 
     constructor(
         ERC20 _dai,
+        cERC20 _cDai,
         GoodDollar _gooddollar,
         address _fundManager,
         Avatar _avatar,
@@ -129,6 +131,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 _blockInterval
     ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2, _avatar) {
         dai = _dai;
+        cDai = _cDai;
         gooddollar = _gooddollar;
         avatar = _avatar;
         fundManager = _fundManager;
@@ -313,24 +316,20 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     }
 
     /**
-     * @dev making the contract inactive after it has transferred the funds to `_avatar`
+     * @dev making the contract inactive after it has transferred the cDAI funds to `_avatar`
      * and has transferred the market maker ownership to `_avatar`. inactive
      * means that buy / sell / mintInterestAndUBI actions will no longer be active. only the
      * avatar can destroy the contract.
-     * @param _allITokens array of addrese of all iTokens 
      */
-    function end(address[] memory _allITokens) public onlyAvatar {
-        // We can pass all "i token" addresses or we can store them in global variable. Let me know if need to implement it in other way.
-        for(uint i=0; i < _allITokens.length; i++)
-        {
-            ERC20 iToken = ERC20(_allITokens[i]);
-            uint256 remainingITokenReserve = iToken.balanceOf(address(this));
-            if (remainingITokenReserve > 0) {
-                require(iToken.transfer(address(avatar), remainingITokenReserve),"iToken transfer failed");
-            }
-            require(iToken.balanceOf(address(this)) == 0, "Funds transfer has failed");
+    function end() public onlyAvatar {
+        uint256 remainingReserve = cDai.balanceOf(address(this));
+        if (remainingReserve > 0) {
+            require(
+                cDai.transfer(address(avatar), remainingReserve),
+                "cdai transfer failed"
+            );
         }
-        
+        require(cDai.balanceOf(address(this)) == 0, "Funds transfer has failed");
         marketMaker.transferOwnership(address(avatar));
         gooddollar.renounceMinter();
         super.internalEnd(avatar);

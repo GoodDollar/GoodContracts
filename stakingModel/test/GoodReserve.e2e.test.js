@@ -164,13 +164,13 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     expect(contributionAddressT).to.be.equal(contribution.address);
   });
 
-  it("should returned fixed 0.0001 market price", async () => {
+  it("should returned fixed 0.005 market price", async () => {
     const gdPrice = await goodReserve.currentPrice(cDAI.address);
     const cdaiWorthInGD = gdPrice.mul(new BN("100000000", 10));
     const gdFloatPrice = gdPrice.toNumber() / 10 ** 8; //cdai 8 decimals
-    expect(gdFloatPrice).to.be.equal(0.0001);
-    expect(cdaiWorthInGD.toString()).to.be.equal("1000000000000"); //in 8 decimals precision
-    expect(cdaiWorthInGD.toNumber() / 10 ** 8).to.be.equal(10000);
+    expect(gdFloatPrice).to.be.equal(0.005);
+    expect(cdaiWorthInGD.toString()).to.be.equal("50000000000000"); //in 8 decimals precision
+    expect(cdaiWorthInGD.toNumber() / 10 ** 8).to.be.equal(500000);
   });
 
   it("should be able to buy gd with cDAI and reserve should be correct", async () => {
@@ -240,9 +240,9 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
     // return = reserve balance * (1 - (1 - sellAmount / supply))
     // the contribution ratio is 20%
     let expected = reserveBalance * (1 - (1 - amount / supply));
-    expected = Math.floor(expected - 0.2 * expected);
-    expect((cDAIBalanceAfter - cDAIBalanceBefore).toString()).to.be.equal(
-      expected.toString()
+    expected = Math.ceil(expected - 0.2 * expected);
+    expect(Math.floor((cDAIBalanceAfter.toNumber() - cDAIBalanceBefore.toNumber()) / 10 ** 8)).to.be.equal(
+      Math.floor(expected / 10 ** 8)
     );
     expect((cDAIBalanceReserveBefore - cDAIBalanceReserveAfter).toString()).to.be.equal(
       expected.toString()
@@ -250,7 +250,7 @@ contract("GoodCDaiReserve - network e2e tests", ([founder, staker]) => {
   });
 
   it("should be able to retain the precision when selling a low quantity of tokens", async () => {
-    let amount = 1e4;
+    let amount = 1e1;
     let reserveToken = await marketMaker.reserveTokens(cDAI.address);
     const priceBefore = await goodReserve.currentPrice(cDAI.address);
     await goodDollar.approve(goodReserve.address, amount);

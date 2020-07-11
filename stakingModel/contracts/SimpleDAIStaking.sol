@@ -147,10 +147,6 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
     function stakeDAI(uint256 _amount) public whenNotPaused {
         require(_amount > 0, "You need to stake a positive token amount");
         require(
-            dai.allowance(msg.sender, address(this)) >= _amount,
-            "You need to approve DAI transfer first"
-        );
-        require(
             dai.transferFrom(msg.sender, address(this), _amount) == true,
             "transferFrom failed, make sure you approved DAI transfer"
         );

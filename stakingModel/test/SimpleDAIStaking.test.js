@@ -485,7 +485,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
         from: staker
       })
       .catch(e => e);
-    expect(error.message).to.have.string("You need to approve DAI transfer first");
+    expect(error.message).not.to.be.empty;
   });
 
   it("should not be able to stake when staker dai balance is too low", async () => {

@@ -47,7 +47,6 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
     ERC20 dai;
-
     cERC20 cDai;
 
     GoodDollar gooddollar;
@@ -73,8 +72,9 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         _;
     }
 
-    modifier onlyCDai(ERC20 token) {
-        require(address(token) == address(cDai), "Only cDAI is supported");
+    modifier onlyActiveToken(ERC20 _token) {
+        (, , uint gdSupply)  = marketMaker.reserveTokens(address(_token));
+        require(gdSupply > 0, "Only active tokens are supported");
         _;
     }
 
@@ -191,7 +191,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
 
     /**
      * @dev buy G$ from buyWith and update the bonding curve params. buy occurs only if
-     * the G$ return is above the given minimum. it is possible to buy only with cDAI
+     * the G$ return is above the given minimum. it is possible to buy only with active tokens
      * and when the contract is set to active. MUST call to `buyWith` `approve` prior
      * this buying action to allow this contract to accomplish the conversion.
      * @param tokenAmount how much `buyWith` tokens convert to G$ tokens
@@ -202,14 +202,14 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         ERC20 buyWith,
         uint256 tokenAmount,
         uint256 minReturn
-    ) public requireActive onlyCDai(buyWith) returns (uint256) {
+    ) public requireActive onlyActiveToken(buyWith) returns (uint256) {
         require(
             buyWith.allowance(msg.sender, address(this)) >= tokenAmount,
-            "You need to approve cDAI transfer first"
+            "You need to approve token transfer first"
         );
         require(
             buyWith.transferFrom(msg.sender, address(this), tokenAmount) == true,
-            "transferFrom failed, make sure you approved cDAI transfer"
+            "transferFrom failed, make sure you approved token transfer"
         );
         uint256 gdReturn = marketMaker.buy(buyWith, tokenAmount);
         require(gdReturn >= minReturn, "GD return must be above the minReturn");
@@ -228,7 +228,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
      * @dev sell G$ to sellTo and update the bonding curve params. sell occurs only if the
      * token return is above the given minimum. notice that there is a contribution
      * amount from the given G$ that remains in the reserve. it is possible to sell only to
-     * cDAI and when the contract is set to active. MUST call to G$ `approve` prior this
+     * active tokens and when the contract is set to active. MUST call to G$ `approve` prior this
      * selling action to allow this contract to accomplish the conversion.
      * @param gdAmount how much G$ tokens convert to `sellTo` tokens
      * @param minReturn the minimum allowed return in `sellTo` tokens
@@ -238,7 +238,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         ERC20 sellTo,
         uint256 gdAmount,
         uint256 minReturn
-    ) public requireActive onlyCDai(sellTo) returns (uint256) {
+    ) public requireActive onlyActiveToken(sellTo) returns (uint256) {
         ERC20Burnable(address(gooddollar)).burnFrom(msg.sender, gdAmount);
         uint256 contributionAmount = contribution.calculateContribution(
             marketMaker,
@@ -288,7 +288,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
     )
         public
         requireActive
-        onlyCDai(interestToken)
+        onlyActiveToken(interestToken)
         onlyFundManager
         returns (uint256, uint256)
     {

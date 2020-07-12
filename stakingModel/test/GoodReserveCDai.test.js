@@ -68,7 +68,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
       "1000000" //100% rr
     );
 
-    await marketMaker.initializeToken(dai.address, "100", "1000000000", "1000000");
+    // await marketMaker.initializeToken(dai.address, "100", "1000000000", "1000000");
   });
 
   it("should set marketmaker in the reserve by avatar", async () => {
@@ -335,14 +335,14 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     let amount = 1e8;
     await dai.approve(goodReserve.address, amount);
     let error = await goodReserve.buy(dai.address, amount, 0).catch(e => e);
-    expect(error.message).to.have.string("Only cDAI is supported");
+    expect(error.message).to.have.string("Only active tokens are supported");
   });
 
   it("should not be able to buy gd without cDAI allowance", async () => {
     let amount = 1e8;
     await cDAI.approve(goodReserve.address, "0");
     let error = await goodReserve.buy(cDAI.address, amount, 0).catch(e => e);
-    expect(error.message).to.have.string("You need to approve cDAI transfer first");
+    expect(error.message).to.have.string("You need to approve token transfer first");
   });
 
   it("should not be able to buy gd without enough cDAI funds", async () => {
@@ -544,7 +544,7 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     let amount = 1e8;
     await dai.approve(goodReserve.address, amount);
     let error = await goodReserve.sell(dai.address, amount, 0).catch(e => e);
-    expect(error.message).to.have.string("Only cDAI is supported");
+    expect(error.message).to.have.string("Only active tokens are supported");
   });
 
   it("should not be able to sell gd without gd allowance", async () => {

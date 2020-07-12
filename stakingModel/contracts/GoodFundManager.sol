@@ -12,6 +12,8 @@ interface StakingContract {
     function collectUBIInterest(address recipient)
         external
         returns (uint256, uint256, uint256, uint32);
+
+    function iToken() external view returns(address); 
 }
 
 
@@ -105,7 +107,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     }
 
     /**
-     * @dev collects ubi interest in cdai from from a given staking and transfer it to
+     * @dev collects ubi interest in iToken from a given staking and transfer it to
      * the reserve contract. then transfer the given gd which recieved from the reserve
      * back to the staking contract.
      * @param _staking contract that implements `collectUBIInterest` and transfer cdai to
@@ -123,17 +125,17 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         );
         
         lastTransferred = block.number.div(blockInterval);
-
-        // cdai balance of the reserve contract
-        uint256 currentBalance = cDai.balanceOf(address(reserve));
+        ERC20 iToken = ERC20(_staking.iToken());
+        // iToken balance of the reserve contract
+        uint256 currentBalance = iToken.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract
-        //collectUBIInterest returns (cdaigains, daigains, precission loss, donation ratio)
+        //collectUBIInterest returns (iTokengains, tokengains, precission loss, donation ratio)
         (, , , uint32 donationRatio) = _staking.collectUBIInterest(
             address(reserve)
         );
 
-        // finds the actual transferred cdai
-        uint256 interest = cDai.balanceOf(address(reserve)).sub(
+        // finds the actual transferred iToken
+        uint256 interest = iToken.balanceOf(address(reserve)).sub(
             currentBalance
         );
         if (interest > 0) {
@@ -141,7 +143,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             uint256 afterDonation = interest.sub(interestDonated);
             // mints gd while the interest amount is equal to the transferred amount
             (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(
-                cDai,
+                iToken,
                 interest,
                 afterDonation
             );
@@ -168,7 +170,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         }
     }
 
-    /**
+     /**
      * @dev making the contract inactive after it has transferred funds to `_avatar`
      * only the avatar can destroy the contract.
      */

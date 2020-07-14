@@ -30,8 +30,10 @@ module.exports = async function(deployer, network) {
     const goodDollar = await GoodDollar.at(dao_sidechain_addresses.GoodDollar);
     const ubi = await UBIScheme.at(staking_sidechain_addresses.UBIScheme);
 
+    console.log("Minting G$ on sidechain to mock ubi+firstclaim award")
     await goodDollar.mint(accounts[0], "10000000");
-    await goodDollar.transfer(ubi.address, "5000000");
+    await Promise.all([goodDollar.transfer(ubi.address, "5000000"),goodDollar.transfer(staking_sidechain_addresses.FirstClaimPool, "2000000")]);
+
   }
 
   if (network.indexOf("mainnet") >= 0 || network === "develop") {

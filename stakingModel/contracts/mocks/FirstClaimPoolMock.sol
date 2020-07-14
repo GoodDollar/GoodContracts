@@ -8,9 +8,9 @@ import "../FirstClaimPool.sol";
  * Those tests can be found on e2e tests.
  */
 contract FirstClaimPoolMock is FirstClaimPool {
-    constructor(uint256 _claimAmount, Avatar _avatar, Identity _identity)
+    constructor(Avatar _avatar, Identity _identity, uint256 _claimAmount)
         public
-        FirstClaimPool(_claimAmount, _avatar, _identity)
+        FirstClaimPool(_avatar, _identity, _claimAmount)
     {}
 
     function start() public {

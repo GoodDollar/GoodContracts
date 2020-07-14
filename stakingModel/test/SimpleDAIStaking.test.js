@@ -90,7 +90,142 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     dai.transfer(dai.address, balance.toString(), { from: staker });
   });
 
+  it("should return an error if non avatar account is trying to execute recover", async () => {
+    const cdai1 = await cDAIMock.new(dai.address);
+    let error = await simpleStaking.recover(cdai1.address).catch(e => e);
+    expect(error.message).to.have.string("only Avatar can call this method");
+  });
+
+  it("should not transfer any funds if trying to execute recover of token without balance", async () => {
+    const cdai1 = await cDAIMock.new(dai.address);
+    await dai.mint(cdai1.address, web3.utils.toWei("100", "ether"));
+    let balanceBefore = await cdai1.balanceOf(avatar.address);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "recover",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_token"
+          }
+        ]
+      },
+      [cdai1.address]
+    );
+    await controller.genericCall(simpleStaking.address, encodedCall, avatar.address, 0);
+    let balanceAfter = await cdai1.balanceOf(avatar.address);
+    expect(balanceAfter.toString()).to.be.equal(balanceBefore.toString());
+  });
+
+  it("should transfer funds when execute recover of token which the contract has some balance", async () => {
+    const cdai1 = await cDAIMock.new(dai.address);
+    await dai.mint(cdai1.address, web3.utils.toWei("100", "ether"));
+    const cdai1BalanceFounder = await cdai1.balanceOf(founder);
+    await cdai1.transfer(simpleStaking.address, cdai1BalanceFounder);
+    let balanceBefore = await cdai1.balanceOf(avatar.address);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "recover",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_token"
+          }
+        ]
+      },
+      [cdai1.address]
+    );
+    await controller.genericCall(simpleStaking.address, encodedCall, avatar.address, 0);
+    let balanceAfter = await cdai1.balanceOf(avatar.address);
+    expect(balanceAfter.sub(balanceBefore).toString()).to.be.equal(
+      cdai1BalanceFounder.toString()
+    );
+  });
+
+  it("should not transfer user's funds when execute recover", async () => {
+    await dai.mint(staker, web3.utils.toWei("100", "ether"));
+    await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    let balanceBefore = await dai.balanceOf(avatar.address);
+    let stakerBalanceBefore = await dai.balanceOf(staker);
+    await simpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+      });
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "recover",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_token"
+          }
+        ]
+      },
+      [dai.address]
+    );
+    await controller.genericCall(simpleStaking.address, encodedCall, avatar.address, 0);
+    await simpleStaking.withdrawStake({
+      from: staker
+    });
+    let balanceAfter = await dai.balanceOf(avatar.address);
+    let stakerBalanceAfter = await dai.balanceOf(staker);
+    expect(balanceAfter.toString()).to.be.equal(balanceBefore.toString());
+    expect(stakerBalanceAfter.toString()).to.be.equal(stakerBalanceBefore.toString());
+  });
+
+  it("should transfer excessive dai funds when execute recover", async () => {
+    await dai.mint(staker, web3.utils.toWei("100", "ether"));
+    await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
+      from: staker
+    });
+    let totalStaked0 = await simpleStaking.totalStaked();
+    await simpleStaking
+      .stakeDAI(web3.utils.toWei("100", "ether"), {
+        from: staker
+    });
+    let totalStaked1 = await simpleStaking.totalStaked();
+    await dai.mint(simpleStaking.address, web3.utils.toWei("100", "ether"));
+    let stakerBalanceBefore = await dai.balanceOf(staker);
+    let avatarBalanceBefore = await dai.balanceOf(avatar.address);
+    let encodedCall = web3.eth.abi.encodeFunctionCall(
+      {
+        name: "recover",
+        type: "function",
+        inputs: [
+          {
+            type: "address",
+            name: "_token"
+          }
+        ]
+      },
+      [dai.address]
+    );
+    await controller.genericCall(simpleStaking.address, encodedCall, avatar.address, 0);
+    let avatarBalanceAfter = await dai.balanceOf(avatar.address);
+
+    // checks that after recover stake balance is still available
+    await simpleStaking.withdrawStake({
+      from: staker
+    });
+    let stakerBalanceAfter = await dai.balanceOf(staker);    
+    expect(totalStaked1.sub(totalStaked0).toString()).to.be.equal(
+      web3.utils.toWei("100", "ether")
+    );
+    expect(stakerBalanceAfter.sub(stakerBalanceBefore).toString()).to.be.equal(
+      totalStaked1.sub(totalStaked0).toString()
+    );
+    expect(avatarBalanceAfter.sub(avatarBalanceBefore).toString()).to.be.equal(
+      web3.utils.toWei("100", "ether")
+    );
+  });
+
   it("should be able to stake dai", async () => {
+    let totalStakedBefore = await simpleStaking.totalStaked();
     await dai.mint(staker, web3.utils.toWei("100", "ether"));
     await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
       from: staker
@@ -100,12 +235,12 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
         from: staker
       })
       .catch(console.log);
+    let totalStakedAfter = await simpleStaking.totalStaked();
     let balance = await simpleStaking.stakers(staker);
     expect(balance.stakedToken.toString()).to.be.equal(
       web3.utils.toWei("100", "ether") //100 dai
     );
-    let totalStaked = await simpleStaking.totalStaked();
-    expect(totalStaked.toString()).to.be.equal(web3.utils.toWei("100", "ether"));
+    expect(totalStakedAfter.sub(totalStakedBefore).toString()).to.be.equal(web3.utils.toWei("100", "ether"));
     let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
     expect(stakedcDaiBalance.toString()).to.be.equal(
       web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai because of the exchange rate dai <> cdai)

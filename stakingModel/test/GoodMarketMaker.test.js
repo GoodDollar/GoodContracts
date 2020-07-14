@@ -16,9 +16,8 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
 
   before(async () => {
     dai = await DAIMock.new();
-    [cDAI, avatar, identity, formula] = await Promise.all([
+    [cDAI, identity, formula] = await Promise.all([
       cDAIMock.new(dai.address),
-      avatarMock.new("", NULL_ADDRESS, NULL_ADDRESS),
       Identity.new(),
       Formula.new(0)
     ]);
@@ -30,11 +29,11 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
       identity.address,
       NULL_ADDRESS
     );
+    avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
     marketMaker = await MarketMaker.new(
-      goodDollar.address,
+      avatar.address,
       999388834642296,
-      1e15,
-      avatar.address
+      1e15
     );
   });
 
@@ -103,10 +102,9 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
 
   it("should not return a sell contribution if the given gd is less than the given contribution amount", async () => {
     const marketMaker1 = await MarketMaker.new(
-      goodDollar.address,
+      avatar.address,
       999388834642296,
-      1e15,
-      avatar.address
+      1e15
     );
     await marketMaker1.initializeToken(
       dai.address,
@@ -121,10 +119,9 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
 
   it("should not return a sell contribution if the given gd is less than the the total supply", async () => {
     const marketMaker1 = await MarketMaker.new(
-      goodDollar.address,
+      avatar.address,
       999388834642296,
-      1e15,
-      avatar.address
+      1e15
     );
     await marketMaker1.initializeToken(
       dai.address,
@@ -167,8 +164,12 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
   });
 
   it("should mint 0 gd tokens if the add token supply is 0", async () => {
-    const error = await marketMaker.mintInterest(cDAI.address, "0").catch(e => e);
-    expect(error.message).to.have.string("added supply must be above 0");
+    let reserveTokenBefore = await marketMaker.reserveTokens(cDAI.address);
+    let gdSupplyBefore = reserveTokenBefore.gdSupply;
+    await marketMaker.mintInterest(cDAI.address, "0");
+    let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
+    let gdSupplyAfter = reserveTokenAfter.gdSupply;
+    expect(gdSupplyAfter.toString()).to.be.equal(gdSupplyBefore.toString());
   });
 
   it("should be able to update the reserve ratio only by the owner", async () => {

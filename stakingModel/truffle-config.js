@@ -15,13 +15,16 @@ const mnemonic = process.env.MNEMONIC;
 const privateKey = process.env.PRIVATE_KEY;
 
 const infura_api = process.env.INFURA_API;
+const alchemy_key = process.env.ALCHEMY_KEY;
+
 const admin_mnemonic = process.env.ADMIN_MNEMONIC;
 
 const ropsten_settings = {
   provider: function() {
     return new HDWalletProvider(
       mnemonic,
-      "https://ropsten.infura.io/v3/" + infura_api,
+      "https://eth-ropsten.alchemyapi.io/v2/" + alchemy_key,
+      // "https://ropsten.infura.io/v3/" + infura_api,
       0,
       10
     );
@@ -33,7 +36,7 @@ const ropsten_settings = {
   skipDryRun: true
 };
 
-console.log({ mnemonic, admin_mnemonic, privateKey, infura_api });
+console.log({ mnemonic, admin_mnemonic, privateKey, infura_api, alchemy_key });
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
@@ -84,7 +87,9 @@ module.exports = {
       provider: function() {
         return new HDWalletProvider(
           mnemonic,
-          "https://mainnet.infura.io/v3/" + infura_api,
+          // "https://mainnet.infura.io/v3/" + infura_api,
+          "https://eth-mainnet.alchemyapi.io/v2/" + alchemy_key,
+
           0,
           10
         );

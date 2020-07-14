@@ -36,6 +36,7 @@ module.exports = async function(deployer, network) {
   const networkSettings = { ...settings["default"], ...settings[network] };
   const maindao = daoAddresses[network];
   const homedao = daoAddresses[homeNetwork];
+  const homeAddresses = previousDeployment[homeNetwork];
 
   let foreignBridgeAddr, daiAddress, cdaiAddress;
   if (network == "test" || network == "develop") {
@@ -47,20 +48,22 @@ module.exports = async function(deployer, network) {
     foreignBridgeAddr = foreignBridge.address;
     daiAddress = dai.address;
     cdaiAddress = cdai.address;
+    reserveTokenAddress = cdaiAddress;
   } else {
     foreignBridgeAddr = maindao.ForeignBridge._foreignBridge;
     daiAddress = networkSettings.daiAddress;
     cdaiAddress = networkSettings.cdaiAddress;
+    reserveTokenAddress = networkSettings.reserveToken.address;
   }
-  const ubiBridgeRecipient = networkAddresses.UBIScheme;
+  const ubiBridgeRecipient = homeAddresses.UBIScheme;
   const homeAvatar = homedao.Avatar;
 
   console.log("deploying stand alone contracts");
   const fundManagerP = deployer.deploy(
     FundManager,
-    cdaiAddress,
     maindao.Avatar,
     maindao.Identity,
+    cdaiAddress,
     foreignBridgeAddr,
     ubiBridgeRecipient,
     networkSettings.blockInterval
@@ -77,17 +80,25 @@ module.exports = async function(deployer, network) {
   );
   const marketmakerP = deployer.deploy(
     MarketMaker,
-    maindao.GoodDollar,
+    maindao.Avatar,
     networkSettings.expansionRatio.nom,
     networkSettings.expansionRatio.denom,
-    maindao.Avatar,
-    { gas: network.indexOf("mainnet") >= 0 ? 4000000 : undefined }
+    { gas: network.indexOf("mainnet") >= 0 ? 5000000 : undefined }
   );
 
   const [fundManager, contribcalc, marketmaker] = await Promise.all([
-    fundManagerP,
-    contribcalcP,
-    marketmakerP
+    fundManagerP.then(c => {
+      console.log("fundmanager:", c.address);
+      return c;
+    }),
+    contribcalcP.then(c => {
+      console.log("contribution calc:", c.address);
+      return c;
+    }),
+    marketmakerP.then(c => {
+      console.log("marketmaker:", c.address);
+      return c;
+    })
   ]);
 
   console.log("deploying staking contract and reserve");
@@ -105,7 +116,6 @@ module.exports = async function(deployer, network) {
     Reserve,
     daiAddress,
     cdaiAddress,
-    maindao.GoodDollar,
     fundManager.address,
     maindao.Avatar,
     maindao.Identity,
@@ -113,11 +123,22 @@ module.exports = async function(deployer, network) {
     contribcalc.address,
     networkSettings.blockInterval
   );
-  const [goodCompoundStaking, reserve] = await Promise.all([goodCompoundStakingP, reserveP]);
+  const [goodCompoundStaking, reserve] = await Promise.all([
+    goodCompoundStakingP.then(c => {
+      console.log("staking:", c.address);
+      return c;
+    }),
+    reserveP.then(c => {
+      console.log("reserve:", c.address);
+      return c;
+    })
+  ]);
+
+  console.log("initializing reserve token and transfering marketmaker to reserve");
   await marketmaker.initializeToken(
-    cdaiAddress,
-    "100", //1gd
-    "10000", //0.0001 cDai
+    reserveTokenAddress,
+    "100", //1 gd
+    networkSettings.reserveToken.gdPriceWei, //"500000" 0.005 cDai = 0.0001 DAI($) (1 cDAI = 0.02$(DAI))
     "1000000" //100% rr
   );
   await marketmaker.transferOwnership(reserve.address);

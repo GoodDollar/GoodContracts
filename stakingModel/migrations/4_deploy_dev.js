@@ -30,8 +30,10 @@ module.exports = async function(deployer, network) {
     const goodDollar = await GoodDollar.at(dao_sidechain_addresses.GoodDollar);
     const ubi = await UBIScheme.at(staking_sidechain_addresses.UBIScheme);
 
+    console.log("Minting G$ on sidechain to mock ubi+firstclaim award")
     await goodDollar.mint(accounts[0], "10000000");
-    await goodDollar.transfer(ubi.address, "5000000");
+    await Promise.all([goodDollar.transfer(ubi.address, "5000000"),goodDollar.transfer(staking_sidechain_addresses.FirstClaimPool, "2000000")]);
+
   }
 
   if (network.indexOf("mainnet") >= 0 || network === "develop") {
@@ -76,15 +78,18 @@ module.exports = async function(deployer, network) {
     );
 
     console.log(
-      "preload staking contract and increase the cdai allowance to preload the reserve contract..."
+      "preload staking (fake interest) contract and increase the cdai allowance to preload the reserve contract..."
     );
     await Promise.all([preloadStaking, approveCdai]);
 
-    console.log("preload reserve with CDAI");
+    console.log("preload reserve with CDAI (buying GD from reserve)");
     await goodReserve.buy(
       cDAI.address,
       Math.floor(totalMinted.toNumber() / 2).toString(),
       0
     );
+
+    //TODO: call transferInterest so UBIScheme is loaded
+    //TODO: bridge bought gooddollars and transfer to firstclaimpool
   }
 };

@@ -718,7 +718,7 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
 
   it("should return true for canCollect", async () => {
     await evm_mine(BLOCK_INTERVAL);
-    canCollect = await simpleStaking.canCollect();
+    let canCollect = await simpleStaking.canCollect();
     expect(canCollect).to.be.true;
   });
 

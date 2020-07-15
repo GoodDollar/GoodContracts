@@ -57,6 +57,11 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     await simpleStaking.start();
   });
 
+  it("should return false for canCollect", async () => {
+    let canCollect = await simpleStaking.canCollect();
+    expect(canCollect).to.be.false;
+  });
+
   it("should mock cdai exchange rate 1e28 precision", async () => {
     let rate = await cDAI.exchangeRateStored();
     expect(rate.toString()).to.be.equal("10101010101010101010101010101");
@@ -711,8 +716,9 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     });
   });
 
-  it("should return for canCollect", async () => {
-    let canCollect = await simpleStaking.canCollect();
+  it("should return true for canCollect", async () => {
+    await evm_mine(BLOCK_INTERVAL);
+    canCollect = await simpleStaking.canCollect();
     expect(canCollect).to.be.true;
   });
 

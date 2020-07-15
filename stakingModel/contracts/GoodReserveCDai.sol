@@ -366,8 +366,8 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         uint256 gdExpansionToMint = marketMaker.mintExpansion(_interestToken);
         uint256 gdUBI = gdInterestToMint.sub(gdInterest);
         gdUBI = gdUBI.add(gdExpansionToMint);
-        uint256 toMint = gdUBI.add(gdInterest);
-        ERC20Mintable(address(avatar.nativeToken())).mint(fundManager, toMint);
+        // uint256 toMint = gdUBI.add(gdInterest);  removing local variable to avoid stack too deep error.
+        ERC20Mintable(address(avatar.nativeToken())).mint(fundManager, gdUBI.add(gdInterest));
         lastMinted = block.number.div(blockInterval);
         emit UBIMinted(
             lastMinted,

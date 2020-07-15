@@ -18,17 +18,28 @@ import "./AbstractGoodStaking.sol";
 contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     using SafeMath for uint256;
 
+    // Token address
     ERC20 token;
+    // Interest Token address
     ERC20 public iToken;
 
+    // The block interval defines the number of     
+    // blocks that shall be passed before the       
+    // next execution of `collectUBIInterest`
     uint256 public blockInterval;
-    uint256 lastUBICollection;
+
+    // The last block number which      
+    // `collectUBIInterest` has been executed in
+    uint256 public lastUBICollection;
+
+    // The total staked Token amount in the contract
     uint256 public totalStaked = 0;
 
     //how much of the generated interest is donated, meaning no G$ is expected in compensation, 1 in mil precision.
     //100% for phase0 POC
     uint32 public avgInterestDonatedRatio = 1e6;
 
+    // The address of the fund manager contract
     address public fundManager;
 
     modifier onlyFundManager {
@@ -36,7 +47,15 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         _;
     }
 
-
+    /**     
+     * @dev Constructor     
+     * @param _token The address of Token       
+     * @param _iToken The address of Interest Token     
+     * @param _fundManager The address of the fund manager contract     
+     * @param _blockInterval How many blocks should be passed before the next execution of `collectUBIInterest`     
+     * @param _avatar The avatar of the DAO     
+     * @param _identity The identity contract       
+     */
     constructor(
         address _token,
         address _iToken,
@@ -50,42 +69,46 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         blockInterval = _blockInterval;
         lastUBICollection = block.number.div(blockInterval);
         fundManager = _fundManager;
+
+        // Adds the avatar as a pauser of this contract
         addPauser(address(avatar));
     }
 
     /**
-    @dev allow the DAO to change the fund manager contract
-    @param _fundManager address of the new contract
+    * @dev Allow the DAO to change the fund manager contract address
+    * @param _fundManager Address of the new contract
     */
     function setFundManager(address _fundManager) public onlyAvatar {
         fundManager = _fundManager;
     }
 
     /**
-     * @dev stake some Token
-     * @param amount of Token to stake
+     * @dev Allows a staker to deposit Tokens. Notice that `approve` is
+     * needed to be executed before the execution of this method.
+     * Can be executed only when the contract is not paused.
+     * @param _amount The amount of DAI to stake
      */
-    function stake(uint256 amount) external whenNotPaused {
+    function stake(uint256 _amount) external whenNotPaused {
         
-        require(amount > 0, "You need to stake a positive token amount");
+        require(_amount > 0, "You need to stake a positive token amount");
         require(
-            token.transferFrom(msg.sender, address(this), amount),
+            token.transferFrom(msg.sender, address(this), _amount),
             "transferFrom failed, make sure you approved token transfer"
         );
 
         // approve the transfer to defi protocol
-        token.approve(address(iToken), amount);
-        mint(amount); //mint iToken
+        token.approve(address(iToken), _amount);
+        mint(_amount); //mint iToken
 
         Staker storage staker = stakers[msg.sender];
-        staker.stakedToken = staker.stakedToken.add(amount);
+        staker.stakedToken = staker.stakedToken.add(_amount);
         staker.lastStake = block.number;
-        totalStaked = totalStaked.add(amount);
-        emit Staked(msg.sender, address(token), amount);
+        totalStaked = totalStaked.add(_amount);
+        emit Staked(msg.sender, address(token), _amount);
     }
 
     /**
-     * @dev withdraw all staked Token
+     * @dev Withdraws the sender staked Token.
      */
     function withdrawStake() external {
         Staker storage staker = stakers[msg.sender];
@@ -102,6 +125,10 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         emit StakeWithdraw(msg.sender, address(token), tokenWithdraw, token.balanceOf(address(this)));
     }
 
+    /**
+     * @dev Calculates the worth of the staked iToken tokens in Token.
+     * @return (uint256) The worth in Token
+     */
     function currentTokenWorth() public view returns (uint256) {
         uint256 er = exchangeRate();
 
@@ -135,6 +162,11 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         return (decimalDifference, tokenDecimal > iTokenDecimal);
     }
 
+    /**
+     * @dev Calculates the current interest that was gained.
+     * @return (uint256, uint256, uint256) The interest in iToken, the interest in Token,
+     * the amount which is not covered by precision of Token
+     */
     function currentUBIInterest()
         public
         view
@@ -151,7 +183,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         }
         uint256 tokenGains = tokenWorth.sub(totalStaked);
         (uint decimalDifference, bool caseType) = tokenDecimalPrecision();
-        //mul by 1e10 to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
+        //mul by `10^decimalDifference` to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
         uint256 iTokenGains;
         if(caseType) {
         
@@ -160,12 +192,12 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         } else {
             iTokenGains = rdiv(tokenGains.div(10 ** decimalDifference), er);
         }
-        //get right most bits not covered by precision of cdai which is only 8 decimals while RAY is 27
+        //get right most bits not covered by precision of iToken.
         uint256 precisionDecimal = uint(27).sub(iTokenDecimal());
         uint256 precisionLossITokenRay = iTokenGains % (10 ** precisionDecimal);
-         // lower back to 8 decimals
+         // lower back to iToken's decimals
         iTokenGains = iTokenGains.div(10 ** precisionDecimal);
-        //div by 1e10 to get results in dai precision 1e18
+        //div by `10^decimalDifference` to get results in dai precision 1e18
         uint256 precisionLossToken;
         if(caseType) {
             precisionLossToken = rmul(precisionLossITokenRay, er).div(10 ** decimalDifference);
@@ -176,10 +208,13 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     }
 
     /**
-     * @dev collect gained interest by fundmanager
-     * @param recipient of cDAI gains
+     * @dev Collects gained interest by fundmanager. Can be collected only once
+     * in an interval which is defined above.
+     * @param _recipient The recipient of cDAI gains
+     * @return (uint256, uint256, uint256, uint32) The interest in iToken, the interest in Token,
+     * the amount which is not covered by precision of Token, how much of the generated interest is donated
      */
-    function collectUBIInterest(address recipient)
+    function collectUBIInterest(address _recipient)
         public
         onlyFundManager
         returns (
@@ -189,7 +224,8 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
             uint32
         )
     {
-        require(recipient != address(this), "Recipient cannot be the staking contract"); // otherwise fund manager has to wait for the next interval
+        // otherwise fund manager has to wait for the next interval
+        require(_recipient != address(this), "Recipient cannot be the staking contract");
 
         require(canCollect(), "Need to wait for the next interval");
         (
@@ -199,21 +235,23 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         ) = currentUBIInterest();
         lastUBICollection = block.number.div(blockInterval);
         if (iTokenGains > 0)
-            require(iToken.transfer(recipient, iTokenGains), "collect transfer failed");
-        emit InterestCollected(recipient, address(token), address(iToken), iTokenGains, tokenGains, precisionLossToken);
+            require(iToken.transfer(_recipient, iTokenGains), "collect transfer failed");
+        emit InterestCollected(_recipient, address(token), address(iToken), iTokenGains, tokenGains, precisionLossToken);
         return (iTokenGains, tokenGains, precisionLossToken, avgInterestDonatedRatio);
     }
 
     /**
-     * @dev can fund manager collect interest
-     * @return bool - true if enough time has passed (counted in blocks)
+     * @dev Checks if enough blocks have passed so it would be possible to
+     * execute `collectUBIInterest` according to the length of `blockInterval`
+     * @return (bool) True if enough blocks have passed
      */
     function canCollect() public view returns (bool) {
         return block.number.div(blockInterval) > lastUBICollection;
     }
 
     /**
-     * @dev making the contract active
+     * @dev Start function. Adds this contract to identity as a feeless scheme.
+     * Can only be called if scheme is registered
      */
     function start() public onlyRegistered {
         addRights();
@@ -227,5 +265,22 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     function end() public onlyAvatar {
         pause();
         removeRights();
+    }
+
+    /**
+     * @dev method to recover any stuck erc20 tokens (ie  compound COMP)
+     * @param _token the ERC20 token to recover
+     */
+    function recover(ERC20 _token) public onlyAvatar {
+        uint256 toWithdraw = _token.balanceOf(address(this));
+
+        // recover left iToken(stakers token) only when all stakes have been withdrawn
+        if (address(_token) == address(iToken)) {
+            require(
+                totalStaked == 0 && paused(),
+                "can recover iToken only when stakes have been withdrawn"
+            );
+        }
+        require(_token.transfer(address(avatar), toWithdraw), "recover transfer failed");
     }
 }

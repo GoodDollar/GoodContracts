@@ -41,21 +41,21 @@ contract GoodDMMStaking is SimpleStaking {
 
     /**
      * @dev stake some DAI
-     * @param amount of dai to stake
+     * @param _amount of dai to stake
      */
-    function mint(uint256 amount) internal {
+    function mint(uint256 _amount) internal {
         
         DMMToken mToken = DMMToken(address(iToken));
-        uint res = mToken.mint(amount);
+        uint res = mToken.mint(_amount);
 
         require(res > 0, "Minting mDai failed, funds returned");
         
 
     }
 
-    function redeem(uint256 amount) internal {
+    function redeem(uint256 _amount) internal {
         DMMToken mToken = DMMToken(address(iToken));
-        require(mToken.redeem(amount) > 0, "Failed to redeem mDai");
+        require(mToken.redeem(_amount) > 0, "Failed to redeem mDai");
 
     }
 

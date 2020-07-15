@@ -43,12 +43,12 @@ contract GoodCompoundStaking is SimpleStaking {
 
     /**
      * @dev stake some DAI
-     * @param amount of dai to stake
+     * @param _amount of dai to stake
      */
-    function mint(uint256 amount) internal {
+    function mint(uint256 _amount) internal {
         
         cERC20 cToken = cERC20(address(iToken));
-        uint res = cToken.mint(amount);
+        uint res = cToken.mint(_amount);
 
         if (
             res > 0
@@ -59,9 +59,9 @@ contract GoodCompoundStaking is SimpleStaking {
 
     }
 
-    function redeem(uint256 amount) internal {
+    function redeem(uint256 _amount) internal {
         cERC20 cToken = cERC20(address(iToken));
-        require(cToken.redeemUnderlying(amount) == 0, "Failed to redeem cDai");
+        require(cToken.redeemUnderlying(_amount) == 0, "Failed to redeem cDai");
 
     }
 

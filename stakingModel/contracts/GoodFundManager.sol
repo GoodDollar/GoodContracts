@@ -214,7 +214,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             address(reserve)
         );
 
-        // Finds the actual transferred cDai
+        // Finds the actual transferred iToken
         uint256 interest = iToken.balanceOf(address(reserve)).sub(
             currentBalance
         );

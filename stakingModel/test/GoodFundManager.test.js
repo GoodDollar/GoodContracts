@@ -306,7 +306,7 @@ contract(
       );
 
       // a new staking contract with no interest
-      const staking1 = await SimpleDAIStakingNoDonation.new(
+      const staking1 = await GoodCompoundStakingNoDonation.new(
         dai.address,
         cDAI.address,
         goodFundManager.address,

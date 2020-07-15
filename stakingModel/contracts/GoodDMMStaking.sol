@@ -53,23 +53,36 @@ contract GoodDMMStaking is SimpleStaking {
 
     }
 
+    /**
+     * @dev redeem DAI from DMM 
+     * @param _amount of dai to redeem
+     */
     function redeem(uint256 _amount) internal {
         DMMToken mToken = DMMToken(address(iToken));
         require(mToken.redeem(_amount) > 0, "Failed to redeem mDai");
 
     }
 
+    /**
+     * @dev returns Dai to mDai Exchange rate.
+     */
     function exchangeRate() internal view returns(uint) {
         DMMToken mToken = DMMToken(address(iToken));
         return mToken.getCurrentExchangeRate();
 
     }
 
+    /**
+     * @dev returns decimals of token.
+     */
     function tokenDecimal() internal view returns(uint) {
         ERC20Detailed token = ERC20Detailed(address(token));
         return uint(token.decimals());
     }
 
+    /**
+     * @dev returns decimals of interest token.
+     */
     function iTokenDecimal() internal view returns(uint) {
         ERC20Detailed mToken = ERC20Detailed(address(iToken));
         return uint(mToken.decimals());

@@ -4,12 +4,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 library InterestDistribution {
     using SafeMath for uint256;
 
-    // Minimum value supported by int256
-    int256 constant INT256_MIN = int256((uint256(1) << 255));
-
-    // Maximum value supported by int256
-    int256 constant INT256_MAX = int256(~((uint256(1) << 255)));
-
     // 10^18
     uint256 constant DECIMAL1e18 = 10 ** 18;
 
@@ -40,11 +34,19 @@ library InterestDistribution {
     ) 
     {
       
-      int interest = sub(mul(_totalStaked, sub(_accumulatedYieldPerToken, _avgYieldRatePerToken)), _withdrawnToDate);
-      if(interest < 0)
+      // will lead to -ve value
+      if(_avgYieldRatePerToken > _accumulatedYieldPerToken)
         return 0;
+        
+      uint intermediateInterest =_totalStaked.mul(_accumulatedYieldPerToken.sub(_avgYieldRatePerToken));
+      // will lead to -ve value
+      if(_withdrawnToDate > intermediateInterest)
+        return 0;
+
+      _earnedGDInterest = intermediateInterest.sub(_withdrawnToDate);
+
       // To reduce it to 2 precision of G$
-      return uint(interest).div(10**16);
+      return _earnedGDInterest.div(10**16);
     }
 
     /**
@@ -86,38 +88,5 @@ library InterestDistribution {
     {
       return _accumulatedYieldPerToken.mul(_staking.mul(uint(100).sub(_donationPer))).div(_totalStaked.mul(100));
     }
-
-    /**
-      * @dev Safe method for Subtracting signed integer. 
-    */
-    function sub(int256 a, int256 b) internal pure returns (int256) {
-        assert(!(a > 0 && b > INT256_MIN - a));  // underflow
-        assert(!(a < 0 && b < INT256_MAX - a));  // overflow
-
-        return a - b;
-    }
-
-    /**
-      * @dev Safe method for Adding signed integer. 
-    */
-    function add(int256 a, int256 b) internal pure returns (int256) {
-        assert(!(a > 0 && b > INT256_MAX - a));  // overflow
-        assert(!(a < 0 && b < INT256_MIN - a));  // underflow
-
-        return a + b;
-    }
-
-    /**
-      * @dev Safe method for Multiplying signed integer. 
-    */
-    function mul(int256 a, int256 b) internal pure returns (int256) {
-        if (a == 0) {
-            return 0;
-        }
-        int256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
     
 }

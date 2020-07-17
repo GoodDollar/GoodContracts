@@ -30,7 +30,7 @@ library InterestDistribution {
      */
     struct YieldData {
       uint accumulatedYieldPerToken;
-      uint avgYieldRatePerToken;
+      mapping(address => uint) avgYieldRatePerToken;
     }
 
     // 10^18
@@ -80,22 +80,37 @@ library InterestDistribution {
     }
 
     /**
-      * @dev Updates Yield Data.
+      * @dev Updates Accumulated Yield Per Token.
       * 
       * @param _yieldData                   Yield data
       * @param _accumulatedYieldPerToken    Total yielding amount per token
-      * @param _avgYieldRatePerToken        Average yielding rate per token
       *
     */
-    function addYieldData(
+    function addAccumulatedYieldPerToken(
       YieldData storage _yieldData, 
-      uint _accumulatedYieldPerToken, 
-      uint _avgYieldRatePerToken
+      uint _accumulatedYieldPerToken
       ) 
     internal 
     {
       _yieldData.accumulatedYieldPerToken = _yieldData.accumulatedYieldPerToken.add(_accumulatedYieldPerToken);
-      _yieldData.avgYieldRatePerToken = _yieldData.avgYieldRatePerToken.add(_avgYieldRatePerToken);
+    }
+
+    /**
+      * @dev Updates Avgrage Yield Rate Per Token or staker.
+      * 
+      * @param _yieldData                   Yield data
+      * @param _staker                      Staker's address
+      * @param _avgYieldRatePerToken        Average yielding rate per token for staker
+      *
+    */
+    function addAvgYieldRatePerToken(
+      YieldData storage _yieldData, 
+      address _staker,
+      uint _avgYieldRatePerToken
+      ) 
+    internal 
+    {
+      _yieldData.avgYieldRatePerToken[_staker] = _yieldData.avgYieldRatePerToken[_staker].add(_avgYieldRatePerToken);
     }
 
     /**
@@ -126,17 +141,17 @@ library InterestDistribution {
       * Formula:
       * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
       * 
+      * @param _staker                     Staker's address
       * @param _withdrawnToDate            Withdrawn interest by individual staker so far.
-      * @param _avgYieldRatePerToken       Average yielding rate per token
-      * @param _accumulatedYieldPerToken   Total yielding amount per token
+      * @param _yieldData                  Yield Data
       * @param _totalStaked                Total staked by individual staker.
       * 
       * @return _earnedGDInterest The amount of G$ credit for the staker 
     */
     function calculateGDInterest(
+      address _staker,
       uint256 _withdrawnToDate,
-      uint256 _avgYieldRatePerToken,
-      uint256 _accumulatedYieldPerToken,
+      YieldData _yieldData,
       uint256 _totalStaked
     ) 
     internal 
@@ -148,10 +163,10 @@ library InterestDistribution {
     {
       
       // will lead to -ve value
-      if(_avgYieldRatePerToken > _accumulatedYieldPerToken)
+      if(_yieldData.avgYieldRatePerToken[_staker] > _yieldData.accumulatedYieldPerToken[_staker])
         return 0;
         
-      uint intermediateInterest =_totalStaked.mul(_accumulatedYieldPerToken.sub(_avgYieldRatePerToken));
+      uint intermediateInterest =_totalStaked.mul(_yieldData.accumulatedYieldPerToken.sub(_yieldData.avgYieldRatePerToken[_staker]));
       // will lead to -ve value
       if(_withdrawnToDate > intermediateInterest)
         return 0;

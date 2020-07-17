@@ -68,7 +68,7 @@ library InterestDistribution {
       * @param _amount                 Amount of stake to withdraw
       *
     */
-    function withDrawStakeCalculation(
+    function withdrawStakeAndInterest(
       InterestData storage _interestData, 
       Staker storage _staker, 
       uint256 _amount

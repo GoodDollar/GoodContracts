@@ -4,8 +4,121 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 library InterestDistribution {
     using SafeMath for uint256;
 
+    /**
+     * @dev Structure to store Interest details.
+     * It contains total amount of tokens staked and total amount of interest generated.
+     */    
+    struct InterestData {
+      uint grandTotalStaked;
+      uint interestAccrued;
+    }
+
+    /**
+     * @dev Structure to store staking details.
+     * It contains amount of tokens staked and blocknumber at which last staked.
+     */
+    struct Staker {
+        uint256 stakedToken;
+        uint256 weightedStake; // stored with 2 precision points ie., 0.82 => 82
+        uint256 lastStake;
+        uint256 withdrawnToDate;
+    }
+
+    /**
+     * @dev Structure to store Yield details.
+     * It contains total accumulated yield and avg yieding rate per token.
+     */
+    struct YieldData {
+      uint accumulatedYieldPerToken;
+      uint avgYieldRatePerToken;
+    }
+
     // 10^18
     uint256 constant DECIMAL1e18 = 10 ** 18;
+
+    /**
+      * @dev Updates InterestData and Staker data while staking.
+      * 
+      * @param _interestData           Interest data
+      * @param _staker                 Staker's data
+      * @param _stake                  Amount of stake
+      * @param _donationPer            Percentage will to donate.
+      *
+    */
+    function stakeCalculation(
+      InterestData storage _interestData, 
+      Staker storage _staker, 
+      uint256 _stake, 
+      uint256 _donationPer
+      ) 
+    internal 
+    {
+      _interestData.grandTotalStaked = _interestData.grandTotalStaked.add(_stake);
+      uint currentStake = _staker.stakedToken;
+      _staker.stakedToken = currentStake.add(_stake);
+      _staker.weightedStake = (_staker.weightedStake.mul(currentStake).add(_stake.mul(uint(100).sub(_donationPer)))).div(_staker.stakedToken);
+      _staker.lastStake = block.number;
+    }
+
+    /**
+      * @dev Updates InterestData and Staker data while withdrawing stake.
+      * 
+      * @param _interestData           Interest data
+      * @param _staker                 Staker data
+      * @param _amount                 Amount of stake to withdraw
+      *
+    */
+    function withDrawStakeCalculation(
+      InterestData storage _interestData, 
+      Staker storage _staker, 
+      uint256 _amount
+      ) 
+    internal 
+    {
+      _interestData.grandTotalStaked = _interestData.grandTotalStaked.sub(_amount);
+      _staker.stakedToken = _staker.stakedToken.sub(_amount);
+    }
+
+    /**
+      * @dev Updates Yield Data.
+      * 
+      * @param _yieldData                   Yield data
+      * @param _accumulatedYieldPerToken    Total yielding amount per token
+      * @param _avgYieldRatePerToken        Average yielding rate per token
+      *
+    */
+    function addYieldData(
+      YieldData storage _yieldData, 
+      uint _accumulatedYieldPerToken, 
+      uint _avgYieldRatePerToken
+      ) 
+    internal 
+    {
+      _yieldData.accumulatedYieldPerToken = _yieldData.accumulatedYieldPerToken.add(_accumulatedYieldPerToken);
+      _yieldData.avgYieldRatePerToken = _yieldData.avgYieldRatePerToken.add(_avgYieldRatePerToken);
+    }
+
+    /**
+      * @dev Updates interestAccrued.
+      * 
+      * @param _interestData           Interest data
+      * @param _iterest                Newly accrued intrest
+      *
+    */
+    function addInterest(InterestData storage _interestData, uint256 _iterest) internal {
+      _interestData.interestAccrued.add(_iterest);
+    }
+
+    /**
+      * @dev Updates withdrawnToDate of staker.
+      * 
+      * @param _staker           Staker data
+      * @param _amount           Amount of G$ withdrawn
+      *
+    */
+    function withdrawIntrest(Staker storage _staker, uint256 _amount) internal {
+      _staker.withdrawnToDate.add(_amount);
+    }
 
     /**
       * @dev Calculates GD Interest for staker for their stake.
@@ -56,7 +169,7 @@ library InterestDistribution {
       * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
       * 
       * @param _dailyIntrest            Withdrawn interest by individual staker so far.
-      * @param _grandTotalStaked       Average yielding rate per token
+      * @param _grandTotalStaked        Average yielding rate per token
       * 
       * @return  new yield since last update.
     */

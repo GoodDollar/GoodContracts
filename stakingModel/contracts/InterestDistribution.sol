@@ -151,7 +151,7 @@ library InterestDistribution {
     function calculateGDInterest(
       address _staker,
       uint256 _withdrawnToDate,
-      YieldData _yieldData,
+      YieldData storage _yieldData,
       uint256 _totalStaked
     ) 
     internal 
@@ -163,7 +163,7 @@ library InterestDistribution {
     {
       
       // will lead to -ve value
-      if(_yieldData.avgYieldRatePerToken[_staker] > _yieldData.accumulatedYieldPerToken[_staker])
+      if(_yieldData.avgYieldRatePerToken[_staker] > _yieldData.accumulatedYieldPerToken)
         return 0;
         
       uint intermediateInterest =_totalStaked.mul(_yieldData.accumulatedYieldPerToken.sub(_yieldData.avgYieldRatePerToken[_staker]));

@@ -1,9 +1,8 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "../../contracts/dao/schemes/UBI.sol";
 import "./FirstClaimPool.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-
 
 /* @title Dynamic amount-per-day UBI scheme allowing claim once a day
  */
@@ -240,8 +239,7 @@ contract UBIScheme is AbstractUBI {
             uint256 awardAmount = firstClaimPool.awardUser(_account);
             day.claimAmount = day.claimAmount.add(awardAmount);
             emit UBIClaimed(_account, awardAmount);
-        }
-        else {
+        } else {
             day.claimAmount = day.claimAmount.add(_amount);
             GoodDollar token = GoodDollar(address(avatar.nativeToken()));
             require(token.transfer(_account, _amount), "claim transfer failed");
@@ -282,10 +280,7 @@ contract UBIScheme is AbstractUBI {
      * @param _account The claimer account
      * @return A bool indicating if UBI was claimed
      */
-    function _claim(address _account)
-        internal
-        returns (bool)
-    {
+    function _claim(address _account) internal returns (bool) {
         // calculats the formula up today ie on day 0 there are no active users, on day 1 any user
         // (new or active) will trigger the calculation with the active users count of the day before
         // and so on. the new or inactive users that will become active today, will not take into account
@@ -356,7 +351,11 @@ contract UBIScheme is AbstractUBI {
      * @param _accounts to fish
      * @return A bool indicating if all the UBIs were fished
      */
-    function fishMulti(address[] memory _accounts) public requireActive returns (uint256) {
+    function fishMulti(address[] memory _accounts)
+        public
+        requireActive
+        returns (uint256)
+    {
         for (uint256 i = 0; i < _accounts.length; ++i) {
             if (gasleft() < iterationGasLimit) {
                 emit TotalFished(i);

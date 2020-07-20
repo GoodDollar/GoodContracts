@@ -1,7 +1,6 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "../SimpleDAIStaking.sol";
-
 
 /**
  * @title A SimpleDAIStaking mock.

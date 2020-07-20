@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";

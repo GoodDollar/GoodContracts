@@ -1,11 +1,10 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "./ERC677/ERC677.sol";
 import "./ERC677/ERC677Receiver.sol";
 import "@daostack/arc/contracts/controller/DAOToken.sol";
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Pausable.sol";
-
 
 /* @title ERC677Token contract.
  */

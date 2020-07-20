@@ -1,9 +1,8 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
-
 
 /* @dev abstract contract for ensuring that schemes have been registered properly
  * Allows setting zero Avatar in situations where the Avatar hasn't been created yet

@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
@@ -8,7 +8,6 @@ import "../../contracts/token/GoodDollar.sol";
 import "../../contracts/dao/schemes/SchemeGuard.sol";
 import "../../contracts/DSMath.sol";
 import "./BancorFormula.sol";
-
 
 /**
 @title Dynamic reserve ratio market maker
@@ -123,13 +122,13 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Allows the DAO to change the daily expansion rate
-    * it is calculated by _nom/_denom with e27 precision. Emits
-    * `ReserveRatioUpdated` event after the ratio has changed.
-    * Only Avatar can call this method.
-    * @param _nom The numerator to calculate the global `reserveRatioDailyExpansion` from
-    * @param _denom The denominator to calculate the global `reserveRatioDailyExpansion` from
-    */
+     * @dev Allows the DAO to change the daily expansion rate
+     * it is calculated by _nom/_denom with e27 precision. Emits
+     * `ReserveRatioUpdated` event after the ratio has changed.
+     * Only Avatar can call this method.
+     * @param _nom The numerator to calculate the global `reserveRatioDailyExpansion` from
+     * @param _denom The denominator to calculate the global `reserveRatioDailyExpansion` from
+     */
     function setReserveRatioDailyExpansion(uint256 _nom, uint256 _denom)
         public
         onlyAvatar
@@ -145,12 +144,12 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     // updating the new reserve must be deployed too.
 
     /**
-    * @dev Initialize a reserve token entity with the given parameters
-    * @param _token The reserve token
-    * @param _gdSupply Initial supply of GD to set the price
-    * @param _tokenSupply Initial supply of reserve token to set the price
-    * @param _reserveRatio The starting reserve ratio
-    */
+     * @dev Initialize a reserve token entity with the given parameters
+     * @param _token The reserve token
+     * @param _gdSupply Initial supply of GD to set the price
+     * @param _tokenSupply Initial supply of reserve token to set the price
+     * @param _reserveRatio The starting reserve ratio
+     */
     function initializeToken(
         ERC20 _token,
         uint256 _gdSupply,
@@ -165,11 +164,11 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Calculates how much to decrease the reserve ratio for _token by
-    * the `reserveRatioDailyExpansion`
-    * @param _token The reserve token to calculate the reserve ratio for
-    * @return The new reserve ratio
-    */
+     * @dev Calculates how much to decrease the reserve ratio for _token by
+     * the `reserveRatioDailyExpansion`
+     * @param _token The reserve token to calculate the reserve ratio for
+     * @return The new reserve ratio
+     */
     function calculateNewReserveRatio(ERC20 _token)
         public
         view
@@ -192,10 +191,10 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Decreases the reserve ratio for _token by the `reserveRatioDailyExpansion`
-    * @param _token The token to change the reserve ratio for
-    * @return The new reserve ratio
-    */
+     * @dev Decreases the reserve ratio for _token by the `reserveRatioDailyExpansion`
+     * @param _token The token to change the reserve ratio for
+     * @return The new reserve ratio
+     */
     function expandReserveRatio(ERC20 _token)
         public
         onlyOwner
@@ -212,11 +211,11 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Calculates the buy return in GD according to the given _tokenAmount
-    * @param _token The reserve token buying with
-    * @param _tokenAmount The amount of reserve token buying with
-    * @return Number of GD that should be given in exchange as calculated by the bonding curve
-    */
+     * @dev Calculates the buy return in GD according to the given _tokenAmount
+     * @param _token The reserve token buying with
+     * @param _tokenAmount The amount of reserve token buying with
+     * @return Number of GD that should be given in exchange as calculated by the bonding curve
+     */
     function buyReturn(ERC20 _token, uint256 _tokenAmount)
         public
         view
@@ -234,11 +233,11 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Calculates the sell return in _token according to the given _gdAmount
-    * @param _token The desired reserve token to have
-    * @param _gdAmount The amount of GD that are sold
-    * @return Number of tokens that should be given in exchange as calculated by the bonding curve
-    */
+     * @dev Calculates the sell return in _token according to the given _gdAmount
+     * @param _token The desired reserve token to have
+     * @param _gdAmount The amount of GD that are sold
+     * @return Number of tokens that should be given in exchange as calculated by the bonding curve
+     */
     function sellReturn(ERC20 _token, uint256 _gdAmount)
         public
         view
@@ -256,12 +255,12 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Updates the _token bonding curve params. Emits `BalancesUpdated` with the
-    * new reserve token information.
-    * @param _token The reserve token buying with
-    * @param _tokenAmount The amount of reserve token buying with
-    * @return (gdReturn) Number of GD that will be given in exchange as calculated by the bonding curve
-    */
+     * @dev Updates the _token bonding curve params. Emits `BalancesUpdated` with the
+     * new reserve token information.
+     * @param _token The reserve token buying with
+     * @param _tokenAmount The amount of reserve token buying with
+     * @return (gdReturn) Number of GD that will be given in exchange as calculated by the bonding curve
+     */
     function buy(ERC20 _token, uint256 _tokenAmount)
         public
         onlyOwner
@@ -284,12 +283,12 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Updates the _token bonding curve params. Emits `BalancesUpdated` with the
-    * new reserve token information.
-    * @param _token The desired reserve token to have
-    * @param _gdAmount The amount of GD that are sold
-    * @return Number of tokens that will be given in exchange as calculated by the bonding curve
-    */
+     * @dev Updates the _token bonding curve params. Emits `BalancesUpdated` with the
+     * new reserve token information.
+     * @param _token The desired reserve token to have
+     * @param _gdAmount The amount of GD that are sold
+     * @return Number of tokens that will be given in exchange as calculated by the bonding curve
+     */
     function sell(ERC20 _token, uint256 _gdAmount)
         public
         onlyOwner
@@ -313,13 +312,13 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Calculates the sell return with contribution in _token and update the bonding curve params.
-    * Emits `BalancesUpdated` with the new reserve token information.
-    * @param _token The desired reserve token to have
-    * @param _gdAmount The amount of GD that are sold
-    * @param _contributionGdAmount The number of GD tokens that will not be traded for the reserve token
-    * @return Number of tokens that will be given in exchange as calculated by the bonding curve
-    */
+     * @dev Calculates the sell return with contribution in _token and update the bonding curve params.
+     * Emits `BalancesUpdated` with the new reserve token information.
+     * @param _token The desired reserve token to have
+     * @param _gdAmount The amount of GD that are sold
+     * @param _contributionGdAmount The number of GD tokens that will not be traded for the reserve token
+     * @return Number of tokens that will be given in exchange as calculated by the bonding curve
+     */
     function sellWithContribution(
         ERC20 _token,
         uint256 _gdAmount,
@@ -351,10 +350,10 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Current price of GD in `token`. currently only cDAI is supported.
-    * @param _token The desired reserve token to have
-    * @return price of GD
-    */
+     * @dev Current price of GD in `token`. currently only cDAI is supported.
+     * @param _token The desired reserve token to have
+     * @return price of GD
+     */
     function currentPrice(ERC20 _token)
         public
         view
@@ -374,14 +373,14 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
 
     //TODO: need real calculation and tests
     /**
-    * @dev Calculates how much G$ to mint based on added token supply (from interest)
-    * and on current reserve ratio, in order to keep G$ price the same at the bonding curve
-    * formula to calculate the gd to mint: gd to mint =
-    * addreservebalance * (gdsupply / (reservebalance * reserveratio))
-    * @param _token the reserve token
-    * @param _addTokenSupply amount of token added to supply
-    * @return how much to mint in order to keep price in bonding curve the same
-    */
+     * @dev Calculates how much G$ to mint based on added token supply (from interest)
+     * and on current reserve ratio, in order to keep G$ price the same at the bonding curve
+     * formula to calculate the gd to mint: gd to mint =
+     * addreservebalance * (gdsupply / (reservebalance * reserveratio))
+     * @param _token the reserve token
+     * @param _addTokenSupply amount of token added to supply
+     * @return how much to mint in order to keep price in bonding curve the same
+     */
     function calculateMintInterest(ERC20 _token, uint256 _addTokenSupply)
         public
         view
@@ -396,17 +395,17 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Updates bonding curve based on _addTokenSupply and new minted amount
-    * @param _token The reserve token
-    * @param _addTokenSupply Amount of token added to supply
-    * @return How much to mint in order to keep price in bonding curve the same
-    */
+     * @dev Updates bonding curve based on _addTokenSupply and new minted amount
+     * @param _token The reserve token
+     * @param _addTokenSupply Amount of token added to supply
+     * @return How much to mint in order to keep price in bonding curve the same
+     */
     function mintInterest(ERC20 _token, uint256 _addTokenSupply)
         public
         onlyOwner
         returns (uint256)
     {
-        if(_addTokenSupply == 0) {
+        if (_addTokenSupply == 0) {
             return 0;
         }
         uint256 toMint = calculateMintInterest(_token, _addTokenSupply);
@@ -426,13 +425,13 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Calculate how much G$ to mint based on expansion change (new reserve
-    * ratio), in order to keep G$ price the same at the bonding curve. the
-    * formula to calculate the gd to mint: gd to mint =
-    * (reservebalance / (newreserveratio * currentprice)) - gdsupply
-    * @param _token The reserve token
-    * @return How much to mint in order to keep price in bonding curve the same
-    */
+     * @dev Calculate how much G$ to mint based on expansion change (new reserve
+     * ratio), in order to keep G$ price the same at the bonding curve. the
+     * formula to calculate the gd to mint: gd to mint =
+     * (reservebalance / (newreserveratio * currentprice)) - gdsupply
+     * @param _token The reserve token
+     * @return How much to mint in order to keep price in bonding curve the same
+     */
     function calculateMintExpansion(ERC20 _token)
         public
         view
@@ -459,10 +458,10 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     }
 
     /**
-    * @dev Updates bonding curve based on expansion change and new minted amount
-    * @param _token The reserve token
-    * @return How much to mint in order to keep price in bonding curve the same
-    */
+     * @dev Updates bonding curve based on expansion change and new minted amount
+     * @param _token The reserve token
+     * @return How much to mint in order to keep price in bonding curve the same
+     */
     function mintExpansion(ERC20 _token) public onlyOwner returns (uint256) {
         uint256 toMint = calculateMintExpansion(_token);
         ReserveToken storage reserveToken = reserveTokens[address(_token)];

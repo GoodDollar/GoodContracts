@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "../../../contracts/token/ERC677/ERC677Receiver.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";

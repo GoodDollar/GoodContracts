@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
@@ -10,7 +10,6 @@ import "../../token/GoodDollar.sol";
 import "./ActivePeriod.sol";
 import "./FeelessScheme.sol";
 import "./SchemeGuard.sol";
-
 
 /* @title Sign-Up bonus scheme responsible for transferring
  * a given amount of GoodDollar to users

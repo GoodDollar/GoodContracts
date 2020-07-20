@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
@@ -13,20 +13,14 @@ contract cDAILowWorthMock is DSMath, ERC20, ERC20Detailed, Ownable {
 
     uint256 exchangeRate = uint256(100e28).div(99);
 
-    constructor(ERC20 _dai)
-        public
-        ERC20()
-        ERC20Detailed("Compound DAI", "cDAI", 8)
-    {
+    constructor(ERC20 _dai) public ERC20() ERC20Detailed("Compound DAI", "cDAI", 8) {
         dai = _dai;
     }
+
     function mint(uint256 daiAmount) public returns (uint256) {
         dai.transferFrom(msg.sender, address(this), daiAmount);
         //mul by 1e10 to match to precision of 1e28 of the exchange rate
-        _mint(
-            msg.sender,
-            rdiv(daiAmount * 1e10, exchangeRateStored()).div(1e19)
-        ); //div to reduce precision from RAY 1e27 to 1e8 precision of cDAI
+        _mint(msg.sender, rdiv(daiAmount * 1e10, exchangeRateStored()).div(1e19)); //div to reduce precision from RAY 1e27 to 1e8 precision of cDAI
         return 0;
     }
 
@@ -59,5 +53,4 @@ contract cDAILowWorthMock is DSMath, ERC20, ERC20Detailed, Ownable {
     function exchangeRateStored() public view returns (uint256) {
         return exchangeRate.div(2);
     }
-
 }

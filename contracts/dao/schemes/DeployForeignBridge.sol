@@ -1,8 +1,7 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "./SchemeGuard.sol";
-
 
 /* @title Scheme for deploying a token bridge on a foreign network using the fuseio bridge factory.
  * For more information see https://fuse.io/
@@ -41,10 +40,7 @@ contract DeployForeignBridge is SchemeGuard {
             avatar,
             0
         );
-        require(
-            ok,
-            "Calling deployForeignBridge in ForeignBridgeFactory failed"
-        );
+        require(ok, "Calling deployForeignBridge in ForeignBridgeFactory failed");
         selfdestruct(address(avatar));
     }
 }

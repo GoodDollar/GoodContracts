@@ -1,11 +1,10 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../../contracts/dao/schemes/FeelessScheme.sol";
 import "../../contracts/dao/schemes/ActivePeriod.sol";
 import "./UBIScheme.sol";
-
 
 /**
  * @title FirstClaimPool contract that transfer bonus tokens when claiming for
@@ -41,11 +40,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
         Avatar _avatar,
         Identity _identity,
         uint256 _claimAmount
-    )
-        public
-        FeelessScheme(_identity, _avatar)
-        ActivePeriod(now, now * 2, _avatar)
-    {
+    ) public FeelessScheme(_identity, _avatar) ActivePeriod(now, now * 2, _avatar) {
         claimAmount = _claimAmount;
     }
 

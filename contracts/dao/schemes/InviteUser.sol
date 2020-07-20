@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
@@ -35,11 +35,7 @@ contract InviteUser is IdentityGuard, SchemeGuard {
         Identity _identity,
         uint256 _maxBonus,
         uint256 _reward
-    )
-        public
-        IdentityGuard(_identity)
-        SchemeGuard(_avatar)
-    {
+    ) public IdentityGuard(_identity) SchemeGuard(_avatar) {
         require(_maxBonus >= _reward, "Reward cannot be greater than max bonus");
         maxBonus = _maxBonus;
         reward = _reward;
@@ -83,12 +79,7 @@ contract InviteUser is IdentityGuard, SchemeGuard {
      * if contract is registered and if address has been added.
      * @return a bool indicating if the caller has been rewarded
      */
-    function claimReward()
-        public
-        onlyRegistered
-        requireAdded(msg.sender)
-        returns (bool)
-    {
+    function claimReward() public onlyRegistered requireAdded(msg.sender) returns (bool) {
         require(!claimed[msg.sender], "Cannot claim twice");
 
         claimed[msg.sender] = true;
@@ -113,8 +104,7 @@ contract InviteUser is IdentityGuard, SchemeGuard {
             rewarded[_user] = maxBonus;
             controller.mintTokens(newReward, _user, address(avatar));
             emit BonusClaimed(_user, newReward);
-        }
-        else {
+        } else {
             rewarded[_user] = rewarded[_user].add(reward);
             controller.mintTokens(reward, _user, address(avatar));
 

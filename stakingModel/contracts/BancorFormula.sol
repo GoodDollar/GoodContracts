@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract BancorFormula {
@@ -12,28 +12,29 @@ contract BancorFormula {
     uint8 private constant MAX_PRECISION = 127;
 
     /**
-      * Auto-generated via 'PrintIntScalingFactors.py'
-    */
+     * Auto-generated via 'PrintIntScalingFactors.py'
+     */
     uint256 private constant FIXED_1 = 0x080000000000000000000000000000000;
     uint256 private constant FIXED_2 = 0x100000000000000000000000000000000;
     uint256 private constant MAX_NUM = 0x200000000000000000000000000000000;
 
     /**
-      * Auto-generated via 'PrintLn2ScalingFactors.py'
-    */
+     * Auto-generated via 'PrintLn2ScalingFactors.py'
+     */
     uint256 private constant LN2_NUMERATOR = 0x3f80fe03f80fe03f80fe03f80fe03f8;
     uint256 private constant LN2_DENOMINATOR = 0x5b9de1d10bf4103d647b0955897ba80;
 
     /**
-      * Auto-generated via 'PrintFunctionOptimalLog.py' and 'PrintFunctionOptimalExp.py'
-    */
+     * Auto-generated via 'PrintFunctionOptimalLog.py' and 'PrintFunctionOptimalExp.py'
+     */
     uint256 private constant OPT_LOG_MAX_VAL = 0x15bf0a8b1457695355fb8ac404e7a79e3;
     uint256 private constant OPT_EXP_MAX_VAL = 0x800000000000000000000000000000000;
 
     /**
-      * Auto-generated via 'PrintFunctionConstructor.py'
-    */
+     * Auto-generated via 'PrintFunctionConstructor.py'
+     */
     uint256[128] private maxExpArray;
+
     constructor() public {
         //  maxExpArray[  0] = 0x6bffffffffffffffffffffffffffffffff;
         //  maxExpArray[  1] = 0x67ffffffffffffffffffffffffffffffff;
@@ -166,19 +167,19 @@ contract BancorFormula {
     }
 
     /**
-      * @dev given a token supply, reserve balance, ratio and a deposit amount (in the reserve token),
-      * calculates the return for a given conversion (in the main token)
-      * 
-      * Formula:
-      * Return = _supply * ((1 + _depositAmount / _reserveBalance) ^ (_reserveRatio / 1000000) - 1)
-      * 
-      * @param _supply              token total supply
-      * @param _reserveBalance      total reserve balance
-      * @param _reserveRatio        reserve ratio, represented in ppm, 1-1000000
-      * @param _depositAmount       deposit amount, in reserve token
-      * 
-      * @return purchase return amount
-    */
+     * @dev given a token supply, reserve balance, ratio and a deposit amount (in the reserve token),
+     * calculates the return for a given conversion (in the main token)
+     *
+     * Formula:
+     * Return = _supply * ((1 + _depositAmount / _reserveBalance) ^ (_reserveRatio / 1000000) - 1)
+     *
+     * @param _supply              token total supply
+     * @param _reserveBalance      total reserve balance
+     * @param _reserveRatio        reserve ratio, represented in ppm, 1-1000000
+     * @param _depositAmount       deposit amount, in reserve token
+     *
+     * @return purchase return amount
+     */
     function calculatePurchaseReturn(
         uint256 _supply,
         uint256 _reserveBalance,
@@ -203,30 +204,25 @@ contract BancorFormula {
         uint256 result;
         uint8 precision;
         uint256 baseN = _depositAmount.add(_reserveBalance);
-        (result, precision) = power(
-            baseN,
-            _reserveBalance,
-            _reserveRatio,
-            MAX_RATIO
-        );
+        (result, precision) = power(baseN, _reserveBalance, _reserveRatio, MAX_RATIO);
         uint256 temp = _supply.mul(result) >> precision;
         return temp - _supply;
     }
 
     /**
-      * @dev given a token supply, reserve balance, ratio and a sell amount (in the main token),
-      * calculates the return for a given conversion (in the reserve token)
-      * 
-      * Formula:
-      * Return = _reserveBalance * (1 - (1 - _sellAmount / _supply) ^ (1000000 / _reserveRatio))
-      * 
-      * @param _supply              token total supply
-      * @param _reserveBalance      total reserve
-      * @param _reserveRatio        constant reserve Ratio, represented in ppm, 1-1000000
-      * @param _sellAmount          sell amount, in the token itself
-      * 
-      * @return sale return amount
-    */
+     * @dev given a token supply, reserve balance, ratio and a sell amount (in the main token),
+     * calculates the return for a given conversion (in the reserve token)
+     *
+     * Formula:
+     * Return = _reserveBalance * (1 - (1 - _sellAmount / _supply) ^ (1000000 / _reserveRatio))
+     *
+     * @param _supply              token total supply
+     * @param _reserveBalance      total reserve
+     * @param _reserveRatio        constant reserve Ratio, represented in ppm, 1-1000000
+     * @param _sellAmount          sell amount, in the token itself
+     *
+     * @return sale return amount
+     */
     function calculateSaleReturn(
         uint256 _supply,
         uint256 _reserveBalance,
@@ -249,8 +245,7 @@ contract BancorFormula {
         if (_sellAmount == _supply) return _reserveBalance;
 
         // special case if the ratio = 100%
-        if (_reserveRatio == MAX_RATIO)
-            return _reserveBalance.mul(_sellAmount) / _supply;
+        if (_reserveRatio == MAX_RATIO) return _reserveBalance.mul(_sellAmount) / _supply;
 
         uint256 result;
         uint8 precision;
@@ -262,21 +257,21 @@ contract BancorFormula {
     }
 
     /**
-      * @dev given two reserve balances/ratios and a sell amount (in the first reserve token),
-      * calculates the return for a conversion from the first reserve token to the second reserve token (in the second reserve token)
-      * note that prior to version 4, you should use 'calculateCrossConnectorReturn' instead
-      * 
-      * Formula:
-      * Return = _toReserveBalance * (1 - (_fromReserveBalance / (_fromReserveBalance + _amount)) ^ (_fromReserveRatio / _toReserveRatio))
-      * 
-      * @param _fromReserveBalance      input reserve balance
-      * @param _fromReserveRatio        input reserve ratio, represented in ppm, 1-1000000
-      * @param _toReserveBalance        output reserve balance
-      * @param _toReserveRatio          output reserve ratio, represented in ppm, 1-1000000
-      * @param _amount                  input reserve amount
-      * 
-      * @return second reserve amount
-    */
+     * @dev given two reserve balances/ratios and a sell amount (in the first reserve token),
+     * calculates the return for a conversion from the first reserve token to the second reserve token (in the second reserve token)
+     * note that prior to version 4, you should use 'calculateCrossConnectorReturn' instead
+     *
+     * Formula:
+     * Return = _toReserveBalance * (1 - (_fromReserveBalance / (_fromReserveBalance + _amount)) ^ (_fromReserveRatio / _toReserveRatio))
+     *
+     * @param _fromReserveBalance      input reserve balance
+     * @param _fromReserveRatio        input reserve ratio, represented in ppm, 1-1000000
+     * @param _toReserveBalance        output reserve balance
+     * @param _toReserveRatio          output reserve ratio, represented in ppm, 1-1000000
+     * @param _amount                  input reserve amount
+     *
+     * @return second reserve amount
+     */
     function calculateCrossReserveReturn(
         uint256 _fromReserveBalance,
         uint32 _fromReserveRatio,
@@ -296,9 +291,7 @@ contract BancorFormula {
 
         // special case for equal ratios
         if (_fromReserveRatio == _toReserveRatio)
-            return
-                _toReserveBalance.mul(_amount) /
-                _fromReserveBalance.add(_amount);
+            return _toReserveBalance.mul(_amount) / _fromReserveBalance.add(_amount);
 
         uint256 result;
         uint8 precision;
@@ -315,19 +308,19 @@ contract BancorFormula {
     }
 
     /**
-      * @dev given a smart token supply, reserve balance, total ratio and an amount of requested smart tokens,
-      * calculates the amount of reserve tokens required for purchasing the given amount of smart tokens
-      * 
-      * Formula:
-      * Return = _reserveBalance * (((_supply + _amount) / _supply) ^ (MAX_RATIO / _totalRatio) - 1)
-      * 
-      * @param _supply              smart token supply
-      * @param _reserveBalance      reserve token balance
-      * @param _totalRatio          total ratio, represented in ppm, 2-2000000
-      * @param _amount              requested amount of smart tokens
-      * 
-      * @return amount of reserve tokens
-    */
+     * @dev given a smart token supply, reserve balance, total ratio and an amount of requested smart tokens,
+     * calculates the amount of reserve tokens required for purchasing the given amount of smart tokens
+     *
+     * Formula:
+     * Return = _reserveBalance * (((_supply + _amount) / _supply) ^ (MAX_RATIO / _totalRatio) - 1)
+     *
+     * @param _supply              smart token supply
+     * @param _reserveBalance      reserve token balance
+     * @param _totalRatio          total ratio, represented in ppm, 2-2000000
+     * @param _amount              requested amount of smart tokens
+     *
+     * @return amount of reserve tokens
+     */
     function calculateFundCost(
         uint256 _supply,
         uint256 _reserveBalance,
@@ -358,19 +351,19 @@ contract BancorFormula {
     }
 
     /**
-      * @dev given a smart token supply, reserve balance, total ratio and an amount of smart tokens to liquidate,
-      * calculates the amount of reserve tokens received for selling the given amount of smart tokens
-      * 
-      * Formula:
-      * Return = _reserveBalance * (1 - ((_supply - _amount) / _supply) ^ (MAX_RATIO / _totalRatio))
-      * 
-      * @param _supply              smart token supply
-      * @param _reserveBalance      reserve token balance
-      * @param _totalRatio          total ratio, represented in ppm, 2-2000000
-      * @param _amount              amount of smart tokens to liquidate
-      * 
-      * @return amount of reserve tokens
-    */
+     * @dev given a smart token supply, reserve balance, total ratio and an amount of smart tokens to liquidate,
+     * calculates the amount of reserve tokens received for selling the given amount of smart tokens
+     *
+     * Formula:
+     * Return = _reserveBalance * (1 - ((_supply - _amount) / _supply) ^ (MAX_RATIO / _totalRatio))
+     *
+     * @param _supply              smart token supply
+     * @param _reserveBalance      reserve token balance
+     * @param _totalRatio          total ratio, represented in ppm, 2-2000000
+     * @param _amount              amount of smart tokens to liquidate
+     *
+     * @return amount of reserve tokens
+     */
     function calculateLiquidateReturn(
         uint256 _supply,
         uint256 _reserveBalance,
@@ -393,8 +386,7 @@ contract BancorFormula {
         if (_amount == _supply) return _reserveBalance;
 
         // special case if the total ratio = 100%
-        if (_totalRatio == MAX_RATIO)
-            return _amount.mul(_reserveBalance) / _supply;
+        if (_totalRatio == MAX_RATIO) return _amount.mul(_reserveBalance) / _supply;
 
         uint256 result;
         uint8 precision;
@@ -406,28 +398,29 @@ contract BancorFormula {
     }
 
     /**
-      * @dev General Description:
-      *     Determine a value of precision.
-      *     Calculate an integer approximation of (_baseN / _baseD) ^ (_expN / _expD) * 2 ^ precision.
-      *     Return the result along with the precision used.
-      * 
-      * Detailed Description:
-      *     Instead of calculating "base ^ exp", we calculate "e ^ (log(base) * exp)".
-      *     The value of "log(base)" is represented with an integer slightly smaller than "log(base) * 2 ^ precision".
-      *     The larger "precision" is, the more accurately this value represents the real value.
-      *     However, the larger "precision" is, the more bits are required in order to store this value.
-      *     And the exponentiation function, which takes "x" and calculates "e ^ x", is limited to a maximum exponent (maximum value of "x").
-      *     This maximum exponent depends on the "precision" used, and it is given by "maxExpArray[precision] >> (MAX_PRECISION - precision)".
-      *     Hence we need to determine the highest precision which can be used for the given input, before calling the exponentiation function.
-      *     This allows us to compute "base ^ exp" with maximum accuracy and without exceeding 256 bits in any of the intermediate computations.
-      *     This functions assumes that "_expN < 2 ^ 256 / log(MAX_NUM - 1)", otherwise the multiplication should be replaced with a "safeMul".
-      *     Since we rely on unsigned-integer arithmetic and "base < 1" ==> "log(base) < 0", this function does not support "_baseN < _baseD".
-    */
-    function power(uint256 _baseN, uint256 _baseD, uint32 _expN, uint32 _expD)
-        internal
-        view
-        returns (uint256, uint8)
-    {
+     * @dev General Description:
+     *     Determine a value of precision.
+     *     Calculate an integer approximation of (_baseN / _baseD) ^ (_expN / _expD) * 2 ^ precision.
+     *     Return the result along with the precision used.
+     *
+     * Detailed Description:
+     *     Instead of calculating "base ^ exp", we calculate "e ^ (log(base) * exp)".
+     *     The value of "log(base)" is represented with an integer slightly smaller than "log(base) * 2 ^ precision".
+     *     The larger "precision" is, the more accurately this value represents the real value.
+     *     However, the larger "precision" is, the more bits are required in order to store this value.
+     *     And the exponentiation function, which takes "x" and calculates "e ^ x", is limited to a maximum exponent (maximum value of "x").
+     *     This maximum exponent depends on the "precision" used, and it is given by "maxExpArray[precision] >> (MAX_PRECISION - precision)".
+     *     Hence we need to determine the highest precision which can be used for the given input, before calling the exponentiation function.
+     *     This allows us to compute "base ^ exp" with maximum accuracy and without exceeding 256 bits in any of the intermediate computations.
+     *     This functions assumes that "_expN < 2 ^ 256 / log(MAX_NUM - 1)", otherwise the multiplication should be replaced with a "safeMul".
+     *     Since we rely on unsigned-integer arithmetic and "base < 1" ==> "log(base) < 0", this function does not support "_baseN < _baseD".
+     */
+    function power(
+        uint256 _baseN,
+        uint256 _baseD,
+        uint32 _expN,
+        uint32 _expD
+    ) internal view returns (uint256, uint8) {
         require(_baseN < MAX_NUM);
 
         uint256 baseLog;
@@ -444,19 +437,16 @@ contract BancorFormula {
         } else {
             uint8 precision = findPositionInMaxExpArray(baseLogTimesExp);
             return (
-                generalExp(
-                    baseLogTimesExp >> (MAX_PRECISION - precision),
-                    precision
-                ),
+                generalExp(baseLogTimesExp >> (MAX_PRECISION - precision), precision),
                 precision
             );
         }
     }
 
     /**
-      * @dev computes log(x / FIXED_1) * FIXED_1.
-      * This functions assumes that "x >= FIXED_1", because the output would be negative otherwise.
-    */
+     * @dev computes log(x / FIXED_1) * FIXED_1.
+     * This functions assumes that "x >= FIXED_1", because the output would be negative otherwise.
+     */
     function generalLog(uint256 x) internal pure returns (uint256) {
         uint256 res = 0;
 
@@ -482,8 +472,8 @@ contract BancorFormula {
     }
 
     /**
-      * @dev computes the largest integer smaller than or equal to the binary logarithm of the input.
-    */
+     * @dev computes the largest integer smaller than or equal to the binary logarithm of the input.
+     */
     function floorLog2(uint256 _n) internal pure returns (uint8) {
         uint8 res = 0;
 
@@ -507,15 +497,11 @@ contract BancorFormula {
     }
 
     /**
-      * @dev the global "maxExpArray" is sorted in descending order, and therefore the following statements are equivalent:
-      * - This function finds the position of [the smallest value in "maxExpArray" larger than or equal to "x"]
-      * - This function finds the highest position of [a value in "maxExpArray" larger than or equal to "x"]
-    */
-    function findPositionInMaxExpArray(uint256 _x)
-        internal
-        view
-        returns (uint8)
-    {
+     * @dev the global "maxExpArray" is sorted in descending order, and therefore the following statements are equivalent:
+     * - This function finds the position of [the smallest value in "maxExpArray" larger than or equal to "x"]
+     * - This function finds the highest position of [a value in "maxExpArray" larger than or equal to "x"]
+     */
+    function findPositionInMaxExpArray(uint256 _x) internal view returns (uint8) {
         uint8 lo = MIN_PRECISION;
         uint8 hi = MAX_PRECISION;
 
@@ -533,17 +519,13 @@ contract BancorFormula {
     }
 
     /**
-      * @dev this function can be auto-generated by the script 'PrintFunctionGeneralExp.py'.
-      * it approximates "e ^ x" via maclaurin summation: "(x^0)/0! + (x^1)/1! + ... + (x^n)/n!".
-      * it returns "e ^ (x / 2 ^ precision) * 2 ^ precision", that is, the result is upshifted for accuracy.
-      * the global "maxExpArray" maps each "precision" to "((maximumExponent + 1) << (MAX_PRECISION - precision)) - 1".
-      * the maximum permitted value for "x" is therefore given by "maxExpArray[precision] >> (MAX_PRECISION - precision)".
-    */
-    function generalExp(uint256 _x, uint8 _precision)
-        internal
-        pure
-        returns (uint256)
-    {
+     * @dev this function can be auto-generated by the script 'PrintFunctionGeneralExp.py'.
+     * it approximates "e ^ x" via maclaurin summation: "(x^0)/0! + (x^1)/1! + ... + (x^n)/n!".
+     * it returns "e ^ (x / 2 ^ precision) * 2 ^ precision", that is, the result is upshifted for accuracy.
+     * the global "maxExpArray" maps each "precision" to "((maximumExponent + 1) << (MAX_PRECISION - precision)) - 1".
+     * the maximum permitted value for "x" is therefore given by "maxExpArray[precision] >> (MAX_PRECISION - precision)".
+     */
+    function generalExp(uint256 _x, uint8 _precision) internal pure returns (uint256) {
         uint256 xi = _x;
         uint256 res = 0;
 
@@ -612,21 +594,20 @@ contract BancorFormula {
         xi = (xi * _x) >> _precision;
         res += xi * 0x0000000000000000000000000000001; // add x^33 * (33! / 33!)
 
-        return
-            res / 0x688589cc0e9505e2f2fee5580000000 + _x + (ONE << _precision); // divide by 33! and then add x^1 / 1! + x^0 / 0!
+        return res / 0x688589cc0e9505e2f2fee5580000000 + _x + (ONE << _precision); // divide by 33! and then add x^1 / 1! + x^0 / 0!
     }
 
     /**
-      * @dev computes log(x / FIXED_1) * FIXED_1
-      * Input range: FIXED_1 <= x <= LOG_EXP_MAX_VAL - 1
-      * Auto-generated via 'PrintFunctionOptimalLog.py'
-      * Detailed description:
-      * - Rewrite the input as a product of natural exponents and a single residual r, such that 1 < r < 2
-      * - The natural logarithm of each (pre-calculated) exponent is the degree of the exponent
-      * - The natural logarithm of r is calculated via Taylor series for log(1 + x), where x = r - 1
-      * - The natural logarithm of the input is calculated by summing up the intermediate results above
-      * - For example: log(250) = log(e^4 * e^1 * e^0.5 * 1.021692859) = 4 + 1 + 0.5 + log(1 + 0.021692859)
-    */
+     * @dev computes log(x / FIXED_1) * FIXED_1
+     * Input range: FIXED_1 <= x <= LOG_EXP_MAX_VAL - 1
+     * Auto-generated via 'PrintFunctionOptimalLog.py'
+     * Detailed description:
+     * - Rewrite the input as a product of natural exponents and a single residual r, such that 1 < r < 2
+     * - The natural logarithm of each (pre-calculated) exponent is the degree of the exponent
+     * - The natural logarithm of r is calculated via Taylor series for log(1 + x), where x = r - 1
+     * - The natural logarithm of the input is calculated by summing up the intermediate results above
+     * - For example: log(250) = log(e^4 * e^1 * e^0.5 * 1.021692859) = 4 + 1 + 0.5 + log(1 + 0.021692859)
+     */
     function optimalLog(uint256 x) internal pure returns (uint256) {
         uint256 res = 0;
 
@@ -705,16 +686,16 @@ contract BancorFormula {
     }
 
     /**
-      * @dev computes e ^ (x / FIXED_1) * FIXED_1
-      * input range: 0 <= x <= OPT_EXP_MAX_VAL - 1
-      * auto-generated via 'PrintFunctionOptimalExp.py'
-      * Detailed description:
-      * - Rewrite the input as a sum of binary exponents and a single residual r, as small as possible
-      * - The exponentiation of each binary exponent is given (pre-calculated)
-      * - The exponentiation of r is calculated via Taylor series for e^x, where x = r
-      * - The exponentiation of the input is calculated by multiplying the intermediate results above
-      * - For example: e^5.521692859 = e^(4 + 1 + 0.5 + 0.021692859) = e^4 * e^1 * e^0.5 * e^0.021692859
-    */
+     * @dev computes e ^ (x / FIXED_1) * FIXED_1
+     * input range: 0 <= x <= OPT_EXP_MAX_VAL - 1
+     * auto-generated via 'PrintFunctionOptimalExp.py'
+     * Detailed description:
+     * - Rewrite the input as a sum of binary exponents and a single residual r, as small as possible
+     * - The exponentiation of each binary exponent is given (pre-calculated)
+     * - The exponentiation of r is calculated via Taylor series for e^x, where x = r
+     * - The exponentiation of the input is calculated by multiplying the intermediate results above
+     * - For example: e^5.521692859 = e^(4 + 1 + 0.5 + 0.021692859) = e^4 * e^1 * e^0.5 * e^0.021692859
+     */
     function optimalExp(uint256 x) internal pure returns (uint256) {
         uint256 res = 0;
 
@@ -795,8 +776,8 @@ contract BancorFormula {
     }
 
     /**
-      * @dev deprecated, backward compatibility
-    */
+     * @dev deprecated, backward compatibility
+     */
     function calculateCrossConnectorReturn(
         uint256 _fromConnectorBalance,
         uint32 _fromConnectorWeight,

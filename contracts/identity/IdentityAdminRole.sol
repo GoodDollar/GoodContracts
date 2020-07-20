@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -41,11 +41,7 @@ contract IdentityAdminRole is Ownable {
      * @param account Address to be added
      * @return true if successful
      */
-    function addIdentityAdmin(address account) 
-        public
-        onlyOwner
-        returns(bool)
-    {
+    function addIdentityAdmin(address account) public onlyOwner returns (bool) {
         _addIdentityAdmin(account);
         return true;
     }
@@ -55,11 +51,7 @@ contract IdentityAdminRole is Ownable {
      * @param account Address to be removed
      * @return true if successful
      */
-    function removeIdentityAdmin(address account) 
-        public
-        onlyOwner
-        returns (bool)
-    {
+    function removeIdentityAdmin(address account) public onlyOwner returns (bool) {
         _removeIdentityAdmin(account);
         return true;
     }

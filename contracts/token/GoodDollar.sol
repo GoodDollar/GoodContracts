@@ -1,9 +1,8 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "../identity/IdentityGuard.sol";
 import "../dao/schemes/FormulaHolder.sol";
 import "./ERC677BridgeToken.sol";
-
 
 /**
  * @title The GoodDollar ERC677 token contract
@@ -70,10 +69,11 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * @param value the amount of tokens to be transferred
      * @return a boolean that indicates if the operation was successful
      */
-    function transferFrom(address from, address to, uint256 value)
-        public
-        returns (bool)
-    {
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) public returns (bool) {
         uint256 bruttoValue = processFees(from, to, value);
         return super.transferFrom(from, to, bruttoValue);
     }
@@ -85,10 +85,11 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * @param data The data to pass to transferAndCall
      * @return a bool indicating if transfer function succeeded
      */
-    function transferAndCall(address to, uint256 value, bytes calldata data)
-        external
-        returns (bool)
-    {
+    function transferAndCall(
+        address to,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bool) {
         uint256 bruttoValue = processFees(msg.sender, to, value);
         return super._transferAndCall(to, bruttoValue, data);
     }
@@ -106,10 +107,7 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
         returns (bool)
     {
         if (cap > 0) {
-            require(
-                totalSupply().add(value) <= cap,
-                "Cannot increase supply beyond cap"
-            );
+            require(totalSupply().add(value) <= cap, "Cannot increase supply beyond cap");
         }
         super._mint(to, value);
         return true;
@@ -176,11 +174,11 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * @return an uint256 that represents
      * the current transaction fees
      */
-    function getFees(uint256 value, address sender, address recipient)
-        public
-        view
-        returns (uint256, bool)
-    {
+    function getFees(
+        uint256 value,
+        address sender,
+        address recipient
+    ) public view returns (uint256, bool) {
         return formula.getTxFees(value, sender, recipient);
     }
 
@@ -199,10 +197,11 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      * @param value The amount to subtract fees from
      * @return an uint256 that represents the given value minus the transactional fees
      */
-    function processFees(address account, address recipient, uint256 value)
-        internal
-        returns (uint256)
-    {
+    function processFees(
+        address account,
+        address recipient,
+        uint256 value
+    ) internal returns (uint256) {
         (uint256 txFees, bool senderPays) = getFees(value, account, recipient);
         if (txFees > 0 && !identity.isDAOContract(msg.sender)) {
             require(

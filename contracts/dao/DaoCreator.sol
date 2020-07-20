@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Controller.sol";
 import "@daostack/arc/contracts/universalSchemes/SchemeRegistrar.sol";
@@ -10,7 +10,6 @@ import "@daostack/infra/contracts/Reputation.sol";
 import "../token/GoodDollar.sol";
 import "../identity/IdentityGuard.sol";
 import "../dao/schemes/FeeFormula.sol";
-
 
 /**
  * @title ControllerCreator for creating a single controller. Taken from @daostack.
@@ -29,7 +28,6 @@ contract ControllerCreatorGoodDollar {
     }
 }
 
-
 /**
  * @title Contract for adding founders to the DAO. Separated from DaoCreator to reduce
  * contract sizes
@@ -37,9 +35,7 @@ contract ControllerCreatorGoodDollar {
 contract AddFoundersGoodDollar {
     ControllerCreatorGoodDollar private controllerCreatorGoodDollar;
 
-    constructor(ControllerCreatorGoodDollar _controllerCreatorGoodDollar)
-        public
-    {
+    constructor(ControllerCreatorGoodDollar _controllerCreatorGoodDollar) public {
         controllerCreatorGoodDollar = _controllerCreatorGoodDollar;
     }
 
@@ -64,15 +60,9 @@ contract AddFoundersGoodDollar {
 
         // Mint reputation for founders:
         for (uint256 i = 0; i < _founders.length; i++) {
-            require(
-                _founders[i] != address(0),
-                "Founder cannot be zero address"
-            );
+            require(_founders[i] != address(0), "Founder cannot be zero address");
             if (_foundersReputationAmount[i] > 0) {
-                nativeReputation.mint(
-                    _founders[i],
-                    _foundersReputationAmount[i]
-                );
+                nativeReputation.mint(_founders[i], _foundersReputationAmount[i]);
             }
         }
         // Create Controller:
@@ -95,7 +85,6 @@ contract AddFoundersGoodDollar {
         return (avatar);
     }
 }
-
 
 /**
  * @title Genesis Scheme that creates organizations. Taken and modified from @daostack.

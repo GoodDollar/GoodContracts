@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
@@ -11,7 +11,6 @@ import "./SchemeGuard.sol";
  * in constructor to identity admins.
  */
 contract AddAdmin is SchemeGuard, IdentityGuard {
-
     Identity public identity;
     address public admin;
 
@@ -24,11 +23,7 @@ contract AddAdmin is SchemeGuard, IdentityGuard {
         Avatar _avatar,
         Identity _identity,
         address _admin
-    )
-        public
-        SchemeGuard(_avatar)
-        IdentityGuard(_identity)
-    {
+    ) public SchemeGuard(_avatar) IdentityGuard(_identity) {
         require(_admin != address(0), "admin cannot be null address");
         identity = _identity;
         admin = _admin;
@@ -43,7 +38,8 @@ contract AddAdmin is SchemeGuard, IdentityGuard {
             address(identity),
             abi.encodeWithSignature("addIdentityAdmin(address)", admin),
             avatar,
-            0);
+            0
+        );
 
         selfdestruct(address(avatar));
     }

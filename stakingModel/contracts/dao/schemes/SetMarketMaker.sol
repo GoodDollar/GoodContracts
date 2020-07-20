@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
@@ -9,7 +9,6 @@ import "../../../../contracts/dao/schemes/SchemeGuard.sol";
  * in reserve contract
  */
 contract SetMarketMaker is SchemeGuard {
-
     address public reserve;
     address public marketMaker;
 
@@ -17,10 +16,7 @@ contract SetMarketMaker is SchemeGuard {
         Avatar _avatar,
         address _reserve,
         address _marketMaker
-    )
-        public
-        SchemeGuard(_avatar)
-    {
+    ) public SchemeGuard(_avatar) {
         require(_marketMaker != address(0), "marketMaker cannot be null address");
         require(_reserve != address(0), "reserve cannot be null address");
         reserve = _reserve;
@@ -32,7 +28,8 @@ contract SetMarketMaker is SchemeGuard {
             reserve,
             abi.encodeWithSignature("setMarketMaker(address)", marketMaker),
             avatar,
-            0);
+            0
+        );
 
         selfdestruct(address(avatar));
     }

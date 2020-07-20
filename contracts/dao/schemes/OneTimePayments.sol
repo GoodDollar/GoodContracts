@@ -1,11 +1,10 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 
 import "./FeelessScheme.sol";
-
 
 /* @title One Time payment scheme
  * Scheme that allows address to deposit tokens for any address to withdraw

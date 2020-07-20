@@ -1,9 +1,8 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "./Identity.sol";
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-
 
 /* @title The IdentityGuard contract
  * @dev Contract containing an identity and

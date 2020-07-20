@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
@@ -9,7 +9,6 @@ import "./SchemeGuard.sol";
 /* @title Scheme responsible for rewarding reputation to addresses.
  */
 contract ReputationReward is IdentityGuard, SchemeGuard {
-
     address public creator;
     uint256 public reputationReward;
 
@@ -22,12 +21,8 @@ contract ReputationReward is IdentityGuard, SchemeGuard {
         Avatar _avatar,
         Identity _identity,
         uint256 _reputationReward
-    )
-        public
-        IdentityGuard(_identity)
-        SchemeGuard(_avatar)
-    {
-        require(_reputationReward > 0, "reputation reward cannot be zero" );
+    ) public IdentityGuard(_identity) SchemeGuard(_avatar) {
+        require(_reputationReward > 0, "reputation reward cannot be zero");
 
         creator = msg.sender;
         reputationReward = _reputationReward;
@@ -46,5 +41,5 @@ contract ReputationReward is IdentityGuard, SchemeGuard {
     {
         controller.mintReputation(reputationReward, _to, address(avatar));
         return true;
-    } 
+    }
 }

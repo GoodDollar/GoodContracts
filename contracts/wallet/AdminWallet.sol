@@ -1,11 +1,10 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "openzeppelin-solidity/contracts/access/Roles.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "../identity/IdentityGuard.sol";
 import "../dao/schemes/SignUpBonus.sol";
-
 
 /* @title Admin wallet contract allowing whitelisting and topping up of
  * addresses

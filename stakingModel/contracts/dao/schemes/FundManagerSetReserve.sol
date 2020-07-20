@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
@@ -9,7 +9,6 @@ import "../../../../contracts/dao/schemes/SchemeGuard.sol";
  * in fundmanager contract
  */
 contract FundManagerSetReserve is SchemeGuard {
-
     address public fundmanager;
     address public reserve;
 
@@ -17,10 +16,7 @@ contract FundManagerSetReserve is SchemeGuard {
         Avatar _avatar,
         address _fundmanager,
         address _reserve
-    )
-        public
-        SchemeGuard(_avatar)
-    {
+    ) public SchemeGuard(_avatar) {
         require(_reserve != address(0), "reserve cannot be null address");
         fundmanager = _fundmanager;
         reserve = _reserve;
@@ -31,7 +27,8 @@ contract FundManagerSetReserve is SchemeGuard {
             fundmanager,
             abi.encodeWithSignature("setReserve(address)", reserve),
             avatar,
-            0);
+            0
+        );
 
         selfdestruct(address(avatar));
     }

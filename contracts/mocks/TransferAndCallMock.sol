@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "../token/ERC677/ERC677Receiver.sol";
 
@@ -8,14 +8,15 @@ contract TransferAndCallMock is ERC677Receiver {
 
     bool public calledFallback = false;
 
-    function onTokenTransfer(address _sender, uint256 _value, bytes calldata _data)
-        external
-        returns(bool)
-    {
+    function onTokenTransfer(
+        address _sender,
+        uint256 _value,
+        bytes calldata _data
+    ) external returns (bool) {
         sender = _sender;
         value = _value;
 
-        (bool res,) = address(this).call(_data);
+        (bool res, ) = address(this).call(_data);
         return res;
     }
 
@@ -24,7 +25,7 @@ contract TransferAndCallMock is ERC677Receiver {
         return true;
     }
 
-    function wasCalled() public view returns(bool) {
+    function wasCalled() public view returns (bool) {
         return calledFallback;
     }
 }

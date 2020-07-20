@@ -1,7 +1,6 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
-
 
 /* @title Abstract contract responsible for ensuring a scheme is only usable within a set period
  */
@@ -50,7 +49,11 @@ contract ActivePeriod {
      * @param _periodEnd The time from when the contract can be ended
      * @param _avatar DAO avatar
      */
-    constructor(uint256 _periodStart, uint256 _periodEnd, Avatar _avatar) public {
+    constructor(
+        uint256 _periodStart,
+        uint256 _periodEnd,
+        Avatar _avatar
+    ) public {
         require(_periodStart < _periodEnd, "start cannot be after nor equal to end");
 
         periodStart = _periodStart;

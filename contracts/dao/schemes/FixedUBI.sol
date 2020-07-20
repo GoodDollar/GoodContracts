@@ -1,8 +1,7 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "./UBI.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-
 
 /* @title Fixed amount-per-day UBI scheme allowing multiple claims
  * during a longer period

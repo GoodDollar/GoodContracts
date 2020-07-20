@@ -1,4 +1,4 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "@daostack/arc/contracts/controller/ControllerInterface.sol";
@@ -9,17 +9,13 @@ import "./SchemeGuard.sol";
 /* @title Scheme for adding a new minter to minters.
  */
 contract AddMinter is SchemeGuard {
-
     address public minter;
 
     /* @dev Constructor. Requires the given address to be a valid address
      * @param _avatar The avatar of the DAO
      * @param _minter address to grant minter rights
      */
-    constructor(Avatar _avatar, address _minter) 
-        public
-        SchemeGuard(_avatar) 
-    {
+    constructor(Avatar _avatar, address _minter) public SchemeGuard(_avatar) {
         require(_minter != address(0), "Minter must not be null");
         minter = _minter;
     }
@@ -33,7 +29,8 @@ contract AddMinter is SchemeGuard {
             address(avatar.nativeToken()),
             abi.encodeWithSignature("addMinter(address)", minter),
             avatar,
-            0);
+            0
+        );
 
         selfdestruct(address(avatar));
     }

@@ -1,8 +1,7 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./FeeFormula.sol";
-
 
 /* @title Contract in charge of setting registered fee formula schemes to contract
  */

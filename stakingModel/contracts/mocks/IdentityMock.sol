@@ -1,7 +1,6 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "../../../contracts/identity/Identity.sol";
-
 
 /**
  * @title A Identity mock. Ignores the scheme registration.

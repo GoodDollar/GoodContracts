@@ -1,10 +1,9 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 
 import "./SchemeGuard.sol";
-
 
 /**
  * @title Fee formula abstract contract
@@ -12,12 +11,12 @@ import "./SchemeGuard.sol";
 contract AbstractFees is SchemeGuard {
     constructor() public SchemeGuard(Avatar(0)) {}
 
-    function getTxFees(uint256 _value, address _sender, address _recipient)
-        public
-        view
-        returns (uint256, bool);
+    function getTxFees(
+        uint256 _value,
+        address _sender,
+        address _recipient
+    ) public view returns (uint256, bool);
 }
-
 
 /**
  * @title Fee formula contract
@@ -46,11 +45,11 @@ contract FeeFormula is AbstractFees {
      *  @param _recipient address receiving.
      * @return the transactional fee for given value
      */
-    function getTxFees(uint256 _value, address _sender, address _recipient)
-        public
-        view
-        returns (uint256, bool)
-    {
+    function getTxFees(
+        uint256 _value,
+        address _sender,
+        address _recipient
+    ) public view returns (uint256, bool) {
         return (_value.div(100).mul(percentage), senderPays);
     }
 }

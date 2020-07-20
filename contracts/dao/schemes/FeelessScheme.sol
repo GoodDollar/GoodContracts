@@ -1,10 +1,9 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "./SchemeGuard.sol";
 import "../../identity/Identity.sol";
 import "../../identity/IdentityGuard.sol";
-
 
 /**
  * @dev Contract for letting scheme add itself to identity

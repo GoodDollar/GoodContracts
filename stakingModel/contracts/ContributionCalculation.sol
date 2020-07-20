@@ -1,11 +1,10 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../../contracts/dao/schemes/SchemeGuard.sol";
 import "./GoodMarketMaker.sol";
 import "./GoodReserveCDai.sol";
 import "../../contracts/DSMath.sol";
-
 
 /* @title Contribution calculation for selling gd tokens
  */
@@ -33,20 +32,17 @@ contract ContributionCalculation is DSMath, SchemeGuard {
         Avatar _avatar,
         uint256 _nom,
         uint256 _denom
-    )
-        public
-        SchemeGuard(_avatar)
-    {
+    ) public SchemeGuard(_avatar) {
         sellContributionRatio = rdiv(_nom, _denom);
     }
 
     /**
-    * @dev Allow the DAO to change the sell contribution rate
-    * it is calculated by _nom/_denom with e27 precision. Emits
-    * that the contribution ratio was updated.
-    * @param _nom the nominator
-    * @param _denom the denominator
-    */
+     * @dev Allow the DAO to change the sell contribution rate
+     * it is calculated by _nom/_denom with e27 precision. Emits
+     * that the contribution ratio was updated.
+     * @param _nom the nominator
+     * @param _denom the denominator
+     */
     function setContributionRatio(uint256 _nom, uint256 _denom) external onlyAvatar {
         require(_denom > 0, "denominator must be above 0");
         sellContributionRatio = rdiv(_nom, _denom);

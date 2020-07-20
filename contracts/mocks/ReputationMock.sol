@@ -1,8 +1,7 @@
-pragma solidity 0.5.4;
+pragma solidity >0.5.4;
 
 import "../dao/schemes/ReputationReward.sol";
 import "../dao/schemes/ActivePeriod.sol";
-
 
 contract ReputationMock is ReputationReward, ActivePeriod {
     constructor(

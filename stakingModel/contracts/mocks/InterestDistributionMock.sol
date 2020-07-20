@@ -12,11 +12,13 @@ contract InterestDistributionMock {
     function stakeCalculation(
       address _staker,
       uint256 _stake, 
-      uint256 _donationPer
+      uint256 _donationPer,
+      uint256 _dailyIntrest,
+      uint256 _grandTotalStaked
       ) 
     public 
     {
-      InterestDistribution.stakeCalculation(interestData, _staker, _stake, _donationPer);
+      InterestDistribution.stakeCalculation(interestData, yieldData, _staker, _stake, _donationPer, _dailyIntrest, _grandTotalStaked);
     }
 
     function withdrawStakeAndInterest(
@@ -34,15 +36,6 @@ contract InterestDistributionMock {
     public 
     {
         InterestDistribution.addAccumulatedYieldPerToken(yieldData, _accumulatedYieldPerToken);
-    }
-
-    function addAvgYieldRatePerToken(
-      address _staker,
-      uint _avgYieldRatePerToken
-      ) 
-    public 
-    {
-        InterestDistribution.addAvgYieldRatePerToken(yieldData, _staker, _avgYieldRatePerToken);
     }
 
     function addInterest(uint256 _interest) public {

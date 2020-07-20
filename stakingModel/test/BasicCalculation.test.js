@@ -56,7 +56,7 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
         .catch(e => e);
 
     await interestDistribution
-        .addAvgYieldRatePerToken(user1, 7)
+        .stakeCalculation(user1, web3.utils.toWei("10", "ether"), 0, 70*1e2, web3.utils.toWei("1000", "ether"))
         .catch(e => e);
 
     let yieldData = await interestDistribution.getYieldData(user1);
@@ -104,7 +104,7 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
   it("Should return G$ interest as 0 if AvgYieldRatePerToken > AccumulatedYieldPerToken", async () => {
 
     await interestDistribution
-        .addAvgYieldRatePerToken(user1, 10)
+        .stakeCalculation(user1, web3.utils.toWei("1", "ether"), 0, 110*1e2, web3.utils.toWei("100", "ether"))
         .catch(e => e);
 
     let yieldData = await interestDistribution.getYieldData(user1);

@@ -41,16 +41,22 @@ library InterestDistribution {
       * @dev Updates InterestData and Staker data while staking.
       * 
       * @param _interestData           Interest data
+      * @param _yieldData              Yield data
       * @param _staker                 Staker's address
       * @param _stake                  Amount of stake
       * @param _donationPer            Percentage will to donate.
+      * @param _dailyIntrest            Withdrawn interest by individual staker so far.
+      * @param _grandTotalStaked        Average yielding rate per token
       *
     */
     function stakeCalculation(
       InterestData storage _interestData, 
+      YieldData storage _yieldData,
       address _staker,
       uint256 _stake, 
-      uint256 _donationPer
+      uint256 _donationPer,
+      uint256 _dailyIntrest,
+      uint256 _grandTotalStaked
       ) 
     internal 
     {
@@ -59,6 +65,8 @@ library InterestDistribution {
       _interestData.stakers[_staker].stakedToken = currentStake.add(_stake);
       _interestData.stakers[_staker].weightedStake = (_interestData.stakers[_staker].weightedStake.mul(currentStake).add(_stake.mul(uint(100).sub(_donationPer)))).div(_interestData.stakers[_staker].stakedToken);
       _interestData.stakers[_staker].lastStake = block.number;
+      uint _accumulatedYieldPerToken = getAccumulatedYieldPerToken(_dailyIntrest, _grandTotalStaked);
+      _yieldData.avgYieldRatePerToken[_staker] = _yieldData.avgYieldRatePerToken[_staker].add(getAvgYieldRatePerToken(_accumulatedYieldPerToken, _stake, _donationPer, _interestData.stakers[_staker].stakedToken));
     }
 
     /**
@@ -94,24 +102,6 @@ library InterestDistribution {
     internal 
     {
       _yieldData.accumulatedYieldPerToken = _yieldData.accumulatedYieldPerToken.add(_accumulatedYieldPerToken);
-    }
-
-    /**
-      * @dev Updates Avgrage Yield Rate Per Token or staker.
-      * 
-      * @param _yieldData                   Yield data
-      * @param _staker                      Staker's address
-      * @param _avgYieldRatePerToken        Average yielding rate per token for staker
-      *
-    */
-    function addAvgYieldRatePerToken(
-      YieldData storage _yieldData, 
-      address _staker,
-      uint _avgYieldRatePerToken
-      ) 
-    internal 
-    {
-      _yieldData.avgYieldRatePerToken[_staker] = _yieldData.avgYieldRatePerToken[_staker].add(_avgYieldRatePerToken);
     }
 
     /**

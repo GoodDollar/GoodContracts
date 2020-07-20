@@ -184,7 +184,7 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
         return
             uint32(
                 rmul(
-                    uint256(ratio) * 1e21, // expand to e27 precision
+                    uint256(ratio).mul(1e21), // expand to e27 precision
                     reserveRatioDailyExpansion
                 )
                     .div(1e21) // return to e6 precision

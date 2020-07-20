@@ -166,7 +166,7 @@ contract UBIScheme is AbstractUBI {
      * since start of contract.
      */
     function setDay() public {
-        currentDay = (now.sub(periodStart)) / 1 days;
+        currentDay = (now.sub(periodStart)).div(1 days);
     }
 
     /**
@@ -204,7 +204,7 @@ contract UBIScheme is AbstractUBI {
     function isActiveUser(address _account) public view returns (bool) {
         uint256 lastClaimed = lastClaimed[_account];
         if (isNotNewUser(_account)) {
-            uint256 daysSinceLastClaim = now.sub(lastClaimed) / 1 days;
+            uint256 daysSinceLastClaim = now.sub(lastClaimed).div(1 days);
             if (daysSinceLastClaim < maxInactiveDays) {
                 // active user
                 return true;
@@ -266,7 +266,7 @@ contract UBIScheme is AbstractUBI {
 
         // current day has already been updated which means
         // that the dailyUbi has been updated
-        if (currentDay == (now.sub(periodStart)) / 1 days) {
+        if (currentDay == (now.sub(periodStart)).div(1 days)) {
             return hasClaimed(msg.sender) ? 0 : dailyUbi;
         }
         // the current day has not updated yet

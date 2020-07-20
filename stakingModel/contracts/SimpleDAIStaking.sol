@@ -207,7 +207,7 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         uint256 er = cDai.exchangeRateStored();
 
         //TODO: why 1e10? cDai is e8 so we should convert it to e28 like exchange rate
-        uint256 daiBalance = rmul(cDai.balanceOf(address(this)) * 1e10, er).div(10);
+        uint256 daiBalance = rmul(cDai.balanceOf(address(this)).mul(1e10), er).div(10);
         return daiBalance;
     }
 
@@ -233,10 +233,10 @@ contract SimpleDAIStaking is DSMath, Pausable, FeelessScheme {
         uint256 daiGains = daiWorth.sub(totalStaked);
         // mul by 1e10 to equalize precision otherwise since exchangerate
         // is very big, dividing by it would result in 0.
-        uint256 cdaiGains = rdiv(daiGains * 1e10, er);
+        uint256 cdaiGains = rdiv(daiGains.mul(1e10), er);
         // gets right most bits not covered by precision of cdai which is
         // only 8 decimals while RAY is 27
-        uint256 precisionLossCDaiRay = cdaiGains % 1e19;
+        uint256 precisionLossCDaiRay = cdaiGains.mod(1e19);
         // lower back to 8 decimals
         cdaiGains = cdaiGains.div(1e19);
         //div by 1e10 to get results in dai precision 1e18

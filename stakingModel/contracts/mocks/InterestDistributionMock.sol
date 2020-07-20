@@ -5,24 +5,28 @@ import "../InterestDistribution.sol";
 
 contract InterestDistributionMock {
 
-    InterestDistribution.YieldData public yieldData;
+    InterestDistribution.YieldData yieldData;
 
-    // function stakeCalculation(
-    //   uint256 _stake, 
-    //   uint256 _donationPer
-    //   ) 
-    // public 
-    // {
+    InterestDistribution.InterestData interestData;
 
-    // }
+    function stakeCalculation(
+      address _staker,
+      uint256 _stake, 
+      uint256 _donationPer
+      ) 
+    public 
+    {
+      InterestDistribution.stakeCalculation(interestData, _staker, _stake, _donationPer);
+    }
 
-    // function withdrawStakeAndInterest(
-    //   uint256 _amount
-    //   ) 
-    // public 
-    // {
-
-    // }
+    function withdrawStakeAndInterest(
+      address _staker,
+      uint256 _amount
+      ) 
+    public 
+    {
+      InterestDistribution.withdrawStakeAndInterest(interestData, _staker, _amount);
+    }
 
     function addAccumulatedYieldPerToken(
       uint _accumulatedYieldPerToken
@@ -41,11 +45,25 @@ contract InterestDistributionMock {
         InterestDistribution.addAvgYieldRatePerToken(yieldData, _staker, _avgYieldRatePerToken);
     }
 
-    // function addInterest(uint256 _iterest) public {
-    // }
+    function addInterest(uint256 _interest) public {
+      InterestDistribution.addInterest(interestData, _interest);
+    }
 
-    // function withdrawIntrest(uint256 _amount) public {
-    // }
+    function withdrawIntrest(address _staker, uint256 _amount) public {
+      InterestDistribution.withdrawIntrest(interestData.stakers[_staker], _amount);
+    }
+
+    function getYieldData(address _staker) public view returns(uint256,uint256)
+    {
+
+      return (yieldData.accumulatedYieldPerToken, yieldData.avgYieldRatePerToken[_staker]);
+    }
+
+    function getStakerData(address _staker) public view returns(uint256, uint256, uint256, uint256)
+    {
+
+      return (interestData.stakers[_staker].stakedToken, interestData.stakers[_staker].weightedStake, interestData.stakers[_staker].lastStake, interestData.stakers[_staker].withdrawnToDate);
+    }
 
     function calculateGDInterest(
       address _staker,

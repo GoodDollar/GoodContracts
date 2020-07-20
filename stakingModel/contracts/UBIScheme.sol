@@ -258,7 +258,7 @@ contract UBIScheme is AbstractUBI {
      */
     function checkEntitlement() public view requireActive returns (uint256) {
         // new user or inactive should recieve the first claim reward
-        if (!isNotNewUser(msg.sender) || !isActiveUser(msg.sender)) {
+        if (!isNotNewUser(msg.sender) || fishedUsersAddresses[msg.sender]) {
             return firstClaimPool.claimAmount();
         }
 

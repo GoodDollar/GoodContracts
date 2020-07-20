@@ -11,6 +11,7 @@ library InterestDistribution {
     struct InterestData {
       uint grandTotalStaked;
       uint interestAccrued;
+      mapping(address => Staker) stakers;
     }
 
     /**
@@ -40,43 +41,43 @@ library InterestDistribution {
       * @dev Updates InterestData and Staker data while staking.
       * 
       * @param _interestData           Interest data
-      * @param _staker                 Staker's data
+      * @param _staker                 Staker's address
       * @param _stake                  Amount of stake
       * @param _donationPer            Percentage will to donate.
       *
     */
     function stakeCalculation(
       InterestData storage _interestData, 
-      Staker storage _staker, 
+      address _staker,
       uint256 _stake, 
       uint256 _donationPer
       ) 
     internal 
     {
       _interestData.grandTotalStaked = _interestData.grandTotalStaked.add(_stake);
-      uint currentStake = _staker.stakedToken;
-      _staker.stakedToken = currentStake.add(_stake);
-      _staker.weightedStake = (_staker.weightedStake.mul(currentStake).add(_stake.mul(uint(100).sub(_donationPer)))).div(_staker.stakedToken);
-      _staker.lastStake = block.number;
+      uint currentStake = _interestData.stakers[_staker].stakedToken;
+      _interestData.stakers[_staker].stakedToken = currentStake.add(_stake);
+      _interestData.stakers[_staker].weightedStake = (_interestData.stakers[_staker].weightedStake.mul(currentStake).add(_stake.mul(uint(100).sub(_donationPer)))).div(_interestData.stakers[_staker].stakedToken);
+      _interestData.stakers[_staker].lastStake = block.number;
     }
 
     /**
       * @dev Updates InterestData and Staker data while withdrawing stake.
       * 
       * @param _interestData           Interest data
-      * @param _staker                 Staker data
+      * @param _staker                 Staker address
       * @param _amount                 Amount of stake to withdraw
       *
     */
     function withdrawStakeAndInterest(
       InterestData storage _interestData, 
-      Staker storage _staker, 
+      address _staker, 
       uint256 _amount
       ) 
     internal 
     {
       _interestData.grandTotalStaked = _interestData.grandTotalStaked.sub(_amount);
-      _staker.stakedToken = _staker.stakedToken.sub(_amount);
+      _interestData.stakers[_staker].stakedToken = _interestData.stakers[_staker].stakedToken.sub(_amount);
     }
 
     /**

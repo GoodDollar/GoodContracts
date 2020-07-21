@@ -37,8 +37,8 @@ library InterestDistribution {
       * @param _staker                 Staker's address
       * @param _stake                  Amount of stake
       * @param _donationPer            Percentage will to donate.
-      * @param _dailyIntrest           Withdrawn interest by individual staker so far.
-      * @param _grandTotalStaked       Average yielding rate per token
+      * @param _dailyIntrest           Newly accrued interest.
+      * @param _grandTotalStaked       Total staked by all stakers.
       *
     */
     function stakeCalculation(
@@ -86,7 +86,7 @@ library InterestDistribution {
       * 
       * @param _interestData           Interest data
       * @param _interest               Newly accrued interest
-      * @param _grandTotalStaked       Average yielding rate per token
+      * @param _grandTotalStaked       Total staked by all stakers.
       *
     */
     function addInterest(InterestData storage _interestData, uint256 _interest, uint256 _grandTotalStaked) internal {
@@ -156,7 +156,7 @@ library InterestDistribution {
       * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
       * 
       * @param _dailyIntrest            Newly accrued interest (Precision same as G$ = 2)
-      * @param _grandTotalStaked        Average yielding rate per token
+      * @param _grandTotalStaked        Total staked by all stakers. (Precision points = 18)
       * 
       * @return  new yield since last update with same precision points as G$(2).
     */

@@ -5,8 +5,6 @@ import "../InterestDistribution.sol";
 
 contract InterestDistributionMock {
 
-    InterestDistribution.YieldData yieldData;
-
     InterestDistribution.InterestData interestData;
 
     function stakeCalculation(
@@ -18,7 +16,7 @@ contract InterestDistributionMock {
       ) 
     public 
     {
-      InterestDistribution.stakeCalculation(interestData, yieldData, _staker, _stake, _donationPer, _dailyIntrest, _grandTotalStaked);
+      InterestDistribution.stakeCalculation(interestData, _staker, _stake, _donationPer, _dailyIntrest, _grandTotalStaked);
     }
 
     function withdrawStakeAndInterest(
@@ -30,16 +28,8 @@ contract InterestDistributionMock {
       InterestDistribution.withdrawStakeAndInterest(interestData, _staker, _amount);
     }
 
-    function addAccumulatedYieldPerToken(
-      uint _accumulatedYieldPerToken
-      ) 
-    public 
-    {
-        InterestDistribution.addAccumulatedYieldPerToken(yieldData, _accumulatedYieldPerToken);
-    }
-
-    function addInterest(uint256 _interest) public {
-      InterestDistribution.addInterest(interestData, _interest);
+    function addInterest(uint256 _interest, uint256 _grandTotalStaked) public {
+      InterestDistribution.addInterest(interestData, _interest, _grandTotalStaked);
     }
 
     function withdrawIntrest(address _staker, uint256 _amount) public {
@@ -49,7 +39,7 @@ contract InterestDistributionMock {
     function getYieldData(address _staker) public view returns(uint256,uint256)
     {
 
-      return (yieldData.accumulatedYieldPerToken, yieldData.avgYieldRatePerToken[_staker]);
+      return (interestData.accumulatedYieldPerToken, interestData.stakers[_staker].avgYieldRatePerToken);
     }
 
     function getStakerData(address _staker) public view returns(uint256, uint256, uint256, uint256)
@@ -70,7 +60,7 @@ contract InterestDistributionMock {
       uint256 _earnedGDInterest
     ) 
     {
-      return InterestDistribution.calculateGDInterest(_staker, _withdrawnToDate, yieldData, _totalStaked);
+      return InterestDistribution.calculateGDInterest(_withdrawnToDate, _staker, interestData, _totalStaked);
      
     }
 

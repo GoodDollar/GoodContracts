@@ -66,7 +66,7 @@ contract("InterestDistribution - Basic calculations", ([user1, S1, S2, S3]) => {
         .catch(e => e);
 
       await interestDistribution
-        .addAccumulatedYieldPerToken(await interestDistribution.getAccumulatedYieldPerToken(0, web3.utils.toWei("10000", "ether")))
+        .addInterest(0, web3.utils.toWei("10000", "ether"))
         .catch(e => e);
 
       let earnedGDInterestS1 = await interestDistribution.calculateGDInterest(S1, 0, web3.utils.toWei("10000", "ether"));
@@ -90,7 +90,7 @@ contract("InterestDistribution - Basic calculations", ([user1, S1, S2, S3]) => {
         .catch(e => e);
 
       await interestDistribution
-        .addAccumulatedYieldPerToken(await interestDistribution.getAccumulatedYieldPerToken(220, web3.utils.toWei("70000", "ether")))
+        .addInterest(220, web3.utils.toWei("70000", "ether"))
         .catch(e => e);
 
       earnedGDInterestS1 = await interestDistribution.calculateGDInterest(S1, 0, web3.utils.toWei("10000", "ether"));

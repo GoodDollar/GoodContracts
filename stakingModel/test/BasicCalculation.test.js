@@ -26,6 +26,11 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
 
       let accumulatedYieldPerToken = await interestDistribution.getAccumulatedYieldPerToken(10*1e2, web3.utils.toWei("100", "ether"));
       
+      /**
+      * Formula:
+      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
+      * (10*1e2)/(100) = 10.
+      */
       expect(accumulatedYieldPerToken.toString()).to.be.equal("10");
   });
 
@@ -44,23 +49,46 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       */
 
       let avgYieldRatePerToken = await interestDistribution.getAvgYieldRatePerToken(10, web3.utils.toWei("10", "ether"), 30, web3.utils.toWei("20", "ether"));
-      
+
+      /**
+      * Formula:
+      * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
+      * (10*10*1e18*(100-30)%)/(20*1e18) = (100*70%)/20 =  3.5 = 3
+      */      
       expect(avgYieldRatePerToken.toString()).to.be.equal("3");
   });
 
   it("Set Accumulated Yield Per Token and Avg Yield Rate Per Token", async () => {
 
 
+    /**
+      * Daily interest = 100
+      * Grand total stake = 10 x 10^18
+      */
     await interestDistribution
-        .addAccumulatedYieldPerToken(10)
+        .addInterest(100, web3.utils.toWei("10", "ether"))
         .catch(e => e);
 
+    /**
+      * Stake = 10 x 10^18
+      * Donation = 0%
+      * Daily interest = 70 x 1e2
+      * Grand total stake = 1000 x 10^18
+      */
     await interestDistribution
         .stakeCalculation(user1, web3.utils.toWei("10", "ether"), 0, 70*1e2, web3.utils.toWei("1000", "ether"))
         .catch(e => e);
 
     let yieldData = await interestDistribution.getYieldData(user1);
     
+
+    /**
+      * Formula:
+      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
+      * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
+      * (1*1e2)/(10) = 10.
+      * ((70*1e2/1000)*10*1e18*(100-0)%)/(10*1e18) = (7*100%)/20 =  7
+      */
     expect(yieldData[0].toString()).to.be.equal("10");
     expect(yieldData[1].toString()).to.be.equal("7");
   });
@@ -80,6 +108,11 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
 
       let earnedGDInterest = await interestDistribution.calculateGDInterest(user1, web3.utils.toWei("10", "ether"), web3.utils.toWei("20", "ether"));
       
+      /**
+      * Formula: 
+      * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
+      * Max[20 * (10 - 7) - 10, 0] = Max[, 0] = Max[20 * 3 - 10, 0] = Max[50, 0] = 50 = 2 points presicion 5000
+      */
       expect(earnedGDInterest.toString()).to.be.equal("5000");
   });
 
@@ -98,17 +131,36 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
 
       let earnedGDInterest = await interestDistribution.calculateGDInterest(user1, web3.utils.toWei("70", "ether"), web3.utils.toWei("20", "ether"));
       
+
+      /**
+      * Formula: 
+      * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
+      * interest(60) < WithdrawnToDate(70), Hence output is 0.
+      */
       expect(earnedGDInterest.toString()).to.be.equal(web3.utils.toWei("0"));
   });
 
   it("Should return G$ interest as 0 if AvgYieldRatePerToken > AccumulatedYieldPerToken", async () => {
 
+    /**
+      * Stake = 1 x 10^18
+      * Donation = 0%
+      * Daily interest = 110 x 1e2
+      * Grand total stake = 100 x 10^18
+      */
     await interestDistribution
         .stakeCalculation(user1, web3.utils.toWei("1", "ether"), 0, 110*1e2, web3.utils.toWei("100", "ether"))
         .catch(e => e);
 
     let yieldData = await interestDistribution.getYieldData(user1);
     
+
+    /**
+      * Formula:
+      * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
+      * No new Tx so no change in value = 10.
+      * 7 + ((110*1e2/100)*1*1e18*(100-0)%)/(11*1e18) = 7 + (110*100%)/11 = (7 + 10) = 17
+      */
     expect(yieldData[0].toString()).to.be.equal("10");
     expect(yieldData[1].toString()).to.be.equal("17");
 
@@ -125,6 +177,11 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
 
       let earnedGDInterest = await interestDistribution.calculateGDInterest(user1, web3.utils.toWei("10", "ether"), web3.utils.toWei("20", "ether"));
       
+      /**
+      * Formula: 
+      * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
+      * AccumulatedYieldPerToken(10) < AvgYieldRatePerToken(17), Hence output is 0.
+      */
       expect(earnedGDInterest.toString()).to.be.equal(web3.utils.toWei("0"));
   });
 });

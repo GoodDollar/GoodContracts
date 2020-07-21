@@ -155,10 +155,10 @@ library InterestDistribution {
       * Formula:
       * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
       * 
-      * @param _dailyIntrest            Newly accrued interest
+      * @param _dailyIntrest            Newly accrued interest (Precision same as G$ = 2)
       * @param _grandTotalStaked        Average yielding rate per token
       * 
-      * @return  new yield since last update.
+      * @return  new yield since last update with same precision points as G$(2).
     */
     function getAccumulatedYieldPerToken(uint256 _dailyIntrest, uint256 _grandTotalStaked) internal view returns(uint256) {
       return _dailyIntrest.mul(DECIMAL1e18).div(_grandTotalStaked);
@@ -171,12 +171,12 @@ library InterestDistribution {
       * Formula:
       * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
       * 
-      * @param _accumulatedYieldPerToken    Total yielding amount per token
+      * @param _accumulatedYieldPerToken    Total yielding amount per token (Precision same as G$ = 2)
       * @param _staking                     Amount staked
       * @param _donationPer                 Percentage pledged to donate.
       * @param _totalStaked                 Total staked by individual staker.
       * 
-      * @return  increase in yielding rate since last update.
+      * @return  increase in yielding rate since last update with same precision points as G$(2).
     */
     function getAvgYieldRatePerToken(
       uint256 _accumulatedYieldPerToken, 

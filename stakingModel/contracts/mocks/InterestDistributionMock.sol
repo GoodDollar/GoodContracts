@@ -11,12 +11,11 @@ contract InterestDistributionMock {
       address _staker,
       uint256 _stake, 
       uint256 _donationPer,
-      uint256 _dailyIntrest,
-      uint256 _grandTotalStaked
+      uint256 _dailyIntrest
       ) 
     public 
     {
-      InterestDistribution.stakeCalculation(interestData, _staker, _stake, _donationPer, _dailyIntrest, _grandTotalStaked);
+      InterestDistribution.stakeCalculation(interestData, _staker, _stake, _donationPer, _dailyIntrest);
     }
 
     function withdrawStakeAndInterest(
@@ -28,18 +27,18 @@ contract InterestDistributionMock {
       InterestDistribution.withdrawStakeAndInterest(interestData, _staker, _amount);
     }
 
-    function addInterest(uint256 _interest, uint256 _grandTotalStaked) public {
-      InterestDistribution.addInterest(interestData, _interest, _grandTotalStaked);
+    function updateInterest(uint256 _interest) public {
+      InterestDistribution.updateInterest(interestData, _interest);
     }
 
-    function withdrawIntrest(address _staker, uint256 _amount) public {
-      InterestDistribution.withdrawIntrest(interestData.stakers[_staker], _amount);
+    function updateWithdrawnInterest(address _staker) public {
+      InterestDistribution.updateWithdrawnInterest(interestData, _staker);
     }
 
     function getYieldData(address _staker) public view returns(uint256,uint256)
     {
 
-      return (interestData.accumulatedYieldPerToken, interestData.stakers[_staker].avgYieldRatePerToken);
+      return (interestData.globalYieldPerToken, interestData.stakers[_staker].avgYieldRatePerToken);
     }
 
     function getStakerData(address _staker) public view returns(uint256, uint256, uint256, uint256)
@@ -60,24 +59,28 @@ contract InterestDistributionMock {
       uint256 _earnedGDInterest
     ) 
     {
-      return InterestDistribution.calculateGDInterest(_withdrawnToDate, _staker, interestData, _totalStaked);
+      return InterestDistribution.calculateGDInterest(_withdrawnToDate, _staker, interestData);
      
     }
 
-    function getAccumulatedYieldPerToken(uint256 _dailyIntrest, uint256 _grandTotalStaked) public view returns(uint256) {
-        return InterestDistribution.getAccumulatedYieldPerToken(_dailyIntrest, _grandTotalStaked);
+    function getGlobalYieldPerToken(uint256 _dailyIntrest, uint256 _grandTotalStaked) public view returns(uint256) {
+        return InterestDistribution.getGlobalYieldPerToken(_dailyIntrest, _grandTotalStaked);
     }
 
-    function getAvgYieldRatePerToken(
-      uint256 _accumulatedYieldPerToken, 
-      uint256 _staking, uint256 _donationPer, 
-      uint256 _totalStaked
+    function updateAvgYieldRatePerToken(
+      address _staker,
+      uint256 _globalYieldPerToken, 
+      uint256 _staking, uint256 _donationPer
       ) 
-    public 
-    view 
-    returns(uint256) 
+    public
     {
-        return InterestDistribution.getAvgYieldRatePerToken(_accumulatedYieldPerToken, _staking, _donationPer, _totalStaked);
+        InterestDistribution.updateAvgYieldRatePerToken(interestData.stakers[_staker], _globalYieldPerToken, _staking, _donationPer);
+    }
+
+    function resetRecord(address _staker) public {
+
+      interestData = InterestDistribution.InterestData(0,0,0);
+      interestData.stakers[_staker] = InterestDistribution.Staker(0,0,0,0,0);
     }
     
 }

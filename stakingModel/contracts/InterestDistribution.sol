@@ -51,13 +51,13 @@ library InterestDistribution {
     {
       Staker storage _stakerData = _interestData.stakers[_staker];
       // Should not update avgYieldRatePerToken for 1st stake as his avg rate should be 0. 
-      if (_interestData.globalTotalStaked > 0) {
+      if (_interestData.globalTotalStaked > 0 && _stakerData.stakedToken > 0) {
         // Calculating _globalYieldPerToken before updating globalTotalStaked
         // because the staker still has no part in the interest generated today.
         // Calculating globalYieldPerToken before the actual update of 
         // it in the next daily interest accumulation.
         uint _globalYieldPerToken = getGlobalYieldPerToken(_interest, _interestData.globalTotalStaked);
-        updateAvgYieldRatePerToken(_stakerData, _globalYieldPerToken, _stake, _donationPer);
+        updateAvgYieldRatePerToken(_stakerData, _interestData.globalYieldPerToken.add(_globalYieldPerToken), _stake, _donationPer);
       }
       uint currentStake = _stakerData.stakedToken;
       _stakerData.stakedToken = currentStake.add(_stake);
@@ -109,8 +109,8 @@ library InterestDistribution {
     */
     function updateWithdrawnInterest(InterestData storage _interestData, address _staker) internal {
       Staker storage stakerData = _interestData.stakers[_staker];
-      uint256 amount = calculateGDInterest(stakerData.withdrawnToDate, _staker, _interestData);
-      stakerData.withdrawnToDate.add(amount);
+      uint256 amount = calculateGDInterest(_staker, _interestData);
+      stakerData.withdrawnToDate = stakerData.withdrawnToDate.add(amount);
     }
 
     /**
@@ -119,14 +119,12 @@ library InterestDistribution {
       * Formula:
       * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
       * 
-      * @param _withdrawnToDate            Withdrawn interest by individual staker so far.
       * @param _staker                     Staker's address
       * @param _interestData               Interest Data
       * 
       * @return _earnedGDInterest The amount of G$ credit for the staker 
     */
     function calculateGDInterest(
-      uint256 _withdrawnToDate,
       address _staker,
       InterestData storage _interestData
     ) 
@@ -139,19 +137,25 @@ library InterestDistribution {
     {
       
       Staker storage stakerData = _interestData.stakers[_staker];
+      uint256 _withdrawnToDate = stakerData.withdrawnToDate;
       // will lead to -ve value
-      if(stakerData.avgYieldRatePerToken > _interestData.globalYieldPerToken)
+      if(stakerData.avgYieldRatePerToken > _interestData.globalYieldPerToken) {
         return 0;
+      }
         
       uint intermediateInterest =stakerData.stakedToken.mul(_interestData.globalYieldPerToken.sub(stakerData.avgYieldRatePerToken));
-      // will lead to -ve value
-      if(_withdrawnToDate > intermediateInterest)
-        return 0;
-
-      _earnedGDInterest = intermediateInterest.sub(_withdrawnToDate);
-
+      
       // To reduce it to 2 precision of G$
-      return _earnedGDInterest.div(10**16);
+      _earnedGDInterest = intermediateInterest.div(10**16);
+
+      // will lead to -ve value
+      if(_withdrawnToDate > _earnedGDInterest) {
+        return 0;
+      }
+      
+      _earnedGDInterest = _earnedGDInterest.sub(_withdrawnToDate);
+
+      return _earnedGDInterest;
     }
 
     /**

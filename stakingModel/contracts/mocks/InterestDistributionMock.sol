@@ -48,9 +48,7 @@ contract InterestDistributionMock {
     }
 
     function calculateGDInterest(
-      address _staker,
-      uint256 _withdrawnToDate,
-      uint256 _totalStaked
+      address _staker
     ) 
     public 
     view 
@@ -59,7 +57,7 @@ contract InterestDistributionMock {
       uint256 _earnedGDInterest
     ) 
     {
-      return InterestDistribution.calculateGDInterest(_withdrawnToDate, _staker, interestData);
+      return InterestDistribution.calculateGDInterest(_staker, interestData);
      
     }
 

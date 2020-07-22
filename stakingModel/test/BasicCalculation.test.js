@@ -34,6 +34,49 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       expect(accumulatedYieldPerToken.toString()).to.be.equal("10");
   });
 
+  it("Should return correct Accumulated Yield Per Token when Token's decimal is less than 18", async () => {
+
+    /**
+      * Formula:
+      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
+      * consider :
+      * AccumulatedYieldPerToken(P) = 0
+      * Daily Interest = 10 x 1e2
+      * GrandTotalStaked = 100 x 1e10
+      * output = 10
+      */
+
+      let accumulatedYieldPerToken = await interestDistribution.mockGetGlobalYieldPerToken(10*1e2, (100*1e10).toString(), 10);
+      
+      /**
+      * Formula:
+      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
+      * (10*1e2)/(100) = 10.
+      */
+      expect(accumulatedYieldPerToken.toString()).to.be.equal("10");
+  });
+
+  it("Should return correct Accumulated Yield Per Token when Token's decimal is more than 18", async () => {
+
+    /**
+      * Formula:
+      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
+      * consider :
+      * AccumulatedYieldPerToken(P) = 0
+      * Daily Interest = 10 x 1e2
+      * GrandTotalStaked = 100 x 1e20
+      * output = 10
+      */
+      let accumulatedYieldPerToken = await interestDistribution.mockGetGlobalYieldPerToken(10*1e2, web3.utils.toWei("10000", "ether"), 20);
+
+      /**
+      * Formula:
+      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
+      * (10*1e2)/(100) = 10.
+      */
+      expect(accumulatedYieldPerToken.toString()).to.be.equal("10");
+  });
+
   it("Should return correct Avg Yield Rate Per Token", async () => {
 
       // 1st stake will not affect AvgYieldRatePerToken because globalTotalStaked and totalStaked both are 0.

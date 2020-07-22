@@ -1,6 +1,5 @@
 pragma solidity 0.5.4;
 
-import "../../../contracts/token/ERC677/ERC677Receiver.sol";
 import "../InterestDistribution.sol";
 
 contract InterestDistributionMock {
@@ -11,11 +10,12 @@ contract InterestDistributionMock {
       address _staker,
       uint256 _stake, 
       uint256 _donationPer,
-      uint256 _dailyIntrest
+      uint256 _iTokenRate,
+      uint256 _iTokenHoldings
       ) 
     public 
     {
-      InterestDistribution.stakeCalculation(interestData, _staker, _stake, _donationPer, _dailyIntrest);
+      InterestDistribution.stakeCalculation(interestData, _staker, _stake, _donationPer, _iTokenRate, _iTokenHoldings);
     }
 
     function withdrawStakeAndInterest(
@@ -25,10 +25,6 @@ contract InterestDistributionMock {
     public 
     {
       InterestDistribution.withdrawStakeAndInterest(interestData, _staker, _amount);
-    }
-
-    function updateInterest(uint256 _interest) public {
-      InterestDistribution.updateInterest(interestData, _interest);
     }
 
     function updateWithdrawnInterest(address _staker) public {
@@ -61,8 +57,8 @@ contract InterestDistributionMock {
      
     }
 
-    function getGlobalYieldPerToken(uint256 _dailyIntrest, uint256 _grandTotalStaked) public view returns(uint256) {
-        return InterestDistribution.getGlobalYieldPerToken(_dailyIntrest, _grandTotalStaked);
+    function updateGlobalYieldPerToken(uint256 iTokenRate, uint256 iTokenHoldings) public {
+        InterestDistribution.updateGlobalYieldPerToken(interestData, iTokenRate, iTokenHoldings);
     }
 
     function updateAvgYieldRatePerToken(
@@ -73,12 +69,6 @@ contract InterestDistributionMock {
     public
     {
         InterestDistribution.updateAvgYieldRatePerToken(interestData.stakers[_staker], _globalYieldPerToken, _staking, _donationPer);
-    }
-
-    function resetRecord(address _staker) public {
-
-      interestData = InterestDistribution.InterestData(0,0,0);
-      interestData.stakers[_staker] = InterestDistribution.Staker(0,0,0,0,0);
     }
     
 }

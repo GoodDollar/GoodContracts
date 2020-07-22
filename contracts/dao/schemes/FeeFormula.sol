@@ -50,6 +50,6 @@ contract FeeFormula is AbstractFees {
         address _sender,
         address _recipient
     ) public view returns (uint256, bool) {
-        return (_value.div(100).mul(percentage), senderPays);
+        return (_value.mul(percentage).div(100), senderPays);
     }
 }

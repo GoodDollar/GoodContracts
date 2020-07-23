@@ -12,6 +12,7 @@ library InterestDistribution {
       uint256 globalTotalStaked;
       uint256 globalYieldPerToken;
       uint256 lastInterestTokenRate;   // Stored with 18 precision point ie., 1 ==> 1e18
+      uint256 globalTotalweightedStaked;
       mapping(address => Staker) stakers;
     }
 
@@ -62,7 +63,9 @@ library InterestDistribution {
       }
       uint currentStake = _stakerData.stakedToken;
       _stakerData.stakedToken = currentStake.add(_stake);
+      uint currentWeightedStake = _stakerData.weightedStake; 
       _stakerData.weightedStake = (_stakerData.weightedStake.mul(currentStake).add(_stake.mul(uint(100).sub(_donationPer)))).div(_stakerData.stakedToken);
+      _interestData.globalTotalweightedStaked = _interestData.globalTotalweightedStaked.add(_stakerData.weightedStake).sub(currentWeightedStake);
       _stakerData.lastStake = block.number;
       _interestData.globalTotalStaked = _interestData.globalTotalStaked.add(_stake);
       

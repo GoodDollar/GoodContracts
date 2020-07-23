@@ -9,9 +9,9 @@ library InterestDistribution {
      * It contains total amount of tokens staked and total amount of interest generated.
      */    
     struct InterestData {
-      uint globalTotalStaked;
-      uint globalYieldPerToken;
-      uint lastTokenRate;
+      uint256 globalTotalStaked;
+      uint256 globalYieldPerToken;
+      uint256 lastInterestTokenRate;   // Stored with 18 precision point ie., 1 ==> 1e18
       mapping(address => Staker) stakers;
     }
 
@@ -21,7 +21,7 @@ library InterestDistribution {
      */
     struct Staker {
         uint256 stakedToken;
-        uint256 weightedStake; // stored with 2 precision points ie., 0.82 => 82
+        uint256 weightedStake; // stored with 2 precision points ie., 0.82 ==> 82
         uint256 lastStake;
         uint256 withdrawnToDate;
         uint256 avgYieldRatePerToken;
@@ -148,34 +148,32 @@ library InterestDistribution {
     }
 
     /**
-      * @dev Calculates new accrued amount per token 
-      * since last update without updating global data.
+      * @dev Calculates and updates new accrued amount per token since last update.
       * 
       * Formula:
-      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
+      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + [(InterestTokenRate - LastInterestTokenRate) x ITokenHoldings)]/GlobalTotalStake.
       * 
       * @param _interestData           Interest Data
-      * @param _iTokenRate             Interest token rate.
-      * @param _iTokenHoldings         Interest token balance of staking contract.
+      * @param _iTokenRate             Interest token rate in 10^18 format.
+      * @param _iTokenHoldings         Interest token balance of staking contract in same format as Token.
       * 
       * @return  new yield since last update with same precision points as G$(2).
     */
     function updateGlobalYieldPerToken(InterestData storage _interestData, uint256 _iTokenRate, uint256 _iTokenHoldings) internal
     {
-     _interestData.globalYieldPerToken = _interestData.globalYieldPerToken.add(_iTokenRate.sub(_interestData.lastTokenRate).mul(_iTokenHoldings).div(_interestData.globalTotalStaked));
-     _interestData.lastTokenRate = _iTokenRate;
+     _interestData.globalYieldPerToken = _interestData.globalYieldPerToken.add(_iTokenRate.sub(_interestData.lastInterestTokenRate).mul(_iTokenHoldings).mul(100).div(_interestData.globalTotalStaked).div(DECIMAL1e18));
+     _interestData.lastInterestTokenRate = _iTokenRate;
     }
 
     /**
-      * @dev Calculates increase in yielding rate per token 
-      * since last update without updating global data.
+      * @dev Calculates and updates increase in yielding rate per token since last update.
       * 
       * Formula:
       * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
       *
       * @param _stakerData                  Staker's Data
       * @param _globalYieldPerToken         Total yielding amount per token (Precision same as G$ = 2)
-      * @param _staking                     Amount staked
+      * @param _staking                     Amount staked in the same format as Token.
       * @param _donationPer                 Percentage pledged to donate.
       * 
       * @return  increase in yielding rate since last update with same precision points as G$(2).

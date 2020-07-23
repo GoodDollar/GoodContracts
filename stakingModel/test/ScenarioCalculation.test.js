@@ -27,10 +27,10 @@ contract("InterestDistribution - Basic calculations", ([user1, S1, S2, S3]) => {
       */
 
       await interestDistribution
-        .stakeCalculation(user1, web3.utils.toWei("100", "ether"), 20, 0, web3.utils.toWei("100", "ether"))
+        .stakeCalculation(user1, web3.utils.toWei("100", "ether"), 20, web3.utils.toWei("1", "ether"), 0)
         .catch(e => e);
       await interestDistribution
-        .stakeCalculation(user1, web3.utils.toWei("200", "ether"), 30, 0, web3.utils.toWei("300", "ether"))
+        .stakeCalculation(user1, web3.utils.toWei("200", "ether"), 30, web3.utils.toWei("1", "ether"), web3.utils.toWei("100", "ether"))
         .catch(e => e);
 
       let stakerData = await interestDistribution.getStakerData(user1);
@@ -49,7 +49,7 @@ contract("InterestDistribution - Basic calculations", ([user1, S1, S2, S3]) => {
       expect(stakerData[1].toString()).to.be.equal("73");
 
       await interestDistribution
-        .stakeCalculation(user1, web3.utils.toWei("100", "ether"), 20, 0, web3.utils.toWei("500", "ether"))
+        .stakeCalculation(user1, web3.utils.toWei("100", "ether"), 20, web3.utils.toWei("1", "ether"), web3.utils.toWei("190", "ether"))
         .catch(e => e);
 
       stakerData = await interestDistribution.getStakerData(user1);
@@ -59,57 +59,57 @@ contract("InterestDistribution - Basic calculations", ([user1, S1, S2, S3]) => {
       expect(stakerData[1].toString()).to.be.equal("75");
   });
 
-  it("Simulate scenario 2", async () => {
+  // it("Simulate scenario 2", async () => {
 
-      await interestDistribution
-        .stakeCalculation(S1, web3.utils.toWei("10000", "ether"), 0, 0, web3.utils.toWei("10000", "ether"))
-        .catch(e => e);
+  //     await interestDistribution
+  //       .stakeCalculation(S1, web3.utils.toWei("10000", "ether"), 0, 0, web3.utils.toWei("10000", "ether"))
+  //       .catch(e => e);
 
-      await interestDistribution
-        .addInterest(0, web3.utils.toWei("10000", "ether"))
-        .catch(e => e);
+  //     await interestDistribution
+  //       .updateInterest(0, web3.utils.toWei("10000", "ether"))
+  //       .catch(e => e);
 
-      let earnedGDInterestS1 = await interestDistribution.calculateGDInterest(S1, 0, web3.utils.toWei("10000", "ether"));
+  //     let earnedGDInterestS1 = await interestDistribution.calculateGDInterest(S1, 0, web3.utils.toWei("10000", "ether"));
       
-      // expect(earnedGDInterestS1.toString()).to.be.equal("0");
-      console.log("==>",earnedGDInterestS1);
+  //     // expect(earnedGDInterestS1.toString()).to.be.equal("0");
+  //     console.log("==>",earnedGDInterestS1);
 
-      await interestDistribution
-        .stakeCalculation(S2, web3.utils.toWei("20000", "ether"), 50, 0, web3.utils.toWei("30000", "ether"))
-        .catch(e => e);
+  //     await interestDistribution
+  //       .stakeCalculation(S2, web3.utils.toWei("20000", "ether"), 50, 0, web3.utils.toWei("30000", "ether"))
+  //       .catch(e => e);
 
-      earnedGDInterestS1 = await interestDistribution.calculateGDInterest(S1, 0, web3.utils.toWei("10000", "ether"));
-      let earnedGDInterestS2 = await interestDistribution.calculateGDInterest(S2, 0, web3.utils.toWei("20000", "ether"));
-      console.log("==>",earnedGDInterestS1);
-      console.log("==>",earnedGDInterestS2);
-      // expect(earnedGDInterestS1.toString()).to.be.equal("0");
-      // expect(earnedGDInterestS2.toString()).to.be.equal("0");
+  //     earnedGDInterestS1 = await interestDistribution.calculateGDInterest(S1, 0, web3.utils.toWei("10000", "ether"));
+  //     let earnedGDInterestS2 = await interestDistribution.calculateGDInterest(S2, 0, web3.utils.toWei("20000", "ether"));
+  //     console.log("==>",earnedGDInterestS1);
+  //     console.log("==>",earnedGDInterestS2);
+  //     // expect(earnedGDInterestS1.toString()).to.be.equal("0");
+  //     // expect(earnedGDInterestS2.toString()).to.be.equal("0");
 
-      await interestDistribution
-        .stakeCalculation(S3, web3.utils.toWei("40000", "ether"), 0, 220, web3.utils.toWei("70000", "ether"))
-        .catch(e => e);
+  //     await interestDistribution
+  //       .stakeCalculation(S3, web3.utils.toWei("40000", "ether"), 0, 220, web3.utils.toWei("70000", "ether"))
+  //       .catch(e => e);
 
-      await interestDistribution
-        .addInterest(220, web3.utils.toWei("70000", "ether"))
-        .catch(e => e);
+  //     await interestDistribution
+  //       .updateInterest(220, web3.utils.toWei("70000", "ether"))
+  //       .catch(e => e);
 
-      earnedGDInterestS1 = await interestDistribution.calculateGDInterest(S1, 0, web3.utils.toWei("10000", "ether"));
-      earnedGDInterestS2 = await interestDistribution.calculateGDInterest(S2, 0, web3.utils.toWei("20000", "ether"));
-      let earnedGDInterestS3 = await interestDistribution.calculateGDInterest(S2, 0, web3.utils.toWei("40000", "ether"));
+  //     earnedGDInterestS1 = await interestDistribution.calculateGDInterest(S1, 0, web3.utils.toWei("10000", "ether"));
+  //     earnedGDInterestS2 = await interestDistribution.calculateGDInterest(S2, 0, web3.utils.toWei("20000", "ether"));
+  //     let earnedGDInterestS3 = await interestDistribution.calculateGDInterest(S2, 0, web3.utils.toWei("40000", "ether"));
         
 
-      console.log("==>",earnedGDInterestS1);
-      console.log("==>",earnedGDInterestS2);
-      console.log("==>",earnedGDInterestS3);
-      // expect(earnedGDInterestS1.toString()).to.be.equal("220");
-      // expect(earnedGDInterestS2.toString()).to.be.equal("0");
-      // expect(earnedGDInterestS3.toString()).to.be.equal("0");
+  //     console.log("==>",earnedGDInterestS1);
+  //     console.log("==>",earnedGDInterestS2);
+  //     console.log("==>",earnedGDInterestS3);
+  //     // expect(earnedGDInterestS1.toString()).to.be.equal("220");
+  //     // expect(earnedGDInterestS2.toString()).to.be.equal("0");
+  //     // expect(earnedGDInterestS3.toString()).to.be.equal("0");
 
-      // stakerData = await interestDistribution.getStakerData(user1);
+  //     // stakerData = await interestDistribution.getStakerData(user1);
       
-      // // total stake will rise to 290 and weighted stake should be 75
-      // expect(stakerData[0].toString()).to.be.equal(web3.utils.toWei("290", "ether"));
-      // expect(stakerData[1].toString()).to.be.equal("75");
-  });
+  //     // // total stake will rise to 290 and weighted stake should be 75
+  //     // expect(stakerData[0].toString()).to.be.equal(web3.utils.toWei("290", "ether"));
+  //     // expect(stakerData[1].toString()).to.be.equal("75");
+  // });
 
 });

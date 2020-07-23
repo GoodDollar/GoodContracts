@@ -6,6 +6,13 @@ contract InterestDistributionMock {
 
     InterestDistribution.InterestData interestData;
 
+    constructor() public {
+
+      interestData.lastInterestTokenRate = 10 ** 18;
+
+    }
+
+
     function stakeCalculation(
       address _staker,
       uint256 _stake, 
@@ -41,6 +48,12 @@ contract InterestDistributionMock {
     {
 
       return (interestData.stakers[_staker].stakedToken, interestData.stakers[_staker].weightedStake, interestData.stakers[_staker].lastStake, interestData.stakers[_staker].withdrawnToDate);
+    }
+
+    function getInterestData() public view returns(uint256, uint256, uint256)
+    {
+
+      return (interestData.globalTotalStaked, interestData.globalYieldPerToken, interestData.lastInterestTokenRate);
     }
 
     function calculateGDInterest(

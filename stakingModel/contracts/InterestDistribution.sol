@@ -53,14 +53,15 @@ library InterestDistribution {
     internal 
     {
       Staker storage _stakerData = _interestData.stakers[_staker];
-      // Should not update avgYieldRatePerToken and globalYieldPerToken for 1st stake as his avg rate should be 0. 
-      if (_interestData.globalTotalStaked > 0 && _stakerData.stakedToken > 0) {
-        // Calculating _globalYieldPerToken before updating globalTotalStaked
-        // because the staker still has no part in the interest generated today.
-        // Updating globalYieldPerToken for every stake.
-        updateGlobalYieldPerToken(_interestData, _iTokenRate, _iTokenHoldings);
+      
+      // Calculating _globalYieldPerToken before updating globalTotalStaked
+      // because the staker still has no part in the interest generated today.
+      // Updating globalYieldPerToken for every stake.
+      updateGlobalYieldPerToken(_interestData, _iTokenRate, _iTokenHoldings);
+      if(_stakerData.stakedToken > 0){
         updateAvgYieldRatePerToken(_stakerData, _interestData.globalYieldPerToken, _stake, _donationPer);
       }
+      
       uint currentStake = _stakerData.stakedToken;
       _stakerData.stakedToken = currentStake.add(_stake);
       uint currentWeightedStake = _stakerData.weightedStake; 
@@ -164,7 +165,11 @@ library InterestDistribution {
     */
     function updateGlobalYieldPerToken(InterestData storage _interestData, uint256 _iTokenRate, uint256 _iTokenHoldings) internal
     {
-     _interestData.globalYieldPerToken = _interestData.globalYieldPerToken.add(_iTokenRate.sub(_interestData.lastInterestTokenRate).mul(_iTokenHoldings).mul(100).div(_interestData.globalTotalStaked).div(DECIMAL1e18));
+      if(_interestData.globalTotalStaked > 0) {
+
+        _interestData.globalYieldPerToken = _interestData.globalYieldPerToken.add(_iTokenRate.sub(_interestData.lastInterestTokenRate).mul(_iTokenHoldings).mul(100).div(_interestData.globalTotalStaked).div(DECIMAL1e18));
+      
+      }
      _interestData.lastInterestTokenRate = _iTokenRate;
     }
 

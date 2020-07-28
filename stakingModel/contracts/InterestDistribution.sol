@@ -186,8 +186,8 @@ library InterestDistribution {
      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
      *
      * @param _interestData             Interest Data
-     * @param _blockGDInterest          Interest earned in G$  (after donations)
-     * @param _blockInteretTokenEarned  Interest token earned in exchange for _blockGDInterest (before donations)
+     * @param _blockGDInterest          Interest earned in G$ in  exchange for _blockInteretTokenEarned (after donations)
+     * @param _blockInteretTokenEarned  Interest token earned (before donations)
      *
      * @return  new yield since last update with same precision points as G$(2).
      */

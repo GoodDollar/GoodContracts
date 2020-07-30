@@ -40,9 +40,10 @@ library InterestDistribution {
     // Updating globalGDYieldPerToken for every stake.
     modifier requireUpdate(InterestData memory _interestData) {
         require(
-            _interestData.globalGDYieldPerTokenUpdated == block.number,
+            _interestData.globalGDYieldPerTokenUpdatedBlock == block.number,
             "must call updateGlobalGDYieldPerTokenUpdated before staking operations"
         );
+        _;
     }
 
     /**
@@ -81,7 +82,7 @@ library InterestDistribution {
 
         _interestData.globalTotalEffectiveStake = _interestData
             .globalTotalEffectiveStake
-            .add(_stakerData.totalEffectiveStake);
+            .add(effectiveStake);
 
         _stakerData.lastStake = block.number;
         _interestData.globalTotalStaked = _interestData.globalTotalStaked.add(_stake);
@@ -100,6 +101,9 @@ library InterestDistribution {
         address _staker,
         uint256 _amount
     ) internal requireUpdate(_interestData) returns (uint256) {
+
+        Staker storage _stakerData = _interestData.stakers[_staker];
+        
         //earned gd must be fully withdrawn on any stake withdraw
         uint256 gdInterestEarned = withdrawGDInterest(_interestData, _staker);
 
@@ -115,7 +119,6 @@ library InterestDistribution {
             .sub(avgEffectivePerStake);
 
         _interestData.globalTotalStaked = _interestData.globalTotalStaked.sub(_amount);
-        Staker storage _stakerData = _interestData.stakers[_staker];
         _stakerData.totalStaked = _stakerData.totalStaked.sub(_amount);
 
         return gdInterestEarned;
@@ -157,24 +160,18 @@ library InterestDistribution {
     {
         Staker storage stakerData = _interestData.stakers[_staker];
         uint256 _withdrawnToDate = stakerData.withdrawnToDate;
+
+        uint256 intermediateInterest = stakerData.totalEffectiveStake.mul(_interestData.globalGDYieldPerToken);
+
+        uint256 intermediateVal = _withdrawnToDate.mul(DECIMAL1e27).add(stakerData.avgGDYieldRatePerToken);
+        
         // will lead to -ve value
-        if (stakerData.avgGDYieldRatePerToken > _interestData.globalGDYieldPerToken) {
+        if (intermediateVal > intermediateInterest) {
             return 0;
         }
-
-        uint256 intermediateInterest = stakerData.totalEffectiveStake.mul(
-            _interestData.globalGDYieldPerToken.sub(stakerData.avgGDYieldRatePerToken)
-        );
 
         // To reduce it to 2 precision of G$, we originally multiplied globalGDYieldPerToken by DECIMAL1e27
-        _earnedGDInterest = intermediateInterest.div(DECIMAL1e27);
-
-        // will lead to -ve value
-        if (_withdrawnToDate > _earnedGDInterest) {
-            return 0;
-        }
-
-        _earnedGDInterest = _earnedGDInterest.sub(_withdrawnToDate);
+        _earnedGDInterest = (intermediateInterest.sub(intermediateVal)).div(DECIMAL1e27);
 
         return _earnedGDInterest;
     }
@@ -186,8 +183,8 @@ library InterestDistribution {
      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
      *
      * @param _interestData             Interest Data
-     * @param _blockGDInterest          Interest earned in G$ in  exchange for _blockInteretTokenEarned (after donations)
-     * @param _blockInteretTokenEarned  Interest token earned (before donations)
+     * @param _blockGDInterest          Interest earned in G$ in  exchange for _blockInterestTokenEarned (after donations)
+     * @param _blockInterestTokenEarned  Interest token earned (before donations)
      *
      * @return  new yield since last update with same precision points as G$(2).
      */
@@ -220,7 +217,7 @@ library InterestDistribution {
      *
      * @param _stakerData                  Staker's Data
      * @param _globalGDYieldPerToken       Total yielding amount per token (Precision same as G$ = 2)
-     * @param _effectiveStaking            Amount staked after donation
+     * @param _effectiveStake              Amount staked after donation
      *
      * @return  increase in yielding rate since last update with same precision points as G$(2).
      */
@@ -230,9 +227,7 @@ library InterestDistribution {
         uint256 _effectiveStake
     ) internal {
         _stakerData.avgGDYieldRatePerToken = _stakerData.avgGDYieldRatePerToken.add(
-            _globalGDYieldPerToken.mul(_effectiveStake).div(
-                _stakerData.totalEffectiveStake
-            )
+            _globalGDYieldPerToken.mul(_effectiveStake)
         );
     }
 }

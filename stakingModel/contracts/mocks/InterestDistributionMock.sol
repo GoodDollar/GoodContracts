@@ -9,43 +9,50 @@ contract InterestDistributionMock {
     function stake(
       address _staker,
       uint256 _stake, 
-      uint256 _donationPer
+      uint256 _donationPer,
+      uint256 _blockGDInterest,
+      uint256 _blockInterestTokenEarned
       ) 
     public 
     {
+      updateGlobalGDYieldPerToken(_blockGDInterest, _blockInterestTokenEarned);
       InterestDistribution.stake(interestData, _staker, _stake, _donationPer);
     }
 
     function withdrawStakeAndInterest(
       address _staker,
-      uint256 _amount
+      uint256 _amount,
+      uint256 _blockGDInterest,
+      uint256 _blockInterestTokenEarned
       ) 
     public 
     {
+      updateGlobalGDYieldPerToken(_blockGDInterest, _blockInterestTokenEarned);
       InterestDistribution.withdrawStakeAndInterest(interestData, _staker, _amount);
     }
 
-    function withdrawGDInterest(address _staker) public {
+    function withdrawGDInterest(address _staker, uint256 _blockGDInterest, uint256 _blockInterestTokenEarned) public {
+      updateGlobalGDYieldPerToken(_blockGDInterest, _blockInterestTokenEarned);
       InterestDistribution.withdrawGDInterest(interestData, _staker);
     }
 
-    // function getYieldData(address _staker) public view returns(uint256,uint256)
-    // {
+    function getYieldData(address _staker) public view returns(uint256,uint256)
+    {
 
-    //   return (interestData.globalYieldPerToken, interestData.stakers[_staker].avgYieldRatePerToken);
-    // }
+      return (interestData.globalGDYieldPerToken, interestData.stakers[_staker].gdYieldRate);
+    }
 
-    // function getStakerData(address _staker) public view returns(uint256, uint256, uint256, uint256)
-    // {
+    function getStakerData(address _staker) public view returns(uint256, uint256, uint256, uint256)
+    {
 
-    //   return (interestData.stakers[_staker].stakedToken, interestData.stakers[_staker].weightedStake, interestData.stakers[_staker].lastStake, interestData.stakers[_staker].withdrawnToDate);
-    // }
+      return (interestData.stakers[_staker].totalStaked, interestData.stakers[_staker].totalEffectiveStake, interestData.stakers[_staker].lastStake, interestData.stakers[_staker].withdrawnToDate);
+    }
 
-    // function getInterestData() public view returns(uint256, uint256, uint256)
-    // {
+    function getInterestData() public view returns(uint256, uint256, uint256, uint256, uint256, uint256)
+    {
 
-    //   return (interestData.globalTotalStaked, interestData.globalYieldPerToken, interestData.lastInterestTokenRate);
-    // }
+      return (interestData.globalTotalStaked, interestData.globalGDYieldPerToken, interestData.globalTotalEffectiveStake, interestData.gdInterestEarnedToDate, interestData.interestTokenEarnedToDate, interestData.globalGDYieldPerTokenUpdatedBlock);
+    }
 
     function calculateGDInterest(
       address _staker
@@ -65,14 +72,14 @@ contract InterestDistributionMock {
         InterestDistribution.updateGlobalGDYieldPerToken(interestData, _blockGDInterest, _blockInterestTokenEarned);
     }
 
-    function updateAvgGDYieldRatePerToken(
+    function updateGDYieldRate(
       address _staker,
       uint256 _globalGDYieldPerToken,
       uint256 _effectiveStake
       ) 
     public
     {
-        InterestDistribution.updateAvgGDYieldRatePerToken(interestData.stakers[_staker], _globalGDYieldPerToken, _effectiveStake);
+        InterestDistribution.updateGDYieldRate(interestData.stakers[_staker], _globalGDYieldPerToken, _effectiveStake);
     }
     
 }

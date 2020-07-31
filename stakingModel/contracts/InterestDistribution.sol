@@ -25,14 +25,13 @@ library InterestDistribution {
      */
     struct Staker {
         uint256 totalStaked;
-        uint256 totalEffectiveStake; // stake after donation, stored with 2 precision points ie., 0.82 ==> 82
+        uint256 totalEffectiveStake; // stake after donation
         uint256 lastStake;
         uint256 withdrawnToDate;
-        uint256 avgGDYieldRatePerToken; //
+        uint256 gdYieldRate; 
     }
 
-    // 10^18
-    uint256 constant DECIMAL1e18 = 10**18;
+    // 10^27
     uint256 constant DECIMAL1e27 = 10**27;
 
     // Calculating updateGlobalGDYieldPerTokenUpdated is required before each action
@@ -74,7 +73,7 @@ library InterestDistribution {
             effectiveStake
         );
 
-        updateAvgGDYieldRatePerToken(
+        updateGDYieldRate(
             _stakerData,
             _interestData.globalGDYieldPerToken,
             effectiveStake
@@ -146,7 +145,7 @@ library InterestDistribution {
      * @dev Calculates GD Interest for staker for their stake.
      *
      * Formula:
-     * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
+     * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (AvgYieldRatePerDAI + WithdrawnToDate), 0]
      *
      * @param _staker                     Staker's address
      * @param _interestData               Interest Data
@@ -163,7 +162,7 @@ library InterestDistribution {
 
         uint256 intermediateInterest = stakerData.totalEffectiveStake.mul(_interestData.globalGDYieldPerToken);
 
-        uint256 intermediateVal = _withdrawnToDate.mul(DECIMAL1e27).add(stakerData.avgGDYieldRatePerToken);
+        uint256 intermediateVal = _withdrawnToDate.mul(DECIMAL1e27).add(stakerData.gdYieldRate);
         
         // will lead to -ve value
         if (intermediateVal > intermediateInterest) {
@@ -182,8 +181,8 @@ library InterestDistribution {
      * Formula:
      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
      *
-     * @param _interestData             Interest Data
-     * @param _blockGDInterest          Interest earned in G$ in  exchange for _blockInterestTokenEarned (after donations)
+     * @param _interestData              Interest Data
+     * @param _blockGDInterest           Interest earned in G$ in  exchange for _blockInterestTokenEarned (after donations)
      * @param _blockInterestTokenEarned  Interest token earned (before donations)
      *
      * @return  new yield since last update with same precision points as G$(2).
@@ -193,6 +192,8 @@ library InterestDistribution {
         uint256 _blockGDInterest,
         uint256 _blockInterestTokenEarned
     ) internal {
+      if(_interestData.globalTotalEffectiveStake == 0)
+        return;
         _interestData.globalGDYieldPerToken = _interestData.globalGDYieldPerToken.add(
             _blockGDInterest
                 .mul(DECIMAL1e27) //increase precision of G$
@@ -210,10 +211,10 @@ library InterestDistribution {
     }
 
     /**
-     * @dev Calculates and updates the yield rate in which the staker has entered
-     * a staker may stake multiple times, so we calculate his average rate his earning will be calculated based on GlobalGDYieldRate - AvgGDYieldRate
+     * @dev Calculates and updates the GD yield rate in which the staker has entered
+     * a staker may stake multiple times, so we calculate his cumulative rate his earning will be calculated based on GlobalGDYieldRate - GDYieldRate
      * Formula:
-     * AvgGDYieldRatePerToken = [(AvgGDYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
+     * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
      *
      * @param _stakerData                  Staker's Data
      * @param _globalGDYieldPerToken       Total yielding amount per token (Precision same as G$ = 2)
@@ -221,12 +222,12 @@ library InterestDistribution {
      *
      * @return  increase in yielding rate since last update with same precision points as G$(2).
      */
-    function updateAvgGDYieldRatePerToken(
+    function updateGDYieldRate(
         Staker storage _stakerData,
         uint256 _globalGDYieldPerToken,
         uint256 _effectiveStake
     ) internal {
-        _stakerData.avgGDYieldRatePerToken = _stakerData.avgGDYieldRatePerToken.add(
+        _stakerData.gdYieldRate = _stakerData.gdYieldRate.add(
             _globalGDYieldPerToken.mul(_effectiveStake)
         );
     }

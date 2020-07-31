@@ -31,6 +31,8 @@ library InterestDistribution {
         uint256 gdYieldRate; 
     }
 
+    // 10^18
+    uint256 constant DECIMAL1e18 = 10**18;
     // 10^27
     uint256 constant DECIMAL1e27 = 10**27;
 
@@ -145,7 +147,7 @@ library InterestDistribution {
      * @dev Calculates GD Interest for staker for their stake.
      *
      * Formula:
-     * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (AvgYieldRatePerDAI + WithdrawnToDate), 0]
+     * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (GDYieldRate + WithdrawnToDate), 0]
      *
      * @param _staker                     Staker's address
      * @param _interestData               Interest Data
@@ -160,7 +162,7 @@ library InterestDistribution {
         Staker storage stakerData = _interestData.stakers[_staker];
         uint256 _withdrawnToDate = stakerData.withdrawnToDate;
 
-        uint256 intermediateInterest = stakerData.totalEffectiveStake.mul(_interestData.globalGDYieldPerToken);
+        uint256 intermediateInterest = stakerData.totalEffectiveStake.mul(_interestData.globalGDYieldPerToken).div(DECIMAL1e18);
 
         uint256 intermediateVal = _withdrawnToDate.mul(DECIMAL1e27).add(stakerData.gdYieldRate);
         
@@ -170,7 +172,7 @@ library InterestDistribution {
         }
 
         // To reduce it to 2 precision of G$, we originally multiplied globalGDYieldPerToken by DECIMAL1e27
-        _earnedGDInterest = (intermediateInterest.sub(intermediateVal)).div(DECIMAL1e27);
+        _earnedGDInterest = (intermediateInterest.sub(intermediateVal)).mul(100).div(DECIMAL1e27);
 
         return _earnedGDInterest;
     }
@@ -192,22 +194,22 @@ library InterestDistribution {
         uint256 _blockGDInterest,
         uint256 _blockInterestTokenEarned
     ) internal {
+
+      //mark that it was updated
+      _interestData.globalGDYieldPerTokenUpdatedBlock = block.number;
       if(_interestData.globalTotalEffectiveStake == 0)
         return;
-        _interestData.globalGDYieldPerToken = _interestData.globalGDYieldPerToken.add(
-            _blockGDInterest
-                .mul(DECIMAL1e27) //increase precision of G$
-                .div(_interestData.globalTotalEffectiveStake) //earnings are after donations so we divide by effective stake
-        );
-        _interestData.interestTokenEarnedToDate = _interestData
-            .interestTokenEarnedToDate
-            .add(_blockInterestTokenEarned);
-        _interestData.gdInterestEarnedToDate = _interestData.gdInterestEarnedToDate.add(
-            _blockGDInterest
-        );
-
-        //mark that it was updated
-        _interestData.globalGDYieldPerTokenUpdatedBlock = block.number;
+      _interestData.globalGDYieldPerToken = _interestData.globalGDYieldPerToken.add(
+          _blockGDInterest
+              .mul(DECIMAL1e27) //increase precision of G$
+              .div(_interestData.globalTotalEffectiveStake) //earnings are after donations so we divide by effective stake
+      );
+      _interestData.interestTokenEarnedToDate = _interestData
+          .interestTokenEarnedToDate
+          .add(_blockInterestTokenEarned);
+      _interestData.gdInterestEarnedToDate = _interestData.gdInterestEarnedToDate.add(
+          _blockGDInterest
+      );
     }
 
     /**
@@ -228,7 +230,7 @@ library InterestDistribution {
         uint256 _effectiveStake
     ) internal {
         _stakerData.gdYieldRate = _stakerData.gdYieldRate.add(
-            _globalGDYieldPerToken.mul(_effectiveStake)
+            _globalGDYieldPerToken.mul(_effectiveStake).div(DECIMAL1e18)
         );
     }
 }

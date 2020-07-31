@@ -74,12 +74,11 @@ contract InterestDistributionMock {
 
     function updateGDYieldRate(
       address _staker,
-      uint256 _globalGDYieldPerToken,
       uint256 _effectiveStake
       ) 
     public
     {
-        InterestDistribution.updateGDYieldRate(interestData.stakers[_staker], _globalGDYieldPerToken, _effectiveStake);
+        InterestDistribution.updateGDYieldRate(interestData.stakers[_staker], interestData.globalGDYieldPerToken, _effectiveStake);
     }
     
 }

@@ -10,7 +10,8 @@ require("dotenv").load();
 
 const PrivateKeyProvider = require("truffle-hdwallet-provider-privkey");
 const HDWalletProvider = require("truffle-hdwallet-provider");
-
+const SafeHDWalletProvider = require("truffle-safe-hdwallet-provider");
+const HttpProvider = require("web3-providers-http");
 const mnemonic = process.env.MNEMONIC;
 const privateKey = process.env.PRIVATE_KEY;
 
@@ -18,9 +19,10 @@ const infura_api = process.env.INFURA_API;
 const alchemy_key = process.env.ALCHEMY_KEY;
 
 const admin_mnemonic = process.env.ADMIN_MNEMONIC;
+const admin_password = process.env.ADMIN_PASSWORD;
 
 const ropsten_settings = {
-  provider: function() {
+  provider: function () {
     return new HDWalletProvider(
       mnemonic,
       "https://eth-ropsten.alchemyapi.io/v2/" + alchemy_key,
@@ -44,7 +46,7 @@ module.exports = {
 
   networks: {
     develop: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(mnemonic, "http://localhost:9545/", 0, 10);
       },
       // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
@@ -83,25 +85,9 @@ module.exports = {
       gas: 0xfffffffffff,
       gasPrice: 0x01
     },
-    mainnet: {
-      provider: function() {
-        return new HDWalletProvider(
-          mnemonic,
-          // "https://mainnet.infura.io/v3/" + infura_api,
-          "https://eth-mainnet.alchemyapi.io/v2/" + alchemy_key,
-
-          0,
-          10
-        );
-      },
-      network_id: 1,
-      skipDryRun: true,
-      gas: 8000000,
-      gasPrice: 10000000000
-    },
     ropsten: ropsten_settings,
     kovan: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(
           mnemonic,
           "https://kovan.infura.io/v3/" + infura_api,
@@ -115,7 +101,7 @@ module.exports = {
       gasPrice: 2000000000 //2 gwei
     },
     fuse: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
       },
       network_id: 122,
@@ -124,7 +110,7 @@ module.exports = {
       gasPrice: 2000000000 //1 gwei
     },
     staging: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
       },
       network_id: 122,
@@ -134,8 +120,42 @@ module.exports = {
     },
     "fuse-mainnet": ropsten_settings,
     "staging-mainnet": ropsten_settings,
+    "production-mainnet": {
+      provider: () =>
+        new HDWalletProvider(
+          admin_mnemonic,
+          // "https://eth-mainnet.alchemyapi.io/v2/" + alchemy_key,
+          // "wss://mainnet.infura.io/ws",
+          // "https://mainnet.infura.io/v3/" + infura_api,
+          "https://mainnet.infura.io/v3/35586b6316ce494e953584b7ad9cd2cc",
+          0,
+          10
+        ),
+      gas: 3000000,
+      timeoutBlocks: 400,
+      gasPrice: 51000000000,
+      network_id: 1,
+      skipDryRun: true,
+      networkCheckTimeout: 5000
+    },
+    "production-admin": {
+      provider: () =>
+        new SafeHDWalletProvider(
+          admin_mnemonic,
+          "https://rpc.fusenet.io/",
+          0,
+          10,
+          admin_password
+        ),
+      gas: 3000000,
+      timeoutBlocks: 400,
+      gasPrice: 51000000000,
+      network_id: 122,
+      skipDryRun: true,
+      networkCheckTimeout: 5000
+    },
     etoro: {
-      provider: function() {
+      provider: function () {
         return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
       },
       network_id: 122,
@@ -144,13 +164,12 @@ module.exports = {
       gasPrice: 2000000000 //1 gwei
     },
     production: {
-      provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
-      },
+      provider: () =>
+        new HDWalletProvider(admin_mnemonic, "https://rpc.fusenet.io/", 0, 10),
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,
-      gasPrice: 2000000000 //1 gwei
+      gasPrice: 1000000000 //1 gwei
     }
   },
   plugins: ["solidity-coverage"],

@@ -172,12 +172,18 @@ module.exports = {
       gasPrice: 1000000000 //1 gwei
     }
   },
-  plugins: ["solidity-coverage"],
+  plugins: ["solidity-coverage", "truffle-plugin-verify"],
   mocha: {
     reporter: "eth-gas-reporter",
     reporterOptions: {
       currency: "USD"
     }
+  },
+  api_keys: {
+    etherscan: "IU57R7ENC6881PG2WN5DRU75DACWYQCXJY"
+  },
+  verify: {
+    preamble: "Support UBI! https://github.com/GoodDollar/GoodContracts"
   },
   compilers: {
     solc: {

@@ -1,4 +1,5 @@
 const Web3 = require("web3");
+const SafeHDWalletProvider = require("truffle-safe-hdwallet-provider");
 const AdminWallet = artifacts.require("./AdminWallet.sol");
 const settings = require("./deploy-settings.json");
 // if (process.env.NODE_ENV !== 'production') { // https://codeburst.io/process-env-what-it-is-and-why-when-how-to-use-it-effectively-505d0b2831e7
@@ -8,9 +9,10 @@ require("dotenv").load();
 const HDWalletProvider = require("truffle-hdwallet-provider");
 
 const admin_mnemonic = process.env.ADMIN_MNEMONIC;
+const admin_password = process.env.ADMIN_PASSWORD;
 const infura_api = process.env.INFURA_API;
 
-module.exports = async function(deployer, network, accounts) {
+module.exports = async function (deployer, network, accounts) {
   if (network.indexOf("mainnet") >= 0) {
     console.log("Skipping adminwallet for mainnet");
     return;
@@ -18,8 +20,6 @@ module.exports = async function(deployer, network, accounts) {
   if (network != "ganache" && network != "test" && network != "coverage") {
     const adminWallet = await AdminWallet.deployed();
     const networkSettings = { ...settings["default"], ...settings[network] };
-
-    let adminProvider;
 
     let adminWalletBalance = await web3.eth
       .getBalance(adminWallet.address)
@@ -39,16 +39,13 @@ module.exports = async function(deployer, network, accounts) {
       console.log("adminwallet balance after top:", { adminWalletBalance });
     }
 
-    if (["mainnet", "ropsten", "kovan"].includes("network")) {
-      adminProvider = new HDWalletProvider(
-        admin_mnemonic,
-        "https://" + network + ".infura.io/v3/" + infura_api,
-        0,
-        10
-      );
-    } else {
-      adminProvider = new HDWalletProvider(admin_mnemonic, "https://rpc.fuse.io/", 0, 10);
-    }
+    let adminProvider = new SafeHDWalletProvider(
+      admin_mnemonic,
+      "https://rpc.fuse.io/",
+      0,
+      10,
+      admin_password
+    );
 
     const adminsWeb3 = new Web3(adminProvider);
     const admins = await adminsWeb3.eth.getAccounts();

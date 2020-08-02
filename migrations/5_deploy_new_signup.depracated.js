@@ -13,7 +13,7 @@ const fse = require("fs-extra");
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-module.exports = async function(deployer, network) {
+module.exports = async function (deployer, network) {
   if (network.indexOf("test") < 0) {
     console.log("Depracted old signup bonus scheme");
     return;
@@ -33,7 +33,7 @@ module.exports = async function(deployer, network) {
   const identityaddr = await networkAddresses.Identity;
   const walletaddr = await networkAddresses.AdminWallet;
 
-  await web3.eth.getAccounts(function(err, res) {
+  await web3.eth.getAccounts(function (err, res) {
     accounts = res;
   });
   const founders = [accounts[0]];
@@ -64,7 +64,9 @@ module.exports = async function(deployer, network) {
 
   let proposalId = transaction.logs[0].args._proposalId;
 
-  await Promise.all(founders.map(f => absoluteVote.vote(proposalId, 1, 0, f)));
+  await Promise.all(
+    founders.map(f => absoluteVote.vote(proposalId, 1, 0, f, { from: f, gas: 500000 }))
+  );
 
   await signupBonus.start();
 

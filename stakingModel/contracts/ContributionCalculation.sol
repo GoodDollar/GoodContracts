@@ -8,9 +8,10 @@ import "../../contracts/DSMath.sol";
 
 /* @title Contribution calculation for selling gd tokens
  */
-contract ContributionCalculation is DSMath, SchemeGuard {
+contract ContributionCalculation is DSMath {
     using SafeMath for uint256;
 
+    Avatar avatar;
     // The contribution ratio, declares how much
     // to contribute from the given amount
     uint256 public sellContributionRatio;
@@ -22,6 +23,13 @@ contract ContributionCalculation is DSMath, SchemeGuard {
         uint256 denom
     );
 
+    /** @dev modifier to check if caller is avatar
+     */
+    modifier onlyAvatar() {
+        require(address(avatar) == msg.sender, "only Avatar can call this method");
+        _;
+    }
+
     /**
      * @dev Constructor
      * @param _avatar The avatar of the DAO
@@ -32,8 +40,9 @@ contract ContributionCalculation is DSMath, SchemeGuard {
         Avatar _avatar,
         uint256 _nom,
         uint256 _denom
-    ) public SchemeGuard(_avatar) {
+    ) public {
         sellContributionRatio = rdiv(_nom, _denom);
+        avatar = _avatar;
     }
 
     /**

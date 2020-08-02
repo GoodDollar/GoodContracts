@@ -8,25 +8,26 @@ const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 
 const releaser = require("../../scripts/releaser.js");
+const getFounders = require("../../migrations/getFounders");
 
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-module.exports = async function(deployer, network) {
+module.exports = async function (deployer, network) {
   if (network === "tdd") return;
   if (network.indexOf("mainnet") >= 0) {
     return;
   }
 
   await deployer;
-  const accounts = await web3.eth.getAccounts();
-  const founders = [accounts[0]];
+
+  const founders = await getFounders(AbsoluteVote.web3, network);
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = JSON.parse(file);
   const networkAddresses = previousDeployment[network];
   const networkSettings = { ...settings["default"], ...settings[network] };
   const homedao = daoAddresses[network];
-
+  console.log({ networkSettings, network, homedao });
   const ubiPool = await deployer.deploy(
     UBIPool,
     homedao.Avatar,
@@ -68,12 +69,20 @@ module.exports = async function(deployer, network) {
   let proposalId1 = p1.logs[0].args._proposalId;
   let proposalId2 = p2.logs[0].args._proposalId;
 
-  console.log("voting...");
-  await Promise.all([
-    ...founders.map(f => absoluteVote.vote(proposalId1, 1, 0, f)),
-    ...founders.map(f => absoluteVote.vote(proposalId2, 1, 0, f))
-  ]);
+  console.log("voting...", { proposalId1, proposalId2 });
 
+  await Promise.all(
+    founders
+      .slice(0, Math.ceil(founders.length / 2))
+      .map(f => absoluteVote.vote(proposalId1, 1, 0, f, { from: f, gas: 500000 }))
+  );
+  console.log("voting proposal 2");
+
+  await Promise.all(
+    founders
+      .slice(0, Math.ceil(founders.length / 2))
+      .map(f => absoluteVote.vote(proposalId2, 1, 0, f, { from: f, gas: 500000 }))
+  );
   console.log("starting...");
   await Promise.all([ubi.start(), ubiPool.start()]);
 

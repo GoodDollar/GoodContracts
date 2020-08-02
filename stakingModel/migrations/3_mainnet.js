@@ -16,24 +16,25 @@ const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
 const FundManagerSetReserve = artifacts.require("FundManagerSetReserve");
 
 const releaser = require("../../scripts/releaser.js");
+const getFounders = require("../../migrations/getFounders");
 
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-module.exports = async function(deployer, network) {
+module.exports = async function (deployer, network) {
   if (network === "tdd") return;
   if (network.indexOf("mainnet") < 0 && network !== "test" && network !== "develop") {
     return;
   }
   await deployer;
-  const accounts = await web3.eth.getAccounts();
-  const founders = [accounts[0]];
+
+  const founders = await getFounders(AbsoluteVote.web3, network);
   const file = await fse.readFile("releases/deployment.json", "utf8");
   const previousDeployment = JSON.parse(file);
   const networkAddresses = previousDeployment[network];
 
   const homeNetwork = network.replace(/-?mainnet/, "");
-  const networkSettings = { ...settings["default"], ...settings[network] };
+  const networkSettings = { ...settings["default"], ...settings[homeNetwork] };
   const maindao = daoAddresses[network];
   const homedao = daoAddresses[homeNetwork];
   const homeAddresses = previousDeployment[homeNetwork];
@@ -123,6 +124,7 @@ module.exports = async function(deployer, network) {
     contribcalc.address,
     networkSettings.blockInterval
   );
+
   const [stakingContract, reserve] = await Promise.all([
     stakingContractP.then(c => {
       console.log("staking:", c.address);
@@ -175,13 +177,33 @@ module.exports = async function(deployer, network) {
   let proposalId2 = p2.logs[0].args._proposalId;
   let proposalId3 = p3.logs[0].args._proposalId;
 
-  console.log("voting...");
-  await Promise.all([
-    ...founders.map(f => absoluteVote.vote(proposalId1, 1, 0, f)),
-    ...founders.map(f => absoluteVote.vote(proposalId2, 1, 0, f)),
-    ...founders.map(f => absoluteVote.vote(proposalId3, 1, 0, f))
-  ]);
+  console.log("voting...", { proposalId1, proposalId2, proposalId3 });
+  const vote1P = await Promise.all(
+    founders
+      .slice(0, Math.ceil(founders.length / 2))
+      .map(f => absoluteVote.vote(proposalId1, 1, 0, f, { from: f, gas: 500000 }))
+  ).catch(e => {
+    console.log("proposal 1 failed", e);
+    throw e;
+  });
+  const vote2P = await Promise.all(
+    founders
+      .slice(0, Math.ceil(founders.length / 2))
+      .map(f => absoluteVote.vote(proposalId2, 1, 0, f, { from: f, gas: 500000 }))
+  ).catch(e => {
+    console.log("proposal 2 failed", e);
+    throw e;
+  });
+  const vote3P = await Promise.all(
+    founders
+      .slice(0, Math.ceil(founders.length / 2))
+      .map(f => absoluteVote.vote(proposalId3, 1, 0, f, { from: f, gas: 500000 }))
+  ).catch(e => {
+    console.log("proposal 3 failed");
+    throw e;
+  });
 
+  await Promise.all([vote1P, vote2P, vote3P]);
   console.log("starting...");
   await Promise.all([reserve.start(), fundManager.start(), stakingContract.start()]);
 
@@ -206,7 +228,11 @@ module.exports = async function(deployer, network) {
 
   console.log("voting...");
   await Promise.all([
-    ...founders.map(f => absoluteVote.vote(setReserveProposalId, 1, 0, f))
+    ...founders
+      .slice(0, Math.ceil(founders.length / 2))
+      .map(f =>
+        absoluteVote.vote(setReserveProposalId, 1, 0, f, { from: f, gas: 500000 })
+      )
   ]);
 
   console.log("setting the reserve...");

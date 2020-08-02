@@ -7,7 +7,7 @@ const cDAIMock = artifacts.require("./cDAIMock.sol");
 const GoodDollar = artifacts.require("./GoodDollar.sol");
 const UBIScheme = artifacts.require("./UBIScheme.sol");
 
-module.exports = async function(deployer, network) {
+module.exports = async function (deployer, network) {
   if (
     network.indexOf("tdd") >= 0 ||
     network.indexOf("production") >= 0 ||
@@ -16,7 +16,8 @@ module.exports = async function(deployer, network) {
     return;
   }
   await deployer;
-  const networkSettings = { ...settings["default"], ...settings[network] };
+  const homeNetwork = network.replace(/-?mainnet/, "");
+  const networkSettings = { ...settings["default"], ...settings[homeNetwork] };
   const accounts = await web3.eth.getAccounts();
   const staking_file = await fse.readFile("releases/deployment.json", "utf8");
   const dao_file = await fse.readFile("../releases/deployment.json", "utf8");
@@ -30,10 +31,12 @@ module.exports = async function(deployer, network) {
     const goodDollar = await GoodDollar.at(dao_sidechain_addresses.GoodDollar);
     const ubi = await UBIScheme.at(staking_sidechain_addresses.UBIScheme);
 
-    console.log("Minting G$ on sidechain to mock ubi+firstclaim award")
+    console.log("Minting G$ on sidechain to mock ubi+firstclaim award");
     await goodDollar.mint(accounts[0], "10000000");
-    await Promise.all([goodDollar.transfer(ubi.address, "5000000"),goodDollar.transfer(staking_sidechain_addresses.FirstClaimPool, "2000000")]);
-
+    await Promise.all([
+      goodDollar.transfer(ubi.address, "5000000"),
+      goodDollar.transfer(staking_sidechain_addresses.FirstClaimPool, "2000000")
+    ]);
   }
 
   if (network.indexOf("mainnet") >= 0 || network === "develop") {

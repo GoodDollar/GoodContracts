@@ -11,7 +11,7 @@ library InterestDistribution {
 
     struct InterestData {
         uint256 globalTotalStaked;
-        uint256 globalGDYieldPerToken; // after donations
+        uint256 globalGDYieldPerToken; // after donations, 1e29 precision. 2(G$)+27
         uint256 globalTotalEffectiveStake; //stake whose interest is  not donated
         uint256 gdInterestEarnedToDate;
         uint256 interestTokenEarnedToDate;
@@ -28,7 +28,7 @@ library InterestDistribution {
         uint256 totalEffectiveStake; // stake after donation
         uint256 lastStake;
         uint256 withdrawnToDate;
-        uint256 gdYieldRate; 
+        uint256 gdYieldRate;
     }
 
     // 10^18
@@ -102,9 +102,8 @@ library InterestDistribution {
         address _staker,
         uint256 _amount
     ) internal requireUpdate(_interestData) returns (uint256) {
-
         Staker storage _stakerData = _interestData.stakers[_staker];
-        
+
         //earned gd must be fully withdrawn on any stake withdraw
         uint256 gdInterestEarned = withdrawGDInterest(_interestData, _staker);
 
@@ -162,17 +161,24 @@ library InterestDistribution {
         Staker storage stakerData = _interestData.stakers[_staker];
         uint256 _withdrawnToDate = stakerData.withdrawnToDate;
 
-        uint256 intermediateInterest = stakerData.totalEffectiveStake.mul(_interestData.globalGDYieldPerToken).div(DECIMAL1e18);
+        uint256 intermediateInterest = stakerData
+            .totalEffectiveStake
+            .mul(_interestData.globalGDYieldPerToken)
+            .div(DECIMAL1e18);
 
-        uint256 intermediateVal = _withdrawnToDate.mul(DECIMAL1e27).add(stakerData.gdYieldRate);
-        
+        uint256 intermediateVal = _withdrawnToDate.mul(DECIMAL1e27).add(
+            stakerData.gdYieldRate
+        );
+
         // will lead to -ve value
         if (intermediateVal > intermediateInterest) {
             return 0;
         }
 
         // To reduce it to 2 precision of G$, we originally multiplied globalGDYieldPerToken by DECIMAL1e27
-        _earnedGDInterest = (intermediateInterest.sub(intermediateVal)).mul(100).div(DECIMAL1e27);
+        _earnedGDInterest = (intermediateInterest.sub(intermediateVal)).mul(100).div(
+            DECIMAL1e27
+        );
 
         return _earnedGDInterest;
     }
@@ -194,22 +200,20 @@ library InterestDistribution {
         uint256 _blockGDInterest,
         uint256 _blockInterestTokenEarned
     ) internal {
-
-      //mark that it was updated
-      _interestData.globalGDYieldPerTokenUpdatedBlock = block.number;
-      if(_interestData.globalTotalEffectiveStake == 0)
-        return;
-      _interestData.globalGDYieldPerToken = _interestData.globalGDYieldPerToken.add(
-          _blockGDInterest
-              .mul(DECIMAL1e27) //increase precision of G$
-              .div(_interestData.globalTotalEffectiveStake) //earnings are after donations so we divide by effective stake
-      );
-      _interestData.interestTokenEarnedToDate = _interestData
-          .interestTokenEarnedToDate
-          .add(_blockInterestTokenEarned);
-      _interestData.gdInterestEarnedToDate = _interestData.gdInterestEarnedToDate.add(
-          _blockGDInterest
-      );
+        //mark that it was updated
+        _interestData.globalGDYieldPerTokenUpdatedBlock = block.number;
+        if (_interestData.globalTotalEffectiveStake == 0) return;
+        _interestData.globalGDYieldPerToken = _interestData.globalGDYieldPerToken.add(
+            _blockGDInterest
+                .mul(DECIMAL1e27) //increase precision of G$
+                .div(_interestData.globalTotalEffectiveStake) //earnings are after donations so we divide by effective stake
+        );
+        _interestData.interestTokenEarnedToDate = _interestData
+            .interestTokenEarnedToDate
+            .add(_blockInterestTokenEarned);
+        _interestData.gdInterestEarnedToDate = _interestData.gdInterestEarnedToDate.add(
+            _blockGDInterest
+        );
     }
 
     /**

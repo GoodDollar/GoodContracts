@@ -29,12 +29,12 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       * GDYieldRate(P) = 0
       * Staking = 10 x 1e18
       * Donation% = 30%
-      * GDEarnedInterest = 100 x 1e18
-      * GDEarnedInterestEarned = 100 x 1e18
+      * GDEarnedInterest = 100 x 1e2
+      * GDEarnedInterestEarned = 100 x 1e2
       */
 
       await interestDistribution
-        .stake(user1, web3.utils.toWei("10", "ether"), 30, web3.utils.toWei("100", "ether"), web3.utils.toWei("100", "ether"))
+        .stake(user1, web3.utils.toWei("10", "ether"), 30, 100*100, 100*100)
         .catch(e => e);
 
       let yieldData = await interestDistribution.getYieldData(user1);
@@ -43,22 +43,22 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       * Formula:
       * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
       * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
-      * 0 + (100)/20 = 5 => 5 x 1e27 (27 precision points)
-      * 0 + (5 * 7) = 35 => 35 x 1e27 (27 precision points)
+      * 0 + (100)/20 = 5 => 5 x 1e11 (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
+      * 0 + (5 * 7) = 35 => 35 x 1e29 (27 + 2(G$ precision) = 29 precision points)
       */      
-      expect((yieldData[0]/1e27).toString()).to.be.equal("5");
-      expect((yieldData[1]/1e27).toString()).to.be.equal("35");
+      expect((yieldData[0]/1e11).toString()).to.be.equal("5");
+      expect((Math.round(yieldData[1]/1e29)).toString()).to.be.equal("35");
   });
 
   it("Set Accumulated Yield Per Token", async () => {
 
 
     /**
-      * GDEarnedInterest = 60 x 1e18
-      * GDEarnedInterestEarned = 60 x 1e18
+      * GDEarnedInterest = 60 x 1e2
+      * GDEarnedInterestEarned = 60 x 1e2
       */
     await interestDistribution
-        .updateGlobalGDYieldPerToken(web3.utils.toWei("27", "ether"), web3.utils.toWei("27", "ether"))
+        .updateGlobalGDYieldPerToken(27 * 100, 27 * 100)
         .catch(e => e);
 
     let yieldData = await interestDistribution.getYieldData(user1);
@@ -67,9 +67,9 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
     /**
       * Formula:
       * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
-      * 5 + (27)/27 = 5 + 1 => 6 x 1e27 (27 precision points)
+      * 5 + (27)/27 = 5 + 1 => 6 x 1e11 (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
       */ 
-    expect((Math.round(yieldData[0]/1e27)).toString()).to.be.equal("6");
+    expect((Math.round(yieldData[0]/1e11)).toString()).to.be.equal("6");
   });
 
   it("Should return correct G$ interest", async () => {
@@ -78,8 +78,8 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       * Formula: 
       * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (GDYieldRate + WithdrawnToDate), 0]
       * consider :
-      * GDYieldRate(P) = 35
-      * AccumulatedYieldPerToken(P) = 6
+      * GDYieldRate(P) = 35 x 1e29
+      * AccumulatedYieldPerToken(P) = 6 x 1e11
       * TotalEfectiveStaked = 27 x 1e18
       * WithdrawnToDate = 0
       * output = 127 x 1e2
@@ -122,15 +122,15 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
       * 35 + (6 * 3) = 35 + 18 =  53
       */
-    expect((yieldData[1]/1e27).toString()).to.be.equal("53");
+      expect((Math.round(yieldData[1]/1e29)).toString()).to.be.equal("53");
 
 
     /**
       * Formula: 
       * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (GDYieldRate + WithdrawnToDate), 0]
       * consider :
-      * GDYieldRate(P) = 53
-      * AccumulatedYieldPerToken(P) = 6
+      * GDYieldRate(P) = 53 x 1e29
+      * AccumulatedYieldPerToken(P) = 6 x 1e11
       * TotalEfectiveStaked = 27 x 1e18
       * WithdrawnToDate = 127 x 1e2
       * output = 0

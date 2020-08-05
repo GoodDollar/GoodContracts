@@ -125,8 +125,19 @@ contract InterestDistributionMock {
     function mintGoodDollar(uint256 _excesCDAI) internal returns(uint256, uint256) {
       iTokenBalance = iTokenBalance.sub(_excesCDAI);
       uint mintAmount = _excesCDAI.mul(20000).div(DECIMAL1e18);
-      interestGDBalance = interestGDBalance.add(interestData.globalTotalEffectiveStake.mul(mintAmount).div(interestData.globalTotalStaked));
-      ubiGDBlance = ubiGDBlance.add(mintAmount.sub(interestGDBalance));
-      return (interestGDBalance, mintAmount);
+      uint mintGDInterest = interestData.globalTotalEffectiveStake.mul(mintAmount).div(interestData.globalTotalStaked);
+      interestGDBalance = interestGDBalance.add(mintGDInterest);
+      ubiGDBlance = ubiGDBlance.add(mintAmount.sub(mintGDInterest));
+      return (mintGDInterest, mintAmount);
+    }
+
+    function collectUBIInterest() public {
+      uint requiredCDAIBal = (interestData.globalTotalStaked).mul(DECIMAL1e18).div(iTokenToTokenRate);
+      uint newGDMinted = 0;
+      uint newGDMintedBeforeDonation = 0;
+      if(iTokenBalance > requiredCDAIBal) {
+        (newGDMinted, newGDMintedBeforeDonation) = mintGoodDollar(iTokenBalance.sub(requiredCDAIBal));
+      }
+      updateGlobalGDYieldPerToken(newGDMinted, newGDMintedBeforeDonation);
     }
 }

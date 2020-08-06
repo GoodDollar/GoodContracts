@@ -14,12 +14,12 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
 
   it("Should return correct cumulative Yield Rate", async () => {
 
-      // 1st stake will not affect GDYieldRate and GlobalYieldPerToken because globalTotalStaked is 0.
+      // 1st stake will not affect StakeBuyinRate and GlobalYieldPerToken because globalTotalStaked is 0.
       await interestDistribution
         .stake(user1, web3.utils.toWei("20", "ether"), 0)
         .catch(e => e);
 
-      
+      // Updating Interest token rate
       await interestDistribution
         .setITokenToTokenRate(web3.utils.toWei("0.4", "ether"))
         .catch(e => e);
@@ -27,11 +27,11 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       /**
       * Formula:
       * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
-      * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
+      * StakeBuyinRate = [StakeBuyinRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
       * consider :
       * GlobalTotalEffectiveStake = 20 x 1e18
       * AccumulatedYieldPerToken(P) = 0
-      * GDYieldRate(P) = 0
+      * StakeBuyinRate(P) = 0
       * Staking = 10 x 1e18
       * Donation% = 30%
       * GDEarnedInterest = 10000 x 1e2
@@ -47,7 +47,7 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       /**
       * Formula:
       * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
-      * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
+      * StakeBuyinRate = [StakeBuyinRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
       * 0 + (10000)/20 = 500 => 500 x 1e11 (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
       * 0 + (500 * 7) = 3500 => 3500 x 1e29 (27 + 2(G$ precision) = 29 precision points)
       */      
@@ -81,9 +81,9 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
 
     /**
       * Formula: 
-      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (GDYieldRate + WithdrawnToDate), 0]
+      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
       * consider :
-      * GDYieldRate(P) = 3500 x 1e29
+      * StakeBuyinRate(P) = 3500 x 1e29
       * AccumulatedYieldPerToken(P) = 510 x 1e11
       * TotalEfectiveStaked = 27 x 1e18
       * WithdrawnToDate = 0
@@ -94,13 +94,13 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       
       /**
       * Formula: 
-      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (GDYieldRate + WithdrawnToDate), 0]
+      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
       * Max[27 * 510 - (3500 + 0), 0] = Max[13770 - 3500, 0] = Max[10207, 0] = 10270 = 2 points presicion 1027000
       */
       expect(earnedGDInterest.toString()).to.be.equal("1027000");
   });
 
-  it("Should return G$ interest as 0 if (GDYieldRate + WithdrawnToDate) > TotalEfectiveStaked x AccumulatedYieldPerDAI", async () => {
+  it("Should return G$ interest as 0 if (StakeBuyinRate + WithdrawnToDate) > TotalEfectiveStaked x AccumulatedYieldPerDAI", async () => {
 
 
     // withdrawing G$ interest 
@@ -114,16 +114,16 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
     /**
       * Effective stake
       */
-    // Manipulate GDYieldRate to create scenario.
+    // Manipulate StakeBuyinRate to create scenario.
     await interestDistribution
-        .updateGDYieldRate(user1, web3.utils.toWei("3", "ether"))
+        .updateStakeBuyinRate(user1, web3.utils.toWei("3", "ether"))
         .catch(e => e);
 
     let yieldData = await interestDistribution.getYieldData(user1);
 
     /*
       * Formula:
-      * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
+      * StakeBuyinRate = [StakeBuyinRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
       * 3500 + (510 * 3) = 3500 + 1530 =  5030
       */
       expect((Math.round(yieldData[1]/1e29)).toString()).to.be.equal("5030");
@@ -131,9 +131,9 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
 
     /**
       * Formula: 
-      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (GDYieldRate + WithdrawnToDate), 0]
+      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
       * consider :
-      * GDYieldRate(P) = 5030 x 1e29
+      * StakeBuyinRate(P) = 5030 x 1e29
       * AccumulatedYieldPerToken(P) = 510 x 1e11
       * TotalEfectiveStaked = 27 x 1e18
       * WithdrawnToDate = 10270 x 1e2
@@ -146,7 +146,7 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       /**
       * Formula: 
       * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
-      * TotalEfectiveStaked x AccumulatedYieldPerDAI(27 * 510 = 13770) < WithdrawnToDate + GDYieldRate(10270 + 5030 = 15300), Hence output is 0.
+      * TotalEfectiveStaked x AccumulatedYieldPerDAI(27 * 510 = 13770) < WithdrawnToDate + StakeBuyinRate(10270 + 5030 = 15300), Hence output is 0.
       */
       expect(earnedGDInterest.toString()).to.be.equal(web3.utils.toWei("0"));
   });

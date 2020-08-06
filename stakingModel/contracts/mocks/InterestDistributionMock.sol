@@ -67,7 +67,7 @@ contract InterestDistributionMock {
     function getYieldData(address _staker) public view returns(uint256,uint256)
     {
 
-      return (interestData.globalGDYieldPerToken, interestData.stakers[_staker].gdYieldRate);
+      return (interestData.globalGDYieldPerToken, interestData.stakers[_staker].stakeBuyinRate);
     }
 
     function getStakerData(address _staker) public view returns(uint256, uint256, uint256, uint256)
@@ -100,13 +100,13 @@ contract InterestDistributionMock {
         InterestDistribution.updateGlobalGDYieldPerToken(interestData, _blockGDInterest, _blockInterestTokenEarned);
     }
 
-    function updateGDYieldRate(
+    function updateStakeBuyinRate(
       address _staker,
       uint256 _effectiveStake
       ) 
     public
     {
-        InterestDistribution.updateGDYieldRate(interestData.stakers[_staker], interestData.globalGDYieldPerToken, _effectiveStake);
+        InterestDistribution.updateStakeBuyinRate(interestData.stakers[_staker], interestData.globalGDYieldPerToken, _effectiveStake);
     }
 
     function setITokenToTokenRate(uint _val) public {

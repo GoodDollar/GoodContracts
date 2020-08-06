@@ -28,7 +28,7 @@ library InterestDistribution {
         uint256 totalEffectiveStake; // stake after donation
         uint256 lastStake;
         uint256 withdrawnToDate;
-        uint256 gdYieldRate;  // Precision points = 27 + 2 (G$ decimal) = 29
+        uint256 stakeBuyinRate;  // Precision points = 27 + 2 (G$ decimal) = 29
     }
 
     // 10^27
@@ -73,7 +73,7 @@ library InterestDistribution {
             effectiveStake
         );
 
-        updateGDYieldRate(
+        updateStakeBuyinRate(
             _stakerData,
             _interestData.globalGDYieldPerToken,
             effectiveStake
@@ -146,7 +146,7 @@ library InterestDistribution {
      * @dev Calculates GD Interest for staker for their stake.
      *
      * Formula:
-     * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (GDYieldRate + WithdrawnToDate), 0]
+     * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
      *
      * @param _staker                     Staker's address
      * @param _interestData               Interest Data
@@ -169,9 +169,9 @@ library InterestDistribution {
             .totalEffectiveStake
             .mul(_interestData.globalGDYieldPerToken);
 
-        // Multiplying DECIMAL1e27 to make _withdrawnToDate in same format as gdYieldRate ie., 29
+        // Multiplying DECIMAL1e27 to make _withdrawnToDate in same format as stakeBuyinRate ie., 29
         uint256 intermediateVal = _withdrawnToDate.mul(DECIMAL1e27).add(
-            stakerData.gdYieldRate
+            stakerData.stakeBuyinRate
         );
 
         // will lead to -ve value
@@ -224,9 +224,9 @@ library InterestDistribution {
 
     /**
      * @dev Calculates and updates the GD yield rate in which the staker has entered
-     * a staker may stake multiple times, so we calculate his cumulative rate his earning will be calculated based on GlobalGDYieldRate and GDYieldRate
+     * a staker may stake multiple times, so we calculate his cumulative rate his earning will be calculated based on GlobalGDYield and StakeBuyinRate
      * Formula:
-     * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
+     * StakeBuyinRate = [StakeBuyinRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
      *
      * @param _stakerData                  Staker's Data
      * @param _globalGDYieldPerToken       Total yielding amount per token (Precision: 27 + 2 (G$ decimal) - (token Decimal))
@@ -234,7 +234,7 @@ library InterestDistribution {
      *
      * @return  increase in yielding rate since last update with precision points 29.
      */
-    function updateGDYieldRate(
+    function updateStakeBuyinRate(
         Staker storage _stakerData,
         uint256 _globalGDYieldPerToken,
         uint256 _effectiveStake
@@ -242,7 +242,7 @@ library InterestDistribution {
 
       // Precision points = precision points of _globalGDYieldPerToken[27 + 2 (G$ decimal) - (token Decimal)]
       // + precision points of _effectiveStake (token Decimal) = 29
-        _stakerData.gdYieldRate = _stakerData.gdYieldRate.add(
+        _stakerData.stakeBuyinRate = _stakerData.stakeBuyinRate.add(
             _globalGDYieldPerToken.mul(_effectiveStake)
         );
     }

@@ -19,7 +19,10 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
         .stake(user1, web3.utils.toWei("20", "ether"), 0)
         .catch(e => e);
 
-      // Updating Interest token rate
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.4 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
       await interestDistribution
         .setITokenToTokenRate(web3.utils.toWei("0.4", "ether"))
         .catch(e => e);

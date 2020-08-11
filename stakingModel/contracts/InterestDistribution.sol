@@ -27,6 +27,7 @@ library InterestDistribution {
         uint256 lastStake;
         uint256 withdrawnToDate;
         uint256 avgYieldRatePerToken;
+        uint256 interestClaimedBeforeLastUnstake;
     }
 
     // 10^18

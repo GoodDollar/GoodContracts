@@ -12,7 +12,10 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
     
     it("Staker 1 stakes 100 Token and donate 20% of interest", async () => {
 
-      // Setting Interest token rate
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.4 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
       await interestDistribution
           .setITokenToTokenRate(web3.utils.toWei("0.4", "ether"))
           .catch(e => e);
@@ -64,7 +67,10 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
 
     it("Staker 2 stakes 50 Token and donate 50% of interest", async () => {
 
-      // Updating Interest token rate
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.5 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
       await interestDistribution
           .setITokenToTokenRate(web3.utils.toWei("0.5", "ether"))
           .catch(e => e);
@@ -138,7 +144,10 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
 
     it("Staker 3 stakes 360 Token and donate 40% of interest", async () => {
 
-      // Updating Interest token rate
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.6 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
       await interestDistribution
           .setITokenToTokenRate(web3.utils.toWei("0.6", "ether"))
           .catch(e => e);
@@ -210,7 +219,10 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
 
     it("Staker 1 again stakes 250 Token and donate 60% of interest", async () => {
 
-      // Updating Interest token rate
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.65 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
       await interestDistribution
           .setITokenToTokenRate(web3.utils.toWei("0.65", "ether"))
           .catch(e => e);
@@ -282,7 +294,10 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
 
     it("Collecting all GD for excess interest token holding", async () => {
 
-      // Updating Interest token rate
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.7 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
       await interestDistribution
           .setITokenToTokenRate(web3.utils.toWei("0.7", "ether"))
           .catch(e => e);
@@ -363,7 +378,10 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
   describe('Few stakers stake and Few staker withdraw Interest', function() {
     it("Staker 1 stakes 60 Token and donate 0% of interest", async () => {
 
-      // Setting Interest token rate
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.8 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
       await interestDistribution
           .setITokenToTokenRate(web3.utils.toWei("0.8", "ether"))
           .catch(e => e);
@@ -438,7 +456,7 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
 
       /**
         * S2 Withdraws interest
-        * will not mint new GD because no interest is generted since lat update.
+        * will not mint new GD because no interest is generted since last update.
         */
         await interestDistribution
           .withdrawGDInterest(S2)
@@ -507,7 +525,10 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
 
     it("Staker 3 Withdraws their share of interest", async () => {
 
-      // Updating Interest token rate
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.9 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
       await interestDistribution
           .setITokenToTokenRate(web3.utils.toWei("0.9", "ether"))
           .catch(e => e);
@@ -586,7 +607,10 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
 
     it("Staker 2 stakes 100 Token and donate 30% of interest", async () => {
 
-      // Updating Interest token rate
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.95 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
       await interestDistribution
           .setITokenToTokenRate(web3.utils.toWei("0.95", "ether"))
           .catch(e => e);
@@ -659,9 +683,7 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
     it("Collecting all GD for excess interest token holding", async () => {
 
       /**
-        * will mint 16703.29 new GD. total stake = 760, iTokenBalance = 1169
-        * Required iToken = 760/0.7 = 1085.71, excessIToken = 83.28.
-        * newlyMintGD = 83.28 x 16703.29 = 13,076.92
+        * will not mint new GD because no interest is generted since last update.
         */    
       await interestDistribution
           .collectUBIInterest()
@@ -726,6 +748,412 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
       * Max[216 x 289.47 - (36000 + 24000),0] = Max[2526.31, 0] = 2526.31 , precision points 2
       */
       expect((await interestDistribution.calculateGDInterest(S3)).toString()).to.be.equal("252631");
+    });
+  });
+
+  describe('No one stakes in this interest cycle but Itoken rate will changes so some interest will be generated', function() {
+    it("Collecting all GD for excess interest token holding", async () => {
+
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 1 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
+      await interestDistribution
+          .setITokenToTokenRate(web3.utils.toWei("1", "ether"))
+          .catch(e => e);
+
+
+      /**
+        * will mint 9684.21 new GD. total stake = 920, iTokenBalance = 968.42
+        * Required iToken = 920/1 = 920, excessIToken = 48.42.
+        * newlyMintGD = 48.42 x 200 = 9684.21
+        */    
+      await interestDistribution
+          .collectUBIInterest()
+          .catch(e => e);
+
+      
+      let interestData = await interestDistribution.getInterestData();
+      
+      /**
+      *
+      * values:
+      * GDEarnedInterest = 5800 (551 x 9684.21 / 920)
+      * GlobalTotalEffectiveStake = 551 
+      * Formula:
+      * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
+      * 289.47 + (5800)/551 = 289.47 + 10.52 => 299.99 x 1e11 (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
+      */      
+      expect((Math.floor(interestData[1]/1e11)).toString()).to.be.equal("299");
+
+      // globalTotalStake
+      expect((interestData[0]).toString()).to.be.equal(web3.utils.toWei("920", "ether")); 
+      // globalTotalEffectiveStake
+      expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("551", "ether")); 
+      // gdInterestEarnedToDate, 66506.03 + 5800 (66506.03 + 551 x 9684.21 / 920)
+      expect((interestData[3]).toString()).to.be.equal("7230602");  
+      // interestTokenEarnedToDate, 109291.47 + 9684.21
+      expect((interestData[4]).toString()).to.be.equal("11897568"); 
+
+      /*
+      * Formula:
+      * iTokenBalance = iTokenBalance(P) + stakedToken/iTokenRate - excessIToken
+      * 968.42 + 0 - 48.42 = 920 , precision points 18
+      */
+      expect((Math.floor(await interestDistribution.iTokenBalance()/1e18)).toString()).to.be.equal("920"); 
+
+      /*
+      * Formula:
+      * ubiGDBlance = ubiGDBlance + newGDMinted - interestGD
+      * 42785.44 + 9684.21 - 5800 = 46669.63 , precision points 2
+      */
+      expect((await interestDistribution.ubiGDBlance()).toString()).to.be.equal("4666966");
+
+      /*
+      * Formula:
+      * interestGDBalance = interestGDBalance + (newGDMinted x GlobalTotalEffectiveStake / globalTotalStaked)
+      * 66506.03 + (9684.21 x 551 / 920) = 66506.03 + 5799.99 = 72306.02 , precision points 2
+      */
+      expect((await interestDistribution.interestGDBalance()).toString()).to.be.equal("7230602");
+
+      /**
+      * Formula: 
+      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
+      */
+      /**
+      * Max[240 x 299.99 - (34230.76923 + 0),0] = Max[37769.20, 0] = 37769.20 , precision points 2
+      */
+      expect((await interestDistribution.calculateGDInterest(S1)).toString()).to.be.equal("3776920");
+      /**
+      * Max[95 x 299.99 - (22763.157 + 3750),0] = Max[1986.84, 0] = 1986.84 , precision points 2
+      */
+      expect((await interestDistribution.calculateGDInterest(S2)).toString()).to.be.equal("198684");
+      /**
+      * Max[216 x 299.99 - (36000 + 24000),0] = Max[4799.99, 0] = 4799.99 , precision points 2
+      */
+      expect((await interestDistribution.calculateGDInterest(S3)).toString()).to.be.equal("479999");
+    });
+  });
+
+  describe('Few stakers stakes and few staker withdraw Interest and stake', function() {
+    it("Staker 1 Withdraws partial stake worth 150 Token", async () => {
+
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 1.05 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
+      await interestDistribution
+          .setITokenToTokenRate(web3.utils.toWei("1.05", "ether"))
+          .catch(e => e);
+
+      /**
+        * S1 withdraws stakes worth 150DAI
+        * will mint 8761.9047 new GD. total stake = 770, iTokenBalance = 777.142
+        * Required iToken = 770/1.05 = 733.33, excessIToken = 43.80
+        * newlyMintGD = 43.80 x 200 = 8761.9047
+        */
+        await interestDistribution
+          .withdrawStakeAndInterest(S1, web3.utils.toWei("150", "ether"))
+          .catch(e => e);
+
+        let stakerData = await interestDistribution.getStakerData(S1);
+        let interestData = await interestDistribution.getInterestData();
+        let yieldData = await interestDistribution.getYieldData(S1);
+
+
+        /**
+        * Formula: 
+        * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
+        * Max[240 x 309.52 - (34230.76923 + 0),0] = Max[40054.94, 0] = 40054.94 , precision points 2
+        */
+        expect((stakerData[4]).toString()).to.be.equal("4005491");
+
+
+
+        /**
+        *
+        * values:
+        * GDEarnedInterest = 5247.61 (551 x 8761.904762 / 920)
+        * GlobalTotalEffectiveStake = 463.2 
+        * NewEffectiveStake = 152.20 (240 - 150 x (240/410))
+        * Formula:
+        * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
+        * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x NewEffectiveStake)]
+        * 299.99 + (5247.61)/551 = 214.2857143 + 9.52 => 309.52 x 1e11 (Approx) (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
+        * 0 + (309.52 * 152.2) = 0 + 47108.01 => 47108.01 x 1e29 (27 + 2(G$ precision) = 29 precision points)
+        */   
+        expect((Math.floor(yieldData[0]/1e11)).toString()).to.be.equal("309");
+        expect((Math.floor(yieldData[1]/1e29)).toString()).to.be.equal("47107");
+
+        // globalTotalStake
+        expect((interestData[0]).toString()).to.be.equal(web3.utils.toWei("770", "ether")); 
+        // globalTotalEffectiveStake
+        expect((Math.floor(interestData[2]/1e18)).toString()).to.be.equal("463"); 
+        // gdInterestEarnedToDate, 77553.63 (72306.02 + 551 x 8761.904762 / 920)
+        expect((interestData[3]).toString()).to.be.equal("7755363");  
+        // interestTokenEarnedToDate, 118975.68 + 8761.90
+        expect((interestData[4]).toString()).to.be.equal("12773758"); 
+
+        // totalStake of S1
+        expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("260", "ether")); 
+        // totalEffectiveStake of S1
+        expect((Math.floor(stakerData[1]/1e18)).toString()).to.be.equal("152"); 
+
+        /*
+        * Formula:
+        * iTokenBalance = iTokenBalance(P) + stakedToken/iTokenRate - excessIToken
+        * 920 + (-150 / 1.05) - 43.8 = 920 + -142.85 - 43.8 = 733.33 , precision points 18
+        */
+        expect((Math.floor(await interestDistribution.iTokenBalance()/1e18)).toString()).to.be.equal("733"); 
+
+        /*
+        * Formula:
+        * ubiGDBlance = ubiGDBlance + newGDMinted - interestGD
+        * 46669.66 + 8761.90 - 5247.61 = 50183.95 , precision points 2
+        */
+        expect((await interestDistribution.ubiGDBlance()).toString()).to.be.equal("5018395");
+
+        /*
+        * Formula:
+        * interestGDBalance = interestGDBalance + (newGDMinted x GlobalTotalEffectiveStake / globalTotalStaked)
+        * 72306.02 + (8761.90 x 551 / 920) = 72306.02 + 5247.61 = 77553.63 , precision points 2
+        */
+        expect((await interestDistribution.interestGDBalance()).toString()).to.be.equal("7755363"); 
+    });
+
+    it("Staker 2 Withdraws Entire stake worth 150 Token", async () => {
+
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 1.1 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
+      await interestDistribution
+          .setITokenToTokenRate(web3.utils.toWei("1.1", "ether"))
+          .catch(e => e);
+
+
+      /**
+        * S2 withdraws stakes worth 150DAI
+        * will mint 6666.66 new GD. total stake = 620, iTokenBalance = 596.96
+        * Required iToken = 620/1.1 = 563.63, excessIToken = 33.32
+        * newlyMintGD = 33.32 x 200 = 6666.66
+        */
+        await interestDistribution
+          .withdrawStakeAndInterest(S2, web3.utils.toWei("150", "ether"))
+          .catch(e => e);
+
+
+        let stakerData = await interestDistribution.getStakerData(S2);
+        let interestData = await interestDistribution.getInterestData();
+        let yieldData = await interestDistribution.getYieldData(S2);
+
+
+        /**
+        * Formula: 
+        * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
+        * Max[95 x 318.18 - (22763.157),0] = Max[1986.84, 0] = 1986.84 , precision points 2
+        */
+        expect((stakerData[4]).toString()).to.be.equal("746410");
+
+
+
+        /**
+        *
+        * values:
+        * GDEarnedInterest = 4010.38 (463.2 x 6666.66 / 770)
+        * GlobalTotalEffectiveStake = 368.20 
+        * NewEffectiveStake = 0 (95 - 150 x (95/150))
+        * Formula:
+        * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
+        * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x NewEffectiveStake)]
+        * 309.52 + (4010.38)/463.2 = 309.52 + 8.65 => 318.18 x 1e11 (Approx) (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
+        * 0 + (318.18 * 0) = 0 + 0 => 0 x 1e29 (27 + 2(G$ precision) = 29 precision points)
+        */     
+        expect((Math.floor(yieldData[0]/1e11)).toString()).to.be.equal("318");
+        expect((Math.floor(yieldData[1]/1e29)).toString()).to.be.equal("0");
+
+        // globalTotalStake
+        expect((interestData[0]).toString()).to.be.equal(web3.utils.toWei("620", "ether")); 
+        // globalTotalEffectiveStake
+        expect((Math.floor(interestData[2]/1e18)).toString()).to.be.equal("368"); 
+        // gdInterestEarnedToDate, 81563.97 (77553.63 + 463.2 x 6666.66 / 770)
+        expect((interestData[3]).toString()).to.be.equal("8156397");  
+        // interestTokenEarnedToDate, 127737.58 + 6666.66
+        expect((interestData[4]).toString()).to.be.equal("13440424"); 
+
+        // totalStake of S2
+        expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("0", "ether")); 
+        // totalEffectiveStake of S2
+        expect((stakerData[1]).toString()).to.be.equal(web3.utils.toWei("0", "ether")); 
+
+
+        /*
+        * Formula:
+        * iTokenBalance = iTokenBalance(P) + stakedToken/iTokenRate - excessIToken
+        * 733.33 + (-150 / 1.1) - 33.32 = 1025 + 0 - 0 = 563.64 , precision points 18
+        */
+        expect((Math.floor(await interestDistribution.iTokenBalance()/1e18)).toString()).to.be.equal("563");
+
+        /*
+        * Formula:
+        * ubiGDBlance = ubiGDBlance + newGDMinted - interestGD
+        * 50183.95 + 6666.66 - 4010.38 = 52840.27 , precision points 2
+        */
+        expect((await interestDistribution.ubiGDBlance()).toString()).to.be.equal("5284027");
+
+        /*
+        * Formula:
+        * interestGDBalance = interestGDBalance + (newGDMinted x GlobalTotalEffectiveStake / globalTotalStaked)
+        * 77553.63 + (463.2 x 6666.66 / 770) = 81563.97 , precision points 2
+        */
+        expect((await interestDistribution.interestGDBalance()).toString()).to.be.equal("8156397"); 
+    });
+
+    it("Staker 3 stakes 100 Token and donate 40% of interest", async () => {
+
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 1.15 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
+      await interestDistribution
+          .setITokenToTokenRate(web3.utils.toWei("1.15", "ether"))
+          .catch(e => e);
+
+      /**
+        * S3 stakes 100DAI, donating 40%
+        * will mint 4901.18 new GD. total stake = 720, iTokenBalance = 650.59
+        * Required iToken = 720/1.15 = 626.08, excessIToken = 24.50.
+        * newlyMintGD = 25.50 x 200 = 4901.18
+        */
+        await interestDistribution
+          .stake(S3, web3.utils.toWei("100", "ether"), 40)
+          .catch(e => e);
+
+        let stakerData = await interestDistribution.getStakerData(S3);
+        let interestData = await interestDistribution.getInterestData();
+        let yieldData = await interestDistribution.getYieldData(S3);
+
+        /**
+        *
+        * values:
+        * GDEarnedInterest = 2910.63 (368.20 x 4901.18 / 620)
+        * GlobalTotalEffectiveStake = 428.20 (368.20 + 100 * (100%-40%))
+        * EffectiveStake = 60 (100 * (100%-40%))
+        * Formula:
+        * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
+        * GDYieldRate = [GDYieldRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
+        * 318.18 + (2910.63)/368.20 = 318.18 + 7.90 => 326.08 x 1e11 (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
+        * 35999 + 326.08*60 = 55565.21 => 55565.21 x 1e29 (27 + 2(G$ precision) = 29 precision points)
+        */   
+        expect((Math.floor(yieldData[0]/1e11)).toString()).to.be.equal("326");
+        expect((Math.floor(yieldData[1]/1e29)).toString()).to.be.equal("55565");
+
+        // globalTotalStake
+        expect((interestData[0]).toString()).to.be.equal(web3.utils.toWei("720", "ether")); 
+        // globalTotalEffectiveStake
+        expect((Math.floor(interestData[2]/1e18)).toString()).to.be.equal("428");  
+        // gdInterestEarnedToDate, 81563.97 + 2910.63 (368.20 x 4901.18 / 620)
+        expect((interestData[3]).toString()).to.be.equal("8447459");  
+        // interestTokenEarnedToDate, 134404.24 + 4901.18
+        expect((interestData[4]).toString()).to.be.equal("13930542"); 
+
+        // totalStake of S3
+        expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("460", "ether")); 
+        // totalEffectiveStake of S3
+        expect((stakerData[1]).toString()).to.be.equal(web3.utils.toWei("276", "ether"));  
+
+        /**
+        * Formula:
+        * iTokenBalance = iTokenBalance(P) + stakedToken/iTokenRate - excessIToken
+        * 563.64 + (100 / 1.15) - 24.50 = 626.09 , precision points 18
+        */
+        expect((Math.floor(await interestDistribution.iTokenBalance()/1e18)).toString()).to.be.equal("626");
+
+        /**
+        * Formula:
+        * ubiGDBlance = ubiGDBlance + newGDMinted - interestGD
+        * 52840.27 + 4901.18 - 2910.63 = 54830.83 , precision points 2
+        */
+        expect((await interestDistribution.ubiGDBlance()).toString()).to.be.equal("5483083");
+
+        
+        /** Formula:
+        * interestGDBalance = interestGDBalance + (newGDMinted x GlobalTotalEffectiveStake / globalTotalStaked)
+        * 81563.97 + (368.20 x 4901.18 / 620) = 84474.59 , precision points 2
+        */
+        expect((await interestDistribution.interestGDBalance()).toString()).to.be.equal("8447459"); 
+    });
+
+    it("Collecting all GD for excess interest token holding", async () => {
+
+      /**
+        * will not mint new GD because no interest is generted since last update.
+        */    
+      await interestDistribution
+          .collectUBIInterest()
+          .catch(e => e);
+
+      
+      let interestData = await interestDistribution.getInterestData();
+
+
+      
+      /**
+      *
+      * values:
+      * GDEarnedInterest = 0 (428.20 x 0 / 760)
+      * Formula:
+      * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
+      * 326.08 + (0)/428.2 = 326.08 => 326.08 x 1e11 (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
+      */      
+      expect((Math.floor(interestData[1]/1e11)).toString()).to.be.equal("326");
+
+      // globalTotalStake
+      expect((interestData[0]).toString()).to.be.equal(web3.utils.toWei("720", "ether")); 
+      // globalTotalEffectiveStake
+      expect((Math.floor(interestData[2]/1e18)).toString()).to.be.equal("428"); 
+      // gdInterestEarnedToDate, 84474.59 + 0 (8447459 + 428.2 x 0 / 760)
+      expect((interestData[3]).toString()).to.be.equal("8447459");  
+      // interestTokenEarnedToDate, 139305.42 + 0
+      expect((interestData[4]).toString()).to.be.equal("13930542"); 
+
+      /*
+      * Formula:
+      * iTokenBalance = iTokenBalance(P) + stakedToken/iTokenRate - excessIToken
+      * 626.08 + 0 - 0 = 626.08 , precision points 18
+      */
+      expect((Math.floor(await interestDistribution.iTokenBalance()/1e18)).toString()).to.be.equal("626"); 
+
+      
+      /** Formula:
+      * ubiGDBlance = ubiGDBlance + newGDMinted - interestGD
+      * 54830.83 + 0 - 0 = 54830.83 , precision points 2
+      */
+      expect((await interestDistribution.ubiGDBlance()).toString()).to.be.equal("5483083");
+
+      /*
+      * Formula:
+      * interestGDBalance = interestGDBalance + (newGDMinted x GlobalTotalEffectiveStake / globalTotalStaked)
+      * 84474.59 + (0 x 428.2 / 760) = 84474.59 + 0 = 84474.59 , precision points 2
+      */
+      expect((await interestDistribution.interestGDBalance()).toString()).to.be.equal("8447459");
+
+      /**
+      * Formula: 
+      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
+      */
+      /**
+      * Max[152.2 x 326.08 - (47108.01394 + 0),0] = Max[2520.82, 0] = 2520.82 , precision points 2
+      */
+      expect((await interestDistribution.calculateGDInterest(S1)).toString()).to.be.equal("252082");
+      /**
+      * Max[0 x 326.08 - (0 + 0),0] = Max[0, 0] = 0 , precision points 2
+      */
+      expect((await interestDistribution.calculateGDInterest(S2)).toString()).to.be.equal("0");
+      /**
+      * Max[276 x 326.08 - (55565.21739 + 24000),0] = Max[10434.76, 0] = 10434.76 , precision points 2
+      */
+      expect((await interestDistribution.calculateGDInterest(S3)).toString()).to.be.equal("1043476");
     });
   });
 

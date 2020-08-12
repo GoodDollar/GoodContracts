@@ -9,20 +9,6 @@ pragma solidity 0.5.4;
 contract AbstractGoodStaking {
 
     /**
-     * @dev Structure to store staking details.
-     * It contains amount of tokens staked and blocknumber at which last staked.
-     */
-    struct Staker {
-        uint256 stakedToken;
-        uint256 lastStake;
-    }
-
-    /**
-     * @dev Mapping to store staking details for each user.
-     */
-    mapping(address => Staker) public stakers;
-
-    /**
      * @dev Emitted when `staker` stake `value` tokens of `token`
      */
     event Staked(address indexed staker, address token, uint256 value);

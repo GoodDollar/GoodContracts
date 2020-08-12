@@ -8,6 +8,7 @@ import "../../contracts/dao/schemes/FeelessScheme.sol";
 import "../../contracts/identity/Identity.sol";
 import "../../contracts/DSMath.sol";
 import "./AbstractGoodStaking.sol";
+import "./InterestDistribution.sol";
 
 /**
  * @title Staking contract that donates earned interest to the DAO
@@ -23,6 +24,9 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     // Interest Token address
     ERC20 public iToken;
 
+    // Interest and staker data
+    InterestDistribution.InterestData interestData;
+
     // The block interval defines the number of     
     // blocks that shall be passed before the       
     // next execution of `collectUBIInterest`
@@ -30,14 +34,14 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
 
     // The last block number which      
     // `collectUBIInterest` has been executed in
-    uint256 public lastUBICollection;
+    // uint256 public lastUBICollection;
 
     // The total staked Token amount in the contract
-    uint256 public totalStaked = 0;
+    // uint256 public totalStaked = 0;
 
     //how much of the generated interest is donated, meaning no G$ is expected in compensation, 1 in mil precision.
     //100% for phase0 POC
-    uint32 public avgInterestDonatedRatio = 1e6;
+    // uint32 public avgInterestDonatedRatio = 1e6;
 
     // The address of the fund manager contract
     address public fundManager;
@@ -88,7 +92,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
      * Can be executed only when the contract is not paused.
      * @param _amount The amount of DAI to stake
      */
-    function stake(uint256 _amount) external whenNotPaused {
+    function stake(uint256 _amount, uint256 _donationPer) external whenNotPaused {
         
         require(_amount > 0, "You need to stake a positive token amount");
         require(
@@ -99,21 +103,22 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         // approve the transfer to defi protocol
         token.approve(address(iToken), _amount);
         mint(_amount); //mint iToken
-
-        Staker storage staker = stakers[msg.sender];
-        staker.stakedToken = staker.stakedToken.add(_amount);
-        staker.lastStake = block.number;
-        totalStaked = totalStaked.add(_amount);
+        address reserve; // need to pass original reserve address
+        collectUBIInterest(reserve);
+        uint newGDMintedBeforeDonation = 0; // fetch from collectUBIInterest
+        uint newGDMinted = 0; // fetch from collectUBIInterest
+        InterestDistribution.updateGlobalGDYieldPerToken(interestData, newGDMinted, newGDMintedBeforeDonation);
+        InterestDistribution.stake(interestData, msg.sender, _amount, _donationPer);
         emit Staked(msg.sender, address(token), _amount);
     }
 
     /**
      * @dev Withdraws the sender staked Token.
      */
-    function withdrawStake() external {
-        Staker storage staker = stakers[msg.sender];
-        require(staker.stakedToken > 0, "No DAI staked");
-        uint256 tokenWithdraw = staker.stakedToken;
+    function withdrawStake(uint256 _amount) external {
+        InterestDistribution.Staker storage staker = interestData.stakers[msg.sender];
+        require(staker.stakedToken >= _amount, "Not enough token staked");
+        uint256 tokenWithdraw = _amount;
         redeem(tokenWithdraw);
         uint256 tokenActual = token.balanceOf(address(this));
         if (tokenActual < tokenWithdraw) {
@@ -123,6 +128,15 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         totalStaked = totalStaked.sub(tokenWithdraw);
         require(token.transfer(msg.sender, tokenWithdraw), "withdraw transfer failed");
         emit StakeWithdraw(msg.sender, address(token), tokenWithdraw, token.balanceOf(address(this)));
+    }
+
+    function withdrawGDInterest(address _staker) public {
+        address reserve; // need to pass original reserve address
+        collectUBIInterest(reserve);
+        uint newGDMinted = 0;
+        uint newGDMintedBeforeDonation = 0;
+        InterestDistribution.updateGlobalGDYieldPerToken(interestData, newGDMinted, newGDMintedBeforeDonation);
+        InterestDistribution.withdrawGDInterest(interestData, _staker);
     }
 
     /**
@@ -227,7 +241,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         // otherwise fund manager has to wait for the next interval
         require(_recipient != address(this), "Recipient cannot be the staking contract");
 
-        require(canCollect(), "Need to wait for the next interval");
+        // require(canCollect(), "Need to wait for the next interval");
         (
             uint256 iTokenGains,
             uint256 tokenGains,

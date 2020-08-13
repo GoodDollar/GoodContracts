@@ -9,6 +9,7 @@ import "../../contracts/identity/Identity.sol";
 import "../../contracts/DSMath.sol";
 import "./AbstractGoodStaking.sol";
 import "./InterestDistribution.sol";
+// import "./GoodFundManager.sol";
 
 /**
  * @title Staking contract that donates earned interest to the DAO
@@ -34,14 +35,13 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
 
     // The last block number which      
     // `collectUBIInterest` has been executed in
-    // uint256 public lastUBICollection;
+    uint256 public lastUBICollection;
 
     // The total staked Token amount in the contract
     // uint256 public totalStaked = 0;
 
-    //how much of the generated interest is donated, meaning no G$ is expected in compensation, 1 in mil precision.
-    //100% for phase0 POC
-    // uint32 public avgInterestDonatedRatio = 1e6;
+    
+    uint256 constant DECIMAL1e18 = 10**18;
 
     // The address of the fund manager contract
     address public fundManager;
@@ -91,6 +91,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
      * needed to be executed before the execution of this method.
      * Can be executed only when the contract is not paused.
      * @param _amount The amount of DAI to stake
+     * @param _donationPer The % of interest staker want to donate.
      */
     function stake(uint256 _amount, uint256 _donationPer) external whenNotPaused {
         
@@ -103,11 +104,8 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         // approve the transfer to defi protocol
         token.approve(address(iToken), _amount);
         mint(_amount); //mint iToken
-        address reserve; // need to pass original reserve address
-        collectUBIInterest(reserve);
-        uint newGDMintedBeforeDonation = 0; // fetch from collectUBIInterest
-        uint newGDMinted = 0; // fetch from collectUBIInterest
-        InterestDistribution.updateGlobalGDYieldPerToken(interestData, newGDMinted, newGDMintedBeforeDonation);
+        GoodFundManager fm = GoodFundManager(fundManager);
+        fm.transferInterest(address(this));
         InterestDistribution.stake(interestData, msg.sender, _amount, _donationPer);
         emit Staked(msg.sender, address(token), _amount);
     }
@@ -120,23 +118,35 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         require(staker.stakedToken >= _amount, "Not enough token staked");
         uint256 tokenWithdraw = _amount;
         redeem(tokenWithdraw);
+        GoodFundManager fm = GoodFundManager(fundManager);
+        fm.transferInterest(address(this));
         uint256 tokenActual = token.balanceOf(address(this));
         if (tokenActual < tokenWithdraw) {
             tokenWithdraw = tokenActual;
         }
-        staker.stakedToken = staker.stakedToken.sub(tokenWithdraw); // update balance before transfer to prevent re-entry
-        totalStaked = totalStaked.sub(tokenWithdraw);
+        uint256 gdInterest =  InterestDistribution.withdrawStakeAndInterest(msg.sender, _amount);
+        GoodDollar goodDollar = GoodDollar(address(avatar.nativeToken()));
+        require(goodDollar.transfer(msg.sender, gdInterest), "withdraw interest transfer failed");
         require(token.transfer(msg.sender, tokenWithdraw), "withdraw transfer failed");
         emit StakeWithdraw(msg.sender, address(token), tokenWithdraw, token.balanceOf(address(this)));
     }
 
     function withdrawGDInterest(address _staker) public {
-        address reserve; // need to pass original reserve address
-        collectUBIInterest(reserve);
-        uint newGDMinted = 0;
-        uint newGDMintedBeforeDonation = 0;
-        InterestDistribution.updateGlobalGDYieldPerToken(interestData, newGDMinted, newGDMintedBeforeDonation);
-        InterestDistribution.withdrawGDInterest(interestData, _staker);
+        GoodFundManager fm = GoodFundManager(fundManager);
+        fm.transferInterest(address(this));
+        uint256 gdInterest = InterestDistribution.withdrawGDInterest(interestData, msg.sender);
+        GoodDollar goodDollar = GoodDollar(address(avatar.nativeToken()));
+        require(goodDollar.transfer(msg.sender, gdInterest), "withdraw interest transfer failed");
+    }
+
+    function updateGlobalGDYieldPerToken(
+        uint256 _blockGDInterest,
+        uint256 _blockInterestTokenEarned
+        ) 
+    public 
+    onlyFundManager 
+    {
+        InterestDistribution.updateGlobalGDYieldPerToken(interestData, _blockGDInterest, _blockInterestTokenEarned);
     }
 
     /**
@@ -192,10 +202,10 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     {
         uint256 er = exchangeRate();
         uint256 tokenWorth = currentTokenWorth();
-        if (tokenWorth <= totalStaked) {
+        if (tokenWorth <= interestData.globalTotalStaked) {
             return (0, 0, 0);
         }
-        uint256 tokenGains = tokenWorth.sub(totalStaked);
+        uint256 tokenGains = tokenWorth.sub(interestData.globalTotalStaked);
         (uint decimalDifference, bool caseType) = tokenDecimalPrecision();
         //mul by `10^decimalDifference` to equalize precision otherwise since exchangerate is very big, dividing by it would result in 0.
         uint256 iTokenGains;
@@ -251,7 +261,8 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         if (iTokenGains > 0)
             require(iToken.transfer(_recipient, iTokenGains), "collect transfer failed");
         emit InterestCollected(_recipient, address(token), address(iToken), iTokenGains, tokenGains, precisionLossToken);
-        return (iTokenGains, tokenGains, precisionLossToken, avgInterestDonatedRatio);
+        uint avgEffectiveStakedRatio = interestData.globalTotalEffectiveStake.mul(DECIMAL1e18).div(interestData.globalTotalStaked);
+        return (iTokenGains, tokenGains, precisionLossToken, avgEffectiveStakedRatio);
     }
 
     /**
@@ -291,7 +302,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         // recover left iToken(stakers token) only when all stakes have been withdrawn
         if (address(_token) == address(iToken)) {
             require(
-                totalStaked == 0 && paused(),
+                interestData.globalTotalStaked == 0 && paused(),
                 "can recover iToken only when stakes have been withdrawn"
             );
         }

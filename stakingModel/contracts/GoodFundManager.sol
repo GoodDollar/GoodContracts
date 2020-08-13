@@ -34,6 +34,8 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
     // staking contract
     GoodReserveCDai public reserve;
 
+    uint256 constant DECIMAL1e18 = 10**18;
+
     // The address of the bridge contract
     // which transfers in his turn the
     // UBI funds to the given recipient
@@ -199,10 +201,10 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         reserveHasInitialized
         requireDAOContract(address(_staking))
     {
-        require(
-            canRun(),
-            "Need to wait for the next interval"
-        );
+        // require(
+        //     canRun(),
+        //     "Need to wait for the next interval"
+        // );
 
         lastTransferred = block.number.div(blockInterval);
         ERC20 iToken = ERC20(_staking.iToken());
@@ -210,7 +212,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         uint256 currentBalance = iToken.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract
         //`collectUBIInterest` returns (iTokengains, tokengains, precission loss, donation ratio)
-        (, , , uint32 donationRatio) = _staking.collectUBIInterest(
+        (, , , uint32 avgEffectiveStakedRatio) = _staking.collectUBIInterest(
             address(reserve)
         );
 
@@ -219,14 +221,15 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             currentBalance
         );
 
-        uint256 interestDonated = interest.mul(donationRatio).div(1e6);
-        uint256 afterDonation = interest.sub(interestDonated);
+        uint256 effectiveInterest = interest.mul(avgEffectiveStakedRatio).div(DECIMAL1e18);
+        uint256 interestDonated = interest.sub(effectiveInterest);
         // Mints gd while the interest amount is equal to the transferred amount
         (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(
             iToken,
             interest,
-            afterDonation
+            effectiveInterest
         );
+        _staking.updateGlobalGDYieldPerToken(gdInterest, gdInterest.add(gdUBI));
         // Transfers the minted tokens to the given staking contract
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
         if(gdInterest > 0)

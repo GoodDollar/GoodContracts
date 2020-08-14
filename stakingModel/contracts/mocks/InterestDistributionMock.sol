@@ -32,7 +32,7 @@ contract InterestDistributionMock {
       if(iTokenBalance > requiredCDAIBal) {
         (newGDMinted, newGDMintedBeforeDonation) = mintGoodDollar(iTokenBalance.sub(requiredCDAIBal));
       }
-      updateGlobalGDYieldPerToken(newGDMinted, newGDMintedBeforeDonation);
+      updateGlobalGDYieldPerToken(newGDMinted, iTokenBalance.sub(requiredCDAIBal));
       InterestDistribution.stake(interestData, _staker, _stake, _donationPer);
     }
 
@@ -49,7 +49,7 @@ contract InterestDistributionMock {
       if(iTokenBalance > requiredCDAIBal) {
         (newGDMinted, newGDMintedBeforeDonation) = mintGoodDollar(iTokenBalance.sub(requiredCDAIBal));
       }
-      updateGlobalGDYieldPerToken(newGDMinted, newGDMintedBeforeDonation);
+      updateGlobalGDYieldPerToken(newGDMinted, iTokenBalance.sub(requiredCDAIBal));
       InterestDistribution.withdrawStakeAndInterest(interestData, _staker, _amount);
     }
 
@@ -60,7 +60,7 @@ contract InterestDistributionMock {
       if(iTokenBalance > requiredCDAIBal) {
         (newGDMinted, newGDMintedBeforeDonation) = mintGoodDollar(iTokenBalance.sub(requiredCDAIBal));
       }
-      updateGlobalGDYieldPerToken(newGDMinted, newGDMintedBeforeDonation);
+      updateGlobalGDYieldPerToken(newGDMinted, iTokenBalance.sub(requiredCDAIBal));
       InterestDistribution.withdrawGDInterest(interestData, _staker);
     }
 
@@ -138,6 +138,6 @@ contract InterestDistributionMock {
       if(iTokenBalance > requiredCDAIBal) {
         (newGDMinted, newGDMintedBeforeDonation) = mintGoodDollar(iTokenBalance.sub(requiredCDAIBal));
       }
-      updateGlobalGDYieldPerToken(newGDMinted, newGDMintedBeforeDonation);
+      updateGlobalGDYieldPerToken(newGDMinted, iTokenBalance.sub(requiredCDAIBal));
     }
 }

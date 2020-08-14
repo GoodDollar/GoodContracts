@@ -38,7 +38,6 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       * Staking = 10 x 1e18
       * Donation% = 30%
       * GDEarnedInterest = 10000 x 1e2
-      * GDEarnedInterestEarned = 10000 x 1e2
       */
 
       await interestDistribution
@@ -63,10 +62,10 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
 
     /**
       * GDEarnedInterest = 270 x 1e2
-      * GDEarnedInterestEarned = 270 x 1e2
+      * interestTokenEarnedToDate = 1.35 x 1e18
       */
     await interestDistribution
-        .updateGlobalGDYieldPerToken(270 * 100, 270 * 100)
+        .updateGlobalGDYieldPerToken(270 * 100, web3.utils.toWei("1.35", "ether"))
         .catch(e => e);
 
     let yieldData = await interestDistribution.getYieldData(user1);

@@ -29,6 +29,7 @@ library InterestDistribution {
         uint256 lastStake;
         uint256 withdrawnToDate;
         uint256 stakeBuyinRate;  // Precision points = 27 + 2 (G$ decimal) = 29
+        uint256 interestClaimedBeforeLastUnstake;
     }
 
     // 10^27
@@ -120,6 +121,15 @@ library InterestDistribution {
         _interestData.globalTotalStaked = _interestData.globalTotalStaked.sub(_amount);
         _stakerData.totalStaked = _stakerData.totalStaked.sub(_amount);
 
+        _stakerData.stakeBuyinRate = 0;
+        _stakerData.interestClaimedBeforeLastUnstake = _stakerData.interestClaimedBeforeLastUnstake.add(_stakerData.withdrawnToDate);
+        _stakerData.withdrawnToDate = 0;
+        updateStakeBuyinRate(
+            _stakerData,
+            _interestData.globalGDYieldPerToken,
+            _stakerData.totalEffectiveStake
+        );
+
         return gdInterestEarned;
     }
 
@@ -197,7 +207,6 @@ library InterestDistribution {
      * @param _blockGDInterest           Interest earned in G$ in  exchange for _blockInterestTokenEarned (after donations)
      * @param _blockInterestTokenEarned  Interest token earned (before donations)
      *
-     * @return  new yield since last update with precision: 27 + 2 (G$ decimal) - (token Decimal).
      */
     function updateGlobalGDYieldPerToken(
         InterestData storage _interestData,
@@ -232,7 +241,6 @@ library InterestDistribution {
      * @param _globalGDYieldPerToken       Total yielding amount per token (Precision: 27 + 2 (G$ decimal) - (token Decimal))
      * @param _effectiveStake              Amount staked after donation
      *
-     * @return  increase in yielding rate since last update with precision points 29.
      */
     function updateStakeBuyinRate(
         Staker storage _stakerData,

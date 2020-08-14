@@ -112,8 +112,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("105", "ether")); 
         // gdInterestEarnedToDate, 8000 (80 x 10000 / 100)
         expect((interestData[3]).toString()).to.be.equal("800000");  
-        // interestTokenEarnedToDate, 10000
-        expect((interestData[4]).toString()).to.be.equal("1000000"); 
+        // interestTokenEarnedToDate, 0 + 50
+        expect((interestData[4]).toString()).to.be.equal(web3.utils.toWei("50", "ether")); 
 
         // totalStake of S2
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("50", "ether")); 
@@ -187,8 +187,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("321", "ether")); 
         // gdInterestEarnedToDate, 8000 + 7000 (8000 + 105 x 10000 / 150)
         expect((interestData[3]).toString()).to.be.equal("1500000");  
-        // interestTokenEarnedToDate, 10000 + 10000
-        expect((interestData[4]).toString()).to.be.equal("2000000"); 
+        // interestTokenEarnedToDate, 50 + 50
+        expect((interestData[4]).toString()).to.be.equal(web3.utils.toWei("100", "ether")); 
 
         // totalStake of S3
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("360", "ether")); 
@@ -262,8 +262,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("421", "ether")); 
         // gdInterestEarnedToDate, 15000 + 8230.76 (15000 + 321 x 13,076.92 / 510)
         expect((interestData[3]).toString()).to.be.equal("2323076");  
-        // interestTokenEarnedToDate, 20000 + 13,076.92
-        expect((interestData[4]).toString()).to.be.equal("3307692"); 
+        // interestTokenEarnedToDate, 100 + 65.37
+        expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("165"); 
 
         // totalStake of S1
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("350", "ether")); 
@@ -332,8 +332,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
       expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("421", "ether")); 
       // gdInterestEarnedToDate, 23230.76 + 9252.74 (23230.76 + 421 x 16703.29 / 760)
       expect((interestData[3]).toString()).to.be.equal("3248350");  
-      // interestTokenEarnedToDate, 33076.92 + 16703.29
-      expect((interestData[4]).toString()).to.be.equal("4978021"); 
+      // interestTokenEarnedToDate, 165.37 + 83.28
+      expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("248");  
 
       /*
       * Formula:
@@ -422,8 +422,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("481", "ether")); 
         // gdInterestEarnedToDate, 4751921 (32483.5164 + 421 x 27142.85714 / 760)
         expect((interestData[3]).toString()).to.be.equal("4751921");  
-        // interestTokenEarnedToDate, 49780.21978 + 27142.85714
-        expect((interestData[4]).toString()).to.be.equal("7692306"); 
+        // interestTokenEarnedToDate, 248.65 + 135.71
+        expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("384"); 
 
         // totalStake of S1
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("410", "ether")); 
@@ -485,8 +485,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("481", "ether")); 
         // gdInterestEarnedToDate, 47519.21 (32483.5164 + 0)
         expect((interestData[3]).toString()).to.be.equal("4751921");  
-        // interestTokenEarnedToDate, 76923.06 + 0
-        expect((interestData[4]).toString()).to.be.equal("7692306"); 
+        // interestTokenEarnedToDate, 384.36 + 0
+        expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("384"); 
 
         // totalStake of S2
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("50", "ether")); 
@@ -568,8 +568,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("481", "ether")); 
         // gdInterestEarnedToDate, 47519.21 + 13361.10 (481 x 22777.77 / 820)
         expect((interestData[3]).toString()).to.be.equal("6088031");  
-        // interestTokenEarnedToDate, 76923.06 + 22777.77
-        expect((interestData[4]).toString()).to.be.equal("9970083"); 
+        // interestTokenEarnedToDate, 384.36 + 113.88
+        expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("498"); 
 
         // totalStake of S3
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("360", "ether")); 
@@ -650,8 +650,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("551", "ether")); 
         // gdInterestEarnedToDate, 60880.31 + 5625.72 (481 x 9590.643 / 820)
         expect((interestData[3]).toString()).to.be.equal("6650603");  
-        // interestTokenEarnedToDate, 99700.83 + 9590.643
-        expect((interestData[4]).toString()).to.be.equal("10929147"); 
+        // interestTokenEarnedToDate, 498.24 + 47.95
+        expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("546"); 
 
         // totalStake of S1
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("150", "ether")); 
@@ -708,8 +708,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
       expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("551", "ether")); 
       // gdInterestEarnedToDate, 66506.03 + 0 (66506.03 + 551 x 0 / 920)
       expect((interestData[3]).toString()).to.be.equal("6650603");  
-      // interestTokenEarnedToDate, 109291.47 + 0
-      expect((interestData[4]).toString()).to.be.equal("10929147"); 
+      // interestTokenEarnedToDate, 546.19 + 0
+      expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("546"); 
 
       /*
       * Formula:
@@ -792,8 +792,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
       expect((interestData[2]).toString()).to.be.equal(web3.utils.toWei("551", "ether")); 
       // gdInterestEarnedToDate, 66506.03 + 5800 (66506.03 + 551 x 9684.21 / 920)
       expect((interestData[3]).toString()).to.be.equal("7230602");  
-      // interestTokenEarnedToDate, 109291.47 + 9684.21
-      expect((interestData[4]).toString()).to.be.equal("11897568"); 
+      // interestTokenEarnedToDate, 546.19 + 48.42
+      expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("594"); 
 
       /*
       * Formula:
@@ -891,8 +891,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((Math.floor(interestData[2]/1e18)).toString()).to.be.equal("463"); 
         // gdInterestEarnedToDate, 77553.63 (72306.02 + 551 x 8761.904762 / 920)
         expect((interestData[3]).toString()).to.be.equal("7755363");  
-        // interestTokenEarnedToDate, 118975.68 + 8761.90
-        expect((interestData[4]).toString()).to.be.equal("12773758"); 
+        // interestTokenEarnedToDate, 594.61 + 43.80
+        expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("638"); 
 
         // totalStake of S1
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("260", "ether")); 
@@ -978,8 +978,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((Math.floor(interestData[2]/1e18)).toString()).to.be.equal("368"); 
         // gdInterestEarnedToDate, 81563.97 (77553.63 + 463.2 x 6666.66 / 770)
         expect((interestData[3]).toString()).to.be.equal("8156397");  
-        // interestTokenEarnedToDate, 127737.58 + 6666.66
-        expect((interestData[4]).toString()).to.be.equal("13440424"); 
+        // interestTokenEarnedToDate, 638.41 + 33.32
+        expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("672"); 
 
         // totalStake of S2
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("0", "ether")); 
@@ -1054,8 +1054,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         expect((Math.floor(interestData[2]/1e18)).toString()).to.be.equal("428");  
         // gdInterestEarnedToDate, 81563.97 + 2910.63 (368.20 x 4901.18 / 620)
         expect((interestData[3]).toString()).to.be.equal("8447459");  
-        // interestTokenEarnedToDate, 134404.24 + 4901.18
-        expect((interestData[4]).toString()).to.be.equal("13930542"); 
+        // interestTokenEarnedToDate, 671.73 + 24.50
+        expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("696"); 
 
         // totalStake of S3
         expect((stakerData[0]).toString()).to.be.equal(web3.utils.toWei("460", "ether")); 
@@ -1114,8 +1114,8 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
       expect((Math.floor(interestData[2]/1e18)).toString()).to.be.equal("428"); 
       // gdInterestEarnedToDate, 84474.59 + 0 (8447459 + 428.2 x 0 / 760)
       expect((interestData[3]).toString()).to.be.equal("8447459");  
-      // interestTokenEarnedToDate, 139305.42 + 0
-      expect((interestData[4]).toString()).to.be.equal("13930542"); 
+      // interestTokenEarnedToDate, 696.23 + 0
+      expect((Math.floor(interestData[4]/1e18)).toString()).to.be.equal("696"); 
 
       /*
       * Formula:

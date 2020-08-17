@@ -43,19 +43,19 @@ module.exports = async function (deployer, network) {
 
   //deploy home bridge always on fuse
   if (["fuse", "staging", "production"].includes(network)) {
+    const homeBridgeFactory =
+      network.indexOf("production") >= 0
+        ? "0xFbf20Fa994A577439Cd0b6033Db373f7a995E147"
+        : "0xb895638fb3870AD5832402a5BcAa64A044687db0"; //Fuse homebridge factory address
     console.log("Deploying home bridge scheme");
-    factory = await deployer.deploy(
-      SetHomeBridge,
-      avataraddr,
-      "0xb895638fb3870AD5832402a5BcAa64A044687db0"
-    );
+    deployBridge = await deployer.deploy(SetHomeBridge, avataraddr, homeBridgeFactory);
 
-    await factory.transferOwnership(avataraddr);
+    // await setBridge.transferOwnership(avataraddr);
 
-    console.log("proposing home bridge scheme", factory.address);
+    console.log("proposing home bridge scheme", deployBridge.address);
     let transaction = await schemeRegistrar.proposeScheme(
       avataraddr,
-      factory.address,
+      deployBridge.address,
       NULL_HASH,
       "0x00000010",
       NULL_HASH
@@ -76,12 +76,10 @@ module.exports = async function (deployer, network) {
       )
     );
 
-    const isAlreadyMinter = await gd.isMinter(
-      "0xb895638fb3870AD5832402a5BcAa64A044687db0"
-    );
+    const isAlreadyMinter = await gd.isMinter(homeBridgeFactory);
 
     console.log("creating home bridge", { isAlreadyMinter });
-    let transaction2 = await factory.setBridge(isAlreadyMinter === false);
+    let transaction2 = await deployBridge.setBridge(isAlreadyMinter === false);
 
     const {
       _homeBridge,

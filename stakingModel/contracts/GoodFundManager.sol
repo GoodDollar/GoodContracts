@@ -14,6 +14,12 @@ interface StakingContract {
         returns (uint256, uint256, uint256, uint32);
 
     function iToken() external view returns(address); 
+
+    function updateGlobalGDYieldPerToken(
+        uint256 _blockGDInterest,
+        uint256 _blockInterestTokenEarned
+        ) 
+    external;
 }
 
 

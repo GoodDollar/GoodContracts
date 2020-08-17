@@ -5,11 +5,18 @@ import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../../contracts/dao/schemes/FeelessScheme.sol";
+import "../../contracts/token/GoodDollar.sol";
 import "../../contracts/identity/Identity.sol";
 import "../../contracts/DSMath.sol";
 import "./AbstractGoodStaking.sol";
 import "./InterestDistribution.sol";
-// import "./GoodFundManager.sol";
+
+
+interface GoodFundManager {
+    function transferInterest(address _staking)
+        external;
+
+}
 
 /**
  * @title Staking contract that donates earned interest to the DAO
@@ -115,7 +122,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
      */
     function withdrawStake(uint256 _amount) external {
         InterestDistribution.Staker storage staker = interestData.stakers[msg.sender];
-        require(staker.stakedToken >= _amount, "Not enough token staked");
+        require(staker.totalStaked >= _amount, "Not enough token staked");
         uint256 tokenWithdraw = _amount;
         redeem(tokenWithdraw);
         GoodFundManager fm = GoodFundManager(fundManager);
@@ -124,7 +131,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         if (tokenActual < tokenWithdraw) {
             tokenWithdraw = tokenActual;
         }
-        uint256 gdInterest =  InterestDistribution.withdrawStakeAndInterest(msg.sender, _amount);
+        uint256 gdInterest =  InterestDistribution.withdrawStakeAndInterest(interestData, msg.sender, _amount);
         GoodDollar goodDollar = GoodDollar(address(avatar.nativeToken()));
         require(goodDollar.transfer(msg.sender, gdInterest), "withdraw interest transfer failed");
         require(token.transfer(msg.sender, tokenWithdraw), "withdraw transfer failed");
@@ -245,7 +252,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
             uint256,
             uint256,
             uint256,
-            uint32
+            uint256
         )
     {
         // otherwise fund manager has to wait for the next interval

@@ -88,7 +88,7 @@ contract AbstractGoodStaking {
             uint256,
             uint256,
             uint256,
-            uint32
+            uint256
         )
     {
         

@@ -27,7 +27,7 @@ contract GoodCompoundStakingMock is GoodCompoundStaking {
             uint256,
             uint256,
             uint256,
-            uint32
+            uint256
         )
     {
         (uint256 iTokenGains, uint256 tokenGains, uint256 precisionLossToken, ) = super

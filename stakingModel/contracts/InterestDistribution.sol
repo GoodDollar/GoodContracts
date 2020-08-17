@@ -29,7 +29,6 @@ library InterestDistribution {
         uint256 lastStake;
         uint256 withdrawnToDate;
         uint256 stakeBuyinRate;  // Precision points = 27 + 2 (G$ decimal) = 29
-        uint256 interestClaimedBeforeLastUnstake;
     }
 
     // 10^27
@@ -122,7 +121,6 @@ library InterestDistribution {
         _stakerData.totalStaked = _stakerData.totalStaked.sub(_amount);
 
         _stakerData.stakeBuyinRate = 0;
-        _stakerData.interestClaimedBeforeLastUnstake = _stakerData.interestClaimedBeforeLastUnstake.add(_stakerData.withdrawnToDate);
         _stakerData.withdrawnToDate = 0;
         updateStakeBuyinRate(
             _stakerData,

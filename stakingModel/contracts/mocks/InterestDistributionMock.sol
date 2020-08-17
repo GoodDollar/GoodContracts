@@ -28,12 +28,12 @@ contract InterestDistributionMock {
       updatecontractBalance(_stake, true);
       uint requiredCDAIBal = (interestData.globalTotalStaked.add(_stake)).mul(DECIMAL1e18).div(iTokenToTokenRate);
       uint newGDMinted = 0;
-      uint excessIToken = 0;
+      uint earnedInterest = 0;
       if(iTokenBalance > requiredCDAIBal) {
-        excessIToken = iTokenBalance.sub(requiredCDAIBal);
-        (newGDMinted, ) = mintGoodDollar(excessIToken);
+        earnedInterest = iTokenBalance.sub(requiredCDAIBal);
+        (newGDMinted, ) = mintGoodDollar(earnedInterest);
       }
-      updateGlobalGDYieldPerToken(newGDMinted, excessIToken);
+      updateGlobalGDYieldPerToken(newGDMinted, earnedInterest);
       InterestDistribution.stake(interestData, _staker, _stake, _donationPer);
     }
 
@@ -46,24 +46,24 @@ contract InterestDistributionMock {
       updatecontractBalance(_amount, false);
       uint requiredCDAIBal = (interestData.globalTotalStaked.sub(_amount)).mul(DECIMAL1e18).div(iTokenToTokenRate);
       uint newGDMinted = 0;
-      uint excessIToken = 0;
+      uint earnedInterest = 0;
       if(iTokenBalance > requiredCDAIBal) {
-        excessIToken = iTokenBalance.sub(requiredCDAIBal);
-        (newGDMinted, ) = mintGoodDollar(excessIToken);
+        earnedInterest = iTokenBalance.sub(requiredCDAIBal);
+        (newGDMinted, ) = mintGoodDollar(earnedInterest);
       }
-      updateGlobalGDYieldPerToken(newGDMinted, excessIToken);
+      updateGlobalGDYieldPerToken(newGDMinted, earnedInterest);
       InterestDistribution.withdrawStakeAndInterest(interestData, _staker, _amount);
     }
 
     function withdrawGDInterest(address _staker) public {
       uint requiredCDAIBal = (interestData.globalTotalStaked).mul(DECIMAL1e18).div(iTokenToTokenRate);
       uint newGDMinted = 0;
-      uint excessIToken = 0;
+      uint earnedInterest = 0;
       if(iTokenBalance > requiredCDAIBal) {
-        excessIToken = iTokenBalance.sub(requiredCDAIBal);
-        (newGDMinted, ) = mintGoodDollar(excessIToken);
+        earnedInterest = iTokenBalance.sub(requiredCDAIBal);
+        (newGDMinted, ) = mintGoodDollar(earnedInterest);
       }
-      updateGlobalGDYieldPerToken(newGDMinted, excessIToken);
+      updateGlobalGDYieldPerToken(newGDMinted, earnedInterest);
       InterestDistribution.withdrawGDInterest(interestData, _staker);
     }
 
@@ -73,10 +73,10 @@ contract InterestDistributionMock {
       return (interestData.globalGDYieldPerToken, interestData.stakers[_staker].stakeBuyinRate);
     }
 
-    function getStakerData(address _staker) public view returns(uint256, uint256, uint256, uint256, uint256)
+    function getStakerData(address _staker) public view returns(uint256, uint256, uint256, uint256)
     {
 
-      return (interestData.stakers[_staker].totalStaked, interestData.stakers[_staker].totalEffectiveStake, interestData.stakers[_staker].lastStake, interestData.stakers[_staker].withdrawnToDate, interestData.stakers[_staker].interestClaimedBeforeLastUnstake);
+      return (interestData.stakers[_staker].totalStaked, interestData.stakers[_staker].totalEffectiveStake, interestData.stakers[_staker].lastStake, interestData.stakers[_staker].withdrawnToDate);
     }
 
     function getInterestData() public view returns(uint256, uint256, uint256, uint256, uint256, uint256)
@@ -137,11 +137,11 @@ contract InterestDistributionMock {
     function collectUBIInterest() public {
       uint requiredCDAIBal = (interestData.globalTotalStaked).mul(DECIMAL1e18).div(iTokenToTokenRate);
       uint newGDMinted = 0;
-      uint excessIToken = 0;
+      uint earnedInterest = 0;
       if(iTokenBalance > requiredCDAIBal) {
-        excessIToken = iTokenBalance.sub(requiredCDAIBal);
-        (newGDMinted, ) = mintGoodDollar(excessIToken);
+        earnedInterest = iTokenBalance.sub(requiredCDAIBal);
+        (newGDMinted, ) = mintGoodDollar(earnedInterest);
       }
-      updateGlobalGDYieldPerToken(newGDMinted, excessIToken);
+      updateGlobalGDYieldPerToken(newGDMinted, earnedInterest);
     }
 }

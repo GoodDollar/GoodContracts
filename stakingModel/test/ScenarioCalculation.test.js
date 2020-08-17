@@ -866,7 +866,7 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
         * Max[240 x 309.52 - (34230.76923 + 0),0] = Max[40054.94, 0] = 40054.94 , precision points 2
         */
-        expect((stakerData[4]).toString()).to.be.equal("4005491");
+        expect((await interestDistribution.userGDBalance(S1)).toString()).to.be.equal("4005491");
 
 
 
@@ -953,7 +953,7 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
         * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
         * Max[95 x 318.18 - (22763.157),0] = Max[1986.84, 0] = 1986.84 , precision points 2
         */
-        expect((stakerData[4]).toString()).to.be.equal("746410");
+        expect((await interestDistribution.userGDBalance(S2)).toString()).to.be.equal("746410");
 
 
 

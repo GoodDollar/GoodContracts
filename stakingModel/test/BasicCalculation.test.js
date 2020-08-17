@@ -12,60 +12,60 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
     
   });
 
-  it("Should return correct Avg Yield Rate Per Token", async () => {
+  it("Should return correct cumulative Yield Rate", async () => {
 
-      // 1st stake will not affect AvgYieldRatePerToken and GlobalYieldPerToken because globalTotalStaked and totalStaked both are 0.
+      // 1st stake will not affect StakeBuyinRate and GlobalYieldPerToken because globalTotalStaked is 0.
       await interestDistribution
-        .stakeCalculation(user1, web3.utils.toWei("20", "ether"), 0, web3.utils.toWei("1", "ether"), web3.utils.toWei("1", "ether"))
+        .stake(user1, web3.utils.toWei("20", "ether"), 0)
         .catch(e => e);
 
+      // Updating Interest token rate to Token rate. (ie., 1 interestToken is worth of 0.4 Token)
+      // Token means any supported ERC20 (ie., DAI, USDC etc)
+      // IToken means any interest Token (ie., mDAI, cDAI, mUSDC etc)
+      // Updating the rate so we can see interest generating for staked tokens.
+      await interestDistribution
+        .setITokenToTokenRate(web3.utils.toWei("0.4", "ether"))
+        .catch(e => e);
 
       /**
       * Formula:
-      * GlobalYieldPerToken = GlobalYieldPerToken(P) + [(IntrestTokenRate - LastTokenRate) x IntrestTokenHoldings]/GlobalTotalStake
-      * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
+      * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
+      * StakeBuyinRate = [StakeBuyinRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
       * consider :
-      * IntrestTokenRate = 1.02
-      * LastTokenRate = 1
-      * IntrestTokenHoldings = 30 x 1e18
-      * GlobalTotalStake = 20 x 1e18
-      * AccumulatedYieldPerToken(P) = 3
-      * AvgYieldRatePerToken(P) = 0
+      * GlobalTotalEffectiveStake = 20 x 1e18
+      * AccumulatedYieldPerToken(P) = 0
+      * StakeBuyinRate(P) = 0
       * Staking = 10 x 1e18
       * Donation% = 30%
-      * TotalStaked = 20 x 1e18
-      * output = 3
+      * GDEarnedInterest = 10000 x 1e2
       */
 
       await interestDistribution
-        .stakeCalculation(user1, web3.utils.toWei("10", "ether"), 30, web3.utils.toWei("1.02", "ether"), web3.utils.toWei("30", "ether"))
+        .stake(user1, web3.utils.toWei("10", "ether"), 30)
         .catch(e => e);
 
       let yieldData = await interestDistribution.getYieldData(user1);
 
       /**
       * Formula:
-      * GlobalYieldPerToken = GlobalYieldPerToken(P) + [(IntrestTokenRate - LastTokenRate) x IntrestTokenHoldings]/GlobalTotalStake
-      * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
-      * 0 + [(1.02 - 1) x 30]/20 = [0.02 x 30]x100/20 = 3
-      * (3*10*1e18*(100-30)%)/(20*1e18) = (30*70%)/20 =  1.05 = 1
+      * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
+      * StakeBuyinRate = [StakeBuyinRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
+      * 0 + (10000)/20 = 500 => 500 x 1e11 (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
+      * 0 + (500 * 7) = 3500 => 3500 x 1e29 (27 + 2(G$ precision) = 29 precision points)
       */      
-      expect(yieldData[0].toString()).to.be.equal("3");
-      expect(yieldData[1].toString()).to.be.equal("1");
+      expect((yieldData[0]/1e11).toString()).to.be.equal("500");
+      expect((Math.round(yieldData[1]/1e29)).toString()).to.be.equal("3500");
   });
 
-  it("Set Accumulated Yield Per Token and Avg Yield Rate Per Token", async () => {
+  it("Set Accumulated Yield Per Token", async () => {
 
 
     /**
-      * Stake = 5 x 10^18
-      * Donation = 0%
-      * IntrestTokenRate = 1.03
-      * LastTokenRate = 1.02
-      * IntrestTokenHoldings = 60 x 1e18
+      * GDEarnedInterest = 270 x 1e2
+      * interestTokenEarnedToDate = 1.35 x 1e18
       */
     await interestDistribution
-        .stakeCalculation(user1, web3.utils.toWei("6", "ether"), 0, web3.utils.toWei("1.03", "ether"), web3.utils.toWei("60", "ether"))
+        .updateGlobalGDYieldPerToken(270 * 100, web3.utils.toWei("1.35", "ether"))
         .catch(e => e);
 
     let yieldData = await interestDistribution.getYieldData(user1);
@@ -73,83 +73,72 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
 
     /**
       * Formula:
-      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
-      * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
-      * 3 + [(1.03 - 1.02)x100 x 60]/30 = 3 + [0.01 x 60]x100/30 = 3 + 2 = 5
-      * 1 + (6)*5*1e18*(100-0)%)/(30*1e18) = 1 + (30*100%)/30 =  2
-      */
-    expect(yieldData[0].toString()).to.be.equal("5");
-    expect(yieldData[1].toString()).to.be.equal("2");
+      * GlobalYieldPerToken = GlobalYieldPerToken(P) + GDEarnedInterest/GlobalTotalEffectiveStake.
+      * 500 + (270)/27 = 500 + 10 => 510 x 1e11 (27 + 2(G$ precision) - 18(token decimal) = 11 precision points)
+      */ 
+    expect((Math.round(yieldData[0]/1e11)).toString()).to.be.equal("510");
   });
 
   it("Should return correct G$ interest", async () => {
 
     /**
       * Formula: 
-      * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
+      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
       * consider :
-      * AvgYieldRatePerToken(P) = 2
-      * AccumulatedYieldPerToken(P) = 5
-      * TotalStaked = 36 x 1e18
-      * WithdrawnToDate = 0;
-      * output = 180 x 1e2
+      * StakeBuyinRate(P) = 3500 x 1e29
+      * AccumulatedYieldPerToken(P) = 510 x 1e11
+      * TotalEfectiveStaked = 27 x 1e18
+      * WithdrawnToDate = 0
+      * output = 10270 x 1e2
       */
 
       let earnedGDInterest = await interestDistribution.calculateGDInterest(user1);
       
       /**
       * Formula: 
-      * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
-      * Max[36 * (5 - 2) - 0, 0] = Max[36 * 3, 0] = Max[108, 0] = 108 = 2 points presicion 10800
+      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
+      * Max[27 * 510 - (3500 + 0), 0] = Max[13770 - 3500, 0] = Max[10207, 0] = 10270 = 2 points presicion 1027000
       */
-      expect(earnedGDInterest.toString()).to.be.equal("10800");
+      expect(earnedGDInterest.toString()).to.be.equal("1027000");
   });
 
-  it("Should return G$ interest as 0 if WithdrawnToDate > TotalStaked x (AccumulatedYieldPerToken - AvgYieldRatePerToken)", async () => {
+  it("Should return G$ interest as 0 if (StakeBuyinRate + WithdrawnToDate) > TotalEfectiveStaked x AccumulatedYieldPerDAI", async () => {
 
 
     // withdrawing G$ interest 
     await interestDistribution
-        .updateWithdrawnInterest(user1)
+        .withdrawGDInterest(user1)
         .catch(e => e);
-
 
     let stkerData = await interestDistribution.getStakerData(user1);
-    expect(stkerData[3].toString()).to.be.equal("10800");
+    expect(stkerData[3].toString()).to.be.equal("1027000");
 
     /**
-      * Stake = 7.2 x 10^18
-      * Donation = 0%
-      * IntrestTokenRate = 1.03
-      * LastTokenRate = 1.03
-      * IntrestTokenHoldings = 60 x 1e18
+      * Effective stake
       */
-    // Staking so we can manipulate AvgYieldRatePerDAI
+    // Manipulate StakeBuyinRate to create scenario.
     await interestDistribution
-        .stakeCalculation(user1, web3.utils.toWei("7.2", "ether"), 0, web3.utils.toWei("1.03", "ether"), web3.utils.toWei("60", "ether"))
+        .updateStakeBuyinRate(user1, web3.utils.toWei("3", "ether"))
         .catch(e => e);
 
     let yieldData = await interestDistribution.getYieldData(user1);
 
-    /**
+    /*
       * Formula:
-      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
-      * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
-      * 5 + [(1.03 - 1.03) x 60]/36 = 5 + [0 x 60]x100/36 = 5 + 0 = 5
-      * 2 + (5*7.2*1e18*(100-0)%)/(36*1e18) = 2 + (36*100%)/36 =  3
+      * StakeBuyinRate = [StakeBuyinRate(P) + (AccumulatedYieldPerToken(P) x EffectiveStake)]
+      * 3500 + (510 * 3) = 3500 + 1530 =  5030
       */
-    expect(yieldData[0].toString()).to.be.equal("5");
-    expect(yieldData[1].toString()).to.be.equal("3");
+      expect((Math.round(yieldData[1]/1e29)).toString()).to.be.equal("5030");
 
 
     /**
       * Formula: 
-      * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
+      * EarnedGDInterest = MAX[TotalEfectiveStaked x AccumulatedYieldPerDAI - (StakeBuyinRate + WithdrawnToDate), 0]
       * consider :
-      * AvgYieldRatePerToken(P) = 3
-      * AccumulatedYieldPerToken(P) = 5
-      * TotalStaked = 43.2 x 1e18
-      * WithdrawnToDate = 108 x 1e2;
+      * StakeBuyinRate(P) = 5030 x 1e29
+      * AccumulatedYieldPerToken(P) = 510 x 1e11
+      * TotalEfectiveStaked = 27 x 1e18
+      * WithdrawnToDate = 10270 x 1e2
       * output = 0
       */
 
@@ -159,56 +148,9 @@ contract("InterestDistribution - Basic calculations", ([user1]) => {
       /**
       * Formula: 
       * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
-      * interest(72) < WithdrawnToDate(108), Hence output is 0.
+      * TotalEfectiveStaked x AccumulatedYieldPerDAI(27 * 510 = 13770) < WithdrawnToDate + StakeBuyinRate(10270 + 5030 = 15300), Hence output is 0.
       */
       expect(earnedGDInterest.toString()).to.be.equal(web3.utils.toWei("0"));
   });
 
-  it("Should return G$ interest as 0 if AvgYieldRatePerToken > AccumulatedYieldPerToken", async () => {
-
-    /**
-      * Stake = 26 x 10^18
-      * Donation = 0%
-      * IntrestTokenRate = 1.03
-      * LastTokenRate = 1.03
-      * IntrestTokenHoldings = 60 x 1e18
-      */
-    // Staking so we can manipulate AvgYieldRatePerDAI
-    await interestDistribution
-        .stakeCalculation(user1, web3.utils.toWei("26", "ether"), 0, web3.utils.toWei("1.03", "ether"), web3.utils.toWei("60", "ether"))
-        .catch(e => e);
-
-    let yieldData = await interestDistribution.getYieldData(user1);
-    
-
-    /**
-      * Formula:
-      * AvgYieldRatePerToken = [(AvgYieldRatePerToken(P) x TotalStaked) + (AccumulatedYieldPerToken(P) x Staking x (1-%Donation))]/TotalStaked
-      * AccumulatedYieldPerToken = AccumulatedYieldPerToken(P) + (Daily Interest/GrandTotalStaked)
-      * 5 + [(1.03 - 1.03) x 60]/43.2 = 5 + [0 x 60]x100/43.2 = 5 + 0 = 5
-      * 3 + (5*26*1e18*(100-0)%)/(43.2*1e18) = 3 + (130*100%)/43.2 =  3 + 3.009 = 6
-      */
-    expect(yieldData[0].toString()).to.be.equal("5");
-    expect(yieldData[1].toString()).to.be.equal("6");
-
-    /**
-      * Formula: 
-      * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
-      * consider :
-      * AvgYieldRatePerToken(P) = 6
-      * AccumulatedYieldPerToken(P) = 5
-      * TotalStaked = 69.2 x 1e18
-      * WithdrawnToDate = 108 x 1e18;
-      * output = 0
-      */
-
-      let earnedGDInterest = await interestDistribution.calculateGDInterest(user1);
-      
-      /**
-      * Formula: 
-      * EarnedGDInterest = MAX[TotalStaked x (AccumulatedYieldPerDAI - AvgYieldRatePerDAI) - WithdrawnToDate, 0]
-      * AccumulatedYieldPerToken(5) < AvgYieldRatePerToken(6), Hence output is 0.
-      */
-      expect(earnedGDInterest.toString()).to.be.equal(web3.utils.toWei("0"));
-  });
 });

@@ -150,16 +150,16 @@ contract(
         from: staker
       });
       await simpleStaking
-        .stake(web3.utils.toWei("100", "ether"), {
+        .stake(web3.utils.toWei("100", "ether"), 100, {
           from: staker
         })
         .catch(console.log);
-      let balance = await simpleStaking.stakers(staker);
-      expect(balance.stakedToken.toString()).to.be.equal(
+      let balance = await simpleStaking.getStakerData(staker);
+      expect(balance.totalStaked.toString()).to.be.equal(
         web3.utils.toWei("100", "ether") //100 dai
       );
-      let totalStaked = await simpleStaking.totalStaked();
-      expect(totalStaked.toString()).to.be.equal(web3.utils.toWei("100", "ether"));
+      let interestData = await simpleStaking.interestData();
+      expect(interestData[0].toString()).to.be.equal(web3.utils.toWei("100", "ether"));
       let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
       expect(stakedcDaiBalance.toString()).to.be.equal(
         web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai because of the exchange rate dai <> cdai)
@@ -209,7 +209,7 @@ contract(
       });
       await identity.addContract(stakingMock.address);
       await stakingMock
-        .stake(web3.utils.toWei("100", "ether"), {
+        .stake(web3.utils.toWei("100", "ether"), 100, {
           from: staker
         })
         .catch(console.log);
@@ -265,7 +265,7 @@ contract(
         from: staker
       });
       await staking1
-        .stake(web3.utils.toWei("100", "ether"), {
+        .stake(web3.utils.toWei("100", "ether"), 100, {
           from: staker
         })
         .catch(console.log);

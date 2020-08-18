@@ -35,16 +35,16 @@ contract AbstractGoodStaking {
 
     /**
      * @dev stake some tokens
-     * @param amount of Tokens to stake
+     * @param _amount of Tokens to stake
      */
-    function stake(uint256 amount) external {
+    function stake(uint256 _amount, uint256 _donationPer) external {
         
     }
 
     /**
      * @dev withdraw staked tokens
      */
-    function withdrawStake() external {
+    function withdrawStake(uint256 _amount) external {
         
     }
 

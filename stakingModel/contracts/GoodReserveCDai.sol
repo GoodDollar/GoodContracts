@@ -357,7 +357,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         onlyFundManager
         returns (uint256, uint256)
     {
-        require(canMint(), "Need to wait for the next interval");
+        // require(canMint(), "Need to wait for the next interval");
         uint256 price = currentPrice(_interestToken);
         uint256 gdInterestToMint = marketMaker.mintInterest(_interestToken, _transfered);
         GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));

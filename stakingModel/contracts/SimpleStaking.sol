@@ -12,7 +12,7 @@ import "./AbstractGoodStaking.sol";
 import "./InterestDistribution.sol";
 
 
-interface GoodFundManager {
+interface FundManager {
     function transferInterest(address _staking)
         external;
 
@@ -33,7 +33,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     ERC20 public iToken;
 
     // Interest and staker data
-    InterestDistribution.InterestData interestData;
+    InterestDistribution.InterestData public interestData;
 
     // The block interval defines the number of     
     // blocks that shall be passed before the       
@@ -108,11 +108,11 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
             "transferFrom failed, make sure you approved token transfer"
         );
 
+        FundManager fm = FundManager(fundManager);
+        fm.transferInterest(address(this));
         // approve the transfer to defi protocol
         token.approve(address(iToken), _amount);
         mint(_amount); //mint iToken
-        GoodFundManager fm = GoodFundManager(fundManager);
-        fm.transferInterest(address(this));
         InterestDistribution.stake(interestData, msg.sender, _amount, _donationPer);
         emit Staked(msg.sender, address(token), _amount);
     }
@@ -125,7 +125,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         require(staker.totalStaked >= _amount, "Not enough token staked");
         uint256 tokenWithdraw = _amount;
         redeem(tokenWithdraw);
-        GoodFundManager fm = GoodFundManager(fundManager);
+        FundManager fm = FundManager(fundManager);
         fm.transferInterest(address(this));
         uint256 tokenActual = token.balanceOf(address(this));
         if (tokenActual < tokenWithdraw) {
@@ -139,7 +139,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     }
 
     function withdrawGDInterest(address _staker) public {
-        GoodFundManager fm = GoodFundManager(fundManager);
+        FundManager fm = FundManager(fundManager);
         fm.transferInterest(address(this));
         uint256 gdInterest = InterestDistribution.withdrawGDInterest(interestData, msg.sender);
         GoodDollar goodDollar = GoodDollar(address(avatar.nativeToken()));
@@ -191,6 +191,12 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
             decimalDifference = iTokenDecimal.sub(tokenDecimal);
         }
         return (decimalDifference, tokenDecimal > iTokenDecimal);
+    }
+
+    function getStakerData(address _staker) public view returns(uint256, uint256, uint256, uint256)
+    {
+
+      return (interestData.stakers[_staker].totalStaked, interestData.stakers[_staker].totalEffectiveStake, interestData.stakers[_staker].lastStake, interestData.stakers[_staker].withdrawnToDate);
     }
 
     /**
@@ -257,7 +263,6 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     {
         // otherwise fund manager has to wait for the next interval
         require(_recipient != address(this), "Recipient cannot be the staking contract");
-
         // require(canCollect(), "Need to wait for the next interval");
         (
             uint256 iTokenGains,
@@ -268,7 +273,9 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         if (iTokenGains > 0)
             require(iToken.transfer(_recipient, iTokenGains), "collect transfer failed");
         emit InterestCollected(_recipient, address(token), address(iToken), iTokenGains, tokenGains, precisionLossToken);
-        uint avgEffectiveStakedRatio = interestData.globalTotalEffectiveStake.mul(DECIMAL1e18).div(interestData.globalTotalStaked);
+        uint avgEffectiveStakedRatio = 0;
+        if(interestData.globalTotalStaked > 0)
+            avgEffectiveStakedRatio = interestData.globalTotalEffectiveStake.mul(DECIMAL1e18).div(interestData.globalTotalStaked);
         return (iTokenGains, tokenGains, precisionLossToken, avgEffectiveStakedRatio);
     }
 

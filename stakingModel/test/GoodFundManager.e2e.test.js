@@ -82,7 +82,7 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
       from: staker
     });
     await goodCompoundStaking
-      .stake(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), 100, {
         from: staker
       })
       .catch(console.log);
@@ -104,13 +104,6 @@ contract("GoodFundManager - network e2e tests", ([founder, staker]) => {
     await setReserve.setReserve();
     const reserve1 = await goodFundManager.reserve();
     expect(reserve1).to.be.equal(goodReserve.address);
-  });
-
-  it("should not mint UBI if not in the interval", async () => {
-    const error = await goodFundManager
-      .transferInterest(goodCompoundStaking.address)
-      .catch(e => e);
-    expect(error.message).to.have.string("wait for the next interval");
   });
 
   it("should collect the interest and transfer it to the reserve and the bridge recipient should recieves minted gd", async () => {

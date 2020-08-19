@@ -433,14 +433,17 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     * @param _token The reserve token
     * @return How much to mint in order to keep price in bonding curve the same
     */
-    function calculateMintExpansion(ERC20 _token)
+    function calculateMintExpansion(ERC20 _token, bool expand)
         public
         view
         onlyActiveToken(_token)
         returns (uint256)
     {
         ReserveToken memory reserveToken = reserveTokens[address(_token)];
-        uint32 newReserveRatio = calculateNewReserveRatio(_token); // new reserve ratio
+        uint32 newReserveRatio = reserveToken.reserveRatio;
+        // Should use new reserve ratio only if block interval as passed since last update.
+        if(expand)
+            newReserveRatio = calculateNewReserveRatio(_token); // new reserve ratio
         uint256 reserveDecimalsDiff = uint256(
             uint256(27).sub(ERC20Detailed(address(_token)).decimals())
         ); // //result is in RAY precision
@@ -463,13 +466,16 @@ contract GoodMarketMaker is BancorFormula, DSMath, SchemeGuard {
     * @param _token The reserve token
     * @return How much to mint in order to keep price in bonding curve the same
     */
-    function mintExpansion(ERC20 _token) public onlyOwner returns (uint256) {
-        uint256 toMint = calculateMintExpansion(_token);
+    function mintExpansion(ERC20 _token, bool expand) public onlyOwner returns (uint256) {
+        
+        uint256 toMint = calculateMintExpansion(_token, expand);
         ReserveToken storage reserveToken = reserveTokens[address(_token)];
         uint256 gdSupply = reserveToken.gdSupply;
         uint256 ratio = reserveToken.reserveRatio;
         reserveToken.gdSupply = gdSupply.add(toMint);
-        expandReserveRatio(_token);
+        // system can update reserveRatio only once a day
+        if(expand)
+            expandReserveRatio(_token);
         emit UBIExpansionMinted(msg.sender, address(_token), ratio, gdSupply, toMint);
         return toMint;
     }

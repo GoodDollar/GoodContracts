@@ -363,7 +363,7 @@ contract GoodReserveCDai is DSMath, FeelessScheme, ActivePeriod {
         GoodDollar gooddollar = GoodDollar(address(avatar.nativeToken()));
         uint256 precisionLoss = uint256(27).sub(uint256(gooddollar.decimals()));
         uint256 gdInterest = rdiv(_interest, price).div(10**precisionLoss);
-        uint256 gdExpansionToMint = marketMaker.mintExpansion(_interestToken);
+        uint256 gdExpansionToMint = marketMaker.mintExpansion(_interestToken, canMint()); // sending canMint() so system can update reserveRatio only once a day
         uint256 gdUBI = gdInterestToMint.sub(gdInterest);
         gdUBI = gdUBI.add(gdExpansionToMint);
         // uint256 toMint = gdUBI.add(gdInterest);  removing local variable to avoid stack too deep error.

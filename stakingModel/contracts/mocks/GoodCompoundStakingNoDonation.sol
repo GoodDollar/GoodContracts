@@ -32,6 +32,6 @@ contract GoodCompoundStakingNoDonation is GoodCompoundStaking {
     {
         (uint256 iTokenGains, uint256 tokenGains, uint256 precisionLossToken, ) = super
             .collectUBIInterest(recipient);
-        return (iTokenGains, tokenGains, precisionLossToken, 0);
+        return (iTokenGains, tokenGains, precisionLossToken, 1e18);
     }
 }

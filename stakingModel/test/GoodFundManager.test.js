@@ -144,7 +144,15 @@ contract(
       expect(reserve).to.be.equal(goodReserve.address);
     });
 
+    it("should not be able to transfer intreset from non whitelisted contracts", async () => {
+      let error = await goodFundManager
+        .transferInterest(simpleStaking.address)
+        .catch(e => e);
+      expect(error.message).to.have.string("is not whitelisted contract");
+    });
+
     it("should be able to stake dai", async () => {
+      await identity.addContract(simpleStaking.address);
       await dai.mint(staker, web3.utils.toWei("100", "ether"));
       await dai.approve(simpleStaking.address, web3.utils.toWei("100", "ether"), {
         from: staker
@@ -155,7 +163,7 @@ contract(
         })
         .catch(console.log);
       let balance = await simpleStaking.getStakerData(staker);
-      expect(balance.totalStaked.toString()).to.be.equal(
+      expect(balance[0].toString()).to.be.equal(
         web3.utils.toWei("100", "ether") //100 dai
       );
       let interestData = await simpleStaking.interestData();
@@ -165,16 +173,9 @@ contract(
         web3.utils.toWei("9900", "mwei") //8 decimals precision (99 cdai because of the exchange rate dai <> cdai)
       );
     });
-
-    it("should not be able to transfer intreset from non whitelisted contracts", async () => {
-      let error = await goodFundManager
-        .transferInterest(simpleStaking.address)
-        .catch(e => e);
-      expect(error.message).to.have.string("is not whitelisted contract");
-    });
   
     it("should transfer ubi interest to the reserve and recieves minted gd back to the staking contract", async () => {
-      await identity.addContract(simpleStaking.address);
+      
       await cDAI.exchangeRateCurrent();
       const gdPriceBefore = await marketMaker.currentPrice(cDAI.address);
       let gains = await simpleStaking.currentUBIInterest();
@@ -186,11 +187,13 @@ contract(
       let stakingGDBalance = await goodDollar.balanceOf(simpleStaking.address);
       const gdPriceAfter = await marketMaker.currentPrice(cDAI.address);
       expect(stakingGDBalance.toString()).to.be.equal("0"); //100% of interest is donated, so nothing is returned to staking
-      expect(recipientAfter.toString()).to.be.equal("971086"); //970492 interest + 594 minted from expansion
+      expect(recipientAfter.toString()).to.be.equal("971097"); //970492 interest + 605 minted from expansion
       expect(
         reserveCDaiBalanceAfter.sub(reserveCDaiBalanceBefore).toString()
       ).to.be.equal(cdaiGains.toString());
-      expect(gdPriceAfter.toString()).to.be.equal(gdPriceBefore.toString());
+      expect(Math.floor(gdPriceAfter.toNumber() / 10).toString()).to.be.equal(
+      Math.floor(gdPriceBefore.toNumber() / 10).toString()
+    );
       expect(tx.logs[0].event).to.be.equal("FundsTransferred");
     });
 
@@ -209,7 +212,7 @@ contract(
       });
       await identity.addContract(stakingMock.address);
       await stakingMock
-        .stake(web3.utils.toWei("100", "ether"), 100, {
+        .stake(web3.utils.toWei("100", "ether"), 20, {
           from: staker
         })
         .catch(console.log);
@@ -219,9 +222,9 @@ contract(
       await goodFundManager.transferInterest(stakingMock.address);
       let stakingGDBalanceAfter = await goodDollar.balanceOf(stakingMock.address);
       // actual gdInterest - interest that the staking contract recieved since the
-      // donation in the mock is 20%
+      // effective stake in the mock is 20%
       expect(stakingGDBalanceAfter.sub(stakingGDBalanceBefore).toString()).to.be.equal(
-        "190329"
+        "190215"
       );
     });
 
@@ -264,19 +267,19 @@ contract(
       await dai.approve(staking1.address, web3.utils.toWei("100", "ether"), {
         from: staker
       });
+      await identity.addContract(staking1.address);
       await staking1
-        .stake(web3.utils.toWei("100", "ether"), 100, {
+        .stake(web3.utils.toWei("100", "ether"), 0, {
           from: staker
         })
         .catch(console.log);
-      await identity.addContract(staking1.address);
       await cDAI.exchangeRateCurrent();
       let recipientBefore = await goodDollar.balanceOf(ubirecipient);
       await goodFundManager.transferInterest(staking1.address);
       let recipientAfter = await goodDollar.balanceOf(ubirecipient);
       let stakingGDBalance = await goodDollar.balanceOf(staking1.address);
-      expect(stakingGDBalance.toString()).to.be.equal("933070"); // 100% of interest is returned to the staking
-      expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal("0"); // 0 interest + 0 minted from expansion (the ratio changed to 100%)
+      expect(stakingGDBalance.toString()).to.be.equal("931952"); // 100% of interest is returned to the staking
+      expect(recipientAfter.sub(recipientBefore).toString()).to.be.equal("4"); // 0 interest + 4 minted from expansion (the ratio changed to 100%)
     });
 
     it("should transfer expansion minted tokens to the recipient when the interest is equal to 0", async () => {
@@ -315,7 +318,7 @@ contract(
         identity.address
       );
       await identity.addContract(staking1.address);
-      let expansionTokens = await marketMaker.calculateMintExpansion(cDAI.address);
+      let expansionTokens = await marketMaker.calculateMintExpansion(cDAI.address, true);
       let recipientBefore = await goodDollar.balanceOf(ubirecipient);
       await goodFundManager.transferInterest(staking1.address);
       let recipientAfter = await goodDollar.balanceOf(ubirecipient);
@@ -344,13 +347,6 @@ contract(
       );
       const newBI = await goodFundManager.blockInterval();
       expect(newBI.toString()).to.be.equal("100");
-    });
-
-    it("should not mint UBI if not in the interval", async () => {
-      const error = await goodFundManager
-        .transferInterest(simpleStaking.address)
-        .catch(e => e);
-      expect(error.message).to.have.string("wait for the next interval");
     });
 
     it("should set bridge and ubi recipient avatar", async () => {

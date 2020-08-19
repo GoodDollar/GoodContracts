@@ -244,19 +244,6 @@ contract("GoodReserve - staking with cDAI mocks", ([founder, staker]) => {
     expect(newBI.toString()).to.be.equal("100");
   });
 
-  it("should not mint UBI if not in the interval", async () => {
-    const gdBalanceFundBefore = await goodDollar.balanceOf(founder);
-    const gdBalanceAvatarBefore = await goodDollar.balanceOf(avatar.address);
-    const error = await goodReserve
-      .mintInterestAndUBI(cDAI.address, web3.utils.toWei("10000", "gwei"), "10000")
-      .catch(e => e);
-    const gdBalanceFundAfter = await goodDollar.balanceOf(founder);
-    const gdBalanceAvatarAfter = await goodDollar.balanceOf(avatar.address);
-    expect(error.message).to.have.string("wait for the next interval");
-    expect(gdBalanceFundAfter.toString()).to.be.equal(gdBalanceFundBefore.toString());
-    expect(gdBalanceAvatarAfter.toString()).to.be.equal(gdBalanceAvatarBefore.toString());
-  });
-
   it("should be able to buy gd with cDAI", async () => {
     let amount = 1e8;
     await dai.mint(web3.utils.toWei("100", "ether"));

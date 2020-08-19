@@ -157,6 +157,7 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
     let error = await marketMaker
       .mintExpansion(
         cDAI.address,
+        true,
         {
           from: staker
         }).catch(e => e);
@@ -203,7 +204,7 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
     let reserveTokenBefore = await marketMaker.reserveTokens(cDAI.address);
     let reserveRatioBefore = reserveTokenBefore.reserveRatio;
     const priceBefore = await marketMaker.currentPrice(cDAI.address);
-    const toMint = await marketMaker.calculateMintExpansion(cDAI.address);
+    const toMint = await marketMaker.calculateMintExpansion(cDAI.address, true);
     expect(toMint.toString()).not.to.be.equal("0");
     const newRR = await marketMaker.calculateNewReserveRatio(cDAI.address);
     expect(reserveRatioBefore.toString()).not.to.be.equal(newRR.toString());
@@ -216,7 +217,7 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
     let gdSupplyBefore = reserveTokenBefore.gdSupply;
     let reserveRatioBefore = reserveTokenBefore.reserveRatio;
     const priceBefore = await marketMaker.currentPrice(cDAI.address);
-    await marketMaker.mintExpansion(cDAI.address);
+    await marketMaker.mintExpansion(cDAI.address, true);
     let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
     let gdSupplyAfter = reserveTokenAfter.gdSupply;
     let reserveRatioAfter = reserveTokenAfter.reserveRatio;
@@ -534,7 +535,7 @@ contract("GoodMarketMaker - calculate gd value at reserve", ([founder, staker]) 
   it("should not change the gd supply when calculate how much gd to mint based on expansion change", async () => {
     let reserveTokenBefore = await marketMaker.reserveTokens(cDAI.address);
     let gdSupplyBefore = reserveTokenBefore.gdSupply;
-    await marketMaker.calculateMintExpansion(cDAI.address);
+    await marketMaker.calculateMintExpansion(cDAI.address, true);
     let reserveTokenAfter = await marketMaker.reserveTokens(cDAI.address);
     let gdSupplyAfter = reserveTokenAfter.gdSupply;
     expect(gdSupplyAfter.toString()).to.be.equal(gdSupplyBefore.toString());

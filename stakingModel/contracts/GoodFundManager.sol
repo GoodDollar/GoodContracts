@@ -11,7 +11,7 @@ import "./GoodReserveCDai.sol";
 interface StakingContract {
     function collectUBIInterest(address recipient)
         external
-        returns (uint256, uint256, uint256, uint32);
+        returns (uint256, uint256, uint256, uint256);
 
     function iToken() external view returns(address); 
 
@@ -218,7 +218,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         uint256 currentBalance = iToken.balanceOf(address(reserve));
         // collects the interest from the staking contract and transfer it directly to the reserve contract
         //`collectUBIInterest` returns (iTokengains, tokengains, precission loss, donation ratio)
-        (, , , uint32 avgEffectiveStakedRatio) = _staking.collectUBIInterest(
+        (, , , uint256 avgEffectiveStakedRatio) = _staking.collectUBIInterest(
             address(reserve)
         );
 
@@ -226,8 +226,8 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
         uint256 interest = iToken.balanceOf(address(reserve)).sub(
             currentBalance
         );
-
         uint256 effectiveInterest = interest.mul(avgEffectiveStakedRatio).div(DECIMAL1e18);
+
         uint256 interestDonated = interest.sub(effectiveInterest);
         // Mints gd while the interest amount is equal to the transferred amount
         (uint256 gdInterest, uint256 gdUBI) = reserve.mintInterestAndUBI(

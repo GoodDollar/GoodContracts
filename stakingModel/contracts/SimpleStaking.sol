@@ -248,7 +248,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
      * @dev Collects gained interest by fundmanager. Can be collected only once
      * in an interval which is defined above.
      * @param _recipient The recipient of cDAI gains
-     * @return (uint256, uint256, uint256, uint32) The interest in iToken, the interest in Token,
+     * @return (uint256, uint256, uint256, uint256) The interest in iToken, the interest in Token,
      * the amount which is not covered by precision of Token, how much of the generated interest is donated
      */
     function collectUBIInterest(address _recipient)
@@ -273,7 +273,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         if (iTokenGains > 0)
             require(iToken.transfer(_recipient, iTokenGains), "collect transfer failed");
         emit InterestCollected(_recipient, address(token), address(iToken), iTokenGains, tokenGains, precisionLossToken);
-        uint avgEffectiveStakedRatio = 0;
+        uint256 avgEffectiveStakedRatio = 0;
         if(interestData.globalTotalStaked > 0)
             avgEffectiveStakedRatio = interestData.globalTotalEffectiveStake.mul(DECIMAL1e18).div(interestData.globalTotalStaked);
         return (iTokenGains, tokenGains, precisionLossToken, avgEffectiveStakedRatio);

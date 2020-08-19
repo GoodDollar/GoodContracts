@@ -35,15 +35,15 @@ contract("SimpleDAIStaking - `test` network e2e tests", ([founder, staker]) => {
       from: staker
     });
     await simpleStaking
-      .stake(web3.utils.toWei("100", "ether"), {
+      .stake(web3.utils.toWei("100", "ether"), 100, {
         from: staker
       })
       .catch(console.log);
-    let balance = await simpleStaking.stakers(staker);
-    expect(balance.stakedToken.toString()).to.be.equal(
+    let balance = (await simpleStaking.getStakerData(staker));
+    expect(balance[0].toString()).to.be.equal(
       web3.utils.toWei("100", "ether") //100 dai
     );
-    let totalStaked = await simpleStaking.totalStaked();
+    let totalStaked = (await simpleStaking.interestData()).globalTotalStaked;
     expect(totalStaked.toString()).to.be.equal(web3.utils.toWei("100", "ether"));
     let stakedcDaiBalance = await cDAI.balanceOf(simpleStaking.address);
     expect(stakedcDaiBalance.toString()).to.be.equal(
@@ -53,12 +53,12 @@ contract("SimpleDAIStaking - `test` network e2e tests", ([founder, staker]) => {
 
   it("should be able to withdraw stake by staker", async () => {
     let stakerDaiBalanceBefore = await dai.balanceOf(staker); // staker DAI balance
-    let balanceBefore = await simpleStaking.stakers(staker); // user staked balance in GoodStaking
-    await simpleStaking.withdrawStake({
+    let balanceBefore = (await simpleStaking.getStakerData(staker)); // user staked balance in GoodStaking
+    await simpleStaking.withdrawStake(web3.utils.toWei("100", "ether"), {
       from: staker
     });
     let stakerDaiBalanceAfter = await dai.balanceOf(staker); // staker DAI balance
-    expect(balanceBefore.stakedToken.toString()).to.be.equal(
+    expect(balanceBefore[0].toString()).to.be.equal(
       (stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString()
     );
   });

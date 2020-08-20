@@ -43,15 +43,15 @@ contract("SimpleDAIStaking - kovan e2e test", ([founder, staker]) => {
     await dai.approve(simpleStaking.address, web3.utils.toWei("500", "gwei"), {
       from: staker
     });
-    let balanceBefore = (await simpleStaking.getStakerData(staker)).totalStaked;
+    let balanceBefore = (await simpleStaking.getStakerData(staker));
     let totalStakedBefore = (await simpleStaking.interestData()).globalTotalStaked;
     await simpleStaking
       .stake(web3.utils.toWei("500", "gwei"), 100, {
         from: staker
       })
       .catch(console.log);
-    let balanceAfter = (await simpleStaking.getStakerData(staker)).totalStaked;
-    expect((balanceAfter - balanceBefore).toString()).to.be.equal(
+    let balanceAfter = (await simpleStaking.getStakerData(staker));
+    expect((balanceAfter[0] - balanceBefore[0]).toString()).to.be.equal(
       web3.utils.toWei("500", "gwei")
     );
     let totalStakedAfter = (await simpleStaking.interestData()).globalTotalStaked;
@@ -74,13 +74,13 @@ contract("SimpleDAIStaking - kovan e2e test", ([founder, staker]) => {
     });
     let stakedcDaiBalanceAfter = await cDAI.balanceOf(simpleStaking.address);
     let stakerDaiBalanceAfter = await dai.balanceOf(staker);
-    let balanceAfterWithdraw = (await simpleStaking.getStakerData(staker)).totalStaked;
+    let balanceAfterWithdraw = (await simpleStaking.getStakerData(staker));
     expect(stakedcDaiBalanceAfter.lt(stakedcDaiBalanceBefore)).to.be.true;
     expect(stakerDaiBalanceAfter.gt(stakerDaiBalanceBefore)).to.be.true;
     expect(balanceAfter.toString()).to.be.equal(
       (stakerDaiBalanceAfter - stakerDaiBalanceBefore).toString()
     );
-    expect(balanceAfterWithdraw.toString()).to.be.equal("0");
+    expect(balanceAfterWithdraw[0].toString()).to.be.equal("0");
     expect(transaction.logs[0].event).to.be.equal("StakeWithdraw");
     console.log("finish");
   });

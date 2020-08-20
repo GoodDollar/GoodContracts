@@ -122,6 +122,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
      */
     function withdrawStake(uint256 _amount) external {
         InterestDistribution.Staker storage staker = interestData.stakers[msg.sender];
+        require(_amount > 0, "Should withdraw positive amount");
         require(staker.totalStaked >= _amount, "Not enough token staked");
         uint256 tokenWithdraw = _amount;
         redeem(tokenWithdraw);

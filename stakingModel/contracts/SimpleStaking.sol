@@ -147,6 +147,12 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         require(goodDollar.transfer(msg.sender, gdInterest), "withdraw interest transfer failed");
     }
 
+    function getYieldData(address _staker) public view returns(uint256,uint256)
+    {
+
+      return (interestData.globalGDYieldPerToken, interestData.stakers[_staker].stakeBuyinRate);
+    }
+
     function updateGlobalGDYieldPerToken(
         uint256 _blockGDInterest,
         uint256 _blockInterestTokenEarned

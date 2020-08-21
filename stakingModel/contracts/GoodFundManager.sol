@@ -235,7 +235,7 @@ contract GoodFundManager is FeelessScheme, ActivePeriod {
             interest,
             effectiveInterest
         );
-        _staking.updateGlobalGDYieldPerToken(gdInterest, gdInterest.add(gdUBI));
+        _staking.updateGlobalGDYieldPerToken(gdInterest, interest);
         // Transfers the minted tokens to the given staking contract
         GoodDollar token = GoodDollar(address(avatar.nativeToken()));
         if(gdInterest > 0)

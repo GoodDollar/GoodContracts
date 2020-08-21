@@ -60,4 +60,8 @@ contract cDAIMock is DSMath, ERC20, ERC20Detailed, Ownable {
         return exchangeRate;
     }
 
+    function setExchangeRate(uint _val) public {
+        exchangeRate = _val.mul(10**10);
+    } 
+
 }

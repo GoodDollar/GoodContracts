@@ -39,6 +39,17 @@ contract InterestDistributionMock {
       InterestDistribution.stake(interestData, _staker, _stake, _donationPer);
     }
 
+    function mockStake(
+      address _staker,
+      uint256 _stake, 
+      uint256 _donationPer
+      ) 
+    public 
+    {
+      
+      InterestDistribution.stake(interestData, _staker, _stake, _donationPer);
+    }
+
     function withdrawStakeAndInterest(
       address _staker,
       uint256 _amount
@@ -58,6 +69,17 @@ contract InterestDistributionMock {
       userGDBalance[_staker] = userGDBalance[_staker].add(InterestDistribution.withdrawStakeAndInterest(interestData, _staker, _amount));
     }
 
+    function mockWithdrawStakeAndInterest(
+      address _staker,
+      uint256 _amount
+      ) 
+    public 
+    returns(uint256)
+    {
+      
+      InterestDistribution.withdrawStakeAndInterest(interestData, _staker, _amount);
+    }
+
     function withdrawGDInterest(address _staker) public {
       uint requiredCDAIBal = (interestData.globalTotalStaked).mul(DECIMAL1e18).div(iTokenToTokenRate);
       uint newGDMinted = 0;
@@ -68,6 +90,11 @@ contract InterestDistributionMock {
       }
       updateGlobalGDYieldPerToken(newGDMinted, earnedInterest);
       userGDBalance[_staker] = userGDBalance[_staker].add(InterestDistribution.withdrawGDInterest(interestData, _staker));
+    }
+
+    function mockWithdrawGDInterest(address _staker) public {
+      
+      InterestDistribution.withdrawGDInterest(interestData, _staker);
     }
 
     function getYieldData(address _staker) public view returns(uint256,uint256)

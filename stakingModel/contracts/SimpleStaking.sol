@@ -125,9 +125,9 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         require(_amount > 0, "Should withdraw positive amount");
         require(staker.totalStaked >= _amount, "Not enough token staked");
         uint256 tokenWithdraw = _amount;
-        redeem(tokenWithdraw);
         FundManager fm = FundManager(fundManager);
         fm.transferInterest(address(this));
+        redeem(tokenWithdraw);
         uint256 tokenActual = token.balanceOf(address(this));
         if (tokenActual < tokenWithdraw) {
             tokenWithdraw = tokenActual;
@@ -139,7 +139,7 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         emit StakeWithdraw(msg.sender, address(token), tokenWithdraw, token.balanceOf(address(this)));
     }
 
-    function withdrawGDInterest(address _staker) public {
+    function withdrawGDInterest() public {
         FundManager fm = FundManager(fundManager);
         fm.transferInterest(address(this));
         uint256 gdInterest = InterestDistribution.withdrawGDInterest(interestData, msg.sender);
@@ -151,6 +151,20 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     {
 
       return (interestData.globalGDYieldPerToken, interestData.stakers[_staker].stakeBuyinRate);
+    }
+
+    function calculateGDInterest(
+      address _staker
+    ) 
+    public 
+    view 
+    returns 
+    (
+      uint256 _earnedGDInterest
+    ) 
+    {
+      return InterestDistribution.calculateGDInterest(_staker, interestData);
+     
     }
 
     function updateGlobalGDYieldPerToken(
@@ -270,7 +284,6 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
     {
         // otherwise fund manager has to wait for the next interval
         require(_recipient != address(this), "Recipient cannot be the staking contract");
-        // require(canCollect(), "Need to wait for the next interval");
         (
             uint256 iTokenGains,
             uint256 tokenGains,
@@ -284,15 +297,6 @@ contract SimpleStaking is DSMath, Pausable, FeelessScheme, AbstractGoodStaking {
         if(interestData.globalTotalStaked > 0)
             avgEffectiveStakedRatio = interestData.globalTotalEffectiveStake.mul(DECIMAL1e18).div(interestData.globalTotalStaked);
         return (iTokenGains, tokenGains, precisionLossToken, avgEffectiveStakedRatio);
-    }
-
-    /**
-     * @dev Checks if enough blocks have passed so it would be possible to
-     * execute `collectUBIInterest` according to the length of `blockInterval`
-     * @return (bool) True if enough blocks have passed
-     */
-    function canCollect() public view returns (bool) {
-        return block.number.div(blockInterval) > lastUBICollection;
     }
 
     /**

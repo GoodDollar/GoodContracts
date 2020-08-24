@@ -153,11 +153,6 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
       expect(reserve).to.be.equal(goodReserve.address);
     });
 
-  it("should return false for canCollect", async () => {
-    let canCollect = await simpleStaking.canCollect();
-    expect(canCollect).to.be.false;
-  });
-
   it("should mock cdai exchange rate 1e28 precision", async () => {
     let rate = await cDAI.exchangeRateStored();
     expect(rate.toString()).to.be.equal("10101010101010101010101010101");
@@ -817,12 +812,6 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     });
   });
 
-  it("should return true for canCollect", async () => {
-    await evm_mine(BLOCK_INTERVAL);
-    let canCollect = await simpleStaking.canCollect();
-    expect(canCollect).to.be.true;
-  });
-
   it("should withdraw interest to owner", async () => {
     const totalStaked = (await simpleStakingFM.interestData())[0];
     await dai.mint(staker, web3.utils.toWei("100", "ether"));
@@ -837,7 +826,6 @@ contract("SimpleDAIStaking - staking with DAI mocks", ([founder, staker]) => {
     const gains = await simpleStakingFM.currentUBIInterest();
     const cdaiGains = gains["0"];
     const precisionLossDai = gains["2"].toString(); //last 10 decimals since cdai is only 8 decimals while dai is 18
-    const canCollect = await simpleStakingFM.canCollect();
     await simpleStakingFM.setFundManager(founder);
     const res = await simpleStakingFM.collectUBIInterest(founder);
     await simpleStakingFM.setFundManager(fundManager.address);

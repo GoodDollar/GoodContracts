@@ -1157,4 +1157,24 @@ contract("InterestDistribution - Scenario based calculations", ([S1, S2, S3]) =>
     });
   });
 
+  describe('Negative test case', function() {
+    it("Should revert if called stake/withdrawStake/withdrawInterest without updating yield data", async () => {
+
+      let error = await interestDistribution
+        .mockStake(S1, 0, 0)
+        .catch(e => e);
+      expect(error.message).to.have.string("must call updateGlobalGDYieldPerTokenUpdated before staking operations");
+
+      error = await interestDistribution
+        .mockWithdrawStakeAndInterest(S1, 0)
+        .catch(e => e);
+      expect(error.message).to.have.string("must call updateGlobalGDYieldPerTokenUpdated before staking operations");
+
+      error = await interestDistribution
+        .mockWithdrawGDInterest(S1)
+        .catch(e => e);
+      expect(error.message).to.have.string("must call updateGlobalGDYieldPerTokenUpdated before staking operations");
+    });
+  });
+
 });

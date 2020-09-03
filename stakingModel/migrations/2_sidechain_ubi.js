@@ -13,7 +13,7 @@ const getFounders = require("../../migrations/getFounders");
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-module.exports = async function (deployer, network) {
+module.exports = async function(deployer, network) {
   if (network === "tdd") return;
   if (network.indexOf("mainnet") >= 0) {
     return;
@@ -41,8 +41,9 @@ module.exports = async function (deployer, network) {
     homedao.Identity,
     ubiPool.address,
     (Date.now() / 1000).toFixed(0),
-    (Date.now() / 1000 + 60 * 60 * 24 * 365).toFixed(0),
-    networkSettings.maxInactiveDays
+    (Date.now() / 1000 + 60 * 60 * 24).toFixed(0),
+    networkSettings.maxInactiveDays,
+    networkSettings.ubiCycle
   );
 
   console.log("proposing UBI to DAO");

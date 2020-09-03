@@ -40,7 +40,18 @@ export const increaseTime = async function(duration) {
 
 contract(
   "UBIScheme",
-  ([founder, claimer1, claimer2, claimer3, claimer4, fisherman, claimer5, claimer6, claimer7, claimer8]) => {
+  ([
+    founder,
+    claimer1,
+    claimer2,
+    claimer3,
+    claimer4,
+    fisherman,
+    claimer5,
+    claimer6,
+    claimer7,
+    claimer8
+  ]) => {
     let goodDollar, identity, formula, avatar, ubi, controller, firstClaimPool;
 
     before(async () => {
@@ -67,23 +78,24 @@ contract(
         firstClaimPool.address,
         0,
         100,
-        0
+        0,
+        1
       ).catch(e => e);
       expect(error.message).to.have.string("Max inactive days cannot be zero");
     });
 
     it("should deploy the ubi", async () => {
-      const now = new Date();
-      const startUBI = (now.getTime() / 1000 - 1).toFixed(0);
-      now.setDate(now.getDate() + 30);
-      const endUBI = (now.getTime() / 1000).toFixed(0);
+      const block = await web3.eth.getBlock("latest");
+      const startUBI = block.timestamp;
+      const endUBI = startUBI + 60 * 60 * 24 * 30;
       ubi = await UBIMock.new(
         avatar.address,
         identity.address,
         firstClaimPool.address,
         startUBI,
         endUBI,
-        MAX_INACTIVE_DAYS
+        MAX_INACTIVE_DAYS,
+        1
       );
       let isActive = await ubi.isActive();
       expect(isActive).to.be.false;
@@ -118,6 +130,9 @@ contract(
       await ubi.start();
       let isActive = await ubi.isActive();
       const newUbi = await firstClaimPool.ubi();
+      let periodStart = await ubi.periodStart().then(_ => _.toNumber());
+      let startDate = new Date(periodStart * 1000);
+      expect(startDate.toISOString()).to.have.string("T12:00:00.000Z"); //contract set itself to start at noon GMT
       expect(newUbi.toString()).to.be.equal(ubi.address);
       expect(isActive).to.be.true;
     });
@@ -217,9 +232,11 @@ contract(
       const amountOfClaimersBefore = await ubi.getClaimerCount(currentDay.toString());
       const claimAmountBefore = await ubi.getClaimAmount(currentDay.toString());
       await ubi.claim({ from: claimer8 });
-      const amountOfClaimersAfter = await ubi.getClaimerCount(currentDay.toString());;
+      const amountOfClaimersAfter = await ubi.getClaimerCount(currentDay.toString());
       const claimAmountAfter = await ubi.getClaimAmount(currentDay.toString());
-      expect(amountOfClaimersAfter.sub(amountOfClaimersBefore).toString()).to.be.equal("1");
+      expect(amountOfClaimersAfter.sub(amountOfClaimersBefore).toString()).to.be.equal(
+        "1"
+      );
       expect(claimAmountAfter.sub(claimAmountBefore).toString()).to.be.equal("100");
     });
 
@@ -257,9 +274,10 @@ contract(
       // in the ubi and in the next day after transferring the balances from the
       // dao, making sure that the tokens that have not been claimed are
       // taken by the formula as expected.
+      const currentDay = await ubi.currentDayInCycle().then(_ => _.toNumber());
       await increaseTime(ONE_DAY);
       await goodDollar.mint(avatar.address, "901");
-      //ubi will have 902GD in pool so daily ubi is now also 300
+      //ubi will have 902GD in pool so daily ubi is now 902/1(cycle)/3(claimers) = 300
       await ubi.claim({ from: claimer1 });
       await increaseTime(ONE_DAY);
       await goodDollar.mint(avatar.address, "1");
@@ -504,7 +522,9 @@ contract(
       let claimer1Balance2 = await goodDollar.balanceOf(claimer1);
       // there are 4 claimers and the total ubi balance after the minting include the previous balance and
       // the 948439324829 minting tokens. that divides into 4
-      expect(claimer1Balance2.sub(claimer1Balance1).toString()).to.be.equal("237109831254");
+      expect(claimer1Balance2.sub(claimer1Balance1).toString()).to.be.equal(
+        "237109831254"
+      );
     });
 
     it("should be able to iterate over all accounts if enough gas in fishMulti", async () => {
@@ -529,7 +549,7 @@ contract(
       let amount = await ubi.checkEntitlement({ from: claimer1 });
       let balance2 = await goodDollar.balanceOf(ubi.address);
       let activeUsersCount = await ubi.activeUsersCount();
-      expect(amount.toString()).to.be.equal((balance2).div(activeUsersCount).toString());
+      expect(amount.toString()).to.be.equal(balance2.div(activeUsersCount).toString());
     });
 
     it("should set the ubi claim amount by avatar", async () => {

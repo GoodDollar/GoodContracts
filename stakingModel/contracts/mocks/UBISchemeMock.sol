@@ -7,13 +7,19 @@ import "../UBIScheme.sol";
  * Those tests can be found on e2e tests.
  */
 contract UBISchemeMock is UBIScheme {
+
+    modifier onlyRegistered() {
+        _;
+    }
+
     constructor(
         Avatar _avatar,
         Identity _identity,
         FirstClaimPool _firstClaimPool,
         uint256 _periodStart,
         uint256 _periodEnd,
-        uint256 _maxInactiveDays
+        uint256 _maxInactiveDays,
+        uint256 _cycleLength
     )
         public
         UBIScheme(
@@ -22,29 +28,28 @@ contract UBISchemeMock is UBIScheme {
             _firstClaimPool,
             _periodStart,
             _periodEnd,
-            _maxInactiveDays
-        )
+            _maxInactiveDays,
+            _cycleLength        )
     {
         shouldWithdrawFromDAO = true;
     }
 
-    //we mock this to skip the onlyRegistered modifier that requires scheme registration, dao voting etc...
-    function start() public {
-        isActive = true;
-        controller.genericCall(
-            address(firstClaimPool),
-            abi.encodeWithSignature("setUBIScheme(address)", address(this)),
-            avatar,
-            0
-        );
-    }
+    // //we mock this to skip the onlyRegistered modifier that requires scheme registration, dao voting etc...
+    // function start() public {
+    //     controller.genericCall(
+    //         address(firstClaimPool),
+    //         abi.encodeWithSignature("setUBIScheme(address)", address(this)),
+    //         avatar,
+    //         0
+    //     );
+    // }
 
-    function end() public onlyAvatar {
-        DAOToken token = avatar.nativeToken();
-        uint256 remainingGDReserve = token.balanceOf(address(this));
-        if (remainingGDReserve > 0) {
-            token.transfer(address(avatar), remainingGDReserve);
-        }
-        super.internalEnd(avatar);
-    }
+    // function end() public onlyAvatar {
+    //     DAOToken token = avatar.nativeToken();
+    //     uint256 remainingGDReserve = token.balanceOf(address(this));
+    //     if (remainingGDReserve > 0) {
+    //         token.transfer(address(avatar), remainingGDReserve);
+    //     }
+    //     selfdestruct(address(avatar));
+    // }
 }

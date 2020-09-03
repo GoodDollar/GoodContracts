@@ -35,6 +35,19 @@ contract UBIScheme is AbstractUBI {
     // before daily ubi calculation
     bool public shouldWithdrawFromDAO;
 
+    //number of days of each UBI pool cycle
+    //dailyPool = Pool/cycleLength
+    uint256 public cycleLength = 1;
+
+    //the amount of G$ UBI pool for each day in the cycle to be divided by active users
+    uint256 public dailyCyclePool;
+
+    //timestamp of current cycle start
+    uint256 public startOfCycle;
+
+    //should be 0 for starters so distributionFormula detects new cycle on first day claim
+    uint256 public currentCycleLength = 0;
+    
     // A pool of GD to give to activated users,
     // since they will enter the UBI pool
     // calculations only in the next day,
@@ -84,6 +97,8 @@ contract UBIScheme is AbstractUBI {
     // Emits when daily ubi is calculated
     event UBICalculated(uint256 day, uint256 dailyUbi, uint256 blockNumber);
 
+    event UBICycleCalculated(uint256 day, uint256 pool, uint256 cycleLength, uint256 dailyUBIPool);
+    
     /**
      * @dev Constructor
      * @param _avatar The avatar of the DAO
@@ -99,13 +114,15 @@ contract UBIScheme is AbstractUBI {
         FirstClaimPool _firstClaimPool,
         uint256 _periodStart,
         uint256 _periodEnd,
-        uint256 _maxInactiveDays
+        uint256 _maxInactiveDays,
+        uint256  _cycleLength
     ) public AbstractUBI(_avatar, _identity, 0, _periodStart, _periodEnd) {
         require(_maxInactiveDays > 0, "Max inactive days cannot be zero");
 
         maxInactiveDays = _maxInactiveDays;
         firstClaimPool = _firstClaimPool;
         shouldWithdrawFromDAO = false;
+        cycleLength  = _cycleLength;
     }
 
     /**
@@ -133,6 +150,22 @@ contract UBIScheme is AbstractUBI {
     }
 
     /**
+    * @dev sets the ubi calculation cycle length
+    * @param _newLength the new length in days  
+    */
+    function setCycleLength(uint256 _newLength) public onlyAvatar {
+        require(_newLength>0, "cycle must be at least 1 day long");
+        cycleLength = _newLength;
+    }
+
+    /**
+    * @dev returns the day count since start of current cycle
+    */
+    function currentDayInCycle() public view returns(uint256) {
+        return now.sub(startOfCycle).div(1 days);
+    }
+
+    /**
      * @dev The claim calculation formula. Divided the daily balance with
      * the sum of the active users.
      * @return The amount of GoodDollar the user can claim
@@ -144,15 +177,25 @@ contract UBIScheme is AbstractUBI {
         setDay();
         // once in 24 hrs calculate distribution
         if (currentDay != lastWithdrawDay) {
-            lastWithdrawDay = currentDay;
-            if (shouldWithdrawFromDAO) _withdrawFromDao();
             DAOToken token = avatar.nativeToken();
             uint256 currentBalance = token.balanceOf(address(this));
+
+            if(currentDayInCycle() >= currentCycleLength) //start of cycle or first time
+            {
+                if (shouldWithdrawFromDAO) _withdrawFromDao();
+                currentBalance = token.balanceOf(address(this));
+                dailyCyclePool = currentBalance.div(cycleLength);
+                currentCycleLength = cycleLength;
+                startOfCycle = now.div(1 hours) * 1 hours; //start at a round hour
+                emit UBICycleCalculated(currentDay, currentBalance, cycleLength, dailyCyclePool);
+            }
+            
+            lastWithdrawDay = currentDay;
             Funds storage funds = dailyUBIHistory[currentDay];
             funds.hasWithdrawn = shouldWithdrawFromDAO;
             funds.openAmount = currentBalance;
             if (activeUsersCount > 0) {
-                dailyUbi = currentBalance.div(activeUsersCount);
+                dailyUbi = dailyCyclePool.div(activeUsersCount);
             }
             emit UBICalculated(currentDay, dailyUbi, block.number);
         }
@@ -379,6 +422,9 @@ contract UBIScheme is AbstractUBI {
      * Can only be called if scheme is registered
      */
     function start() public onlyRegistered {
+
+        periodStart = now.div(1 days) * 1 days + 12 hours; //set start time to GMT noon
+        startOfCycle = periodStart;
         controller.genericCall(
             address(firstClaimPool),
             abi.encodeWithSignature("setUBIScheme(address)", address(this)),
@@ -394,5 +440,9 @@ contract UBIScheme is AbstractUBI {
      */
     function setShouldWithdrawFromDAO(bool _shouldWithdraw) public onlyAvatar {
         shouldWithdrawFromDAO = _shouldWithdraw;
+    }
+
+    function end() public onlyAvatar {
+        super.end();
     }
 }

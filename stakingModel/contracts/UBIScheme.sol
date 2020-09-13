@@ -423,6 +423,7 @@ contract UBIScheme is AbstractUBI {
      */
     function start() public onlyRegistered {
 
+        super.start();
         periodStart = now.div(1 days) * 1 days + 12 hours; //set start time to GMT noon
         startOfCycle = periodStart;
         controller.genericCall(
@@ -431,7 +432,6 @@ contract UBIScheme is AbstractUBI {
             avatar,
             0
         );
-        super.start();
     }
 
     /**

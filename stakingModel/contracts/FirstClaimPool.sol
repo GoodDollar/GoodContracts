@@ -4,7 +4,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@daostack/arc/contracts/controller/Avatar.sol";
 import "../../contracts/dao/schemes/FeelessScheme.sol";
 import "../../contracts/dao/schemes/ActivePeriod.sol";
-import "./UBIScheme.sol";
 
 /**
  * @title FirstClaimPool contract that transfer bonus tokens when claiming for
@@ -13,20 +12,20 @@ import "./UBIScheme.sol";
 contract FirstClaimPool is FeelessScheme, ActivePeriod {
     using SafeMath for uint256;
 
-    // The whitelisted ubi scheme contract
-    UBIScheme public ubi;
+    // The whitelisted ex scheme contract
+    address public ubi;
 
     // The transfer amount to a
     // given user address
     uint256 public claimAmount;
 
     modifier onlyUBIScheme {
-        require(msg.sender == address(ubi), "Only UBIScheme can call this method");
+        require(msg.sender == ubi, "Only UBIScheme can call this method");
         _;
     }
 
     modifier ubiHasInitialized {
-        require(address(ubi) != address(0), "ubi has not initialized");
+        require(ubi != address(0), "ubi has not initialized");
         _;
     }
 
@@ -57,7 +56,7 @@ contract FirstClaimPool is FeelessScheme, ActivePeriod {
      * can call this method.
      * @param _ubi The new ubi scheme to be whitelisted
      */
-    function setUBIScheme(UBIScheme _ubi) public onlyAvatar {
+    function setUBIScheme(address _ubi) public onlyAvatar {
         ubi = _ubi;
     }
 

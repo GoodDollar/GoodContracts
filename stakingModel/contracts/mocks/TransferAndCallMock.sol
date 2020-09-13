@@ -1,10 +1,8 @@
 pragma solidity >0.5.4;
 
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "../../../contracts/token/ERC677/ERC677Receiver.sol";
 
-interface ERC20 {
-    function transfer(address to, uint256 amount) external returns (bool);
-}
 
 contract TransferAndCallMock is ERC677Receiver {
     bool public calledFallback = false;

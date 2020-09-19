@@ -13,6 +13,9 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
     // Overrides hard-coded decimal in DAOToken
     uint256 public constant decimals = 2;
 
+    // UBI earnings NOT subtracted the expenses
+    mapping (address => uint256) public earnings;
+
     /**
      * @dev constructor
      * @param _name The name of the token
@@ -48,6 +51,9 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
      */
     function transfer(address to, uint256 value) public returns (bool) {
         uint256 bruttoValue = processFees(msg.sender, to, value);
+        if(isMinter(msg.sender)) {
+            earnings[to] += bruttoValue;
+        }
         return super.transfer(to, bruttoValue);
     }
 
@@ -75,6 +81,10 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
         uint256 value
     ) public returns (bool) {
         uint256 bruttoValue = processFees(from, to, value);
+        // Unlikely that this function will be used for UBI, but to be sure:
+        if(isMinter(from)) {
+            earnings[to] += bruttoValue;
+        }
         return super.transferFrom(from, to, bruttoValue);
     }
 
@@ -91,6 +101,10 @@ contract GoodDollar is ERC677BridgeToken, IdentityGuard, FormulaHolder {
         bytes calldata data
     ) external returns (bool) {
         uint256 bruttoValue = processFees(msg.sender, to, value);
+        // Unlikely that this function will be used for UBI, but to be sure:
+        if(isMinter(msg.sender)) {
+            earnings[to] += bruttoValue;
+        }
         return super._transferAndCall(to, bruttoValue, data);
     }
 

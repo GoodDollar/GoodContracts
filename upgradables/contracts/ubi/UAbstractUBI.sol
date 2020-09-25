@@ -1,16 +1,11 @@
 pragma solidity >0.6.0;
 
-import "@daostack/arc/contracts/controller/Avatar.sol";
-import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades-core/contracts/Initializable.sol";
-
-import "../../../identity/upgradable/UIdentityGuard.sol";
-
-import "../../../token/GoodDollar.sol";
-
-import "./UFeelessScheme.sol";
+import "../dao/UIdentityGuard.sol";
+import "../Interfaces.sol";
+import ".../dao/UFeelessScheme.sol";
 
 /* @title Base contract template for UBI scheme
  */
@@ -103,7 +98,7 @@ contract UAbstractUBI is UFeelessScheme {
         currentDay = now.sub(periodStart) / 1 days;
 
         // Transfer the fee reserve to this contract
-        DAOToken token = avatar.nativeToken();
+        cERC20 token = cERC20(avatar.nativeToken());
 
         if (initialReserve > 0) {
             require(
@@ -132,7 +127,7 @@ contract UAbstractUBI is UFeelessScheme {
      * address
      */
     function end() public onlyAvatar {
-        DAOToken token = avatar.nativeToken();
+        cERC20 token = cERC20(avatar.nativeToken());
 
         uint256 remainingReserve = token.balanceOf(address(this));
 
@@ -160,7 +155,7 @@ contract UAbstractUBI is UFeelessScheme {
         require(!claimDay[currentDay].hasClaimed[msg.sender], "has already claimed");
         claimDay[currentDay].hasClaimed[msg.sender] = true;
 
-        GoodDollar token = GoodDollar(address(avatar.nativeToken()));
+        cERC20 token = cERC20(address(avatar.nativeToken()));
 
         claimDay[currentDay].amountOfClaimers = claimDay[currentDay].amountOfClaimers.add(
             1

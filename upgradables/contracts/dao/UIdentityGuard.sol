@@ -3,21 +3,21 @@ pragma solidity >0.5.4;
 
 import "@openzeppelin/upgrades-core/contracts/Initializable.sol";
 
-import "../Identity.sol";
+import "./IdentityInterface.sol";
 
 /* @title The IdentityGuard contract
  * @dev Contract containing an identity and
  * modifiers to ensure proper access
  */
 contract UIdentityGuard is Initializable {
-    Identity public identity;
+    IdentityInterface public identity;
 
     /* @dev Constructor. Checks if identity is a zero address
      * @param _identity The identity contract.
      */
     function initialize(address _identity) public initializer {
         require(_identity != address(0), "Supplied identity is null");
-        identity = Identity(_identity);
+        identity = IdentityInterface(_identity);
     }
 
     /* @dev Modifier that requires the sender to be not blacklisted

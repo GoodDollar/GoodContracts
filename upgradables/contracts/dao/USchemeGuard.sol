@@ -1,15 +1,15 @@
 pragma solidity >0.5.4;
 
-import "@daostack/arc/contracts/controller/Avatar.sol";
-import "@daostack/arc/contracts/controller/ControllerInterface.sol";
 import "@openzeppelin/upgrades-core/contracts/Initializable.sol";
+import "../DAOStackInterfaces.sol";
+import "../Interfaces.sol";
 
 /* @dev abstract contract for ensuring that schemes have been registered properly
  * Allows setting zero Avatar in situations where the Avatar hasn't been created yet
  */
 contract USchemeGuard is Initializable {
     Avatar avatar;
-    ControllerInterface internal controller;
+    Controller internal controller;
 
     /** @dev Constructor. only sets controller if given avatar is not null.
      * @param _avatar The avatar of the DAO.
@@ -17,7 +17,7 @@ contract USchemeGuard is Initializable {
     function initialize(address _avatar) public initializer{
         avatar = Avatar(address(uint160(_avatar)));
         if (avatar != Avatar(0)) {
-            controller = ControllerInterface(avatar.owner());
+            controller = Controller(avatar.owner());
         }
     }
 

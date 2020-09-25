@@ -1,6 +1,6 @@
 pragma solidity >0.6.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades-core/contracts/Initializable.sol";
 import "./UAbstractUBI.sol";
 

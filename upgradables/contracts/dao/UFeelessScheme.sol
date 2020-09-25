@@ -1,9 +1,9 @@
 pragma solidity >0.5.4;
 
-import "@daostack/arc/contracts/controller/Avatar.sol";
 import "./USchemeGuard.sol";
-import "../../../identity/Identity.sol";
-import "../../../identity/upgradable/UIdentityGuard.sol";
+import "../DAOStackInterfaces.sol";
+import "../Interfaces.sol";
+import "../dao/UIdentityGuard.sol";
 import "@openzeppelin/upgrades-core/contracts/Initializable.sol";
 
 /**

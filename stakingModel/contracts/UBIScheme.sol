@@ -11,7 +11,7 @@ contract UBIScheme is AbstractUBI {
 
     // Result of distribution formula
     // calculated each day
-    uint256 public dailyUbi = 0;
+    uint256 public dailyUbi;
 
     // Limits the gas for each iteration at `fishMulti`
     uint256 public iterationGasLimit = 150000;
@@ -19,12 +19,12 @@ contract UBIScheme is AbstractUBI {
     // Tracks the active users number. It changes when
     // a new user claim for the first time or when a user
     // has been fished
-    uint256 public activeUsersCount = 0;
+    uint256 public activeUsersCount;
 
     // Tracks the last withdrawal day of funds from avatar.
     // Withdraw occures on the first daily claim or the
     // first daily fish only
-    uint256 public lastWithdrawDay = 0;
+    uint256 public lastWithdrawDay;
 
     // How long can a user be inactive.
     // After those days the user can be fished
@@ -37,7 +37,7 @@ contract UBIScheme is AbstractUBI {
 
     //number of days of each UBI pool cycle
     //dailyPool = Pool/cycleLength
-    uint256 public cycleLength = 1;
+    uint256 public cycleLength;
 
     //the amount of G$ UBI pool for each day in the cycle to be divided by active users
     uint256 public dailyCyclePool;
@@ -46,7 +46,7 @@ contract UBIScheme is AbstractUBI {
     uint256 public startOfCycle;
 
     //should be 0 for starters so distributionFormula detects new cycle on first day claim
-    uint256 public currentCycleLength = 0;
+    uint256 public currentCycleLength;
     
     // A pool of GD to give to activated users,
     // since they will enter the UBI pool
@@ -123,6 +123,7 @@ contract UBIScheme is AbstractUBI {
         firstClaimPool = _firstClaimPool;
         shouldWithdrawFromDAO = false;
         cycleLength  = _cycleLength;
+        lastWithdrawDay = -1; //set to -1 so ubi calculation will also be triggered on first claim
     }
 
     /**
@@ -175,7 +176,7 @@ contract UBIScheme is AbstractUBI {
         returns (uint256)
     {
         setDay();
-        // once in 24 hrs calculate distribution
+        // on first day or once in 24 hrs calculate distribution
         if (currentDay != lastWithdrawDay) {
             DAOToken token = avatar.nativeToken();
             uint256 currentBalance = token.balanceOf(address(this));

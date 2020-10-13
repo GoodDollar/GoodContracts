@@ -17,8 +17,8 @@ contract DonationsStaking is Initializable{
     cERC20 public DAI;
     address public owner;
     Uniswap public uniswap;
-    bool public isActive;
-    
+    bool public active;
+        
     event DonationStaked(address donator, uint256 DAI);
 
     modifier ownerOrAvatar() {
@@ -32,7 +32,7 @@ contract DonationsStaking is Initializable{
     }
 
     modifier isActive() {
-        require(isActive);
+        require(active);
         _;
     }
 
@@ -45,15 +45,11 @@ contract DonationsStaking is Initializable{
         avatar = _avatar;
         stakingContract = Staking(_stakingContract);
         DAI.approve(address(stakingContract),0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
-        isActive = true;
+        active = true;
     }
 
-    function upgradeIsActive() public onlyOwnerOrAvatar {
-        isActive = true;
-    }
-
-    function stakeDonations(uint256 minDAIAmount) public payable isActive {
-        _buyDAI(minDAIAmount);
+    function stakeDonations(uint256 _minDAIAmount) public payable isActive {
+        _buyDAI(_minDAIAmount);
         
         uint256 daiBalance = DAI.balanceOf(address(this));
         if(daiBalance>0)
@@ -68,18 +64,18 @@ contract DonationsStaking is Initializable{
         return staker.stakedDAI;
     }
 
-    function _buyDAI(uint256 minDAIAmount) internal {
+    function _buyDAI(uint256 _minDAIAmount) internal {
         //buy from uniwasp
         uint256 ethBalance = address(this).balance;
         if(ethBalance == 0) return;
         address[] memory path = new address[](2);
         path[1] = address(DAI);
         path[0] = uniswap.WETH();
-        uniswap.swapExactETHForTokens{value:ethBalance}(minDAIAmount, path, address(this), now);
+        uniswap.swapExactETHForTokens{value:ethBalance}(_minDAIAmount, path, address(this), now);
     }
 
-    function setActive(bool active) public ownerOrAvatar returns(uint256) {
-        isActive = active;
+    function setActive(bool _active) public ownerOrAvatar returns(uint256) {
+        active = _active;
     }
     
     function end() public ownerOrAvatar isActive returns(uint256) {
@@ -88,5 +84,9 @@ contract DonationsStaking is Initializable{
         DAI.transfer(avatar,daiBalance);
         avatar.transfer(address(this).balance);
         return daiBalance;
+    }
+
+    function getVersion() public view returns(string memory) {
+        return "1.0.0";
     }
 }

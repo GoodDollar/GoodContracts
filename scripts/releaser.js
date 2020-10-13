@@ -3,7 +3,8 @@ const fse = require("fs-extra");
 module.exports = async function(deployment, network) {
   const dir = "releases/";
   console.log("releaser:", { network, dir });
-  const previousDeployment = await fse.readJson(dir + "/deployment.json").catch(_ => {});
+  const previousDeployment =
+    (await fse.readJson(dir + "/deployment.json").catch(_ => {})) || {};
   await fse.ensureDir(dir);
   let finalDeployment = { ...previousDeployment, [network]: deployment };
   console.log("releaser:", {

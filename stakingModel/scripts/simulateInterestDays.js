@@ -47,12 +47,11 @@ const simulate = async function() {
 
   const ubi = await UBIScheme.at(staking_mainnet_addresses.UBIScheme);
 
+  console.log(await web3.eth.getTransactionCount(accounts[0]));
   for (let day = 0; day < 16; day++) {
     console.log("minting dai and approving day:", { day });
-    await Promise.all([
-      dai.allocateTo(accounts[0], web3.utils.toWei("100", "ether")),
-      dai.approve(cDAI.address, web3.utils.toWei("100", "ether"))
-    ]);
+    await dai.allocateTo(accounts[0], web3.utils.toWei("100", "ether"));
+    await dai.approve(cDAI.address, web3.utils.toWei("100", "ether"));
     await cDAI.mint(web3.utils.toWei("100", "ether"));
     let ownercDaiBalanceAfter = await cDAI.balanceOf(accounts[0]).then(_ => _.toString());
 
@@ -76,7 +75,7 @@ const simulate = async function() {
     await goodFundManager.transferInterest(simpleStaking.address);
 
     console.log("claiming");
-    const slice = accounts.length > day ? day : accounts.length - 1;
+    const slice = accounts.length - 1 > day ? day : accounts.length - 1;
     //forward to next claim day and claim, every day claim with one less account
     await Promise.all(accounts.slice(slice).map(a => ubi.claim({ from: a }))).catch(e =>
       console.log("claiming failed", e)

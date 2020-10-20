@@ -15,7 +15,7 @@ const nextDay = async () =>
       jsonrpc: "2.0",
       method: "evm_increaseTime",
       params: [60 * 60 * 24],
-      id: new Date().getTime(),
+      id: new Date().getTime()
     },
     () => {}
   );
@@ -24,7 +24,7 @@ const nextDay = async () =>
  * helper script to simulate enough days of interest transfer and claiming
  * so we can test fishing of inactive user accounts
  */
-const simulate = async function () {
+const simulate = async function() {
   const network = process.env.NETWORK || "develop";
   const networkSettings = { ...settings["default"], ...settings[network] };
   const accounts = await web3.eth.getAccounts();
@@ -36,9 +36,7 @@ const simulate = async function () {
   let staking_mainnet_addresses = staking_deployment[network];
   let dao_addresses = dao_deployment[network];
   const identity = await Identity.at(dao_addresses.Identity);
-  await Promise.all(accounts.slice(1).map((a) => identity.addWhitelisted(a))).catch(
-    (e) => e
-  );
+  await Promise.all(accounts.slice(1).map(a => identity.addWhitelisted(a))).catch(e => e);
   const dai = await DAIMock.at(staking_mainnet_addresses.DAI);
   const cDAI = await cDAIMock.at(staking_mainnet_addresses.cDAI);
   const simpleStaking = await StakingContract.at(staking_mainnet_addresses.DAIStaking);
@@ -53,17 +51,15 @@ const simulate = async function () {
     console.log("minting dai and approving day:", { day });
     await Promise.all([
       dai.allocateTo(accounts[0], web3.utils.toWei("100", "ether")),
-      dai.approve(cDAI.address, web3.utils.toWei("100", "ether")),
+      dai.approve(cDAI.address, web3.utils.toWei("100", "ether"))
     ]);
     await cDAI.mint(web3.utils.toWei("100", "ether"));
-    let ownercDaiBalanceAfter = await cDAI
-      .balanceOf(accounts[0])
-      .then((_) => _.toString());
+    let ownercDaiBalanceAfter = await cDAI.balanceOf(accounts[0]).then(_ => _.toString());
 
     await cDAI.transfer(simpleStaking.address, ownercDaiBalanceAfter);
     let stakingBalance = await cDAI
       .balanceOf(simpleStaking.address)
-      .then((_) => _.toString());
+      .then(_ => _.toString());
 
     let ps = [];
     for (let i = 0; i < networkSettings.blockInterval; ++i)
@@ -80,13 +76,16 @@ const simulate = async function () {
     await goodFundManager.transferInterest(simpleStaking.address);
 
     console.log("claiming");
+    const slice = accounts.length > day ? day : accounts.length - 1;
     //forward to next claim day and claim, every day claim with one less account
-    await Promise.all(accounts.slice(day).map((a) => ubi.claim({ from: a }))).catch((e) =>
+    await Promise.all(accounts.slice(slice).map(a => ubi.claim({ from: a }))).catch(e =>
       console.log("claiming failed", e)
     );
-    await nextDay().catch((e) => console.log("nextday failed", e));
+    await nextDay().catch(e => console.log("nextday failed", e));
   }
 };
-module.exports = (done) => {
-  simulate().catch(console.log).then(done);
+module.exports = done => {
+  simulate()
+    .catch(console.log)
+    .then(done);
 };

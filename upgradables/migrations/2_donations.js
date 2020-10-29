@@ -4,6 +4,8 @@ const { getSettings, releaser } = require("../../scripts/getMigrationSettings");
 const DonationsStaking = artifacts.require("DonationsStaking");
 
 module.exports = async (deployer, network, accounts) => {
+  if (network === "tdd") return;
+
   const {
     daoAddresses,
     modelAddresses,

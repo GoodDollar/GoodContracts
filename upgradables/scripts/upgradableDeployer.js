@@ -2,7 +2,8 @@ const { admin, deployProxy, prepareUpgrade } = require("@openzeppelin/truffle-up
 const {
   getVersion,
   getImplementationAddress,
-  getAdminAddress
+  getAdminAddress,
+  toEip1967Hash
 } = require("@openzeppelin/upgrades-core");
 const { getFounders } = require("../../scripts/getMigrationSettings");
 const { toChecksumAddress } = require("web3-utils");
@@ -15,8 +16,13 @@ const NULL_HASH = "0x00000000000000000000000000000000000000000000000000000000000
 
 function parseAddress(storage) {
   const buf = Buffer.from(storage.replace(/^0x/, ""), "hex");
+  if (storage.length === 42 && storage.startsWith("0x"))
+    return toChecksumAddress(storage);
+
   if (!buf.slice(0, 12).equals(Buffer.alloc(12, 0))) {
-    throw new Error(`Value in storage is not an address (${storage})`);
+    throw new Error(
+      `Value in storage is not an address (${storage}) value:${buf.toString()}`
+    );
   }
   const address = "0x" + buf.toString("hex", 12, 32); // grab the last 20 bytes
   return toChecksumAddress(address);
@@ -84,7 +90,9 @@ export const deployOrDAOUpgrade = async (
   initParams,
   upgradeCallData,
   deployedProxy,
-  upgradeTimeLock
+  upgradeTimeLock,
+  contractKey, //key in output json of addresses
+  allowUnsafe
 ) => {
   //get the owner address from the proxy contract storage
   let proxyAdmin =
@@ -100,14 +108,14 @@ export const deployOrDAOUpgrade = async (
   console.log("checking deployed version", { proxyAdmin, deployedProxy });
 
   if (proxyAdmin == null || proxyAdmin == "0x0") {
-    const instance = await deployProxy(Contract, initParams, { deployer });
+    const instance = await deployProxy(Contract, initParams, {
+      deployer,
+      unsafeAllowCustomTypes: allowUnsafe
+    });
 
     //get the owner address from the proxy contract storage
     proxyAdmin = await web3.eth
-      .getStorageAt(
-        instance.address,
-        "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103"
-      )
+      .getStorageAt(instance.address, toEip1967Hash("eip1967.proxy.admin"))
       .then(parseAddress);
 
     const adminTransfer = await admin
@@ -123,14 +131,15 @@ export const deployOrDAOUpgrade = async (
 
     let releasedContracts = {
       ProxyAdmin: proxyAdmin,
-      [Contract.contractName]: instance.address
+      [contractKey || Contract.contractName]: instance.address
     };
 
     return releasedContracts;
   } else {
     console.log("skipping already deployed, trying to upgrade");
     const upgraded = await prepareUpgrade(deployedProxy, Contract, {
-      deployer
+      deployer,
+      unsafeAllowCustomTypes: allowUnsafe
     });
 
     //get the owner address from the proxy contract storage

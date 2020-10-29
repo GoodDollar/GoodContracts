@@ -48,7 +48,7 @@ const simulate = async function() {
   const ubi = await UBIScheme.at(staking_mainnet_addresses.UBIScheme);
 
   console.log(await web3.eth.getTransactionCount(accounts[0]));
-  for (let day = 0; day < 16; day++) {
+  for (let day = 0; day < 15; day++) {
     console.log("minting dai and approving day:", { day });
     await dai.allocateTo(accounts[0], web3.utils.toWei("100", "ether"));
     await dai.approve(cDAI.address, web3.utils.toWei("100", "ether"));

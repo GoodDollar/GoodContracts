@@ -21,6 +21,7 @@ contract InvitesV1 is Initializable {
 		bytes32 inviteCode;
 		bool bountyPaid;
 		address[] invitees;
+		address[] pending;
 		uint256 level;
 		uint256 levelStarted;
 		uint256 totalApprovedInvites;
@@ -80,13 +81,16 @@ contract InvitesV1 is Initializable {
 	function initialize(
 		address payable _avatar,
 		address _identity,
-		address _gd
+		address _gd,
+		uint256 level0Bounty
 	) public initializer {
 		owner = msg.sender;
 		identity = IIdentity(_identity);
 		active = true;
-		levels[0] = Level({ toNext: 0, bounty: 1000 });
+		Level storage lvl = levels[0];
+		lvl.bounty = level0Bounty;
 		goodDollar = cERC20(_gd);
+		avatar = _avatar;
 	}
 
 	function join(bytes32 _myCode, bytes32 _inviterCode) public isActive {
@@ -104,6 +108,7 @@ contract InvitesV1 is Initializable {
 			user.invitedBy = inviter;
 			User storage inviterUser = users[inviter];
 			inviterUser.invitees.push(msg.sender);
+			inviterUser.pending.push(msg.sender);
 			stats.totalInvited += 1;
 		}
 		emit InviteeJoined(inviter, msg.sender);
@@ -123,6 +128,47 @@ contract InvitesV1 is Initializable {
 		returns (address[] memory)
 	{
 		return users[_inviter].invitees;
+	}
+
+	function getPendingInvitees(address _inviter)
+		public
+		view
+		returns (address[] memory)
+	{
+		address[] memory pending = users[_inviter].pending;
+		uint256 cur = 0;
+		uint256 total = 0;
+		for (uint256 i; i < pending.length; i++) {
+			if (!users[pending[i]].bountyPaid) {
+				total++;
+			}
+		}
+
+		address[] memory result = new address[](total);
+
+		for (uint256 i; i < pending.length; i++) {
+			if (!users[pending[i]].bountyPaid) {
+				result[cur] = pending[i];
+				cur++;
+			}
+		}
+
+		return result;
+	}
+
+	function getPendingBounties(address _inviter)
+		public
+		view
+		returns (uint256)
+	{
+		address[] memory pending = users[_inviter].pending;
+		uint256 total = 0;
+		for (uint256 i; i < pending.length; i++) {
+			if (canCollectBountyFor(pending[i])) {
+				total++;
+			}
+		}
+		return total;
 	}
 
 	/**
@@ -155,7 +201,7 @@ contract InvitesV1 is Initializable {
 		if (
 			level.toNext > 0 &&
 			inviter.totalApprovedInvites >= level.toNext &&
-			level.daysToComplete <= (now - inviter.levelStarted) / 1 days
+			level.daysToComplete >= (now - inviter.levelStarted) / 1 days
 		) {
 			inviter.level += 1;
 			inviter.levelStarted = now;
@@ -175,14 +221,39 @@ contract InvitesV1 is Initializable {
      @dev collect bounties for invitees by msg.sender that are now whitelisted
      */
 	function collectBounties() public isActive {
-		User memory inviter = users[msg.sender];
-		if (inviter.totalApprovedInvites == inviter.invitees.length) return;
+		User storage inviter = users[msg.sender];
 
-		for (uint256 i = 0; i < inviter.invitees.length; i++) {
-			if (canCollectBountyFor(inviter.invitees[i])) {
-				bountyFor(inviter.invitees[i]);
+		for (uint256 i = 0; i < inviter.pending.length; i++) {
+			if (canCollectBountyFor(inviter.pending[i])) {
+				bountyFor(inviter.pending[i]);
+			}
+			if (users[inviter.pending[i]].bountyPaid) {
+				//if still elements in array move last item to current position
+				if (inviter.pending.length - 1 > i) {
+					inviter.pending[i] = inviter.pending[inviter
+						.pending
+						.length - 1];
+
+					//force loop to do current position again so we dont miss the just moved last item
+					i--;
+				}
+
+				//extract item from pendig array
+				inviter.pending.pop();
 			}
 		}
+	}
+
+	function setLevel(
+		uint256 _lvl,
+		uint256 _toNext,
+		uint256 _bounty,
+		uint256 _daysToComplete
+	) public ownerOrAvatar {
+		Level storage lvl = levels[_lvl];
+		lvl.toNext = _toNext;
+		lvl.daysToComplete = _daysToComplete;
+		lvl.bounty = _bounty;
 	}
 
 	function setActive(bool _active) public ownerOrAvatar returns (uint256) {

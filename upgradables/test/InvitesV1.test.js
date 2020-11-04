@@ -8,7 +8,7 @@ export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract(
   "Invites Model",
-  ([founder, inviter1, inviter2, invitee1, invitee2, invitee3]) => {
+  ([founder, inviter1, inviter2, invitee1, invitee2, invitee3, invitee4, invitee5]) => {
     let invites, identity, gd;
     before(async () => {
       let network = process.env.NETWORK;
@@ -22,10 +22,12 @@ contract(
         await identity.removeWhitelisted(invitee2).catch(e => e);
         await identity.removeWhitelisted(inviter1).catch(e => e);
         await identity.removeWhitelisted(invitee3).catch(e => e);
+        await identity.removeWhitelisted(invitee4).catch(e => e);
+        await identity.removeWhitelisted(invitee5).catch(e => e);
 
         invites = await deployProxy(
           Invites,
-          [await cur.avatar(), await cur.identity(), await cur.goodDollar()],
+          [await cur.avatar(), await cur.identity(), await cur.goodDollar(), 1000],
           { unsafeAllowCustomTypes: true }
         );
       }
@@ -48,7 +50,7 @@ contract(
     });
 
     it("should allow to join only once", async () => {
-      let err = await invites.join("0xfa", "0x0", { from: inviter1 }).catch(e => e);
+      let err = await invites.join("0xfa", "0x01", { from: inviter1 }).catch(e => e);
       expect(err).to.be.an("error");
     });
 
@@ -84,12 +86,16 @@ contract(
       await identity.addWhitelistedWithDID(inviter1, Math.random() + "").catch(e => e);
       const startBalance = await gd.balanceOf(inviter1).then(_ => _.toNumber());
       expect(await identity.isWhitelisted(inviter1)).to.be.true;
+      let pending = await invites.getPendingInvitees(inviter1);
+      expect(pending.length, "pending").to.be.equal(1);
       await invites.bountyFor(invitee1, { from: inviter1 });
 
       let invitee = await invites.users(invitee1);
       let inviter = await invites.users(inviter1);
       const endBalance = await gd.balanceOf(inviter1).then(_ => _.toNumber());
 
+      pending = await invites.getPendingInvitees(inviter1);
+      expect(pending.length, "pending").to.be.equal(0);
       expect(invitee.bountyPaid).to.be.true;
       expect(inviter.totalApprovedInvites.toNumber()).to.be.equal(1);
       expect(inviter.totalEarned.toNumber()).to.be.equal(1000);
@@ -114,6 +120,11 @@ contract(
       const res = await invites.collectBounties({ from: inviter1 }).catch(e => e);
       let user1 = await invites.users(invitee2);
       let user2 = await invites.users(invitee3);
+      let pending = await invites.getPendingInvitees(inviter1);
+      expect(
+        await invites.getPendingBounties(inviter1).then(_ => _.toNumber())
+      ).to.be.equal(0);
+      expect(pending.length, "pending").to.be.equal(2);
       expect(user1.bountyPaid).to.be.false;
       expect(user2.bountyPaid).to.be.false;
       expect(res).not.to.be.an("error");
@@ -122,12 +133,59 @@ contract(
     it("should collectBounties for inviter", async () => {
       await identity.addWhitelistedWithDID(invitee2, Math.random() + "").catch(e => e);
       await identity.addWhitelistedWithDID(invitee3, Math.random() + "").catch(e => e);
+      expect(
+        await invites.getPendingBounties(inviter1).then(_ => _.toNumber())
+      ).to.be.equal(2);
       const res = await invites.collectBounties({ from: inviter1 }).catch(e => e);
-      console.log(res.logs);
+
       let user1 = await invites.users(invitee2);
       let user2 = await invites.users(invitee3);
-      expect(user1.bountyPaid).to.be.true;
-      expect(user2.bountyPaid).to.be.true;
+      let pending = await invites.getPendingInvitees(inviter1);
+      expect(pending.length, "pending").to.be.equal(0);
+      expect(user1.bountyPaid, "user1").to.be.true;
+      expect(user2.bountyPaid, "user2").to.be.true;
+    });
+
+    it("should not set level not by owner", async () => {
+      const err = await invites.setLevel(0, 1, 5, 1, { from: inviter1 }).catch(e => e);
+      expect(err).to.be.an("error");
+    });
+
+    it("should set level by owner", async () => {
+      await invites.setLevel(0, 1, 5, 1);
+      let lvl = await invites.levels(0);
+      expect(lvl.toNext.toNumber()).to.be.equal(1);
+      expect(lvl.daysToComplete.toNumber()).to.be.equal(1);
+      await invites.setLevel(1, 0, 10, 2);
+      lvl = await invites.levels(1);
+      expect(lvl.toNext.toNumber()).to.be.equal(0);
+      expect(lvl.daysToComplete.toNumber()).to.be.equal(2);
+      expect(lvl.bounty.toNumber()).to.be.equal(10);
+    });
+
+    it("should update inviter level", async () => {
+      await invites.join("0x03", "0xfa", { from: invitee4 });
+      await invites.join("0x04", "0xfa", { from: invitee5 });
+      await identity.addWhitelistedWithDID(invitee4, Math.random() + "").catch(e => e);
+      await identity.addWhitelistedWithDID(invitee5, Math.random() + "").catch(e => e);
+      const res1 = await invites.bountyFor(invitee4);
+
+      const log1 = res1.logs[0];
+      expect(log1.event).to.be.equal("InviterBounty");
+      expect(log1.args.inviterLevel.toNumber()).to.be.equal(1);
+      expect(log1.args.earnedLevel).to.be.equal(true);
+      expect(log1.args.bountyPaid.toNumber()).to.be.equal(5);
+
+      let inviter = await invites.users(inviter1);
+      expect(inviter.level.toNumber()).to.be.equal(1);
+      const res2 = await invites.collectBounties({ from: inviter1 });
+      const log2 = res2.logs[0];
+      expect(log2.event).to.be.equal("InviterBounty");
+      expect(log2.args.inviterLevel.toNumber()).to.be.equal(1);
+      expect(log2.args.earnedLevel).to.be.equal(false);
+      expect(log2.args.bountyPaid.toNumber()).to.be.equal(10);
+
+      console.log(log2);
     });
   }
 );

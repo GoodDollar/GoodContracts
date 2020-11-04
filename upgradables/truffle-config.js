@@ -102,7 +102,7 @@ module.exports = {
     },
     fuse: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -111,7 +111,7 @@ module.exports = {
     },
     staging: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -142,7 +142,7 @@ module.exports = {
       provider: () =>
         new SafeHDWalletProvider(
           admin_mnemonic,
-          "https://rpc.fusenet.io/",
+          "https://rpc.fuse.io/",
           0,
           10,
           admin_password
@@ -156,7 +156,7 @@ module.exports = {
     },
     etoro: {
       provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
+        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
       },
       network_id: 122,
       gas: 8500000,
@@ -164,8 +164,7 @@ module.exports = {
       gasPrice: 2000000000 //1 gwei
     },
     production: {
-      provider: () =>
-        new HDWalletProvider(admin_mnemonic, "https://rpc.fusenet.io/", 0, 10),
+      provider: () => new HDWalletProvider(admin_mnemonic, "https://rpc.fuse.io/", 0, 10),
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,

@@ -108,10 +108,13 @@ export const deployOrDAOUpgrade = async (
   console.log("checking deployed version", { proxyAdmin, deployedProxy });
 
   if (proxyAdmin == null || proxyAdmin == "0x0") {
+    console.log("proxy not found calling deployProxy");
     const instance = await deployProxy(Contract, initParams, {
       deployer,
       unsafeAllowCustomTypes: allowUnsafe
     });
+
+    console.log("proxy deployed at:", instance.address);
 
     //get the owner address from the proxy contract storage
     proxyAdmin = await web3.eth

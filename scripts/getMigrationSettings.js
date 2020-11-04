@@ -1,4 +1,4 @@
-const getSettings = async (network, AbsoluteVote) => {
+const getSettings = async network => {
   const daoAddresses = require("../releases/deployment.json");
   const modelAddresses = require("../stakingModel/releases/deployment.json");
   let upgradableAddresses = {};
@@ -17,15 +17,20 @@ const getSettings = async (network, AbsoluteVote) => {
   //   const networkSettings = { ...settings["default"], ...settings[network] };
   //   const homedao = daoAddresses[network];
   //   console.log({ networkSettings, network, homedao });
+  const homeNetwork = network.replace(/-?mainnet/, "");
+  const mainNetwork = homeNetwork + "-mainnet";
   return {
-    daoAddresses: daoAddresses[network] || {},
-    modelAddresses: modelAddresses[network] || {},
-    upgradableAddresses: upgradableAddresses[network] || {},
-    daoSettings: { ...daoSettings["default"], ...daoSettings[network] },
-    modelSettings: { ...modelSettings["default"], ...modelSettings[network] },
+    daoAddresses: daoAddresses[homeNetwork] || {},
+    modelAddresses: modelAddresses[homeNetwork] || {},
+    upgradableAddresses: upgradableAddresses[homeNetwork] || {},
+    mainDaoAddresses: daoAddresses[mainNetwork] || {},
+    mainModelAddresses: modelAddresses[mainNetwork] || {},
+    mainUpgradableAddresses: upgradableAddresses[mainNetwork] || {},
+    daoSettings: { ...daoSettings["default"], ...daoSettings[homeNetwork] },
+    modelSettings: { ...modelSettings["default"], ...modelSettings[homeNetwork] },
     upgradableSettings: {
       ...(upgradableSettings["default"] || {}),
-      ...(upgradableSettings[network] || {})
+      ...(upgradableSettings[homeNetwork] || {})
     }
   };
 };

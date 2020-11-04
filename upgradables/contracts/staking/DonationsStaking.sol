@@ -98,6 +98,7 @@ contract DonationsStaking is Initializable {
 		uint256 daiBalance = DAI.balanceOf(address(this));
 		DAI.transfer(avatar, daiBalance);
 		avatar.transfer(address(this).balance);
+		active = false;
 		return daiBalance;
 	}
 

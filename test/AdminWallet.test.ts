@@ -89,6 +89,7 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   it("should add admins", async () => {
     await adminWallet.addAdmins([whitelisted, admin, admin2]);
     assert(await adminWallet.isAdmin(whitelisted));
+    assert(await adminWallet.isAdmin(admin));
   });
 
   it("should top admins", async () => {
@@ -219,7 +220,9 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
       from: founder,
       value: toppingAmount / 5
     });
-    await adminWallet.topWallet(newUser, { from: admin });
+                                           
+    await adminWallet.topWallet(newUser, { from: admin2 });
+                                           
     await web3.eth.sendTransaction({
       to: adminWallet.address,
       from: newUser,
@@ -244,21 +247,21 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   it("should whitelist user", async () => {
     assert(!(await identity.isWhitelisted(stranger2)));
     await adminWallet.whitelistAndAwardUser(stranger2, 0, "did:test3", {
-      from: admin
+      from: founder
     });
     assert(await identity.isWhitelisted(stranger2));
   });
 
   it("should award users without whitelisting", async () => {
     await adminWallet.whitelistAndAwardUser(stranger2, 5, "did:test4", {
-      from: admin
+      from: founder
     });
   });
 
   it("should not allow whitelisting with existing did", async () => {
     await helpers.assertVMException(
       adminWallet.whitelist(stranger, "did:test", {
-        from: admin
+        from: founder
       }),
       "DID already registered"
     );

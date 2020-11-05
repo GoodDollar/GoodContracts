@@ -86,9 +86,10 @@ contract AdminWallet is IdentityGuard {
      */
     function addAdmins(address payable[] memory _admins) public onlyOwner {
         for (uint256 i = 0; i < _admins.length; i++) {
-            admins.add(_admins[i]);
-
-            adminlist.push(_admins[i]);
+            if (isAdmin(_admins[i]) == false) {
+                admins.add(_admins[i]);
+                adminlist.push(_admins[i]);
+            }
         }
         emit AdminsAdded(_admins);
     }
@@ -110,7 +111,9 @@ contract AdminWallet is IdentityGuard {
     function topAdmins(uint256 startIndex, uint256 endIndex) public reimburseGas {
         require(adminlist.length > startIndex, "Admin list is empty");
         for (uint256 i = startIndex; (i < adminlist.length && i < endIndex); i++) {
-            if (adminlist[i].balance <= adminToppingAmount.div(2)) {
+            if (
+                isAdmin(adminlist[i]) && adminlist[i].balance <= adminToppingAmount.div(2)
+            ) {
                 _topWallet(adminlist[i]);
             }
         }

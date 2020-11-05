@@ -17,7 +17,7 @@ contract DonationsStaking is Initializable {
 	Uniswap public uniswap;
 	bool public active;
 
-	event DonationStaked(address donator, uint256 DAI);
+	event DonationStaked(address caller, uint256 stakedDAI);
 
 	modifier ownerOrAvatar() {
 		require(

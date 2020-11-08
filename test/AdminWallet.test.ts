@@ -82,8 +82,8 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
 
   it("should add admins", async () => {
     await newWallet.addAdmins([founder, admin2]);
-    assert(await adminWallet.isAdmin(founder));
-    assert(await adminWallet.isAdmin(admin2));
+    assert(await newWallet.isAdmin(founder));
+    assert(await newWallet.isAdmin(admin2));
   });
 
   it("should add admins", async () => {
@@ -220,9 +220,7 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
       from: founder,
       value: toppingAmount / 5
     });
-                                           
-    await adminWallet.topWallet(newUser, { from: admin2 });
-                                           
+    await adminWallet.topWallet(newUser, { from: admin });
     await web3.eth.sendTransaction({
       to: adminWallet.address,
       from: newUser,
@@ -230,7 +228,7 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
     });
 
     await helpers.assertVMException(
-      adminWallet.topWallet(newUser),
+      adminWallet.topWallet(newUser, { from: admin }),
       "User wallet has been topped too many times today"
     );
   });
@@ -247,21 +245,21 @@ contract("adminWallet", ([founder, whitelisted, stranger, stranger2, blacklisted
   it("should whitelist user", async () => {
     assert(!(await identity.isWhitelisted(stranger2)));
     await adminWallet.whitelistAndAwardUser(stranger2, 0, "did:test3", {
-      from: founder
+      from: admin2
     });
     assert(await identity.isWhitelisted(stranger2));
   });
 
   it("should award users without whitelisting", async () => {
     await adminWallet.whitelistAndAwardUser(stranger2, 5, "did:test4", {
-      from: founder
+      from: admin2
     });
   });
 
   it("should not allow whitelisting with existing did", async () => {
     await helpers.assertVMException(
       adminWallet.whitelist(stranger, "did:test", {
-        from: founder
+        from: admin2
       }),
       "DID already registered"
     );

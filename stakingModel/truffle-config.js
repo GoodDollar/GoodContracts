@@ -22,7 +22,7 @@ const admin_mnemonic = process.env.ADMIN_MNEMONIC;
 const admin_password = process.env.ADMIN_PASSWORD;
 
 const ropsten_settings = {
-  provider: function () {
+  provider: function() {
     return new HDWalletProvider(
       mnemonic,
       "https://eth-ropsten.alchemyapi.io/v2/" + alchemy_key,
@@ -46,7 +46,7 @@ module.exports = {
 
   networks: {
     develop: {
-      provider: function () {
+      provider: function() {
         return new HDWalletProvider(mnemonic, "http://localhost:9545/", 0, 10);
       },
       // used for 'truffle console' command for debugging purpose. https://truffleframework.com/tutorials/debugger-variable-inspection
@@ -87,7 +87,7 @@ module.exports = {
     },
     ropsten: ropsten_settings,
     kovan: {
-      provider: function () {
+      provider: function() {
         return new HDWalletProvider(
           mnemonic,
           "https://kovan.infura.io/v3/" + infura_api,
@@ -101,8 +101,8 @@ module.exports = {
       gasPrice: 2000000000 //2 gwei
     },
     fuse: {
-      provider: function () {
-        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -110,8 +110,8 @@ module.exports = {
       gasPrice: 2000000000 //1 gwei
     },
     staging: {
-      provider: function () {
-        return new HDWalletProvider(mnemonic, "https://rpc.fusenet.io/", 0, 10);
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -142,7 +142,7 @@ module.exports = {
       provider: () =>
         new SafeHDWalletProvider(
           admin_mnemonic,
-          "https://rpc.fusenet.io/",
+          "https://rpc.fuse.io/",
           0,
           10,
           admin_password
@@ -155,8 +155,8 @@ module.exports = {
       networkCheckTimeout: 5000
     },
     etoro: {
-      provider: function () {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fusenet.io/");
+      provider: function() {
+        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
       },
       network_id: 122,
       gas: 8500000,
@@ -164,8 +164,7 @@ module.exports = {
       gasPrice: 2000000000 //1 gwei
     },
     production: {
-      provider: () =>
-        new HDWalletProvider(admin_mnemonic, "https://rpc.fusenet.io/", 0, 10),
+      provider: () => new HDWalletProvider(admin_mnemonic, "https://rpc.fuse.io/", 0, 10),
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,

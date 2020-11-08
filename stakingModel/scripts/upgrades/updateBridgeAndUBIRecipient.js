@@ -2,7 +2,7 @@ const fse = require("fs-extra");
 const settings = require("../../migrations/deploy-settings.json");
 const AbsoluteVote = artifacts.require("./AbsoluteVote.sol");
 const SchemeRegistrar = artifacts.require("./SchemeRegistrar.sol");
-const FundManagerSetUBI = artifacts.require("./FundManagerSetUBI.sol");
+const FundManagerSetUBIAndBridge = artifacts.require("./FundManagerSetUBIAndBridge.sol");
 
 const releaser = require("../../../scripts/releaser.js");
 const getFounders = require("../../../migrations/getFounders");
@@ -39,15 +39,17 @@ const upgrade = async function() {
   let staking_addresses_home = staking_deployment[network.replace(/-?mainnet/, "")];
   const founders = await getFounders(AbsoluteVote.web3, network);
   console.log({ network, networkSettings, staking_addresses_home, homedao, founders });
-  const ubiupdate = await FundManagerSetUBI.new(
+  const ubiupdate = await FundManagerSetUBIAndBridge.new(
     homedao.Avatar,
     staking_addresses.FundManager,
-    staking_addresses_home.UBIScheme
+    staking_addresses_home.UBIScheme,
+    staking_addresses.ForeignBridge
   );
 
   console.log("Scheme deployed at:", {
     scheme: ubiupdate.address,
-    newRecipient: staking_addresses_home.UBIScheme
+    newRecipient: staking_addresses_home.UBIScheme,
+    newBridge: staking_addresses.ForeignBridge
   });
 
   console.log("proposing Update to DAO");
@@ -72,8 +74,9 @@ const upgrade = async function() {
       .map(f => absoluteVote.vote(proposalId, 1, 0, f, { from: f, gas: 500000 }))
   );
 
-  console.log("starting...");
-  await ubiupdate.setUBIScheme();
+  console.log("updating contracts...");
+  const res = await ubiupdate.setContracts();
+  console.log("result:", { res, logs: res.logs });
 };
 
 module.exports = done => {

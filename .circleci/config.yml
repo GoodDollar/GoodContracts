@@ -6,6 +6,9 @@ jobs:
 
     working_directory: ~/repo
 
+    environment:
+      NODE_OPTIONS: "--max_old_space_size=4096"
+
     steps:
       - checkout
 
@@ -47,6 +50,13 @@ jobs:
           name: coverage stakingModel
           command: |
             cd stakingModel
+            npm run coverage
+            cd ..
+
+      - run:
+          name: coverage upgradables
+          command: |
+            cd upgradables
             npm run coverage
             cd ..
 

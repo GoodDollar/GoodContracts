@@ -29,7 +29,10 @@ const upgrade = async function() {
     console.log("can only run on mainnets");
     return;
   }
-  const networkSettings = { ...settings["default"], ...settings[network] };
+  const networkSettings = {
+    ...settings["default"],
+    ...settings[network.replace(/-?mainnet/, "")]
+  };
   const staking_deployment = require("../../releases/deployment.json");
   const daoAddresses = require("../../../releases/deployment.json");
   const homedao = daoAddresses[network];
@@ -38,18 +41,25 @@ const upgrade = async function() {
 
   let staking_addresses_home = staking_deployment[network.replace(/-?mainnet/, "")];
   const founders = await getFounders(AbsoluteVote.web3, network);
-  console.log({ network, networkSettings, staking_addresses_home, homedao, founders });
+  console.log({
+    newBridge: networkSettings.foreignBridge,
+    network,
+    networkSettings,
+    staking_addresses_home,
+    homedao,
+    founders
+  });
   const ubiupdate = await FundManagerSetUBIAndBridge.new(
     homedao.Avatar,
     staking_addresses.FundManager,
     staking_addresses_home.UBIScheme,
-    staking_addresses.ForeignBridge
+    networkSettings.foreignBridge
   );
 
   console.log("Scheme deployed at:", {
     scheme: ubiupdate.address,
     newRecipient: staking_addresses_home.UBIScheme,
-    newBridge: staking_addresses.ForeignBridge
+    newBridge: networkSettings.foreignBridge
   });
 
   console.log("proposing Update to DAO");

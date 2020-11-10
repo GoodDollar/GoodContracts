@@ -37,12 +37,12 @@ const upgrade = async function() {
   console.log({ network, networkSettings, homedao, founders });
   const bridgeupdate = await ChangeHomeBridge.new(
     homedao.Avatar,
-    "0x628980264f86b20BbF4181f55a35602fEe6B4E6F"
+    networkSettings.homeBridge
   );
 
   console.log("Scheme deployed at:", {
     scheme: bridgeupdate.address,
-    newBridge: "0x628980264f86b20BbF4181f55a35602fEe6B4E6F"
+    newBridge: networkSettings.homeBridge
   });
 
   console.log("proposing Update to DAO");

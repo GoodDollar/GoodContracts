@@ -13,6 +13,7 @@ contract(
     before(async () => {
       let network = process.env.NETWORK;
       const cur = await Invites.deployed();
+      invites = cur;
       identity = await Identity.at(await cur.identity());
       gd = await ERC20.at(await cur.goodDollar());
 
@@ -27,7 +28,7 @@ contract(
 
         invites = await deployProxy(
           Invites,
-          [await cur.avatar(), await cur.identity(), await cur.goodDollar(), 1000],
+          [await cur.avatar(), await cur.identity(), await cur.goodDollar(), 500],
           { unsafeAllowCustomTypes: true }
         );
       }
@@ -98,15 +99,15 @@ contract(
       expect(pending.length, "pending").to.be.equal(0);
       expect(invitee.bountyPaid).to.be.true;
       expect(inviter.totalApprovedInvites.toNumber()).to.be.equal(1);
-      expect(inviter.totalEarned.toNumber()).to.be.equal(1000);
-      expect(endBalance - startBalance).to.be.equal(1000);
+      expect(inviter.totalEarned.toNumber()).to.be.equal(500);
+      expect(endBalance - startBalance).to.be.equal(500);
     });
 
     it("should update global stats", async () => {
       const stats = await invites.stats();
       expect(stats.totalApprovedInvites.toNumber()).to.be.equal(1, "approved invites");
       expect(stats.totalInvited.toNumber()).to.be.equal(1, "total  invited");
-      expect(stats.totalBountiesPaid.toNumber()).to.be.equal(1000);
+      expect(stats.totalBountiesPaid.toNumber()).to.be.equal(500);
     });
 
     it("should not pay bounty twice", async () => {

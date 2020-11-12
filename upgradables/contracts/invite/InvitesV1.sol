@@ -256,7 +256,7 @@ contract InvitesV1 is Initializable {
 		lvl.bounty = _bounty;
 	}
 
-	function setActive(bool _active) public ownerOrAvatar returns (uint256) {
+	function setActive(bool _active) public ownerOrAvatar {
 		active = active;
 	}
 

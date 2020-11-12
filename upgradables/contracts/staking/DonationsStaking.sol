@@ -89,7 +89,7 @@ contract DonationsStaking is Initializable {
 		);
 	}
 
-	function setActive(bool _active) public ownerOrAvatar returns (uint256) {
+	function setActive(bool _active) public ownerOrAvatar {
 		active = _active;
 	}
 

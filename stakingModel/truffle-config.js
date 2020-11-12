@@ -20,7 +20,7 @@ const alchemy_key = process.env.ALCHEMY_KEY;
 
 const admin_mnemonic = process.env.ADMIN_MNEMONIC;
 const admin_password = process.env.ADMIN_PASSWORD;
-
+const FUSE_RPC = "https://gooddollar-rpc.fuse.io/";
 const ropsten_settings = {
   provider: function() {
     return new HDWalletProvider(
@@ -102,7 +102,7 @@ module.exports = {
     },
     fuse: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, FUSE_RPC, 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -111,7 +111,7 @@ module.exports = {
     },
     staging: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10);
+        return new HDWalletProvider(mnemonic, FUSE_RPC, 0, 10);
       },
       network_id: 122,
       gas: 8500000,
@@ -126,27 +126,20 @@ module.exports = {
           admin_mnemonic,
           // "https://eth-mainnet.alchemyapi.io/v2/" + alchemy_key,
           // "wss://mainnet.infura.io/ws",
-          // "https://mainnet.infura.io/v3/" + infura_api,
-          "https://mainnet.infura.io/v3/35586b6316ce494e953584b7ad9cd2cc",
+          "https://mainnet.infura.io/v3/" + infura_api,
           0,
           10
         ),
-      gas: 3000000,
+      gas: 2000000,
       timeoutBlocks: 400,
       gasPrice: 51000000000,
       network_id: 1,
       skipDryRun: true,
-      networkCheckTimeout: 5000
+      networkCheckTimeout: 10000
     },
     "production-admin": {
       provider: () =>
-        new SafeHDWalletProvider(
-          admin_mnemonic,
-          "https://rpc.fuse.io/",
-          0,
-          10,
-          admin_password
-        ),
+        new SafeHDWalletProvider(admin_mnemonic, FUSE_RPC, 0, 10, admin_password),
       gas: 3000000,
       timeoutBlocks: 400,
       gasPrice: 51000000000,
@@ -156,7 +149,7 @@ module.exports = {
     },
     etoro: {
       provider: function() {
-        return new PrivateKeyProvider([privateKey], "https://rpc.fuse.io/");
+        return new PrivateKeyProvider([privateKey], FUSE_RPC);
       },
       network_id: 122,
       gas: 8500000,
@@ -164,7 +157,7 @@ module.exports = {
       gasPrice: 2000000000 //1 gwei
     },
     production: {
-      provider: () => new HDWalletProvider(admin_mnemonic, "https://rpc.fuse.io/", 0, 10),
+      provider: () => new HDWalletProvider(admin_mnemonic, FUSE_RPC, 0, 10),
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,

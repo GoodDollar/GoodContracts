@@ -41,19 +41,27 @@ const upgrade = async function() {
 
   let staking_addresses_home = staking_deployment[network.replace(/-?mainnet/, "")];
   const founders = await getFounders(AbsoluteVote.web3, network);
+  const accounts = await web3.eth.getAccounts();
+  const deployerBalance = await web3.eth
+    .getBalance(accounts[0])
+    .then(_ => web3.utils.fromWei(_));
   console.log({
     newBridge: networkSettings.foreignBridge,
     network,
     networkSettings,
     staking_addresses_home,
     homedao,
-    founders
+    founders,
+    accounts,
+    deployerBalance
   });
+
   const ubiupdate = await FundManagerSetUBIAndBridge.new(
     homedao.Avatar,
     staking_addresses.FundManager,
     staking_addresses_home.UBIScheme,
-    networkSettings.foreignBridge
+    networkSettings.foreignBridge,
+    { gas: 2000000, from: accounts[0] }
   );
 
   console.log("Scheme deployed at:", {
@@ -79,9 +87,12 @@ const upgrade = async function() {
   console.log("voting...", { proposalId });
 
   await Promise.all(
-    founders
-      .slice(0, Math.ceil(founders.length / 2))
-      .map(f => absoluteVote.vote(proposalId, 1, 0, f, { from: f, gas: 500000 }))
+    founders.slice(0, Math.ceil(founders.length / 2)).map(f =>
+      absoluteVote.vote(proposalId, 1, 0, f, {
+        from: f,
+        gas: 200000
+      })
+    )
   );
 
   console.log("updating contracts...");

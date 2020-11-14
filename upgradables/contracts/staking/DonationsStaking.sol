@@ -63,10 +63,10 @@ contract DonationsStaking is Initializable {
 		_buyDAI(_minDAIAmount);
 
 		uint256 daiBalance = DAI.balanceOf(address(this));
-		if (daiBalance > 0) {
-			stakingContract.stakeDAI(daiBalance);
-			emit DonationStaked(msg.sender, daiBalance);
-		}
+		require(daiBalance > 0, "no DAI to stake");
+
+		stakingContract.stakeDAI(daiBalance);
+		emit DonationStaked(msg.sender, daiBalance);
 	}
 
 	function totalStaked() public view returns (uint256) {

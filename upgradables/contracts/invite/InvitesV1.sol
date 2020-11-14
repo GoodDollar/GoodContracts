@@ -26,6 +26,7 @@ contract InvitesV1 is Initializable {
 		uint256 levelStarted;
 		uint256 totalApprovedInvites;
 		uint256 totalEarned;
+		uint256 joinedAt;
 		uint256[5] __reserevedSpace;
 	}
 
@@ -47,6 +48,8 @@ contract InvitesV1 is Initializable {
 	cERC20 public goodDollar;
 	bool public active;
 	Stats public stats;
+
+	bool public levelExpirationEnabled;
 
 	event InviteeJoined(address indexed inviter, address indexed invitee);
 	event InviterBounty(
@@ -91,6 +94,11 @@ contract InvitesV1 is Initializable {
 		lvl.bounty = level0Bounty;
 		goodDollar = cERC20(_gd);
 		avatar = _avatar;
+		levelExpirationEnabled = false;
+	}
+
+	function setLevelExpirationEnabled(bool _isEnabled) public ownerOrAvatar {
+		levelExpirationEnabled = _isEnabled;
 	}
 
 	function join(bytes32 _myCode, bytes32 _inviterCode) public isActive {
@@ -103,6 +111,7 @@ contract InvitesV1 is Initializable {
 		address inviter = codeToUser[_inviterCode];
 		user.inviteCode = _myCode;
 		user.levelStarted = now;
+		user.joinedAt = now;
 		codeToUser[_myCode] = msg.sender;
 		if (inviter != address(0)) {
 			user.invitedBy = inviter;
@@ -116,10 +125,19 @@ contract InvitesV1 is Initializable {
 
 	function canCollectBountyFor(address _invitee) public view returns (bool) {
 		User memory user = users[_invitee];
+		User memory inviter = users[user.invitedBy];
+		Level memory level = levels[inviter.level];
+		bool isLevelExpired = levelExpirationEnabled == true &&
+			level.daysToComplete > 0 &&
+			level.daysToComplete <
+			(user.joinedAt - inviter.levelStarted) / 1 days;
+
 		return
 			!user.bountyPaid &&
 			user.invitedBy != address(0) &&
-			identity.isWhitelisted(_invitee);
+			identity.isWhitelisted(_invitee) &&
+			identity.isWhitelisted(user.invitedBy) &&
+			isLevelExpired == false;
 	}
 
 	function getInvitees(address _inviter)
@@ -180,14 +198,14 @@ contract InvitesV1 is Initializable {
 			canCollectBountyFor(_invitee),
 			"user not elligble for bounty  yet"
 		);
-		User storage user = users[_invitee];
 
-		require(
-			identity.isWhitelisted(user.invitedBy),
-			"inviter is not whitelisted"
-		);
+		User storage user = users[_invitee];
 		User storage inviter = users[user.invitedBy];
 		Level memory level = levels[inviter.level];
+
+		bool isLevelExpired = level.daysToComplete > 0 &&
+			level.daysToComplete <
+			(user.joinedAt - inviter.levelStarted) / 1 days;
 
 		user.bountyPaid = true;
 		inviter.totalApprovedInvites += 1;
@@ -201,7 +219,7 @@ contract InvitesV1 is Initializable {
 		if (
 			level.toNext > 0 &&
 			inviter.totalApprovedInvites >= level.toNext &&
-			level.daysToComplete >= (now - inviter.levelStarted) / 1 days
+			isLevelExpired == false
 		) {
 			inviter.level += 1;
 			inviter.levelStarted = now;

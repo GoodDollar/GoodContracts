@@ -6,6 +6,11 @@ const DonationsStaking = artifacts.require("DonationsStaking");
 module.exports = async (deployer, network, accounts) => {
   if (network === "tdd") return;
 
+  if (network.indexOf("mainnet") < 0 && network !== "test" && network !== "develop") {
+    console.log("not deploying on sidechain");
+    return;
+  }
+
   const {
     daoAddresses,
     modelAddresses,

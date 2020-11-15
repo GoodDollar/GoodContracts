@@ -6,6 +6,12 @@ const allowUnsafe = true;
 
 module.exports = async (deployer, network, accounts) => {
   if (network === "tdd") return;
+
+  if (network.indexOf("mainnet") >= 0) {
+    console.log("not deploying on mainnet");
+    return;
+  }
+
   const {
     daoAddresses,
     modelAddresses,

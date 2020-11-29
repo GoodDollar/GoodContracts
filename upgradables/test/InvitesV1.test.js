@@ -9,7 +9,7 @@ export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 contract(
   "Invites Model",
   ([founder, inviter1, inviter2, invitee1, invitee2, invitee3, invitee4, invitee5]) => {
-    let invites, identity, gd;
+    let invites, identity, gd, bounty;
     before(async () => {
       let network = process.env.NETWORK;
       const cur = await Invites.deployed();
@@ -32,7 +32,8 @@ contract(
           { unsafeAllowCustomTypes: true }
         );
       }
-      await gd.transfer(invites.address, 10000, { from: founder });
+      await gd.transfer(invites.address, 5000, { from: founder });
+      bounty = (await invites.levels(0)).bounty.toNumber();
     });
 
     it("should have version", async () => {
@@ -78,7 +79,7 @@ contract(
     it("should not pay bounty for non whitelisted inviter", async () => {
       await identity.addWhitelistedWithDID(invitee1, Math.random() + "").catch(e => e);
       expect(await identity.isWhitelisted(invitee1)).to.be.true;
-      expect(await invites.canCollectBountyFor(invitee1)).to.be.true;
+      expect(await invites.canCollectBountyFor(invitee1)).to.be.false;
       const err = await invites.bountyFor(invitee1, { from: inviter1 }).catch(e => e);
       expect(err).to.be.an("error");
     });
@@ -99,15 +100,15 @@ contract(
       expect(pending.length, "pending").to.be.equal(0);
       expect(invitee.bountyPaid).to.be.true;
       expect(inviter.totalApprovedInvites.toNumber()).to.be.equal(1);
-      expect(inviter.totalEarned.toNumber()).to.be.equal(500);
-      expect(endBalance - startBalance).to.be.equal(500);
+      expect(inviter.totalEarned.toNumber()).to.be.equal(bounty);
+      expect(endBalance - startBalance).to.be.equal(bounty);
     });
 
     it("should update global stats", async () => {
       const stats = await invites.stats();
       expect(stats.totalApprovedInvites.toNumber()).to.be.equal(1, "approved invites");
       expect(stats.totalInvited.toNumber()).to.be.equal(1, "total  invited");
-      expect(stats.totalBountiesPaid.toNumber()).to.be.equal(500);
+      expect(stats.totalBountiesPaid.toNumber()).to.be.equal(bounty);
     });
 
     it("should not pay bounty twice", async () => {

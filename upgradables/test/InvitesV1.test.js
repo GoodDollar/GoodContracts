@@ -33,7 +33,6 @@ contract(
         );
       }
       await gd.transfer(invites.address, 5000, { from: founder });
-      bounty = (await invites.levels(0)).bounty.toNumber();
     });
 
     it("should have version", async () => {
@@ -85,6 +84,7 @@ contract(
     });
 
     it("should pay bounty for whitelisted invitee and inviter", async () => {
+      const bounty = (await invites.levels(0)).bounty.toNumber();
       await identity.addWhitelistedWithDID(inviter1, Math.random() + "").catch(e => e);
       const startBalance = await gd.balanceOf(inviter1).then(_ => _.toNumber());
       expect(await identity.isWhitelisted(inviter1)).to.be.true;
@@ -105,6 +105,7 @@ contract(
     });
 
     it("should update global stats", async () => {
+      const bounty = (await invites.levels(0)).bounty.toNumber();
       const stats = await invites.stats();
       expect(stats.totalApprovedInvites.toNumber()).to.be.equal(1, "approved invites");
       expect(stats.totalInvited.toNumber()).to.be.equal(1, "total  invited");

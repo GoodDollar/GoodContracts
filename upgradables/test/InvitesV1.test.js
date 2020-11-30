@@ -97,11 +97,12 @@ contract(
       const endBalance = await gd.balanceOf(inviter1).then(_ => _.toNumber());
 
       pending = await invites.getPendingInvitees(inviter1);
+      const txFee = await gd.getFees(bounty).then(_ => _.toNumber()); //gd might have a tx fee
       expect(pending.length, "pending").to.be.equal(0);
       expect(invitee.bountyPaid).to.be.true;
       expect(inviter.totalApprovedInvites.toNumber()).to.be.equal(1);
       expect(inviter.totalEarned.toNumber()).to.be.equal(bounty);
-      expect(endBalance - startBalance).to.be.equal(bounty);
+      expect(endBalance - startBalance + txFee).to.be.equal(bounty);
     });
 
     it("should update global stats", async () => {

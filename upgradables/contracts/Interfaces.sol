@@ -18,6 +18,10 @@ interface cERC20 {
 	function approve(address spender, uint256 amount) external returns (bool);
 }
 
+interface GoodDollar is cERC20 {
+	function getFees(uint256 value) external view returns (uint256, bool);
+}
+
 interface Staking {
 	struct Staker {
 		// The staked DAI amount

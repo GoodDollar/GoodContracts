@@ -1,7 +1,7 @@
 const { deployProxy, upgradeProxy } = require("@openzeppelin/truffle-upgrades");
 const Invites = artifacts.require("InvitesV1.sol");
 const Identity = artifacts.require("IIdentity");
-const ERC20 = artifacts.require("cERC20");
+const ERC20 = artifacts.require("GoodDollar");
 
 const BN = web3.utils.BN;
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -97,7 +97,7 @@ contract(
       const endBalance = await gd.balanceOf(inviter1).then(_ => _.toNumber());
 
       pending = await invites.getPendingInvitees(inviter1);
-      const txFee = await gd.getFees(bounty).then(_ => _.toNumber()); //gd might have a tx fee
+      const txFee = await gd.getFees(bounty).then(_ => _["0"].toNumber()); //gd might have a tx fee
       expect(pending.length, "pending").to.be.equal(0);
       expect(invitee.bountyPaid).to.be.true;
       expect(inviter.totalApprovedInvites.toNumber()).to.be.equal(1);

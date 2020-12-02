@@ -3,12 +3,17 @@ pragma solidity >=0.6.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/upgrades-core/contracts/Initializable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+
 import "../Interfaces.sol";
 
 /**
  * @title InvitesV1 contract that handles invites with pre allocated bounty pool
+ * 1.1 adds invitee bonus
  */
 contract InvitesV1 is Initializable {
+	using SafeMath for uint256;
+
 	struct Stats {
 		uint256 totalApprovedInvites;
 		uint256 totalBountiesPaid;
@@ -130,7 +135,7 @@ contract InvitesV1 is Initializable {
 		bool isLevelExpired = levelExpirationEnabled == true &&
 			level.daysToComplete > 0 &&
 			level.daysToComplete <
-			(user.joinedAt - inviter.levelStarted) / 1 days;
+			(user.joinedAt - inviter.levelStarted).div(1 days);
 
 		return
 			!user.bountyPaid &&
@@ -205,15 +210,13 @@ contract InvitesV1 is Initializable {
 
 		bool isLevelExpired = level.daysToComplete > 0 &&
 			level.daysToComplete <
-			(user.joinedAt - inviter.levelStarted) / 1 days;
+			(user.joinedAt - inviter.levelStarted).div(1 days);
 
 		user.bountyPaid = true;
 		inviter.totalApprovedInvites += 1;
 		inviter.totalEarned += level.bounty;
 		stats.totalApprovedInvites += 1;
 		stats.totalBountiesPaid += level.bounty;
-
-		goodDollar.transfer(user.invitedBy, level.bounty);
 
 		bool earnedLevel = false;
 		if (
@@ -225,6 +228,9 @@ contract InvitesV1 is Initializable {
 			inviter.levelStarted = now;
 			earnedLevel = true;
 		}
+
+		goodDollar.transfer(user.invitedBy, level.bounty);
+		goodDollar.transfer(_invitee, level.bounty.div(2)); //pay invitee half the bounty
 
 		emit InviterBounty(
 			user.invitedBy,
@@ -286,6 +292,6 @@ contract InvitesV1 is Initializable {
 	}
 
 	function version() public view returns (string memory) {
-		return "1.0.0";
+		return "1.1.0";
 	}
 }

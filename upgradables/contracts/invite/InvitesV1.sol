@@ -3,8 +3,7 @@ pragma solidity >=0.6.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/upgrades-core/contracts/Initializable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../Interfaces.sol";
 
 /**
@@ -12,7 +11,7 @@ import "../Interfaces.sol";
  * 1.1 adds invitee bonus
  */
 contract InvitesV1 is Initializable {
-	using SafeMath for uint256;
+	using SafeMathUpgradeable for uint256;
 
 	struct Stats {
 		uint256 totalApprovedInvites;
@@ -135,7 +134,7 @@ contract InvitesV1 is Initializable {
 		bool isLevelExpired = levelExpirationEnabled == true &&
 			level.daysToComplete > 0 &&
 			level.daysToComplete <
-			(user.joinedAt - inviter.levelStarted).div(1 days);
+			user.joinedAt.sub(inviter.levelStarted).div(1 days);
 
 		return
 			!user.bountyPaid &&
@@ -210,7 +209,7 @@ contract InvitesV1 is Initializable {
 
 		bool isLevelExpired = level.daysToComplete > 0 &&
 			level.daysToComplete <
-			(user.joinedAt - inviter.levelStarted).div(1 days);
+			user.joinedAt.sub(inviter.levelStarted).div(1 days);
 
 		user.bountyPaid = true;
 		inviter.totalApprovedInvites += 1;

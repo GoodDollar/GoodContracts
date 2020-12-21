@@ -1,0 +1,21 @@
+diff --git a/node_modules/@openzeppelin/upgrades-core/dist/provider.js b/node_modules/@openzeppelin/upgrades-core/dist/provider.js
+index 1fd10da..d80cf45 100644
+--- a/node_modules/@openzeppelin/upgrades-core/dist/provider.js
++++ b/node_modules/@openzeppelin/upgrades-core/dist/provider.js
+@@ -33,14 +33,14 @@ async function getTransactionByHash(provider, txHash) {
+     return provider.send('eth_getTransactionByHash', [txHash]);
+ }
+ exports.getTransactionByHash = getTransactionByHash;
+-exports.networkNames = Object.freeze({
++exports.networkNames = {
+     1: 'mainnet',
+     2: 'morden',
+     3: 'ropsten',
+     4: 'rinkeby',
+     5: 'goerli',
+     42: 'kovan',
+-});
++};
+ async function isDevelopmentNetwork(provider) {
+     const chainId = await getChainId(provider);
+     //  1337 => ganache and geth --dev

@@ -186,8 +186,7 @@ module.exports = {
   },
   compilers: {
     solc: {
-      version: "0.6",
-      evmVersion: "byzantium",
+      version: "0.6.12",
       settings: {
         optimizer: {
           enabled: true,

@@ -1,3 +1,4 @@
+const { networkNames } = require("@openzeppelin/upgrades-core");
 const { deployOrDAOUpgrade } = require("../scripts/upgradableDeployer");
 const { getSettings, releaser } = require("../../scripts/getMigrationSettings");
 
@@ -11,10 +12,13 @@ module.exports = async (deployer, network, accounts) => {
     return;
   }
 
+  networkNames[1] = network;
+  networkNames[122] = network;
+  networkNames[3] = network;
   const {
-    daoAddresses,
-    modelAddresses,
-    upgradableAddresses,
+    mainDaoAddresses: daoAddresses,
+    mainModelAddresses: modelAddresses,
+    mainUpgradableAddresses: upgradableAddresses,
     founders
   } = await getSettings(network, "");
   console.log({ daoAddresses, modelAddresses, upgradableAddresses });

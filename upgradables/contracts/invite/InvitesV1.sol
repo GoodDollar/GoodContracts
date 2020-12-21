@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity >=0.6.0;
 
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/upgrades-core/contracts/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../Interfaces.sol";
 
@@ -131,10 +133,11 @@ contract InvitesV1 is Initializable {
 		User memory user = users[_invitee];
 		User memory inviter = users[user.invitedBy];
 		Level memory level = levels[inviter.level];
-		bool isLevelExpired = levelExpirationEnabled == true &&
-			level.daysToComplete > 0 &&
-			level.daysToComplete <
-			user.joinedAt.sub(inviter.levelStarted).div(1 days);
+		bool isLevelExpired =
+			levelExpirationEnabled == true &&
+				level.daysToComplete > 0 &&
+				level.daysToComplete <
+				user.joinedAt.sub(inviter.levelStarted).div(1 days);
 
 		return
 			!user.bountyPaid &&
@@ -207,9 +210,10 @@ contract InvitesV1 is Initializable {
 		User storage inviter = users[user.invitedBy];
 		Level memory level = levels[inviter.level];
 
-		bool isLevelExpired = level.daysToComplete > 0 &&
-			level.daysToComplete <
-			user.joinedAt.sub(inviter.levelStarted).div(1 days);
+		bool isLevelExpired =
+			level.daysToComplete > 0 &&
+				level.daysToComplete <
+				user.joinedAt.sub(inviter.levelStarted).div(1 days);
 
 		user.bountyPaid = true;
 		inviter.totalApprovedInvites += 1;
@@ -253,9 +257,9 @@ contract InvitesV1 is Initializable {
 			if (users[inviter.pending[i]].bountyPaid) {
 				//if still elements in array move last item to current position
 				if (inviter.pending.length - 1 > i) {
-					inviter.pending[i] = inviter.pending[inviter
-						.pending
-						.length - 1];
+					inviter.pending[i] = inviter.pending[
+						inviter.pending.length - 1
+					];
 
 					//force loop to do current position again so we dont miss the just moved last item
 					i--;
@@ -280,7 +284,7 @@ contract InvitesV1 is Initializable {
 	}
 
 	function setActive(bool _active) public ownerOrAvatar {
-		active = active;
+		active = _active;
 	}
 
 	function end() public ownerOrAvatar isActive {
@@ -290,7 +294,7 @@ contract InvitesV1 is Initializable {
 		active = false;
 	}
 
-	function version() public view returns (string memory) {
+	function version() public pure returns (string memory) {
 		return "1.1.0";
 	}
 }

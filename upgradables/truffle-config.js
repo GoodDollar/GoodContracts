@@ -147,9 +147,9 @@ module.exports = {
           10,
           admin_password
         ),
-      gas: 3000000,
+      gas: 8000000,
       timeoutBlocks: 400,
-      gasPrice: 51000000000,
+      gasPrice: 1000000000,
       network_id: 122,
       skipDryRun: true,
       networkCheckTimeout: 5000

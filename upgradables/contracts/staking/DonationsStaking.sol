@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity >=0.6.0;
 
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/upgrades-core/contracts/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "../Interfaces.sol";
 
 /**
@@ -16,8 +18,15 @@ contract DonationsStaking is Initializable {
 	address public owner;
 	Uniswap public uniswap;
 	bool public active;
+	uint256 public totalETHDonated;
+	uint256 public totalDAIDonated;
 
-	event DonationStaked(address caller, uint256 stakedDAI);
+	event DonationStaked(
+		address caller,
+		uint256 stakedDAI,
+		uint256 ethDonated,
+		uint256 daiDonated
+	);
 
 	modifier ownerOrAvatar() {
 		require(
@@ -55,29 +64,47 @@ contract DonationsStaking is Initializable {
 		DAI.approve(
 			address(stakingContract),
 			0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-		);
+		); //we trust the staking contract
 		active = true;
 	}
 
+	/**
+	 * @dev stake available funds. It
+	 * take balance in eth and buy DAI from uniswap then stake outstanding DAI balance.
+	 * anyone can call this.
+	 * @param _minDAIAmount enforce expected return from uniswap when converting eth balance to DAI
+	 */
 	function stakeDonations(uint256 _minDAIAmount) public payable isActive {
-		_buyDAI(_minDAIAmount);
+		uint256 daiDonated = DAI.balanceOf(address(this));
+		uint256 ethDonated = _buyDAI(_minDAIAmount);
 
 		uint256 daiBalance = DAI.balanceOf(address(this));
 		require(daiBalance > 0, "no DAI to stake");
 
 		stakingContract.stakeDAI(daiBalance);
-		emit DonationStaked(msg.sender, daiBalance);
+		totalETHDonated += ethDonated;
+		totalDAIDonated += daiDonated;
+		emit DonationStaked(msg.sender, daiBalance, ethDonated, daiDonated);
 	}
 
+	/**
+	 * @dev total DAI value staked
+	 * @return DAI value staked
+	 */
 	function totalStaked() public view returns (uint256) {
 		Staking.Staker memory staker = stakingContract.stakers(address(this));
 		return staker.stakedDAI;
 	}
 
-	function _buyDAI(uint256 _minDAIAmount) internal {
+	/**
+	 * @dev internal method to buy DAI from uniswap
+	 * @param _minDAIAmount enforce expected return from uniswap when converting eth balance to DAI
+	 * @return eth value converted
+	 */
+	function _buyDAI(uint256 _minDAIAmount) internal returns (uint256) {
 		//buy from uniwasp
 		uint256 ethBalance = address(this).balance;
-		if (ethBalance == 0) return;
+		if (ethBalance == 0) return 0;
 		address[] memory path = new address[](2);
 		path[1] = address(DAI);
 		path[0] = uniswap.WETH();
@@ -87,22 +114,29 @@ contract DonationsStaking is Initializable {
 			address(this),
 			now
 		);
+		return ethBalance;
 	}
 
 	function setActive(bool _active) public ownerOrAvatar {
 		active = _active;
 	}
 
-	function end() public ownerOrAvatar isActive returns (uint256) {
+	/**
+	 * @dev withdraws all stakes and then transfer all balances to avatar
+	 * this can also be called by owner(Foundation) but it is safe as funds are transfered to avatarMock
+	 * and only avatar can upgrade this contract logic
+	 */
+	function end() public ownerOrAvatar returns (uint256, uint256) {
 		stakingContract.withdrawStake();
 		uint256 daiBalance = DAI.balanceOf(address(this));
+		uint256 ethBalance = address(this).balance;
 		DAI.transfer(avatar, daiBalance);
-		avatar.transfer(address(this).balance);
+		avatar.transfer(ethBalance);
 		active = false;
-		return daiBalance;
+		return (daiBalance, ethBalance);
 	}
 
-	function getVersion() public view returns (string memory) {
-		return "1.0.0";
+	function getVersion() public pure returns (string memory) {
+		return "1.1.0";
 	}
 }

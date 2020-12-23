@@ -12,6 +12,8 @@ const PrivateKeyProvider = require("truffle-hdwallet-provider-privkey");
 const HDWalletProvider = require("truffle-hdwallet-provider");
 const SafeHDWalletProvider = require("truffle-safe-hdwallet-provider");
 const HttpProvider = require("web3-providers-http");
+const { sha3 } = require("web3-utils");
+
 const mnemonic = process.env.MNEMONIC;
 const privateKey = process.env.PRIVATE_KEY;
 
@@ -38,7 +40,12 @@ const ropsten_settings = {
   skipDryRun: true
 };
 
-console.log({ mnemonic, admin_mnemonic, privateKey, infura_api, alchemy_key });
+console.log({
+  mnemonic: sha3(mnemonic),
+  admin_mnemonic: sha3(admin_mnemonic)
+  // infura_api,
+  // alchemy_key
+});
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
@@ -123,7 +130,7 @@ module.exports = {
     "production-mainnet": {
       provider: () =>
         new HDWalletProvider(
-          admin_mnemonic,
+          mnemonic,
           // "https://eth-mainnet.alchemyapi.io/v2/" + alchemy_key,
           // "wss://mainnet.infura.io/ws",
           // "https://mainnet.infura.io/v3/" + infura_api,
@@ -133,7 +140,7 @@ module.exports = {
         ),
       gas: 3000000,
       timeoutBlocks: 400,
-      gasPrice: 51000000000,
+      gasPrice: 65000000000,
       network_id: 1,
       skipDryRun: true,
       networkCheckTimeout: 5000
@@ -144,8 +151,8 @@ module.exports = {
           admin_mnemonic,
           "https://rpc.fuse.io/",
           0,
-          10,
-          admin_password
+          10
+          // admin_password
         ),
       gas: 8000000,
       timeoutBlocks: 400,

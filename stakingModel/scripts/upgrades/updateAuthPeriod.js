@@ -35,11 +35,16 @@ const upgrade = async function() {
 
   const founders = await getFounders(AbsoluteVote.web3, network);
   console.log({ network, networkSettings, homedao, founders });
-  const periodupdate = await ChangeAuthPeriod.new(homedao.Avatar, homedao.Identity, 120);
+  const newAuthPeriod = 180;
+  const periodupdate = await ChangeAuthPeriod.new(
+    homedao.Avatar,
+    homedao.Identity,
+    newAuthPeriod
+  );
 
   console.log("Scheme deployed at:", {
     scheme: periodupdate.address,
-    newAuthPeriod: 120
+    newAuthPeriod
   });
 
   console.log("proposing Update to DAO");

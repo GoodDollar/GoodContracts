@@ -112,8 +112,8 @@ contract Reputation is OwnableUpgradeable {
 	/// @return The balance at `_blockNumber`
 	function balanceOfAt(address _owner, uint256 _blockNumber)
 		public
-		virtual
 		view
+		virtual
 		returns (uint256)
 	{
 		if (
@@ -130,7 +130,12 @@ contract Reputation is OwnableUpgradeable {
 	/// @notice Total amount of reputation at a specific `_blockNumber`.
 	/// @param _blockNumber The block number when the totalSupply is queried
 	/// @return The total amount of reputation at `_blockNumber`
-	function totalSupplyAt(uint256 _blockNumber) public view returns (uint256) {
+	function totalSupplyAt(uint256 _blockNumber)
+		public
+		view
+		virtual
+		returns (uint256)
+	{
 		if (
 			(totalSupplyHistory.length == 0) ||
 			(uint128(totalSupplyHistory[0]) > _blockNumber)

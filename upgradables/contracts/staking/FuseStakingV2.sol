@@ -56,28 +56,40 @@ contract FuseStakingV2 is Initializable, OwnableUpgradeable {
 		return stakers[_owner];
 	}
 
-	function withdraw() public {
-		uint256 orgAmount = stakers[msg.sender];
-		uint256 toWithdraw = orgAmount - payable(address(this)).balance;
-		require(orgAmount > 0, "no stake  to withdraw");
+	function withdraw(uint256 _value) public returns (uint256) {
+		uint256 toWithdraw = _value == 0 ? stakers[msg.sender] : _value;
+		uint256 toCollect = toWithdraw;
+		require(
+			toWithdraw > 0 && toWithdraw <= stakers[msg.sender],
+			"invalid withdraw amount"
+		);
 		for (uint256 i = 0; i < validators.length; i++) {
 			uint256 cur =
 				consensus.delegatedAmount(address(this), validators[i]);
 			if (cur == 0) continue;
-			if (cur <= toWithdraw) {
+			if (cur <= toCollect) {
 				consensus.withdraw(validators[i], cur);
-				toWithdraw = toWithdraw.sub(cur);
+				toCollect = toCollect.sub(cur);
 			} else {
-				consensus.withdraw(validators[i], toWithdraw);
-				toWithdraw = 0;
+				undelegateWithCatch(validators[i], toCollect);
+				toCollect = 0;
 			}
-			if (toWithdraw == 0) break;
+			if (toCollect == 0) break;
 		}
-		msg.sender.transfer(orgAmount);
+
+		// in case some funds where not withdrawn
+		if (toWithdraw > balance()) {
+			toWithdraw = balance();
+		}
+
+		stakers[msg.sender] = stakers[msg.sender].sub(toWithdraw);
+		if (toWithdraw > 0) payable(msg.sender).transfer(toWithdraw);
+		return toWithdraw;
 	}
 
 	function stakeNextValidator() public {
-		if (validators.length == 0) return;
+		require(validators.length > 0, "no approved validators");
+
 		uint256 min = consensus.delegatedAmount(address(this), validators[0]);
 		uint256 minIdx = 0;
 		for (uint256 i = 1; i < validators.length; i++) {
@@ -105,16 +117,53 @@ contract FuseStakingV2 is Initializable, OwnableUpgradeable {
 	}
 
 	function removeValidator(address _validator) public onlyOwner {
+		uint256 delegated = consensus.delegatedAmount(address(this), _validator);
+		if (delegated > 0) {
+			uint256 prevBalance = balance();
+			undelegateWithCatch(_validator, delegated);
+
+			// wasnt withdrawn because validator needs to be taken of active validators
+			if (balance() == prevBalance) {
+				// pendingValidators.push(_validator);
+				return;
+			}
+		}
+		
 		for (uint256 i = 0; i < validators.length; i++) {
 			if (validators[i] == _validator) {
-				uint256 cur =
-					consensus.delegatedAmount(address(this), _validator);
-				consensus.withdraw(_validator, cur);
 				if (i < validators.length - 1)
 					validators[i] = validators[validators.length - 1];
 				validators.pop();
+				break;
 			}
 		}
+	}
+
+	function undelegateWithCatch(address _validator, uint256 _amount)
+		internal
+		returns (bool)
+	{
+		try consensus.withdraw(_validator, _amount) {
+			return true;
+		} catch Error(
+			string memory /*reason*/
+		) {
+			// This is executed in case
+			// revert was called inside getData
+			// and a reason string was provided.
+			return false;
+		} catch (
+			bytes memory /*lowLevelData*/
+		) {
+			// This is executed in case revert() was used
+			// or there was a failing assertion, division
+			// by zero, etc. inside getData.
+			return false;
+		}
+	}
+
+	function balance() internal view returns (uint256) {
+		return payable(address(this)).balance;
 	}
 
 	receive() external payable {}

@@ -65,6 +65,46 @@ interface Uniswap {
 	) external returns (uint256[] memory amounts);
 
 	function WETH() external pure returns (address);
+
+	function factory() external pure returns (address);
+
+	function quote(
+		uint256 amountA,
+		uint256 reserveA,
+		uint256 reserveB
+	) external pure returns (uint256 amountB);
+
+	function getAmountIn(
+		uint256 amountOut,
+		uint256 reserveIn,
+		uint256 reserveOut
+	) external pure returns (uint256 amountIn);
+
+	function getAmountOut(
+		uint256 amountI,
+		uint256 reserveIn,
+		uint256 reserveOut
+	) external pure returns (uint256 amountOut);
+}
+
+interface UniswapFactory {
+	function getPair(address tokenA, address tokenB)
+		external
+		view
+		returns (address);
+}
+
+interface UniswapPair {
+	function getReserves()
+		external
+		view
+		returns (
+			uint112 reserve0,
+			uint112 reserve1,
+			uint32 blockTimestampLast
+		);
+
+	function kLast() external view returns (uint256);
 }
 
 interface Reserve {
@@ -81,4 +121,23 @@ interface IIdentity {
 	function addWhitelistedWithDID(address account, string memory did) external;
 
 	function removeWhitelisted(address account) external;
+}
+
+interface UBIScheme {
+	function currentDay() external view returns (uint256);
+}
+
+interface ProxyAdmin {
+	function getProxyImplementation(address proxy)
+		external
+		view
+		returns (address);
+
+	function getProxyAdmin(address proxy) external view returns (address);
+
+	function upgrade(address proxy, address implementation) external;
+
+	function owner() external view returns (address);
+
+	function transferOwnership(address newOwner) external;
 }

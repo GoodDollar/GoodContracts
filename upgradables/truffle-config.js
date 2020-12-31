@@ -19,6 +19,7 @@ const privateKey = process.env.PRIVATE_KEY;
 
 const infura_api = process.env.INFURA_API;
 const alchemy_key = process.env.ALCHEMY_KEY;
+const etherscan_key = process.env.ETHERSCAN_KEY;
 
 const admin_mnemonic = process.env.ADMIN_MNEMONIC;
 const admin_password = process.env.ADMIN_PASSWORD;
@@ -151,10 +152,10 @@ module.exports = {
           admin_mnemonic,
           "https://rpc.fuse.io/",
           0,
-          10
-          // admin_password
+          10,
+          admin_password
         ),
-      gas: 8000000,
+      gas: 2000000,
       timeoutBlocks: 400,
       gasPrice: 1000000000,
       network_id: 122,
@@ -178,7 +179,7 @@ module.exports = {
       gasPrice: 1000000000 //1 gwei
     }
   },
-  plugins: ["solidity-coverage", "truffle-plugin-verify"],
+  plugins: ["solidity-coverage", "truffle-source-verify"],
   mocha: {
     reporter: "eth-gas-reporter",
     reporterOptions: {
@@ -186,7 +187,7 @@ module.exports = {
     }
   },
   api_keys: {
-    etherscan: "IU57R7ENC6881PG2WN5DRU75DACWYQCXJY"
+    etherscan: etherscan_key
   },
   verify: {
     preamble: "Support UBI! https://github.com/GoodDollar/GoodContracts"

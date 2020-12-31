@@ -39,7 +39,7 @@ contract(
       // const invites = await Invites.deployed();
       expect(await invites.active()).to.be.true;
       const version = await invites.version();
-      expect(version).to.be.equal("1.0.0");
+      expect(version).to.be.equal("1.1.0");
     });
 
     it("should let anyone join", async () => {
@@ -90,12 +90,12 @@ contract(
       expect(await identity.isWhitelisted(inviter1)).to.be.true;
       let pending = await invites.getPendingInvitees(inviter1);
       expect(pending.length, "pending").to.be.equal(1);
+      const inviteeBalance = await gd.balanceOf(invitee1).then(_ => _.toNumber());
       await invites.bountyFor(invitee1, { from: inviter1 });
 
       let invitee = await invites.users(invitee1);
       let inviter = await invites.users(inviter1);
       const endBalance = await gd.balanceOf(inviter1).then(_ => _.toNumber());
-      const inviteeBalance = await gd.balanceOf(invitee1).then(_ => _.toNumber());
 
       pending = await invites.getPendingInvitees(inviter1);
       const txFee = await gd.getFees(bounty).then(_ => _["0"].toNumber()); //gd might have a tx fee
@@ -105,8 +105,14 @@ contract(
       expect(invitee.bountyPaid).to.be.true;
       expect(inviter.totalApprovedInvites.toNumber()).to.be.equal(1);
       expect(inviter.totalEarned.toNumber()).to.be.equal(bounty);
-      expect(endBalance - startBalance + txFee).to.be.equal(bounty);
-      expect(inviteeBalance).to.be.equal(bounty / 2 - txFee2); //test that invitee  got half bonus
+      expect(
+        endBalance - startBalance + txFee,
+        "inviter rewards not matching bounty"
+      ).to.be.equal(bounty);
+      expect(
+        (await gd.balanceOf(invitee1).then(_ => _.toNumber())) - inviteeBalance,
+        "invitee rewrad should be bounty/2"
+      ).to.be.equal(bounty / 2 - txFee2); //test that invitee  got half bonus
     });
 
     it("should update global stats", async () => {
@@ -194,6 +200,12 @@ contract(
       expect(log2.args.bountyPaid.toNumber()).to.be.equal(10);
 
       console.log(log2);
+    });
+
+    it("should end contract by owner", async () => {
+      expect(await gd.balanceOf(invites.address).then(_ => _.toNumber())).to.be.gt(0);
+      await invites.end();
+      expect(await gd.balanceOf(invites.address).then(_ => _.toNumber())).to.be.eq(0);
     });
   }
 );

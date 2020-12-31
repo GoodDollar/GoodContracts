@@ -36,7 +36,7 @@ contract FuseStaking is Initializable, OwnableUpgradeable {
 
 	IConsensus public consensus2;
 
-	// using SafeMathUpgradeable for uint256;
+	using SafeMathUpgradeable for uint256;
 
 	/**
 	 * @dev initialize
@@ -59,105 +59,75 @@ contract FuseStaking is Initializable, OwnableUpgradeable {
 	// 	stakers[msg.sender] = stakers[msg.sender].add(msg.value);
 	// }
 
-	// function balanceOf(address _owner) public view returns (uint256) {
-	// 	return stakers[_owner];
-	// }
-
-	// function withdraw() public {
-	// 	uint256 toWithdraw = stakers[msg.sender];
-	// 	require(toWithdraw > 0, "no stake  to withdraw");
-	// 	for (uint256 i = 0; i < validators.length; i++) {
-	// 		uint256 cur = consensus.delegatedAmount(
-	// 			address(this),
-	// 			validators[i]
-	// 		);
-	// 		if (cur == 0) continue;
-	// 		if (cur <= toWithdraw) {
-	// 			consensus.withdraw(validators[i], cur);
-	// 			toWithdraw = toWithdraw.sub(cur);
-	// 		} else {
-	// 			consensus.withdraw(validators[i], toWithdraw);
-	// 			toWithdraw = 0;
-	// 		}
-	// 		if (toWithdraw == 0) break;
-	// 	}
-	// 	msg.sender.transfer(stakers[msg.sender]);
-	// }
-
-	// function stakeNextValidator() internal {
-	// 	if (validators.length == 0) return;
-	// 	uint256 min = validatorsStaked[validators[0]];
-	// 	uint256 minIdx = 0;
-	// 	for (uint256 i = 1; i < validators.length; i++) {
-	// 		uint256 cur = consensus.delegatedAmount(
-	// 			address(this),
-	// 			validators[i]
-	// 		);
-	// 		if (cur < min) minIdx = i;
-	// 	}
-	// 	uint256 balance = payable(address(this)).balance;
-
-	// 	consensus.delegate{ value: balance }(validators[minIdx]);
-	// 	validatorsStaked[validators[minIdx]] = validatorsStaked[validators[minIdx]]
-	// 		.add(balance);
-	// }
-
-	// function addValidator(address _v) public onlyOwner {
-	// 	validators.push(_v);
-	// }
-
-	// function totalDelegated() public view returns (uint256) {
-	// 	uint256 total = 0;
-	// 	for (uint256 i = 0; i < validators.length; i++) {
-	// 		uint256 cur = consensus.delegatedAmount(
-	// 			address(this),
-	// 			validators[i]
-	// 		);
-	// 		total = total.add(cur);
-	// 	}
-	// 	return total;
-	// }
-
-	// function undelegate(address _validator) public onlyOwner {
-	// 	uint256 cur = consensus.delegatedAmount(address(this), _validator);
-	// 	consensus.withdraw(_validator, cur);
-	// }
-
-	// function end() public onlyOwner {
-	// 	uint256 total = 0;
-	// 	for (uint256 i = 0; i < validators.length; i++) {
-	// 		uint256 cur = consensus.delegatedAmount(
-	// 			address(this),
-	// 			validators[i]
-	// 		);
-	// 		consensus.withdraw(validators[i], cur);
-	// 		total = total.add(cur);
-	// 	}
-	// 	// msg.sender.transfer(total);
-	// }
-
-	function testStake() public payable {
-		IConsensus(address(0x3014ca10b91cb3D0AD85fEf7A3Cb95BCAc9c0f79))
-			.delegate{ value: msg.value }(
-			address(0xcb876A393F05a6677a8a029f1C6D7603B416C0A6)
-		);
+	function balanceOf(address _owner) public view returns (uint256) {
+		return stakers[_owner];
 	}
 
-	function testWithdraw() public {
-		IConsensus(address(0x3014ca10b91cb3D0AD85fEf7A3Cb95BCAc9c0f79))
-			.withdraw(address(0xcb876A393F05a6677a8a029f1C6D7603B416C0A6), 1);
+	function withdraw() public {
+		uint256 toWithdraw = stakers[msg.sender];
+		require(toWithdraw > 0, "no stake  to withdraw");
+		for (uint256 i = 0; i < validators.length; i++) {
+			uint256 cur =
+				consensus.delegatedAmount(address(this), validators[i]);
+			if (cur == 0) continue;
+			if (cur <= toWithdraw) {
+				consensus.withdraw(validators[i], cur);
+				toWithdraw = toWithdraw.sub(cur);
+			} else {
+				consensus.withdraw(validators[i], toWithdraw);
+				toWithdraw = 0;
+			}
+			if (toWithdraw == 0) break;
+		}
+		msg.sender.transfer(stakers[msg.sender]);
 	}
 
-	function test() public {
-		IConsensus(address(0x3014ca10b91cb3D0AD85fEf7A3Cb95BCAc9c0f79))
-			.delegatedAmount(
-			address(this),
-			address(0xcb876A393F05a6677a8a029f1C6D7603B416C0A6)
-		);
+	function stakeNextValidator() internal {
+		if (validators.length == 0) return;
+		uint256 min = validatorsStaked[validators[0]];
+		uint256 minIdx = 0;
+		for (uint256 i = 1; i < validators.length; i++) {
+			uint256 cur =
+				consensus.delegatedAmount(address(this), validators[i]);
+			if (cur < min) minIdx = i;
+		}
+		uint256 balance = payable(address(this)).balance;
+
+		consensus.delegate{ value: balance }(validators[minIdx]);
+		validatorsStaked[validators[minIdx]] = validatorsStaked[
+			validators[minIdx]
+		]
+			.add(balance);
 	}
 
-	function test3() public view returns (address) {
-		return address(this);
+	function addValidator(address _v) public onlyOwner {
+		validators.push(_v);
+	}
+
+	function totalDelegated() public view returns (uint256) {
+		uint256 total = 0;
+		for (uint256 i = 0; i < validators.length; i++) {
+			uint256 cur =
+				consensus.delegatedAmount(address(this), validators[i]);
+			total = total.add(cur);
+		}
+		return total;
+	}
+
+	function undelegate(address _validator) public onlyOwner {
+		uint256 cur = consensus.delegatedAmount(address(this), _validator);
+		consensus.withdraw(_validator, cur);
+	}
+
+	function end() public onlyOwner {
+		uint256 total = 0;
+		for (uint256 i = 0; i < validators.length; i++) {
+			uint256 cur =
+				consensus.delegatedAmount(address(this), validators[i]);
+			consensus.withdraw(validators[i], cur);
+			total = total.add(cur);
+		}
+		msg.sender.transfer(total);
 	}
 
 	receive() external payable {}

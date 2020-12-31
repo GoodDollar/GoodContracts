@@ -15,12 +15,17 @@ module.exports = async (deployer, network, accounts) => {
   networkNames[1] = network;
   networkNames[122] = network;
   networkNames[3] = network;
-  const {
-    mainDaoAddresses: daoAddresses,
-    mainModelAddresses: modelAddresses,
-    mainUpgradableAddresses: upgradableAddresses,
-    founders
-  } = await getSettings(network, "");
+  let settings = await getSettings(network, "");
+  let daoAddresses =
+    network === "develop" ? settings.daoAddresses : settings.mainDaoAddresses;
+  let modelAddresses =
+    network === "develop" ? settings.modelAddresses : settings.mainModelAddresses;
+  let upgradableAddresses =
+    network === "develop"
+      ? settings.upgradableAddresses
+      : settings.mainUpgradableAddresses;
+  let { founders } = settings;
+
   console.log({ daoAddresses, modelAddresses, upgradableAddresses });
   const deployedProxy = upgradableAddresses["DonationsStaking"];
   const deployedContracts = await deployOrDAOUpgrade(

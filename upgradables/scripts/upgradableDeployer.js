@@ -92,7 +92,8 @@ export const deployOrDAOUpgrade = async (
   deployedProxy,
   upgradeTimeLock,
   contractKey, //key in output json of addresses
-  allowUnsafe
+  allowUnsafe,
+  forceNewProxy = false
 ) => {
   //get the owner address from the proxy contract storage
   let proxyAdmin =
@@ -107,7 +108,7 @@ export const deployOrDAOUpgrade = async (
 
   console.log("checking deployed version", { proxyAdmin, deployedProxy });
 
-  if (proxyAdmin == null || proxyAdmin == "0x0") {
+  if (forceNewProxy || proxyAdmin == null || proxyAdmin == "0x0") {
     console.log("proxy not found calling deployProxy");
     const instance = await deployProxy(Contract, initParams, {
       deployer,

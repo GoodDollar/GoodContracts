@@ -172,7 +172,7 @@ module.exports = {
       gasPrice: 2000000000 //1 gwei
     },
     production: {
-      provider: () => new HDWalletProvider(admin_mnemonic, "https://rpc.fuse.io/", 0, 10),
+      provider: () => new HDWalletProvider(mnemonic, "https://rpc.fuse.io/", 0, 10),
       network_id: 122,
       gas: 8500000,
       skipDryRun: true,

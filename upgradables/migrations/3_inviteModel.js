@@ -1,5 +1,6 @@
 const { deployOrDAOUpgrade } = require("../scripts/upgradableDeployer");
 const { getSettings, releaser } = require("../../scripts/getMigrationSettings");
+const { networkNames } = require("@openzeppelin/upgrades-core");
 
 const Invite = artifacts.require("InvitesV1");
 const allowUnsafe = true;
@@ -11,6 +12,10 @@ module.exports = async (deployer, network, accounts) => {
     console.log("not deploying on mainnet");
     return;
   }
+
+  networkNames[1] = network;
+  networkNames[122] = network;
+  networkNames[3] = network;
 
   const {
     daoAddresses,
@@ -36,7 +41,8 @@ module.exports = async (deployer, network, accounts) => {
     deployedProxy,
     0, //0 hours time lock
     "Invites",
-    allowUnsafe
+    allowUnsafe,
+    process.env.FORCE_DEPLOY
   );
 
   if (deployedContracts && Object.keys(deployedContracts).length > 0) {

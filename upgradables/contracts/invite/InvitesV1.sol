@@ -294,7 +294,11 @@ contract InvitesV1 is Initializable {
 		active = false;
 	}
 
+	/**
+	 * @dev
+	 * 1.2.0 - final changes before release
+	 */
 	function version() public pure returns (string memory) {
-		return "1.1.0";
+		return "1.2.0";
 	}
 }

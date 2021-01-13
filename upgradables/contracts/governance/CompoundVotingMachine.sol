@@ -1,0 +1,633 @@
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.6;
+pragma experimental ABIEncoderV2;
+
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "../DAOStackInterfaces.sol";
+
+contract CompoundVotingMachine {
+	using SafeMathUpgradeable for uint256;
+	/// @notice The name of this contract
+	string public constant name = "GoodDAO Voting Machine";
+
+	uint256 votingPeriodBlocks;
+
+	/// @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
+	function quorumVotes() public view returns (uint256) {
+		return rep.totalSupply().mul(3).div(100);
+	} //3%
+
+	/// @notice The number of votes required in order for a voter to become a proposer
+	function proposalThreshold() public view returns (uint256) {
+		return rep.totalSupply().mul(1).div(100);
+	} // 1%
+
+	/// @notice The maximum number of actions that can be included in a proposal
+	function proposalMaxOperations() public pure returns (uint256) {
+		return 10;
+	} // 10 actions
+
+	/// @notice The delay before voting on a proposal may take place, once proposed
+	function votingDelay() public pure returns (uint256) {
+		return 1;
+	} // 1 block
+
+	//TODO: need to make this adjustable per blockchain or use timestamp
+	/// @notice The duration of voting on a proposal, in blocks
+	function votingPeriod() public view returns (uint256) {
+		return votingPeriodBlocks;
+	} // ~14 days in blocks (assuming 15s blocks)
+
+	/// @notice The duration of time after proposal passed thershold before it can be expected
+	function queuePeriod() public pure returns (uint256) {
+		return 2 days;
+	} // 2 days
+
+	/// @notice During the queue period if vote decision has changed, we extend queue period so
+	/// that at least gameChangerPeriod is left
+	function gameChangerPeriod() public pure returns (uint256) {
+		return 1 days;
+	} // 1 day
+
+	/// @notice the time a succeeded proposal has to be executed on the blockchain
+	function gracePeriod() public pure returns (uint256) {
+		return 3 days;
+	} //3 days
+
+	/// @notice The address of the DAO controller
+	Controller public controller;
+
+	/// @notice The address of the DAO reputation token
+	ReputationInterface public rep;
+
+	/// @notice The address of the Governor Guardian
+	address public guardian;
+
+	/// @notice The total number of proposals
+	uint256 public proposalCount;
+
+	struct Proposal {
+		/// @notice Unique id for looking up a proposal
+		uint256 id;
+		/// @notice Creator of the proposal
+		address proposer;
+		/// @notice The timestamp that the proposal will be available for execution, set once the vote succeeds
+		uint256 eta;
+		/// @notice the ordered list of target addresses for calls to be made
+		address[] targets;
+		/// @notice The ordered list of values (i.e. msg.value) to be passed to the calls to be made
+		uint256[] values;
+		/// @notice The ordered list of function signatures to be called
+		string[] signatures;
+		/// @notice The ordered list of calldata to be passed to each call
+		bytes[] calldatas;
+		/// @notice The block at which voting begins: holders must delegate their votes prior to this block
+		uint256 startBlock;
+		/// @notice The block at which voting ends: votes must be cast prior to this block
+		uint256 endBlock;
+		/// @notice Current number of votes in favor of this proposal
+		uint256 forVotes;
+		/// @notice Current number of votes in opposition to this proposal
+		uint256 againstVotes;
+		/// @notice Flag marking whether the proposal has been canceled
+		bool canceled;
+		/// @notice Flag marking whether the proposal has been executed
+		bool executed;
+		/// @notice Receipts of ballots for the entire set of voters
+		mapping(address => Receipt) receipts;
+		/// @notice quorom required at time of proposing
+		uint256 quoromRequired;
+	}
+
+	/// @notice Ballot receipt record for a voter
+	struct Receipt {
+		/// @notice Whether or not a vote has been cast
+		bool hasVoted;
+		/// @notice Whether or not the voter supports the proposal
+		bool support;
+		/// @notice The number of votes the voter had, which were cast
+		uint256 votes;
+		/// @notice if voted by delegator votes will be 0 and this contains the address
+		address delegator;
+	}
+
+	/// @notice Possible states that a proposal may be in
+	enum ProposalState {
+		Pending,
+		Active,
+		Canceled,
+		Defeated,
+		Succeeded,
+		// Queued, we dont have queued status, we use game changer period instead
+		Expired,
+		Executed
+	}
+
+	/// @notice The official record of all proposals ever proposed
+	mapping(uint256 => Proposal) public proposals;
+
+	/// @notice The latest proposal for each proposer
+	mapping(address => uint256) public latestProposalIds;
+
+	/// @notice The EIP-712 typehash for the contract's domain
+	bytes32 public constant DOMAIN_TYPEHASH =
+		keccak256(
+			"EIP712Domain(string name,uint256 chainId,address verifyingContract)"
+		);
+
+	/// @notice The EIP-712 typehash for the ballot struct used by the contract
+	bytes32 public constant BALLOT_TYPEHASH =
+		keccak256("Ballot(uint256 proposalId,bool support)");
+
+	/// @notice An event emitted when a new proposal is created
+	event ProposalCreated(
+		uint256 id,
+		address proposer,
+		address[] targets,
+		uint256[] values,
+		string[] signatures,
+		bytes[] calldatas,
+		uint256 startBlock,
+		uint256 endBlock,
+		string description
+	);
+
+	/// @notice An event emitted when a vote has been cast on a proposal
+	event VoteCast(
+		address voter,
+		uint256 proposalId,
+		bool support,
+		uint256 votes
+	);
+
+	/// @notice An event emitted when a proposal has been canceled
+	event ProposalCanceled(uint256 id);
+
+	/// @notice An event emitted when a proposal has been queued
+	event ProposalQueued(uint256 id, uint256 eta);
+
+	/// @notice An event emitted when a proposal has been executed
+	event ProposalExecuted(uint256 id);
+
+	constructor(
+		Avatar avatar_,
+		address rep_, // address reputation
+		uint256 votingPeriodBlocks_
+	) public {
+		controller = Controller(avatar_.owner());
+		rep = ReputationInterface(rep_);
+		votingPeriodBlocks = votingPeriodBlocks_;
+	}
+
+	function propose(
+		address[] memory targets,
+		uint256[] memory values,
+		string[] memory signatures,
+		bytes[] memory calldatas,
+		string memory description
+	) public returns (uint256) {
+		require(
+			rep.balanceOfAt(msg.sender, block.number.sub(1)) >
+				proposalThreshold(),
+			"CompoundVotingMachine::propose: proposer votes below proposal threshold"
+		);
+		require(
+			targets.length == values.length &&
+				targets.length == signatures.length &&
+				targets.length == calldatas.length,
+			"CompoundVotingMachine::propose: proposal function information arity mismatch"
+		);
+		require(
+			targets.length != 0,
+			"CompoundVotingMachine::propose: must provide actions"
+		);
+		require(
+			targets.length <= proposalMaxOperations(),
+			"CompoundVotingMachine::propose: too many actions"
+		);
+
+		uint256 latestProposalId = latestProposalIds[msg.sender];
+
+		//TODO: what limit per proposer do we want?
+		if (latestProposalId != 0) {
+			ProposalState proposersLatestProposalState =
+				state(latestProposalId);
+			require(
+				proposersLatestProposalState != ProposalState.Active,
+				"CompoundVotingMachine::propose: one live proposal per proposer, found an already active proposal"
+			);
+			require(
+				proposersLatestProposalState != ProposalState.Pending,
+				"CompoundVotingMachine::propose: one live proposal per proposer, found an already pending proposal"
+			);
+		}
+
+		uint256 startBlock = block.number.add(votingDelay());
+		uint256 endBlock = startBlock.add(votingPeriod());
+
+		proposalCount++;
+		Proposal memory newProposal =
+			Proposal({
+				id: proposalCount,
+				proposer: msg.sender,
+				eta: 0,
+				targets: targets,
+				values: values,
+				signatures: signatures,
+				calldatas: calldatas,
+				startBlock: startBlock,
+				endBlock: endBlock,
+				forVotes: 0,
+				againstVotes: 0,
+				canceled: false,
+				executed: false,
+				quoromRequired: quorumVotes()
+			});
+
+		proposals[newProposal.id] = newProposal;
+		latestProposalIds[newProposal.proposer] = newProposal.id;
+
+		emit ProposalCreated(
+			newProposal.id,
+			msg.sender,
+			targets,
+			values,
+			signatures,
+			calldatas,
+			startBlock,
+			endBlock,
+			description
+		);
+		return newProposal.id;
+	}
+
+	function updateETA(uint256 proposalId, bool hasVoteChanged) internal {
+		Proposal storage proposal = proposals[proposalId];
+
+		//first time we have a quorom we ask for a no change in decision period
+		if (proposal.eta == 0) {
+			proposal.eta = block.timestamp.add(queuePeriod());
+		}
+		//if we have a gamechanger then we extend current eta to have at least gameChangerPeriod left
+		else if (hasVoteChanged) {
+			uint256 timeLeft = proposal.eta.sub(block.timestamp);
+			proposal.eta = proposal.eta.add(
+				timeLeft > gameChangerPeriod()
+					? 0
+					: gameChangerPeriod().sub(timeLeft)
+			);
+		} else {
+			return;
+		}
+		emit ProposalQueued(proposalId, proposal.eta);
+	}
+
+	function execute(uint256 proposalId) public payable {
+		require(
+			state(proposalId) == ProposalState.Succeeded,
+			"CompoundVotingMachine::execute: proposal can only be executed if it is succeeded"
+		);
+		require(
+			proposals[proposalId].eta <= block.timestamp,
+			"CompoundVotingMachine::execute: proposal can only be executed if no game changers"
+		);
+		Proposal storage proposal = proposals[proposalId];
+		proposal.executed = true;
+		for (uint256 i = 0; i < proposal.targets.length; i++) {
+			executeTransaction(
+				proposal.targets[i],
+				proposal.values[i],
+				proposal.signatures[i],
+				proposal.calldatas[i],
+				proposal.eta
+			);
+		}
+		emit ProposalExecuted(proposalId);
+	}
+
+	function executeTransaction(
+		address target,
+		uint256 value,
+		string memory signature,
+		bytes memory data,
+		uint256 eta
+	) internal returns (bytes memory) {
+		bytes memory callData;
+
+		if (bytes(signature).length == 0) {
+			callData = data;
+		} else {
+			callData = abi.encodePacked(
+				bytes4(keccak256(bytes(signature))),
+				data
+			);
+		}
+
+		bool ok;
+		bytes memory result;
+
+		if (target == address(controller)) {
+			(ok, result) = target.call.value(value)(callData);
+		} else {
+			payable(address(controller.avatar())).transfer(value); //make sure avatar have the funds to pay
+			(ok, result) = controller.genericCall(
+				target,
+				callData,
+				controller.avatar(),
+				value
+			);
+		}
+		require(
+			ok,
+			"CompoundVotingMachine::executeTransaction: Transaction execution reverted."
+		);
+
+		//TODO: event with tx result
+		return result;
+	}
+
+	//TODO: do we want guardian? cancel proposal queued for exectuion by proposer?
+	function cancel(uint256 proposalId) public {
+		ProposalState state = state(proposalId);
+		require(
+			state != ProposalState.Executed,
+			"CompoundVotingMachine::cancel: cannot cancel executed proposal"
+		);
+
+		Proposal storage proposal = proposals[proposalId];
+		require(
+			rep.balanceOfAt(proposal.proposer, block.number.sub(1)) <
+				proposalThreshold(),
+			"CompoundVotingMachine::cancel: proposer above threshold"
+		);
+
+		proposal.canceled = true;
+
+		emit ProposalCanceled(proposalId);
+	}
+
+	function getActions(uint256 proposalId)
+		public
+		view
+		returns (
+			address[] memory targets,
+			uint256[] memory values,
+			string[] memory signatures,
+			bytes[] memory calldatas
+		)
+	{
+		Proposal storage p = proposals[proposalId];
+		return (p.targets, p.values, p.signatures, p.calldatas);
+	}
+
+	function getReceipt(uint256 proposalId, address voter)
+		public
+		view
+		returns (Receipt memory)
+	{
+		return proposals[proposalId].receipts[voter];
+	}
+
+	function state(uint256 proposalId) public view returns (ProposalState) {
+		require(
+			proposalCount >= proposalId && proposalId > 0,
+			"CompoundVotingMachine::state: invalid proposal id"
+		);
+
+		Proposal storage proposal = proposals[proposalId];
+
+		if (proposal.canceled) {
+			return ProposalState.Canceled;
+		} else if (block.number <= proposal.startBlock) {
+			return ProposalState.Pending;
+		} else if (proposal.executed) {
+			return ProposalState.Executed;
+		} else if (
+			//TODO: add test for this condition
+			(proposal.eta > 0 && block.timestamp < proposal.eta) || //passed quorum but not executed yet
+			(proposal.eta == 0 && block.number <= proposal.endBlock) //regular voting period
+		) {
+			//proposal is active if we are in the gameChanger period (eta) or no decision yet and in voting period
+			return ProposalState.Active;
+		} else if (
+			proposal.forVotes <= proposal.againstVotes ||
+			proposal.forVotes < proposal.quoromRequired
+		) {
+			return ProposalState.Defeated;
+		} else if (
+			proposal.eta > 0 &&
+			block.timestamp >= proposal.eta.add(gracePeriod())
+		) {
+			//expired if not executed gracePeriod after eta
+			return ProposalState.Expired;
+		} else {
+			return ProposalState.Succeeded;
+		}
+	}
+
+	function castVote(uint256 proposalId, bool support) public {
+		return _castVote(msg.sender, proposalId, support);
+	}
+
+	struct VoteSig {
+		bool support;
+		uint8 v;
+		bytes32 r;
+		bytes32 s;
+	}
+
+	function balanceOfTest(address[] memory _users) public {
+		// for (uint8 i = 0; i < _users.length; i++) {
+		rep.balanceOf(_users[0]);
+		// }
+	}
+
+	function ecRecoverTest(uint256 proposalId, VoteSig[] memory votes) public {
+		bytes32 domainSeparator =
+			keccak256(
+				abi.encode(
+					DOMAIN_TYPEHASH,
+					keccak256(bytes(name)),
+					getChainId(),
+					address(this)
+				)
+			);
+		bytes32 structHashFor =
+			keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, true));
+		bytes32 structHashAgainst =
+			keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, false));
+		bytes32 digestFor =
+			keccak256(
+				abi.encodePacked("\x19\x01", domainSeparator, structHashFor)
+			);
+		bytes32 digestAgainst =
+			keccak256(
+				abi.encodePacked("\x19\x01", domainSeparator, structHashAgainst)
+			);
+
+		address[] memory users = new address[](votes.length);
+
+		for (uint32 i = 0; i < votes.length; i++) {
+			bytes32 digest = votes[i].support ? digestFor : digestAgainst;
+
+			address signatory =
+				ecrecover(digest, votes[i].v, votes[i].r, votes[i].s);
+			require(
+				signatory != address(0),
+				"CompoundVotingMachine::castVoteBySig: invalid signature"
+			);
+			users[i] = signatory;
+			// _castVote(signatory, proposalId, votes[i].support);
+		}
+		rep.balanceOfAtAggregated(users, block.number);
+	}
+
+	function castVoteBySig(
+		uint256 proposalId,
+		bool support,
+		uint8 v,
+		bytes32 r,
+		bytes32 s
+	) public {
+		bytes32 domainSeparator =
+			keccak256(
+				abi.encode(
+					DOMAIN_TYPEHASH,
+					keccak256(bytes(name)),
+					getChainId(),
+					address(this)
+				)
+			);
+		bytes32 structHash =
+			keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, support));
+		bytes32 digest =
+			keccak256(
+				abi.encodePacked("\x19\x01", domainSeparator, structHash)
+			);
+		address signatory = ecrecover(digest, v, r, s);
+		require(
+			signatory != address(0),
+			"CompoundVotingMachine::castVoteBySig: invalid signature"
+		);
+
+		return _castVote(signatory, proposalId, support);
+	}
+
+	function _castVote(
+		address voter,
+		uint256 proposalId,
+		bool support
+	) internal {
+		require(
+			state(proposalId) == ProposalState.Active,
+			"CompoundVotingMachine::_castVote: voting is closed"
+		);
+
+		Proposal storage proposal = proposals[proposalId];
+		Receipt storage receipt = proposal.receipts[voter];
+		require(
+			receipt.hasVoted == false,
+			"CompoundVotingMachine::_castVote: voter already voted"
+		);
+
+		uint256 votes =
+			rep.balanceOfAt(voter, false, true, proposal.startBlock); //balance without delegatees
+
+		// mark delegatees as voted
+		address[] memory delegatees = rep.delegateesOf(voter);
+
+		for (uint256 i = 0; i < delegatees.length; i++) {
+			//skip delegatees that voted already
+			if (proposal.receipts[delegatees[i]].hasVoted == false) {
+				uint256 delVotes =
+					rep.balanceOfAt(
+						delegatees[i],
+						false,
+						true,
+						proposal.startBlock
+					); //balance without delegatees
+				proposal.receipts[delegatees[i]].hasVoted = true;
+				proposal.receipts[delegatees[i]].support = support;
+				proposal.receipts[delegatees[i]].delegator = voter;
+				votes = votes.add(delVotes); //add delegatee votes
+			}
+		}
+
+		bool hasChanged = proposal.forVotes > proposal.againstVotes;
+		if (support) {
+			proposal.forVotes = proposal.forVotes.add(votes);
+		} else {
+			proposal.againstVotes = proposal.againstVotes.add(votes);
+		}
+
+		hasChanged = hasChanged != (proposal.forVotes > proposal.againstVotes);
+		receipt.hasVoted = true;
+		receipt.support = support;
+		receipt.votes = votes;
+
+		// if quorom passed then start the queue period
+		if (
+			proposal.forVotes >= proposal.quoromRequired ||
+			proposal.againstVotes >= proposal.quoromRequired
+		) updateETA(proposalId, hasChanged);
+		emit VoteCast(voter, proposalId, support, votes);
+	}
+
+	// function __acceptAdmin() public {
+	// 	require(
+	// 		msg.sender == guardian,
+	// 		"CompoundVotingMachine::__acceptAdmin: sender must be gov guardian"
+	// 	);
+	// 	timelock.acceptAdmin();
+	// }
+
+	// function __abdicate() public {
+	// 	require(
+	// 		msg.sender == guardian,
+	// 		"CompoundVotingMachine::__abdicate: sender must be gov guardian"
+	// 	);
+	// 	guardian = address(0);
+	// }
+
+	// function __queueSetTimelockPendingAdmin(
+	// 	address newPendingAdmin,
+	// 	uint256 eta
+	// ) public {
+	// 	require(
+	// 		msg.sender == guardian,
+	// 		"CompoundVotingMachine::__queueSetTimelockPendingAdmin: sender must be gov guardian"
+	// 	);
+	// 	timelock.queueTransaction(
+	// 		address(timelock),
+	// 		0,
+	// 		"setPendingAdmin(address)",
+	// 		abi.encode(newPendingAdmin),
+	// 		eta
+	// 	);
+	// }
+
+	// function __executeSetTimelockPendingAdmin(
+	// 	address newPendingAdmin,
+	// 	uint256 eta
+	// ) public {
+	// 	require(
+	// 		msg.sender == guardian,
+	// 		"CompoundVotingMachine::__executeSetTimelockPendingAdmin: sender must be gov guardian"
+	// 	);
+	// 	timelock.executeTransaction(
+	// 		address(timelock),
+	// 		0,
+	// 		"setPendingAdmin(address)",
+	// 		abi.encode(newPendingAdmin),
+	// 		eta
+	// 	);
+	// }
+
+	function getChainId() public pure returns (uint256) {
+		uint256 chainId;
+		assembly {
+			chainId := chainid()
+		}
+		return chainId;
+	}
+}

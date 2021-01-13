@@ -62,6 +62,9 @@ const config: HardhatUserConfig = {
       gasPrice: 25000000000,
       chainId: 1
     }
+  },
+  mocha: {
+    timeout: 60000
   }
 };
 export default config;

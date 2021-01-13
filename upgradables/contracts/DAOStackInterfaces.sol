@@ -16,7 +16,45 @@ interface Controller {
 		uint256 _value
 	) external returns (bool, bytes memory);
 
-	function isSchemeRegistered(address _scheme) external view returns (bool);
+	function avatar() external view returns (Avatar);
+
+	function unregisterScheme(address _scheme, address _avatar)
+		external
+		returns (bool);
+
+	function isSchemeRegistered(address _scheme, address _avatar)
+		external
+		view
+		returns (bool);
+}
+
+interface ReputationInterface {
+	function balanceOf(address _user) external view returns (uint256);
+
+	function balanceOfAt(address _user, uint256 _blockNumber)
+		external
+		view
+		returns (uint256);
+
+	function balanceOfAtAggregated(
+		address[] memory _users,
+		uint256 _blockNumber
+	) external view returns (uint256);
+
+	function balanceOfAt(
+		address _user,
+		bool _withDelegated,
+		bool _global,
+		uint256 _blockNumber
+	) external view returns (uint256);
+
+	function totalSupply() external view returns (uint256);
+
+	function delegatorOf(address _delegatee) external returns (address);
+
+	function delegateesOf(address _delegator)
+		external
+		returns (address[] memory);
 }
 
 interface SchemeRegistrar {

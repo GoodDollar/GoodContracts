@@ -1,12 +1,9 @@
 import { ethers, upgrades, network as networkConfig } from "hardhat";
-import { Signer } from "ethers";
-import { sign } from "crypto";
 import { FuseStakingV3, Uniswap, UniswapFactory, UniswapPair } from "../types";
 import { expect } from "chai";
 import { deployMockContract, MockContract } from "ethereum-waffle";
 import hre from "hardhat";
 import { abi as ubiabi } from "../../stakingModel/build/contracts/UBIScheme.json";
-import { abi as gdabi } from "../../build/contracts/GoodDollar.json";
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 describe("FuseStakingV3", () => {

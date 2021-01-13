@@ -39,9 +39,18 @@ contract Reputation is OwnableUpgradeable {
 	/// @param _amount The quantity of reputation generated
 	/// @return True if the reputation are generated correctly
 	function mint(address _user, uint256 _amount)
-		external
+		public
 		onlyOwner
 		returns (bool)
+	{
+		_mint(_user, _amount);
+		return true;
+	}
+
+	function _mint(address _user, uint256 _amount)
+		internal
+		virtual
+		returns (uint256)
 	{
 		uint256 curTotalSupply = totalSupply();
 		require(
@@ -51,12 +60,12 @@ contract Reputation is OwnableUpgradeable {
 		uint256 previousBalanceTo = balanceOf(_user);
 		require(
 			previousBalanceTo + _amount >= previousBalanceTo,
-			"balace overflow"
+			"balance overflow"
 		); // Check for overflow
 		updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
 		updateValueAtNow(balances[_user], previousBalanceTo + _amount);
 		emit Mint(_user, _amount);
-		return true;
+		return _amount;
 	}
 
 	/// @notice Burns `_amount` reputation from `_owner`
@@ -64,9 +73,18 @@ contract Reputation is OwnableUpgradeable {
 	/// @param _amount The quantity of reputation to burn
 	/// @return True if the reputation are burned correctly
 	function burn(address _user, uint256 _amount)
-		external
+		public
 		onlyOwner
 		returns (bool)
+	{
+		_burn(_user, _amount);
+		return true;
+	}
+
+	function _burn(address _user, uint256 _amount)
+		internal
+		override
+		returns (uint256)
 	{
 		uint256 curTotalSupply = totalSupply();
 		uint256 amountBurned = _amount;
@@ -77,7 +95,7 @@ contract Reputation is OwnableUpgradeable {
 		updateValueAtNow(totalSupplyHistory, curTotalSupply - amountBurned);
 		updateValueAtNow(balances[_user], previousBalanceFrom - amountBurned);
 		emit Burn(_user, amountBurned);
-		return true;
+		return amountBurned;
 	}
 
 	/**
@@ -159,21 +177,23 @@ contract Reputation is OwnableUpgradeable {
 		view
 		returns (uint256)
 	{
-		if (checkpoints.length == 0) {
+		uint256 len = checkpoints.length;
+		if (len == 0) {
 			return 0;
 		}
-
 		// Shortcut for the actual value
-		if (_block >= uint128(checkpoints[checkpoints.length - 1])) {
-			return checkpoints[checkpoints.length - 1] >> 128;
+		uint256 cur = checkpoints[len - 1];
+		if (_block >= uint128(cur)) {
+			return cur >> 128;
 		}
+
 		if (_block < uint128(checkpoints[0])) {
 			return 0;
 		}
 
 		// Binary search of the value in the array
 		uint256 min = 0;
-		uint256 max = checkpoints.length - 1;
+		uint256 max = len - 1;
 		while (max > min) {
 			uint256 mid = (max + min + 1) / 2;
 			if (uint128(checkpoints[mid]) <= _block) {

@@ -203,7 +203,7 @@ contract InvitesV1 is Initializable {
 	function bountyFor(address _invitee) public isActive {
 		require(
 			canCollectBountyFor(_invitee),
-			"user not elligble for bounty  yet"
+			"user not elligble for bounty yet"
 		);
 
 		User storage user = users[_invitee];
@@ -212,8 +212,9 @@ contract InvitesV1 is Initializable {
 
 		bool isLevelExpired =
 			level.daysToComplete > 0 &&
+				user.joinedAt > inviter.levelStarted && //prevent overflow in subtraction
 				level.daysToComplete <
-				user.joinedAt.sub(inviter.levelStarted).div(1 days);
+				user.joinedAt.sub(inviter.levelStarted).div(1 days); //how long after level started did invitee join
 
 		user.bountyPaid = true;
 		inviter.totalApprovedInvites += 1;

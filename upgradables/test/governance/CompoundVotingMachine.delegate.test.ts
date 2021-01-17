@@ -96,20 +96,14 @@ describe("CompoundVotingMachine#Delegation", () => {
     expect((await gov.getReceipt(proposalId, acct.address)).votes).to.eq(
       BN.from(1500000)
     ); //root + acct
-    const delegateeReceipt = await gov.getReceipt(proposalId, root.address);
-    expect(delegateeReceipt.votes).to.eq(BN.from(0));
-    expect(delegateeReceipt.delegator).to.eq(acct.address);
-    expect(delegateeReceipt.hasVoted).to.eq(true);
   });
 
-  it("should revert when voter already voted through delegator", async () => {
-    await grep.delegateTo(acct.address);
-    await expect(gov.castVote(proposalId, true)).to.revertedWith(
-      "CompoundVotingMachine::_castVote: voter already voted"
-    );
+  it("should be able to vote as delegate without my own delegated votes", async () => {
+    await gov.castVote(proposalId, true);
+    expect((await gov.getReceipt(proposalId, root.address)).hasVoted).to.true;
   });
 
-  it("cancel when undelegated", async () => {
+  it("cancel when undelegated and proposer votes below threshold", async () => {
     await grep.delegateTo(signers[4].address);
 
     await gov
@@ -133,7 +127,6 @@ describe("CompoundVotingMachine#Delegation", () => {
 
     const delegateeReceipt = await gov.getReceipt(proposalId, root.address);
     expect(delegateeReceipt.votes).to.eq(BN.from(1000000));
-    expect(delegateeReceipt.delegator).to.eq(ethers.constants.AddressZero);
     expect(delegateeReceipt.hasVoted).to.eq(true);
   });
 });

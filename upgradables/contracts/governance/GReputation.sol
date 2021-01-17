@@ -24,7 +24,7 @@ contract GReputation is Reputation {
 
 	/// @notice The EIP-712 typehash for the delegation struct used by the contract
 	bytes32 public constant DELEGATION_TYPEHASH =
-		keccak256("Delegation(address delegator,uint256 nonce,uint256 expiry)");
+		keccak256("Delegation(address delegate,uint256 nonce,uint256 expiry)");
 
 	struct BlockchainState {
 		bytes32 stateHash;
@@ -42,8 +42,8 @@ contract GReputation is Reputation {
 
 	bytes32[] public activeBlockchains;
 
-	//keep map of user -> delegator
-	mapping(address => address) public delegators;
+	//keep map of user -> delegate
+	mapping(address => address) public delegates;
 
 	//map of user non delegatd + delegated votes to user. this is used for actual voting
 	mapping(address => uint256[]) public activeVotes;
@@ -51,32 +51,57 @@ contract GReputation is Reputation {
 	//keep map of user -> delegatees[]
 	mapping(address => address[]) public delegatees;
 
+	/// @notice An event thats emitted when a delegate account's vote balance changes
+	event DelegateVotesChanged(
+		address indexed delegate,
+		address indexed delegator,
+		uint256 previousBalance,
+		uint256 newBalance
+	);
+
 	function _mint(address _user, uint256 _amount)
 		internal
 		override
-		returns (bool)
+		returns (uint256)
 	{
 		super._mint(_user, _amount);
-		address delegator = delegators[_user];
+		address delegator = delegates[_user];
 		delegator = delegator != address(0) ? delegator : _user;
+		delegates[_user] = delegator;
 		uint256 previousVotes = getVotes(delegator);
-		updateValueAtNow(activeVotes[delgator], previousVotes + _amount);
+
+		_updateDelegateVotes(
+			delegator,
+			_user,
+			previousVotes,
+			previousVotes.add(_amount)
+		);
+		return _amount;
 	}
 
 	function _burn(address _user, uint256 _amount)
 		internal
 		override
-		returns (bool)
+		returns (uint256)
 	{
-		uint256 burned = super._burn(_user, _amount);
-		address delegator = delegators[_user];
+		uint256 amountBurned = super._burn(_user, _amount);
+		address delegator = delegates[_user];
 		delegator = delegator != address(0) ? delegator : _user;
+		delegates[_user] = delegator;
 		uint256 previousVotes = getVotes(delegator);
-		updateValueAtNow(activeVotes[delgator], previousVotes - amountBurned);
+
+		_updateDelegateVotes(
+			delegator,
+			_user,
+			previousVotes,
+			previousVotes.sub(amountBurned)
+		);
+
+		return amountBurned;
 	}
 
-	function delegatorOf(address _delegatee) public view returns (address) {
-		return delegators[_delegatee];
+	function delegateOf(address _user) public view returns (address) {
+		return delegates[_user];
 	}
 
 	function setBlockchainStateHash(
@@ -114,18 +139,17 @@ contract GReputation is Reputation {
 		blockchainStates[idHash].push(state);
 	}
 
-	function balanceOfAt(
+	function getVotesAt(
 		address _user,
-		bool _withDelegated,
 		bool _global,
 		uint256 _blockNumber
 	) public view returns (uint256) {
-		uint256 startingBalance = super.balanceOfAt(_user, _blockNumber);
+		uint256 startingBalance = getValueAt(activeVotes[_user], _blockNumber);
 
 		if (_global) {
 			for (uint256 i = 0; i < activeBlockchains.length; i++) {
 				startingBalance = startingBalance.add(
-					balanceOfAtBlockchain(
+					getVotesAtBlockchain(
 						activeBlockchains[i],
 						_user,
 						_blockNumber
@@ -134,46 +158,25 @@ contract GReputation is Reputation {
 			}
 		}
 
-		if (_withDelegated) {
-			address[] storage userDelegatees = delegatees[_user];
-			for (uint256 i = 0; i < userDelegatees.length; i++) {
-				startingBalance = startingBalance.add(
-					balanceOfAt(userDelegatees[i], false, _global, _blockNumber)
-				);
-			}
-		}
 		return startingBalance;
-	}
-
-	function balanceOfAtAggregated(
-		address[] memory _users,
-		uint256 _blockNumber
-	) public view returns (uint256) {
-		uint256 total = 0;
-		for (uint256 i = 0; i < _users.length; i++) {
-			total += balanceOfAt(_users[i], _blockNumber);
-		}
-		return total;
-	}
-
-	//TODO:remove
-	function balanceOfTest(address[] memory _users) public returns (uint256) {
-		uint256 total = 0;
-		for (uint256 i = 0; i < _users.length; i++)
-			total = balanceOfAt(_users[i], false, true, block.number);
-		// super.balanceOfAt(_users[i], block.number);
 	}
 
 	/**
 	 * @dev returns aggregated reputation in all blockchains and delegated
 	 */
-	function balanceOfAt(address _user, uint256 _blockNumber)
+	function getVotes(address _user) public view returns (uint256) {
+		return getVotesAt(_user, true, block.number);
+	}
+
+	/**
+	 * @dev returns aggregated reputation in all blockchains and delegated
+	 */
+	function getVotesAt(address _user, uint256 _blockNumber)
 		public
 		view
-		override
 		returns (uint256)
 	{
-		return balanceOfAt(_user, true, true, _blockNumber);
+		return getVotesAt(_user, true, _blockNumber);
 	}
 
 	/**
@@ -202,7 +205,7 @@ contract GReputation is Reputation {
 		return startingSupply;
 	}
 
-	function balanceOfAtBlockchain(
+	function getVotesAtBlockchain(
 		bytes32 _id,
 		address _user,
 		uint256 _blockNumber
@@ -265,24 +268,25 @@ contract GReputation is Reputation {
 
 		//if initiial state then set real balance
 		if (idHash == keccak256(bytes("rootState"))) {
-			updateValueAtNow(balances[_user], _balance);
+			_mint(_user, _balance);
 		}
+
 		//if proof is valid then set balances
 		stateHashBalances[stateHash][_user] = _balance;
 		return true;
 	}
 
-	function delegateTo(address _delegator) public {
-		return _delegateTo(msg.sender, _delegator);
+	function delegateTo(address _delegate) public {
+		return _delegateTo(msg.sender, _delegate);
 	}
 
 	function undelegate() public {
-		return _delegateTo(msg.sender, address(0));
+		return _delegateTo(msg.sender, msg.sender);
 	}
 
 	/**
 	 * @notice Delegates votes from signatory to `delegator`
-	 * @param _delegator The address to delegate votes to
+	 * @param _delegate The address to delegate votes to
 	 * @param _nonce The contract state required to match the signature
 	 * @param _expiry The time at which to expire the signature
 	 * @param _v The recovery byte of the signature
@@ -290,7 +294,7 @@ contract GReputation is Reputation {
 	 * @param _s Half of the ECDSA signature pair
 	 */
 	function delegateBySig(
-		address _delegator,
+		address _delegate,
 		uint256 _nonce,
 		uint256 _expiry,
 		uint8 _v,
@@ -308,7 +312,7 @@ contract GReputation is Reputation {
 			);
 		bytes32 structHash =
 			keccak256(
-				abi.encode(DELEGATION_TYPEHASH, _delegator, _nonce, _expiry)
+				abi.encode(DELEGATION_TYPEHASH, _delegate, _nonce, _expiry)
 			);
 		bytes32 digest =
 			keccak256(
@@ -327,23 +331,51 @@ contract GReputation is Reputation {
 			now <= _expiry,
 			"GReputation::delegateBySig: signature expired"
 		);
-		return _delegateTo(signatory, _delegator);
+		return _delegateTo(signatory, _delegate);
 	}
 
-	function _delegateTo(address _user, address _delegator) internal {
-		require(_user != _delegator, "can't delegate to self");
-		address curDelegator = delegators[_user];
-		delegators[_user] = _delegator;
+	function _delegateTo(address _user, address _delegate) internal {
+		require(
+			_delegate != address(0),
+			"GReputation::delegate can't delegat to null address"
+		);
 
-		// remove existing delegator
-		if (curDelegator != address(0) && curDelegator != _delegator) {
-			_arrayRemove(delegatees[curDelegator], _user);
+		address curDelegator = delegates[_user];
+		require(curDelegator != _delegate, "already delegating to delegator");
+
+		delegates[_user] = _delegate;
+
+		// remove votes from current delegator
+		uint256 coreBalance = balanceOf(_user);
+		//redundant check - should not be possible to have address 0 as delegator
+		if (curDelegator != address(0)) {
+			uint256 curVotes = getVotesAt(curDelegator, false, block.number);
+			_updateDelegateVotes(
+				curDelegator,
+				_user,
+				curVotes,
+				curVotes.sub(coreBalance)
+			);
 		}
 
-		//add new delegatee to delegator list
-		if (_delegator != address(0)) {
-			delegatees[_delegator].push(_user);
-		}
+		//move votes to new delegator
+		uint256 curVotes = getVotesAt(_delegate, false, block.number);
+		_updateDelegateVotes(
+			_delegate,
+			_user,
+			curVotes,
+			curVotes.add(coreBalance)
+		);
+	}
+
+	function _updateDelegateVotes(
+		address _delegate,
+		address _delegator,
+		uint256 oldVotes,
+		uint256 newVotes
+	) internal {
+		updateValueAtNow(activeVotes[_delegate], newVotes);
+		emit DelegateVotesChanged(_delegate, _delegator, oldVotes, newVotes);
 	}
 
 	function _checkMerkleProof(
@@ -354,17 +386,6 @@ contract GReputation is Reputation {
 	) internal pure returns (bytes32 leafHash, bool isProofValid) {
 		leafHash = keccak256(abi.encode(_user, _balance));
 		isProofValid = MerkleProofUpgradeable.verify(_proof, _root, leafHash);
-	}
-
-	function _arrayRemove(address[] storage arr, address toRemove) internal {
-		for (uint256 i = 0; i < arr.length; i++) {
-			if (arr[i] == toRemove) {
-				if (i < arr.length - 1) {
-					arr[i] = arr[arr.length - 1];
-				}
-				arr.pop();
-			}
-		}
 	}
 
 	function getChainId() internal pure returns (uint256) {

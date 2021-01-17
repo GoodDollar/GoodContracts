@@ -155,8 +155,8 @@ describe("CompoundVotingMachine#DAOScheme", () => {
 
     let targets = [Controller];
     let values = ["0"];
-    let signatures = ["unregisterScheme(address,address)"];
-    let callDatas = [encodeParameters(["address", "address"], [gov.address, avatar])];
+    let signatures = ["unregisterSelf(address)"];
+    let callDatas = [encodeParameters(["address"], [avatar])];
 
     await gov.propose(targets, values, signatures, callDatas, "send eth");
     let proposalBlock = +(await ethers.provider.getBlockNumber());

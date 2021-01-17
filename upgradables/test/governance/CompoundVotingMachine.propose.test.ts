@@ -119,6 +119,8 @@ describe("GovernorAlpha#propose", () => {
         await ethers.provider.send("evm_mine", []);
         await ethers.provider.send("evm_mine", []);
 
+        grep.undelegate();
+
         await expect(
           gov.propose(targets, values, signatures, callDatas, "do nothing")
         ).to.revertedWith(

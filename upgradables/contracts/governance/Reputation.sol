@@ -83,7 +83,7 @@ contract Reputation is OwnableUpgradeable {
 
 	function _burn(address _user, uint256 _amount)
 		internal
-		override
+		virtual
 		returns (uint256)
 	{
 		uint256 curTotalSupply = totalSupply();

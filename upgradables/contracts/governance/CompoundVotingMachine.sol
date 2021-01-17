@@ -18,8 +18,12 @@ contract CompoundVotingMachine {
 	} //3%
 
 	/// @notice The number of votes required in order for a voter to become a proposer
-	function proposalThreshold() public view returns (uint256) {
-		return rep.totalSupply().mul(1).div(100);
+	function proposalThreshold(uint256 blockNumber)
+		public
+		view
+		returns (uint256)
+	{
+		return rep.totalSupplyAt(blockNumber).mul(1).div(100);
 	} // 1%
 
 	/// @notice The maximum number of actions that can be included in a proposal
@@ -107,8 +111,6 @@ contract CompoundVotingMachine {
 		bool support;
 		/// @notice The number of votes the voter had, which were cast
 		uint256 votes;
-		/// @notice if voted by delegator votes will be 0 and this contains the address
-		address delegator;
 	}
 
 	/// @notice Possible states that a proposal may be in
@@ -187,8 +189,8 @@ contract CompoundVotingMachine {
 		string memory description
 	) public returns (uint256) {
 		require(
-			rep.balanceOfAt(msg.sender, block.number.sub(1)) >
-				proposalThreshold(),
+			rep.getVotesAt(msg.sender, true, block.number.sub(1)) >
+				proposalThreshold(block.number.sub(1)),
 			"CompoundVotingMachine::propose: proposer votes below proposal threshold"
 		);
 		require(
@@ -327,7 +329,7 @@ contract CompoundVotingMachine {
 		bytes memory result;
 
 		if (target == address(controller)) {
-			(ok, result) = target.call.value(value)(callData);
+			(ok, result) = target.call{ value: value }(callData);
 		} else {
 			payable(address(controller.avatar())).transfer(value); //make sure avatar have the funds to pay
 			(ok, result) = controller.genericCall(
@@ -356,8 +358,8 @@ contract CompoundVotingMachine {
 
 		Proposal storage proposal = proposals[proposalId];
 		require(
-			rep.balanceOfAt(proposal.proposer, block.number.sub(1)) <
-				proposalThreshold(),
+			rep.getVotesAt(proposal.proposer, true, block.number.sub(1)) <
+				proposalThreshold(proposal.startBlock),
 			"CompoundVotingMachine::cancel: proposer above threshold"
 		);
 
@@ -426,7 +428,10 @@ contract CompoundVotingMachine {
 	}
 
 	function castVote(uint256 proposalId, bool support) public {
-		return _castVote(msg.sender, proposalId, support);
+		//get all votes in all blockchains including delegated
+		Proposal storage proposal = proposals[proposalId];
+		uint256 votes = rep.getVotesAt(msg.sender, true, proposal.startBlock);
+		return _castVote(msg.sender, proposalId, support, votes);
 	}
 
 	struct VoteSig {
@@ -436,13 +441,11 @@ contract CompoundVotingMachine {
 		bytes32 s;
 	}
 
-	function balanceOfTest(address[] memory _users) public {
-		// for (uint8 i = 0; i < _users.length; i++) {
-		rep.balanceOf(_users[0]);
-		// }
-	}
-
-	function ecRecoverTest(uint256 proposalId, VoteSig[] memory votes) public {
+	function ecRecoverTest(
+		uint256 proposalId,
+		VoteSig[] memory votesFor,
+		VoteSig[] memory votesAgainst
+	) public {
 		bytes32 domainSeparator =
 			keccak256(
 				abi.encode(
@@ -465,21 +468,63 @@ contract CompoundVotingMachine {
 				abi.encodePacked("\x19\x01", domainSeparator, structHashAgainst)
 			);
 
-		address[] memory users = new address[](votes.length);
+		Proposal storage proposal = proposals[proposalId];
 
-		for (uint32 i = 0; i < votes.length; i++) {
-			bytes32 digest = votes[i].support ? digestFor : digestAgainst;
+		uint256 total;
+		for (uint32 i = 0; i < votesFor.length; i++) {
+			bytes32 digest = digestFor;
 
 			address signatory =
-				ecrecover(digest, votes[i].v, votes[i].r, votes[i].s);
+				ecrecover(digest, votesFor[i].v, votesFor[i].r, votesFor[i].s);
 			require(
 				signatory != address(0),
 				"CompoundVotingMachine::castVoteBySig: invalid signature"
 			);
-			users[i] = signatory;
-			// _castVote(signatory, proposalId, votes[i].support);
+			require(
+				votesFor[i].support == true,
+				"CompoundVotingMachine::castVoteBySig: invalid support value in for batch"
+			);
+			total += rep.getVotesAt(signatory, true, proposal.startBlock);
+			Receipt storage receipt = proposal.receipts[signatory];
+			receipt.hasVoted = true;
+			receipt.support = true;
 		}
-		rep.balanceOfAtAggregated(users, block.number);
+		if (votesFor.length > 0) {
+			address voteAddressHash =
+				address(uint160(uint256(keccak256(abi.encode(votesFor)))));
+			_castVote(voteAddressHash, proposalId, true, total);
+		}
+
+		total = 0;
+		for (uint32 i = 0; i < votesAgainst.length; i++) {
+			bytes32 digest = digestFor;
+
+			address signatory =
+				ecrecover(
+					digest,
+					votesAgainst[i].v,
+					votesAgainst[i].r,
+					votesAgainst[i].s
+				);
+			require(
+				signatory != address(0),
+				"CompoundVotingMachine::castVoteBySig: invalid signature"
+			);
+			require(
+				votesAgainst[i].support == false,
+				"CompoundVotingMachine::castVoteBySig: invalid support value in against batch"
+			);
+			total += rep.getVotesAt(signatory, true, proposal.startBlock);
+			Receipt storage receipt = proposal.receipts[signatory];
+			receipt.hasVoted = true;
+			receipt.support = true;
+		}
+		if (votesAgainst.length > 0) {
+			address voteAddressHash =
+				address(uint160(uint256(keccak256(abi.encode(votesAgainst)))));
+			_castVote(voteAddressHash, proposalId, false, total);
+		}
+		// rep.balanceOfAtAggregated(users, block.number);
 	}
 
 	function castVoteBySig(
@@ -510,13 +555,17 @@ contract CompoundVotingMachine {
 			"CompoundVotingMachine::castVoteBySig: invalid signature"
 		);
 
-		return _castVote(signatory, proposalId, support);
+		//get all votes in all blockchains including delegated
+		Proposal storage proposal = proposals[proposalId];
+		uint256 votes = rep.getVotesAt(signatory, true, proposal.startBlock);
+		return _castVote(signatory, proposalId, support, votes);
 	}
 
 	function _castVote(
 		address voter,
 		uint256 proposalId,
-		bool support
+		bool support,
+		uint256 votes
 	) internal {
 		require(
 			state(proposalId) == ProposalState.Active,
@@ -529,29 +578,6 @@ contract CompoundVotingMachine {
 			receipt.hasVoted == false,
 			"CompoundVotingMachine::_castVote: voter already voted"
 		);
-
-		uint256 votes =
-			rep.balanceOfAt(voter, false, true, proposal.startBlock); //balance without delegatees
-
-		// mark delegatees as voted
-		address[] memory delegatees = rep.delegateesOf(voter);
-
-		for (uint256 i = 0; i < delegatees.length; i++) {
-			//skip delegatees that voted already
-			if (proposal.receipts[delegatees[i]].hasVoted == false) {
-				uint256 delVotes =
-					rep.balanceOfAt(
-						delegatees[i],
-						false,
-						true,
-						proposal.startBlock
-					); //balance without delegatees
-				proposal.receipts[delegatees[i]].hasVoted = true;
-				proposal.receipts[delegatees[i]].support = support;
-				proposal.receipts[delegatees[i]].delegator = voter;
-				votes = votes.add(delVotes); //add delegatee votes
-			}
-		}
 
 		bool hasChanged = proposal.forVotes > proposal.againstVotes;
 		if (support) {

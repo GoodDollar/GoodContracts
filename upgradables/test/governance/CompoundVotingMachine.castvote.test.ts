@@ -45,10 +45,10 @@ describe("GovernorAlpha#CastVote", () => {
     signatures = ["getBalanceOf(address)"];
     callDatas = [encodeParameters(["address"], [acct.address])];
 
-    // await gov.propose(targets, values, signatures, callDatas, "do nothing");
-    // proposalBlock = +(await ethers.provider.getBlockNumber());
-    // proposalId = await gov.latestProposalIds(root.address);
-    // trivialProposal = await gov.proposals(proposalId);
+    await gov.propose(targets, values, signatures, callDatas, "do nothing");
+    proposalBlock = +(await ethers.provider.getBlockNumber());
+    proposalId = await gov.latestProposalIds(root.address);
+    trivialProposal = await gov.proposals(proposalId);
 
     voteDelay = await gov.votingDelay().then(_ => _.toNumber());
     votePeriod = await gov.votingPeriod().then(_ => _.toNumber());
@@ -176,17 +176,7 @@ describe("GovernorAlpha#CastVote", () => {
           expect(afterFors).to.equal(beforeFors.add(ethers.BigNumber.from("100001")));
         });
 
-        it.only("gas costs for multiple sigs", async () => {
-          let tx1 = await (
-            await grep.balanceOfTest([
-              root.address,
-              root.address,
-              root.address,
-              root.address
-            ])
-          ).wait();
-          console.log("balaceof gas:", tx1.gasUsed.toNumber());
-
+        it("gas costs for multiple sigs", async () => {
           let wallet = ethers.Wallet.createRandom();
           await root.sendTransaction({
             to: wallet.address,
@@ -200,7 +190,8 @@ describe("GovernorAlpha#CastVote", () => {
             .propose(targets, values, signatures, callDatas, "do nothing");
           let proposalId = await gov.latestProposalIds(actor.address);
 
-          const sigs = [];
+          const sigsFor = [];
+          const sigsAgainst = [];
           const createSig = async () => {
             let wallet = ethers.Wallet.createRandom();
             wallet = wallet.connect(ethers.provider);
@@ -212,25 +203,33 @@ describe("GovernorAlpha#CastVote", () => {
               support
             });
             const sig = ethers.utils.splitSignature(signature);
-            sigs.push({
-              support,
-              v: sig.v,
-              r: sig.r,
-              s: sig.s
-            });
+            if (support)
+              sigsFor.push({
+                support,
+                v: sig.v,
+                r: sig.r,
+                s: sig.s
+              });
+            else
+              sigsAgainst.push({
+                support,
+                v: sig.v,
+                r: sig.r,
+                s: sig.s
+              });
           };
           const ps = [];
-          for (let i = 1; i < 200; i++) {
+          for (let i = 1; i < 100; i++) {
             ps.push(createSig());
           }
           await Promise.all(ps);
 
           await ethers.provider.send("evm_mine", []);
 
-          let tx = await gov.ecRecoverTest(proposalId, sigs.slice(0, 50));
+          let tx = await gov.ecRecoverTest(proposalId, sigsFor, sigsAgainst);
           let receipt = await tx.wait();
           console.log("gas for sigs:", {
-            i: sigs.length,
+            i: sigsFor.length + sigsAgainst.length,
             gas: receipt.gasUsed.toNumber()
           });
         });

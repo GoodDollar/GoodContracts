@@ -36,25 +36,22 @@ interface ReputationInterface {
 		view
 		returns (uint256);
 
-	function balanceOfAtAggregated(
-		address[] memory _users,
-		uint256 _blockNumber
-	) external view returns (uint256);
+	function getVotes(address _user) external view returns (uint256);
 
-	function balanceOfAt(
+	function getVotesAt(
 		address _user,
-		bool _withDelegated,
 		bool _global,
 		uint256 _blockNumber
 	) external view returns (uint256);
 
 	function totalSupply() external view returns (uint256);
 
-	function delegatorOf(address _delegatee) external returns (address);
-
-	function delegateesOf(address _delegator)
+	function totalSupplyAt(uint256 _blockNumber)
 		external
-		returns (address[] memory);
+		view
+		returns (uint256);
+
+	function delegateOf(address _user) external returns (address);
 }
 
 interface SchemeRegistrar {

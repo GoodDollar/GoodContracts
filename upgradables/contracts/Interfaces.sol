@@ -22,6 +22,8 @@ interface cERC20 {
 
 interface GoodDollar is cERC20 {
 	function getFees(uint256 value) external view returns (uint256, bool);
+
+	function mint(address to, uint256 mintAmount) external returns (uint256);
 }
 
 interface Staking {
@@ -121,6 +123,10 @@ interface IIdentity {
 	function addWhitelistedWithDID(address account, string memory did) external;
 
 	function removeWhitelisted(address account) external;
+
+	function addIdentityAdmin(address account) external returns (bool);
+
+	function setAvatar(address _avatar) external;
 }
 
 interface UBIScheme {

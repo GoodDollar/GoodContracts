@@ -46,9 +46,20 @@ export const createDAO = async () => {
 
   const Avatar = new ethers.Contract(
     await daoCreator.avatar(),
-    ["function owner() view returns (address)"],
+    [
+      "function owner() view returns (address)",
+      "function nativeToken() view returns (address)"
+    ],
     root
   );
+
+  await Identity.setAvatar(Avatar.address);
   const controller = await Avatar.owner();
-  return { daoCreator, controller, avatar: await daoCreator.avatar() };
+  return {
+    daoCreator,
+    controller,
+    avatar: await daoCreator.avatar(),
+    gd: await Avatar.nativeToken(),
+    identity: Identity.address
+  };
 };

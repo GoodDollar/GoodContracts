@@ -8,8 +8,7 @@ import "./Reputation.sol";
 import "../Interfaces.sol";
 
 /**
- * @title InvitesV1 contract that handles invites with pre allocated bounty pool
- * 1.1 adds invitee bonus
+ * @title GReputation extends Reputation with delegation and cross blockchain merkle states
  */
 contract GReputation is Reputation {
 	using SafeMathUpgradeable for uint256;
@@ -26,6 +25,11 @@ contract GReputation is Reputation {
 	bytes32 public constant DELEGATION_TYPEHASH =
 		keccak256("Delegation(address delegate,uint256 nonce,uint256 expiry)");
 
+	/// @notice describe a single blockchain states
+	/// @param stateHash the hash with the reputation state
+	/// @param hashType the type of hash. currently just 0 = merkle tree root hash
+	/// @param totalSupply the totalSupply at the blockchain
+	/// @param blockNumber the effective blocknumber
 	struct BlockchainState {
 		bytes32 stateHash;
 		uint256 hashType;
@@ -37,19 +41,20 @@ contract GReputation is Reputation {
 	/// @notice A record of states for signing / validating signatures
 	mapping(address => uint256) public nonces;
 
+	/// @notice mapping from blockchain id hash to list of states
 	mapping(bytes32 => BlockchainState[]) public blockchainStates;
+
+	/// @notice mapping from stateHash to the user balance can be >0 only after supplying state proof
 	mapping(bytes32 => mapping(address => uint256)) public stateHashBalances;
 
+	/// @notice list of blockchains having a statehash for easy iteration
 	bytes32[] public activeBlockchains;
 
-	//keep map of user -> delegate
+	/// @notice keep map of user -> delegate
 	mapping(address => address) public delegates;
 
-	//map of user non delegatd + delegated votes to user. this is used for actual voting
+	/// @notice map of user non delegatd + delegated votes to user. this is used for actual voting
 	mapping(address => uint256[]) public activeVotes;
-
-	//keep map of user -> delegatees[]
-	mapping(address => address[]) public delegatees;
 
 	/// @notice An event thats emitted when a delegate account's vote balance changes
 	event DelegateVotesChanged(
@@ -59,6 +64,10 @@ contract GReputation is Reputation {
 		uint256 newBalance
 	);
 
+	/// @notice internal function that overrides Reputation.sol with consideration to delegation
+	/// @param _user the address to mint for
+	/// @param _amount the amount of rep to mint
+	/// @return the actual amount minted
 	function _mint(address _user, uint256 _amount)
 		internal
 		override
@@ -79,6 +88,10 @@ contract GReputation is Reputation {
 		return _amount;
 	}
 
+	/// @notice internal function that overrides Reputation.sol with consideration to delegation
+	/// @param _user the address to burn from
+	/// @param _amount the amount of rep to mint
+	/// @return the actual amount burned
 	function _burn(address _user, uint256 _amount)
 		internal
 		override
@@ -100,10 +113,10 @@ contract GReputation is Reputation {
 		return amountBurned;
 	}
 
-	function delegateOf(address _user) public view returns (address) {
-		return delegates[_user];
-	}
-
+	/// @notice sets the state hash of a blockchain, can only be called by owner
+	/// @param _id the string name of the blockchain (will be hashed to produce byte32 id)
+	/// @param _hash the state hash
+	/// @param _totalSupply total supply of reputation on the specific blockchain
 	function setBlockchainStateHash(
 		string memory _id,
 		bytes32 _hash,
@@ -139,6 +152,11 @@ contract GReputation is Reputation {
 		blockchainStates[idHash].push(state);
 	}
 
+	/// @notice get the number of active votes a user holds after delegation (vs the basic balance of reputation he holds)
+	/// @param _user the user to get active votes for
+	/// @param _global wether to include reputation from other blockchains
+	/// @param _blockNumber get votes state at specific block
+	/// @return the number of votes
 	function getVotesAt(
 		address _user,
 		bool _global,
@@ -162,14 +180,19 @@ contract GReputation is Reputation {
 	}
 
 	/**
-	 * @dev returns aggregated reputation in all blockchains and delegated
+	 * @notice returns aggregated active votes in all blockchains and delegated
+	 * @param _user the user to get active votes for
+	 * @return the number of votes
 	 */
 	function getVotes(address _user) public view returns (uint256) {
 		return getVotesAt(_user, true, block.number);
 	}
 
 	/**
-	 * @dev returns aggregated reputation in all blockchains and delegated
+	 * @notice returns aggregated active votes in all blockchains and delegated at specific block
+	 * @param _user user to get active votes for
+	 * @param _blockNumber get votes state at specific block
+	 * @return the number of votes
 	 */
 	function getVotesAt(address _user, uint256 _blockNumber)
 		public
@@ -180,7 +203,9 @@ contract GReputation is Reputation {
 	}
 
 	/**
-	 * @dev returns total supply in current blockchain (super.balanceOfAt)
+	 * @notice returns total supply in current blockchain (super.balanceOfAt)
+	 * @param _blockNumber get total supply at specific block
+	 * @return the totaly supply
 	 */
 	function totalSupplyLocal(uint256 _blockNumber)
 		public
@@ -190,6 +215,11 @@ contract GReputation is Reputation {
 		return super.totalSupplyAt(_blockNumber);
 	}
 
+	/**
+	 * @notice returns total supply in all blockchain aggregated
+	 * @param _blockNumber get total supply at specific block
+	 * @return the totaly supply
+	 */
 	function totalSupplyAt(uint256 _blockNumber)
 		public
 		view
@@ -205,6 +235,11 @@ contract GReputation is Reputation {
 		return startingSupply;
 	}
 
+	/// @notice get the number of active votes a user holds after delegation in specific blockchain
+	/// @param _id the keccak hash of the blockchain string id
+	/// @param _user the user to get active votes for
+	/// @param _blockNumber get votes state at specific block
+	/// @return the number of votes
 	function getVotesAtBlockchain(
 		bytes32 _id,
 		address _user,
@@ -224,6 +259,11 @@ contract GReputation is Reputation {
 		return stateHashBalances[state.stateHash][_user];
 	}
 
+	/**
+	 * @notice returns total supply in a specific blockchain
+	 * @param _blockNumber get total supply at specific block
+	 * @return the totaly supply
+	 */
 	function totalSupplyAtBlockchain(bytes32 _id, uint256 _blockNumber)
 		public
 		view
@@ -241,6 +281,15 @@ contract GReputation is Reputation {
 		return state.totalSupply;
 	}
 
+	/**
+	 * @notice prove user balance in a specific blockchain state hash
+	 * @dev "rootState" is a special state that can be supplied once, and actually mints reputation on the current blockchain
+	 * @param _id the string id of the blockchain we supply proof for
+	 * @param _user the user to prove his balance
+	 * @param _balance the balance we are prooving
+	 * @param _proof array of byte32 with proof data (currently merkle tree path)
+	 * @return true if proof is valid
+	 */
 	function proveBalanceOfAtBlockchain(
 		string memory _id,
 		address _user,
@@ -276,16 +325,27 @@ contract GReputation is Reputation {
 		return true;
 	}
 
+	/// @notice returns current delegate of _user
+	/// @param _user the delegatee
+	/// @return the address of the delegate (can be _user  if no delegate or 0x0 if _user doesnt exists)
+	function delegateOf(address _user) public view returns (address) {
+		return delegates[_user];
+	}
+
+	/// @notice delegate votes to another user
+	/// @param _delegate the recipient of votes
 	function delegateTo(address _delegate) public {
 		return _delegateTo(msg.sender, _delegate);
 	}
 
+	/// @notice cancel user delegation
+	/// @dev makes user his own delegate
 	function undelegate() public {
 		return _delegateTo(msg.sender, msg.sender);
 	}
 
 	/**
-	 * @notice Delegates votes from signatory to `delegator`
+	 * @notice Delegates votes from signatory to `delegate`
 	 * @param _delegate The address to delegate votes to
 	 * @param _nonce The contract state required to match the signature
 	 * @param _expiry The time at which to expire the signature
@@ -334,6 +394,9 @@ contract GReputation is Reputation {
 		return _delegateTo(signatory, _delegate);
 	}
 
+	/// @notice internal function to delegate votes to another user
+	/// @param _user the source of votes (delegator)
+	/// @param _delegate the recipient of votes
 	function _delegateTo(address _user, address _delegate) internal {
 		require(
 			_delegate != address(0),
@@ -368,16 +431,23 @@ contract GReputation is Reputation {
 		);
 	}
 
+	/// @notice internal function to update delegated votes, emits event with changes
+	/// @param _delegate the delegate whose record we are updating
+	/// @param _delegator the delegator
+	/// @param _oldVotes the delegate previous votes
+	/// @param _newVotes the delegate votes after the change
 	function _updateDelegateVotes(
 		address _delegate,
 		address _delegator,
-		uint256 oldVotes,
-		uint256 newVotes
+		uint256 _oldVotes,
+		uint256 _newVotes
 	) internal {
-		updateValueAtNow(activeVotes[_delegate], newVotes);
-		emit DelegateVotesChanged(_delegate, _delegator, oldVotes, newVotes);
+		updateValueAtNow(activeVotes[_delegate], _newVotes);
+		emit DelegateVotesChanged(_delegate, _delegator, _oldVotes, _newVotes);
 	}
 
+	/// @notice helper function to check merkle proof using openzeppelin
+	/// @return leafHash isProofValid tuple (byte32, bool) with the hash of the leaf data we prove and true if proof is valid
 	function _checkMerkleProof(
 		address _user,
 		uint256 _balance,
@@ -388,6 +458,8 @@ contract GReputation is Reputation {
 		isProofValid = MerkleProofUpgradeable.verify(_proof, _root, leafHash);
 	}
 
+	/// @notice helper function to get current chain id
+	/// @return chain id
 	function getChainId() internal pure returns (uint256) {
 		uint256 chainId;
 		assembly {

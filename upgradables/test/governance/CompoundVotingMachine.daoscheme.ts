@@ -39,6 +39,7 @@ async function setTime(seconds) {
 const states = [
   "Pending",
   "Active",
+  "ActiveTimelock",
   "Canceled",
   "Defeated",
   "Succeeded",

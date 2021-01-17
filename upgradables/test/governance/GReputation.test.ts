@@ -267,7 +267,7 @@ describe("GReputation", () => {
       const tx = await (
         await grep.delegateBySig(delegate, nonce, expiry, sig.v, sig.r, sig.s)
       ).wait();
-      expect(tx.gasUsed).to.lt(120000);
+      expect(tx.gasUsed).to.lt(120050);
       expect(await grep.delegates(delegator.address)).to.equal(founder);
     });
   });
@@ -428,7 +428,7 @@ describe("GReputation", () => {
     });
   });
 
-  describe.only("real example of airdrop", async () => {
+  describe("real example of airdrop", async () => {
     it("should set a new state hash", async () => {
       expect(
         await grepWithOwner.setBlockchainStateHash(

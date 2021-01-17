@@ -35,6 +35,7 @@ async function setTime(seconds) {
 const states = [
   "Pending",
   "Active",
+  "ActiveTimelock",
   "Canceled",
   "Defeated",
   "Succeeded",
@@ -143,12 +144,12 @@ describe("CompoundVotingMachine#States", () => {
       await advanceBlocks(1);
     });
 
-    it("Active in queue period", async () => {
+    it("ActiveTimelock in queue period", async () => {
       await gov.castVote(proposalId, true);
       await advanceBlocks(1);
       expect((await gov.proposals(proposalId)).eta).to.gt(0);
       await increaseTime(queuePeriod / 2);
-      expect(states[await gov.state(proposalId)]).to.equal("Active"); //active while in queue period
+      expect(states[await gov.state(proposalId)]).to.equal("ActiveTimelock"); //active while in queue period
     });
     it("succeeded after queue period", async () => {
       await increaseTime(queuePeriod / 2);
@@ -178,7 +179,7 @@ describe("CompoundVotingMachine#States", () => {
 
   //
 
-  it("Active in queue period then defeated", async () => {
+  it("ActiveTimelock in queue period then defeated", async () => {
     let actor = signers[0];
     await grep.mint(actor.address, ethers.BigNumber.from("1000000"));
 
@@ -191,7 +192,7 @@ describe("CompoundVotingMachine#States", () => {
     await gov.connect(actor).castVote(proposalId, false);
     expect((await gov.proposals(proposalId)).eta).to.gt(0);
     await increaseTime(queuePeriod / 2);
-    expect(states[await gov.state(proposalId)]).to.equal("Active"); //active while in queue period
+    expect(states[await gov.state(proposalId)]).to.equal("ActiveTimelock"); //active while in queue period
     await increaseTime(queuePeriod / 2);
     expect(states[await gov.state(proposalId)]).to.equal("Defeated");
     await increaseTime(gracePeriod);
@@ -237,14 +238,14 @@ describe("CompoundVotingMachine#States", () => {
     let firstEta = (await gov.proposals(proposalId)).eta;
     expect(firstEta).to.gt(0);
     await increaseTime(queuePeriod / 2);
-    expect(states[await gov.state(proposalId)]).to.equal("Active"); //active while in queue period
+    expect(states[await gov.state(proposalId)]).to.equal("ActiveTimelock"); //active while in queue period
     await increaseTime(queuePeriod / 2 - 10); //almost to end of queue period
     await gov.castVote(proposalId, true);
     let secondEta = (await gov.proposals(proposalId)).eta;
     expect(firstEta).to.lt(secondEta); //eta should now end in atleast gameChangrePeriod
     // expect(secondEta.sub(firstEta)).to.eq(gameChangerPeriod.sub(1));
     await increaseTime(gameChangerPeriod - 10); //almost to end of gameChangerPeriod
-    expect(states[await gov.state(proposalId)]).to.equal("Active"); //should be still active after almost 24hours
+    expect(states[await gov.state(proposalId)]).to.equal("ActiveTimelock"); //should be still active after almost 24hours
     await increaseTime(10);
     expect(states[await gov.state(proposalId)]).to.equal("Succeeded"); //still defeated after expiration
   });

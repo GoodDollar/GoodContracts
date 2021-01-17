@@ -10,7 +10,8 @@ contract CompoundVotingMachine {
 	/// @notice The name of this contract
 	string public constant name = "GoodDAO Voting Machine";
 
-	uint256 votingPeriodBlocks;
+	/// @notice the number of blocks a proposal is open for voting (before passing quorum)
+	uint256 public votingPeriodBlocks;
 
 	/// @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
 	function quorumVotes() public view returns (uint256) {
@@ -36,7 +37,6 @@ contract CompoundVotingMachine {
 		return 1;
 	} // 1 block
 
-	//TODO: need to make this adjustable per blockchain or use timestamp
 	/// @notice The duration of voting on a proposal, in blocks
 	function votingPeriod() public view returns (uint256) {
 		return votingPeriodBlocks;
@@ -117,6 +117,7 @@ contract CompoundVotingMachine {
 	enum ProposalState {
 		Pending,
 		Active,
+		ActiveTimelock, // passed quorom, time lock of 2 days activated, still open for voting
 		Canceled,
 		Defeated,
 		Succeeded,
@@ -172,15 +173,21 @@ contract CompoundVotingMachine {
 	event ProposalExecuted(uint256 id);
 
 	constructor(
-		Avatar avatar_,
+		Avatar avatar_, // the DAO avatar
 		address rep_, // address reputation
-		uint256 votingPeriodBlocks_
+		uint256 votingPeriodBlocks_ //number of blocks a proposal is open for voting before expiring
 	) public {
 		controller = Controller(avatar_.owner());
 		rep = ReputationInterface(rep_);
 		votingPeriodBlocks = votingPeriodBlocks_;
 	}
 
+	/// @notice make a proposal to be voted on
+	/// @param targets list of contracts to be excuted on
+	/// @param values list of eth value to be used in each contract call
+	/// @param signatures the list of functions to execute
+	/// @param calldatas the list of parameters to pass to each function
+	/// @return uint256 proposal id
 	function propose(
 		address[] memory targets,
 		uint256[] memory values,
@@ -210,12 +217,13 @@ contract CompoundVotingMachine {
 
 		uint256 latestProposalId = latestProposalIds[msg.sender];
 
-		//TODO: what limit per proposer do we want?
 		if (latestProposalId != 0) {
 			ProposalState proposersLatestProposalState =
 				state(latestProposalId);
 			require(
-				proposersLatestProposalState != ProposalState.Active,
+				proposersLatestProposalState != ProposalState.Active &&
+					proposersLatestProposalState !=
+					ProposalState.ActiveTimelock,
 				"CompoundVotingMachine::propose: one live proposal per proposer, found an already active proposal"
 			);
 			require(
@@ -263,7 +271,11 @@ contract CompoundVotingMachine {
 		return newProposal.id;
 	}
 
-	function updateETA(uint256 proposalId, bool hasVoteChanged) internal {
+	/// @notice helper to set the effective time of a proposal that passed quorom
+	/// @dev also extends the ETA in case of a game changer in vote decision
+	/// @param proposalId the id of the proposal
+	/// @param hasVoteChanged did the current vote changed the decision
+	function _updateETA(uint256 proposalId, bool hasVoteChanged) internal {
 		Proposal storage proposal = proposals[proposalId];
 
 		//first time we have a quorom we ask for a no change in decision period
@@ -284,6 +296,8 @@ contract CompoundVotingMachine {
 		emit ProposalQueued(proposalId, proposal.eta);
 	}
 
+	/// @notice execute the proposal list of transactions
+	/// @dev anyone can call this once its ETA has arrived
 	function execute(uint256 proposalId) public payable {
 		require(
 			state(proposalId) == ProposalState.Succeeded,
@@ -296,7 +310,7 @@ contract CompoundVotingMachine {
 		Proposal storage proposal = proposals[proposalId];
 		proposal.executed = true;
 		for (uint256 i = 0; i < proposal.targets.length; i++) {
-			executeTransaction(
+			_executeTransaction(
 				proposal.targets[i],
 				proposal.values[i],
 				proposal.signatures[i],
@@ -307,7 +321,9 @@ contract CompoundVotingMachine {
 		emit ProposalExecuted(proposalId);
 	}
 
-	function executeTransaction(
+	/// @notice internal helper to execute a single transaction of a proposal
+	/// @dev special execution is done if target is a method in the DAO controller
+	function _executeTransaction(
 		address target,
 		uint256 value,
 		string memory signature,
@@ -348,7 +364,9 @@ contract CompoundVotingMachine {
 		return result;
 	}
 
-	//TODO: do we want guardian? cancel proposal queued for exectuion by proposer?
+	/// @notice cancel a proposal in case proposer no longer holds the votes that were required to propose
+	/// @dev could be cheating trying to bypass the single proposal per address by delegating to another address
+	/// or when delegators do not concur with the proposal done in their name, they can withdraw
 	function cancel(uint256 proposalId) public {
 		ProposalState state = state(proposalId);
 		require(
@@ -368,6 +386,7 @@ contract CompoundVotingMachine {
 		emit ProposalCanceled(proposalId);
 	}
 
+	/// @notice get the actions to be done in a proposal
 	function getActions(uint256 proposalId)
 		public
 		view
@@ -382,6 +401,7 @@ contract CompoundVotingMachine {
 		return (p.targets, p.values, p.signatures, p.calldatas);
 	}
 
+	/// @notice get the receipt of a single voter in a proposal
 	function getReceipt(uint256 proposalId, address voter)
 		public
 		view
@@ -390,6 +410,7 @@ contract CompoundVotingMachine {
 		return proposals[proposalId].receipts[voter];
 	}
 
+	/// @notice get the current status of a proposal
 	function state(uint256 proposalId) public view returns (ProposalState) {
 		require(
 			proposalCount >= proposalId && proposalId > 0,
@@ -405,9 +426,12 @@ contract CompoundVotingMachine {
 		} else if (proposal.executed) {
 			return ProposalState.Executed;
 		} else if (
-			//TODO: add test for this condition
-			(proposal.eta > 0 && block.timestamp < proposal.eta) || //passed quorum but not executed yet
-			(proposal.eta == 0 && block.number <= proposal.endBlock) //regular voting period
+			proposal.eta > 0 && block.timestamp < proposal.eta //passed quorum but not executed yet, in time lock
+		) {
+			return ProposalState.ActiveTimelock;
+		} else if (
+			//regular voting period
+			proposal.eta == 0 && block.number <= proposal.endBlock
 		) {
 			//proposal is active if we are in the gameChanger period (eta) or no decision yet and in voting period
 			return ProposalState.Active;
@@ -427,6 +451,9 @@ contract CompoundVotingMachine {
 		}
 	}
 
+	/// @notice cast your vote on a proposal
+	/// @param proposalId the proposal to vote on
+	/// @param support for or against
 	function castVote(uint256 proposalId, bool support) public {
 		//get all votes in all blockchains including delegated
 		Proposal storage proposal = proposals[proposalId];
@@ -497,7 +524,7 @@ contract CompoundVotingMachine {
 
 		total = 0;
 		for (uint32 i = 0; i < votesAgainst.length; i++) {
-			bytes32 digest = digestFor;
+			bytes32 digest = digestAgainst;
 
 			address signatory =
 				ecrecover(
@@ -527,6 +554,7 @@ contract CompoundVotingMachine {
 		// rep.balanceOfAtAggregated(users, block.number);
 	}
 
+	/// @notice helper to cast a vote for someone else by using eip712 signatures
 	function castVoteBySig(
 		uint256 proposalId,
 		bool support,
@@ -561,6 +589,7 @@ contract CompoundVotingMachine {
 		return _castVote(signatory, proposalId, support, votes);
 	}
 
+	/// @notice internal helper to cast a vote
 	function _castVote(
 		address voter,
 		uint256 proposalId,
@@ -568,7 +597,8 @@ contract CompoundVotingMachine {
 		uint256 votes
 	) internal {
 		require(
-			state(proposalId) == ProposalState.Active,
+			state(proposalId) == ProposalState.Active ||
+				state(proposalId) == ProposalState.ActiveTimelock,
 			"CompoundVotingMachine::_castVote: voting is closed"
 		);
 
@@ -595,7 +625,7 @@ contract CompoundVotingMachine {
 		if (
 			proposal.forVotes >= proposal.quoromRequired ||
 			proposal.againstVotes >= proposal.quoromRequired
-		) updateETA(proposalId, hasChanged);
+		) _updateETA(proposalId, hasChanged);
 		emit VoteCast(voter, proposalId, support, votes);
 	}
 

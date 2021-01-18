@@ -81,10 +81,13 @@ describe("CompoundVotingMachine#States", () => {
     await grep.mint(root.address, ethers.BigNumber.from("1000000"));
     await grep.mint(acct.address, ethers.BigNumber.from("500000"));
 
-    targets = [grep.address];
-    values = ["0"];
-    signatures = ["balanceOf(address)"];
-    callDatas = [encodeParameters(["address"], [acct.address])];
+    targets = [grep.address, grep.address];
+    values = ["0", "0"];
+    signatures = ["balanceOf(address)", ""];
+    callDatas = [
+      encodeParameters(["address"], [acct.address]),
+      grep.interface.encodeFunctionData("balanceOf", [acct.address])
+    ];
 
     await gov.propose(targets, values, signatures, callDatas, "do nothing");
     proposalBlock = +(await ethers.provider.getBlockNumber());

@@ -468,91 +468,90 @@ contract CompoundVotingMachine {
 		bytes32 s;
 	}
 
-	function ecRecoverTest(
-		uint256 proposalId,
-		VoteSig[] memory votesFor,
-		VoteSig[] memory votesAgainst
-	) public {
-		bytes32 domainSeparator =
-			keccak256(
-				abi.encode(
-					DOMAIN_TYPEHASH,
-					keccak256(bytes(name)),
-					getChainId(),
-					address(this)
-				)
-			);
-		bytes32 structHashFor =
-			keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, true));
-		bytes32 structHashAgainst =
-			keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, false));
-		bytes32 digestFor =
-			keccak256(
-				abi.encodePacked("\x19\x01", domainSeparator, structHashFor)
-			);
-		bytes32 digestAgainst =
-			keccak256(
-				abi.encodePacked("\x19\x01", domainSeparator, structHashAgainst)
-			);
+	// function ecRecoverTest(
+	// 	uint256 proposalId,
+	// 	VoteSig[] memory votesFor,
+	// 	VoteSig[] memory votesAgainst
+	// ) public {
+	// 	bytes32 domainSeparator =
+	// 		keccak256(
+	// 			abi.encode(
+	// 				DOMAIN_TYPEHASH,
+	// 				keccak256(bytes(name)),
+	// 				getChainId(),
+	// 				address(this)
+	// 			)
+	// 		);
+	// 	bytes32 structHashFor =
+	// 		keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, true));
+	// 	bytes32 structHashAgainst =
+	// 		keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, false));
+	// 	bytes32 digestFor =
+	// 		keccak256(
+	// 			abi.encodePacked("\x19\x01", domainSeparator, structHashFor)
+	// 		);
+	// 	bytes32 digestAgainst =
+	// 		keccak256(
+	// 			abi.encodePacked("\x19\x01", domainSeparator, structHashAgainst)
+	// 		);
 
-		Proposal storage proposal = proposals[proposalId];
+	// 	Proposal storage proposal = proposals[proposalId];
 
-		uint256 total;
-		for (uint32 i = 0; i < votesFor.length; i++) {
-			bytes32 digest = digestFor;
+	// 	uint256 total;
+	// 	for (uint32 i = 0; i < votesFor.length; i++) {
+	// 		bytes32 digest = digestFor;
 
-			address signatory =
-				ecrecover(digest, votesFor[i].v, votesFor[i].r, votesFor[i].s);
-			require(
-				signatory != address(0),
-				"CompoundVotingMachine::castVoteBySig: invalid signature"
-			);
-			require(
-				votesFor[i].support == true,
-				"CompoundVotingMachine::castVoteBySig: invalid support value in for batch"
-			);
-			total += rep.getVotesAt(signatory, true, proposal.startBlock);
-			Receipt storage receipt = proposal.receipts[signatory];
-			receipt.hasVoted = true;
-			receipt.support = true;
-		}
-		if (votesFor.length > 0) {
-			address voteAddressHash =
-				address(uint160(uint256(keccak256(abi.encode(votesFor)))));
-			_castVote(voteAddressHash, proposalId, true, total);
-		}
+	// 		address signatory =
+	// 			ecrecover(digest, votesFor[i].v, votesFor[i].r, votesFor[i].s);
+	// 		require(
+	// 			signatory != address(0),
+	// 			"CompoundVotingMachine::castVoteBySig: invalid signature"
+	// 		);
+	// 		require(
+	// 			votesFor[i].support == true,
+	// 			"CompoundVotingMachine::castVoteBySig: invalid support value in for batch"
+	// 		);
+	// 		total += rep.getVotesAt(signatory, true, proposal.startBlock);
+	// 		Receipt storage receipt = proposal.receipts[signatory];
+	// 		receipt.hasVoted = true;
+	// 		receipt.support = true;
+	// 	}
+	// 	if (votesFor.length > 0) {
+	// 		address voteAddressHash =
+	// 			address(uint160(uint256(keccak256(abi.encode(votesFor)))));
+	// 		_castVote(voteAddressHash, proposalId, true, total);
+	// 	}
 
-		total = 0;
-		for (uint32 i = 0; i < votesAgainst.length; i++) {
-			bytes32 digest = digestAgainst;
+	// 	total = 0;
+	// 	for (uint32 i = 0; i < votesAgainst.length; i++) {
+	// 		bytes32 digest = digestAgainst;
 
-			address signatory =
-				ecrecover(
-					digest,
-					votesAgainst[i].v,
-					votesAgainst[i].r,
-					votesAgainst[i].s
-				);
-			require(
-				signatory != address(0),
-				"CompoundVotingMachine::castVoteBySig: invalid signature"
-			);
-			require(
-				votesAgainst[i].support == false,
-				"CompoundVotingMachine::castVoteBySig: invalid support value in against batch"
-			);
-			total += rep.getVotesAt(signatory, true, proposal.startBlock);
-			Receipt storage receipt = proposal.receipts[signatory];
-			receipt.hasVoted = true;
-			receipt.support = true;
-		}
-		if (votesAgainst.length > 0) {
-			address voteAddressHash =
-				address(uint160(uint256(keccak256(abi.encode(votesAgainst)))));
-			_castVote(voteAddressHash, proposalId, false, total);
-		}
-		// rep.balanceOfAtAggregated(users, block.number);
-	}
+	// 		address signatory =
+	// 			ecrecover(
+	// 				digest,
+	// 				votesAgainst[i].v,
+	// 				votesAgainst[i].r,
+	// 				votesAgainst[i].s
+	// 			);
+	// 		require(
+	// 			signatory != address(0),
+	// 			"CompoundVotingMachine::castVoteBySig: invalid signature"
+	// 		);
+	// 		require(
+	// 			votesAgainst[i].support == false,
+	// 			"CompoundVotingMachine::castVoteBySig: invalid support value in against batch"
+	// 		);
+	// 		total += rep.getVotesAt(signatory, true, proposal.startBlock);
+	// 		Receipt storage receipt = proposal.receipts[signatory];
+	// 		receipt.hasVoted = true;
+	// 		receipt.support = true;
+	// 	}
+	// 	if (votesAgainst.length > 0) {
+	// 		address voteAddressHash =
+	// 			address(uint160(uint256(keccak256(abi.encode(votesAgainst)))));
+	// 		_castVote(voteAddressHash, proposalId, false, total);
+	// 	}
+	// }
 
 	/// @notice helper to cast a vote for someone else by using eip712 signatures
 	function castVoteBySig(

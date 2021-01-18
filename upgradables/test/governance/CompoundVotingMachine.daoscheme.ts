@@ -126,7 +126,7 @@ describe("CompoundVotingMachine#DAOScheme", () => {
   it("Should use value passed to execute", async () => {
     let wallet = ethers.Wallet.createRandom();
     let targets = [mock.address];
-    let values = [ethers.utils.parseEther("1")];
+    let values = [ethers.utils.parseEther("10")];
     let signatures = ["rec()"];
     let callDatas = ["0x00"];
 
@@ -137,7 +137,7 @@ describe("CompoundVotingMachine#DAOScheme", () => {
     await gov.castVote(proposalId, true);
     await increaseTime(queuePeriod);
     expect(states[await gov.state(proposalId)]).to.equal("Succeeded");
-    await gov.execute(proposalId, { value: ethers.utils.parseEther("1") });
+    await gov.execute(proposalId, { value: ethers.utils.parseEther("10") });
     expect(states[await gov.state(proposalId)]).to.equal("Executed");
 
     //acct should now have 1M after proposal minted rep
@@ -145,7 +145,7 @@ describe("CompoundVotingMachine#DAOScheme", () => {
     const avatarBalance = await ethers.provider.getBalance(avatar);
 
     expect(avatarBalance).to.eq(0);
-    expect(balance).to.eq(ethers.utils.parseEther("1"));
+    expect(balance).to.eq(ethers.utils.parseEther("10"));
   });
 
   it("should be able to call Controller permissioned methods", async () => {

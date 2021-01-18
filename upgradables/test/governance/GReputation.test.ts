@@ -1,7 +1,7 @@
 // import { GReputationInstance } from "../types/GReputation";
 import MerkleTree from "merkle-tree-solidity";
 import { ethers, upgrades } from "hardhat";
-import { Signer } from "ethers";
+import { BigNumber, Signer } from "ethers";
 import { sign } from "crypto";
 import { expect } from "chai";
 import { GReputation } from "../../types";
@@ -12,9 +12,9 @@ export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 type BlockChainState = {
   stateHash: string;
-  hashType: BN;
-  totalSupply: BN;
-  blockNumber: BN;
+  hashType: BigNumber;
+  totalSupply: BigNumber;
+  blockNumber: BigNumber;
 };
 
 const getMerkleAndProof = (data, proofIdx) => {
@@ -267,7 +267,7 @@ describe("GReputation", () => {
       const tx = await (
         await grep.delegateBySig(delegate, nonce, expiry, sig.v, sig.r, sig.s)
       ).wait();
-      expect(tx.gasUsed).to.lt(120050);
+      expect(tx.gasUsed).to.lt(124000);
       expect(await grep.delegates(delegator.address)).to.equal(founder);
     });
   });

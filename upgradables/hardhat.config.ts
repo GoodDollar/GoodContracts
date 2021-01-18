@@ -6,6 +6,7 @@ import "hardhat-typechain";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
 import "@openzeppelin/hardhat-upgrades";
+import "solidity-coverage";
 import { task, types } from "hardhat/config";
 import { sha3 } from "web3-utils";
 import { load } from "dotenv";

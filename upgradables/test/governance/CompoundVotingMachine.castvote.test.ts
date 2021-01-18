@@ -14,7 +14,7 @@ let signers: SignerWithAddress[], founder, repOwner, rep1, rep2, rep3;
 const encodeParameters = (types, values) =>
   ethers.utils.defaultAbiCoder.encode(types, values);
 
-describe("GovernorAlpha#CastVote", () => {
+describe("CompoundVotingMachine#CastVote", () => {
   let gov: CompoundVotingMachine, root: SignerWithAddress, acct: SignerWithAddress;
 
   let trivialProposal, targets, values, signatures, callDatas;
@@ -146,42 +146,46 @@ describe("GovernorAlpha#CastVote", () => {
           );
         });
 
-        it("casts vote on behalf of the signatory", async () => {
-          let wallet = ethers.Wallet.createRandom();
-          await root.sendTransaction({
-            to: wallet.address,
-            value: ethers.utils.parseEther("1")
+        describe("casts vote on behalf of the signatory", async () => {
+          let receipt;
+          it("should cast vote", async () => {
+            let wallet = ethers.Wallet.createRandom({ gasPrice: 10000000 });
+            await acct.sendTransaction({
+              to: wallet.address,
+              value: ethers.utils.parseEther("9999")
+            });
+
+            wallet = wallet.connect(ethers.provider);
+            let actor = wallet;
+            await grep.mint(actor.address, ethers.BigNumber.from("100001"));
+            await gov
+              .connect(actor)
+              .propose(targets, values, signatures, callDatas, "do nothing");
+            let proposalId = await gov.latestProposalIds(actor.address);
+
+            const signature = await wallet._signTypedData(await Domain(gov), Types, {
+              proposalId: proposalId,
+              support: true
+            });
+
+            const sig = ethers.utils.splitSignature(signature);
+
+            let beforeFors = (await gov.proposals(proposalId)).forVotes;
+            await ethers.provider.send("evm_mine", []);
+            let tx = await gov.castVoteBySig(proposalId, true, sig.v, sig.r, sig.s);
+            receipt = await tx.wait();
+            let afterFors = (await gov.proposals(proposalId)).forVotes;
+            expect(afterFors).to.equal(beforeFors.add(ethers.BigNumber.from("100001")));
           });
-          wallet = wallet.connect(ethers.provider);
-          let actor = wallet;
-          await grep.mint(actor.address, ethers.BigNumber.from("100001"));
-          await gov
-            .connect(actor)
-            .propose(targets, values, signatures, callDatas, "do nothing");
-          let proposalId = await gov.latestProposalIds(actor.address);
 
-          const signature = await wallet._signTypedData(await Domain(gov), Types, {
-            proposalId: proposalId,
-            support: true
+          it("gas costs for cast vote by sig", async () => {
+            expect(receipt.gasUsed.toNumber()).to.be.lt(80000);
           });
-
-          const sig = ethers.utils.splitSignature(signature);
-
-          let beforeFors = (await gov.proposals(proposalId)).forVotes;
-          await ethers.provider.send("evm_mine", []);
-          let tx = await gov.castVoteBySig(proposalId, true, sig.v, sig.r, sig.s);
-          let receipt = await tx.wait();
-          expect(receipt.gasUsed.toNumber() < 80000);
-          let afterFors = (await gov.proposals(proposalId)).forVotes;
-          expect(afterFors).to.equal(beforeFors.add(ethers.BigNumber.from("100001")));
         });
 
-        it("gas costs for multiple sigs", async () => {
+        xit("gas costs for multiple sigs", async () => {
           let wallet = ethers.Wallet.createRandom();
-          await root.sendTransaction({
-            to: wallet.address,
-            value: ethers.utils.parseEther("1")
-          });
+
           wallet = wallet.connect(ethers.provider);
           let actor = wallet;
           await grep.mint(actor.address, ethers.BigNumber.from("100001"));

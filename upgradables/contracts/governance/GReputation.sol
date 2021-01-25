@@ -9,6 +9,11 @@ import "../Interfaces.sol";
 
 /**
  * @title GReputation extends Reputation with delegation and cross blockchain merkle states
+ * @dev NOTICE: this breaks DAOStack nativeReputation usage, since it is not possiible to upgrade
+ * the original nativeReputation token. it means you can no longer rely on avatar.nativeReputation() or controller.nativeReputation() or
+ * to return the current reputation token.
+ *  The DAO avatar will be the owner of this reputation token and not the Controller.
+ *  Minting by the DAO will be done using controller.genericCall and not via controller.mintReputation
  */
 contract GReputation is Reputation {
 	using SafeMathUpgradeable for uint256;
@@ -139,10 +144,6 @@ contract GReputation is Reputation {
 		//if new blockchain
 		if (!isRootState && i == activeBlockchains.length) {
 			activeBlockchains.push(idHash);
-		}
-
-		if (isRootState) {
-			updateValueAtNow(totalSupplyHistory, _totalSupply);
 		}
 
 		BlockchainState memory state;

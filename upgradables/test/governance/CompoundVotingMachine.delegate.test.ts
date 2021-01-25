@@ -73,6 +73,7 @@ describe("CompoundVotingMachine#Delegation", () => {
 
     await grep.mint(root.address, ethers.BigNumber.from("1000000"));
     await grep.mint(acct.address, ethers.BigNumber.from("500000"));
+    await grep.mint(signers[0].address, ethers.BigNumber.from("2000000")); //just to make acct+root < 50%
 
     targets = [acct.address];
     values = ["0"];

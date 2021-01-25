@@ -273,13 +273,17 @@ contract CompoundVotingMachine {
 
 	/// @notice helper to set the effective time of a proposal that passed quorom
 	/// @dev also extends the ETA in case of a game changer in vote decision
-	/// @param proposalId the id of the proposal
+	/// @param proposal the proposal to set the eta
 	/// @param hasVoteChanged did the current vote changed the decision
-	function _updateETA(uint256 proposalId, bool hasVoteChanged) internal {
-		Proposal storage proposal = proposals[proposalId];
-
+	function _updateETA(Proposal storage proposal, bool hasVoteChanged)
+		internal
+	{
+		//if absolute majority allow to execute immediately
+		if (proposal.forVotes > rep.totalSupplyAt(proposal.startBlock).div(2)) {
+			proposal.eta = now;
+		}
 		//first time we have a quorom we ask for a no change in decision period
-		if (proposal.eta == 0) {
+		else if (proposal.eta == 0) {
 			proposal.eta = block.timestamp.add(queuePeriod());
 		}
 		//if we have a gamechanger then we extend current eta to have at least gameChangerPeriod left
@@ -293,7 +297,7 @@ contract CompoundVotingMachine {
 		} else {
 			return;
 		}
-		emit ProposalQueued(proposalId, proposal.eta);
+		emit ProposalQueued(proposal.id, proposal.eta);
 	}
 
 	/// @notice execute the proposal list of transactions
@@ -458,7 +462,7 @@ contract CompoundVotingMachine {
 		//get all votes in all blockchains including delegated
 		Proposal storage proposal = proposals[proposalId];
 		uint256 votes = rep.getVotesAt(msg.sender, true, proposal.startBlock);
-		return _castVote(msg.sender, proposalId, support, votes);
+		return _castVote(msg.sender, proposal, support, votes);
 	}
 
 	struct VoteSig {
@@ -585,23 +589,23 @@ contract CompoundVotingMachine {
 		//get all votes in all blockchains including delegated
 		Proposal storage proposal = proposals[proposalId];
 		uint256 votes = rep.getVotesAt(signatory, true, proposal.startBlock);
-		return _castVote(signatory, proposalId, support, votes);
+		return _castVote(signatory, proposal, support, votes);
 	}
 
 	/// @notice internal helper to cast a vote
 	function _castVote(
 		address voter,
-		uint256 proposalId,
+		Proposal storage proposal,
 		bool support,
 		uint256 votes
 	) internal {
+		uint256 proposalId = proposal.id;
 		require(
 			state(proposalId) == ProposalState.Active ||
 				state(proposalId) == ProposalState.ActiveTimelock,
 			"CompoundVotingMachine::_castVote: voting is closed"
 		);
 
-		Proposal storage proposal = proposals[proposalId];
 		Receipt storage receipt = proposal.receipts[voter];
 		require(
 			receipt.hasVoted == false,
@@ -624,7 +628,7 @@ contract CompoundVotingMachine {
 		if (
 			proposal.forVotes >= proposal.quoromRequired ||
 			proposal.againstVotes >= proposal.quoromRequired
-		) _updateETA(proposalId, hasChanged);
+		) _updateETA(proposal, hasChanged);
 		emit VoteCast(voter, proposalId, support, votes);
 	}
 

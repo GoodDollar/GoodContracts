@@ -30,6 +30,11 @@ interface IConsensus {
 		returns (uint256);
 
 	function stakeAmount(address _address) external view returns (uint256);
+
+	function delegators(address _validator)
+		external
+		view
+		returns (address[] memory);
 }
 
 contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {

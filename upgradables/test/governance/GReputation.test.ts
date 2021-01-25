@@ -17,7 +17,7 @@ type BlockChainState = {
   blockNumber: BigNumber;
 };
 
-const getMerkleAndProof = (data, proofIdx) => {
+export const getMerkleAndProof = (data, proofIdx) => {
   const elements = data.map(e =>
     Buffer.from(
       ethers.utils
@@ -95,29 +95,38 @@ describe("GReputation", () => {
     expect(repBalance.toNumber()).to.be.equal(0);
   });
 
-  it("should set rootState", async () => {
-    await grepWithOwner.setBlockchainStateHash(
-      "rootState",
-      "0x" + merkleRoot.toString("hex"),
-      100
-    );
-    await grep.proveBalanceOfAtBlockchain("rootState", rep1, 1, proof);
+  describe("rootState", async () => {
+    it("should set rootState", async () => {
+      await grepWithOwner.setBlockchainStateHash(
+        "rootState",
+        "0x" + merkleRoot.toString("hex"),
+        100
+      );
+    });
 
-    //root states changes the core balance
-    const newRep = await grep.balanceOf(rep1);
-    expect(newRep.toNumber()).to.be.equal(1);
+    it("rootState should not change totalsupply until proof", async () => {
+      expect(await grep.totalSupply()).to.equal(0);
+    });
 
-    const newVotes = await grep.getVotes(rep1);
-    expect(newVotes.toNumber()).to.be.equal(1);
+    it("should update core balances after proof", async () => {
+      await grep.proveBalanceOfAtBlockchain("rootState", rep1, 1, proof);
+
+      //root states changes the core balance
+      const newRep = await grep.balanceOf(rep1);
+      expect(newRep.toNumber()).to.be.equal(1);
+
+      const newVotes = await grep.getVotes(rep1);
+      expect(newVotes.toNumber()).to.be.equal(1);
+      expect(await grep.totalSupply()).to.equal(1);
+    });
+
+    it("should reject invalid merkle proof", async () => {
+      const e = await grep
+        .proveBalanceOfAtBlockchain("rootState", rep3, 10, proof)
+        .catch(e => e);
+      expect(e.message).to.match(/invalid merkle proof/);
+    });
   });
-
-  it("should reject invalid merkle proof", async () => {
-    const e = await grep
-      .proveBalanceOfAtBlockchain("rootState", rep3, 10, proof)
-      .catch(e => e);
-    expect(e.message).to.match(/invalid merkle proof/);
-  });
-
   describe("delegation", async () => {
     it("should allow delegation", async () => {
       expect(await grep.balanceOf(rep3)).to.be.eq(BN.from(0));

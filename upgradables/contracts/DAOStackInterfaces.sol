@@ -26,6 +26,11 @@ interface Controller {
 		external
 		view
 		returns (bool);
+
+	function getSchemePermissions(address _scheme, address _avatar)
+		external
+		view
+		returns (bytes4);
 }
 
 interface ReputationInterface {

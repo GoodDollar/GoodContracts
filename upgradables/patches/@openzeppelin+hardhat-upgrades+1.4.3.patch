@@ -1,0 +1,62 @@
+diff --git a/node_modules/@openzeppelin/hardhat-upgrades/dist/deploy-proxy.d.ts b/node_modules/@openzeppelin/hardhat-upgrades/dist/deploy-proxy.d.ts
+index 2405883..5879166 100644
+--- a/node_modules/@openzeppelin/hardhat-upgrades/dist/deploy-proxy.d.ts
++++ b/node_modules/@openzeppelin/hardhat-upgrades/dist/deploy-proxy.d.ts
+@@ -7,6 +7,7 @@ export interface DeployFunction {
+ }
+ export interface DeployOptions extends ValidationOptions {
+     initializer?: string | false;
++    proxyFactory?: any;
+ }
+ export declare function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployFunction;
+ //# sourceMappingURL=deploy-proxy.d.ts.map
+\ No newline at end of file
+diff --git a/node_modules/@openzeppelin/hardhat-upgrades/dist/deploy-proxy.js b/node_modules/@openzeppelin/hardhat-upgrades/dist/deploy-proxy.js
+index c50acb2..b3aaf6d 100644
+--- a/node_modules/@openzeppelin/hardhat-upgrades/dist/deploy-proxy.js
++++ b/node_modules/@openzeppelin/hardhat-upgrades/dist/deploy-proxy.js
+@@ -25,7 +25,7 @@ function makeDeployProxy(hre) {
+         const adminAddress = await upgrades_core_1.fetchOrDeployAdmin(provider, () => deploy_1.deploy(AdminFactory));
+         const data = getInitializerData(ImplFactory, args, opts.initializer);
+         const ProxyFactory = await proxy_factory_1.getProxyFactory(hre, ImplFactory.signer);
+-        const proxy = await ProxyFactory.deploy(impl, adminAddress, data);
++        const proxy = await (opts.proxyFactory || ProxyFactory).deploy(impl, adminAddress, data);
+         const inst = ImplFactory.attach(proxy.address);
+         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+         // @ts-ignore Won't be readonly because inst was created through attach.
+diff --git a/node_modules/@openzeppelin/hardhat-upgrades/src/deploy-proxy.ts b/node_modules/@openzeppelin/hardhat-upgrades/src/deploy-proxy.ts
+index 4f9976f..bcaeaf7 100644
+--- a/node_modules/@openzeppelin/hardhat-upgrades/src/deploy-proxy.ts
++++ b/node_modules/@openzeppelin/hardhat-upgrades/src/deploy-proxy.ts
+@@ -22,6 +22,7 @@ export interface DeployFunction {
+ 
+ export interface DeployOptions extends ValidationOptions {
+   initializer?: string | false;
++  proxyFactory?: any
+ }
+ 
+ export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployFunction {
+@@ -52,8 +53,10 @@ export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployFunction
+     const adminAddress = await fetchOrDeployAdmin(provider, () => deploy(AdminFactory));
+ 
+     const data = getInitializerData(ImplFactory, args, opts.initializer);
++
++    
+     const ProxyFactory = await getProxyFactory(hre, ImplFactory.signer);
+-    const proxy = await ProxyFactory.deploy(impl, adminAddress, data);
++    const proxy = await (opts.proxyFactory || ProxyFactory).deploy(impl, adminAddress, data);
+ 
+     const inst = ImplFactory.attach(proxy.address);
+     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+diff --git a/node_modules/@openzeppelin/hardhat-upgrades/src/proxy-factory.ts b/node_modules/@openzeppelin/hardhat-upgrades/src/proxy-factory.ts
+index 8cfe3c2..fe141c5 100644
+--- a/node_modules/@openzeppelin/hardhat-upgrades/src/proxy-factory.ts
++++ b/node_modules/@openzeppelin/hardhat-upgrades/src/proxy-factory.ts
+@@ -2,7 +2,6 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
+ import { Signer, ContractFactory } from 'ethers';
+ import AdminUpgradeabilityProxy from '@openzeppelin/upgrades-core/artifacts/contracts/proxy/AdminUpgradeabilityProxy.sol/AdminUpgradeabilityProxy.json';
+ import ProxyAdmin from '@openzeppelin/upgrades-core/artifacts/contracts/proxy/ProxyAdmin.sol/ProxyAdmin.json';
+-
+ export async function getProxyFactory(hre: HardhatRuntimeEnvironment, signer?: Signer): Promise<ContractFactory> {
+   return hre.ethers.getContractFactory(AdminUpgradeabilityProxy.abi, AdminUpgradeabilityProxy.bytecode, signer);
+ }

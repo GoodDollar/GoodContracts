@@ -18,6 +18,7 @@ const infura_api = process.env.INFURA_API;
 const alchemy_key = process.env.ALCHEMY_KEY;
 const etherscan_key = process.env.ETHERSCAN_KEY;
 const ethplorer_key = process.env.ETHPLORER_KEY;
+
 console.log({ mnemonic: sha3(mnemonic) });
 const config: HardhatUserConfig = {
   solidity: {
@@ -44,6 +45,13 @@ const config: HardhatUserConfig = {
       chainId: 3
     },
     fuse: {
+      accounts: { mnemonic },
+      url: "https://rpc.fuse.io/",
+      gas: 3000000,
+      gasPrice: 1000000000,
+      chainId: 122
+    },
+    staging: {
       accounts: { mnemonic },
       url: "https://rpc.fuse.io/",
       gas: 3000000,

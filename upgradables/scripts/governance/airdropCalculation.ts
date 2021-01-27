@@ -224,7 +224,7 @@ export const airdrop = (ethers, ethplorer_key) => {
 
   const getClaimsPerAddress = async (balances: Balances = {}) => {
     const latestBlock = await ubi.provider.getBlockNumber();
-    const blocks = range(latestBlock - twoWeeks, latestBlock, step);
+    const blocks = range(6200000, latestBlock, step);
     const filter = ubi.filters.UBIClaimed();
 
     for (let blockChunk of chunk(blocks, 10)) {
@@ -272,12 +272,12 @@ export const airdrop = (ethers, ethplorer_key) => {
     await getClaimsPerAddress().then(r =>
       fs.writeFileSync("claimBalances.json", JSON.stringify(r))
     );
-    await getEthPlorerHolders().then(r =>
-      fs.writeFileSync("ethBalances.json", JSON.stringify(r))
-    );
-    await getBlockScoutHolders().then(r =>
-      fs.writeFileSync("fuseBalances.json", JSON.stringify(r))
-    );
+    // await getEthPlorerHolders().then(r =>
+    //   fs.writeFileSync("ethBalances.json", JSON.stringify(r))
+    // );
+    // await getBlockScoutHolders().then(r =>
+    //   fs.writeFileSync("fuseBalances.json", JSON.stringify(r))
+    // );
   };
 
   const buildMerkleTree = () => {
@@ -357,9 +357,11 @@ export const airdrop = (ethers, ethplorer_key) => {
     const { treeData, merkleRoot } = JSON.parse(
       fs.readFileSync("airdrop.json").toString()
     );
+
     const elements = Object.entries(treeData as Tree).map(e =>
       Buffer.from(e[1].hash.slice(2), "hex")
     );
+
     const merkleTree = new MerkleTree(elements, true);
     const proof = merkleTree
       .getProof(Buffer.from(treeData[addr].hash.slice(2), "hex"))

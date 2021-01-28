@@ -152,33 +152,22 @@ contract(
       await firstClaimPool.start();
     });
 
-    it("should not calculate cycle on first day", async () => {
+    it("should calculate cycle on first day", async () => {
       let transaction = await ubi.claim({ from: claimer1 });
       await ubi.claim({ from: claimer2 });
+      let cycleLength = await ubi.cycleLength().then(_ => _.toNumber());
       let currentCycle = await ubi.currentCycleLength();
-      expect(currentCycle.toNumber()).to.be.equal(0);
-      const cycleEventMissing = transaction.logs.some(
-        e => e.event === "UBICycleCalculated"
-      );
-      expect(await ubi.currentDayInCycle().then(_ => _.toNumber())).to.be.equal(0);
-      expect(cycleEventMissing).to.be.false;
-    });
-
-    it("should  calculate cycle on second day", async () => {
-      increaseTime(ONE_DAY);
-      expect(await ubi.currentDayInCycle().then(_ => _.toNumber())).to.be.equal(1); //1 day passed
-      let transaction = await ubi.claim({ from: claimer1 });
-      let currentCycle = await ubi.currentCycleLength();
-      expect(currentCycle.toNumber()).to.be.equal(
-        await ubi.cycleLength().then(_ => _.toNumber())
-      );
+      expect(currentCycle.toNumber()).to.be.gt(0);
       const cycleEvent = transaction.logs.find(e => e.event === "UBICycleCalculated");
-      expect(cycleEvent.args.dailyUBIPool.toNumber()).to.be.equal(125); //(1000 in pool) divided by 8 days
-      expect(await ubi.currentDayInCycle().then(_ => _.toNumber())).to.be.equal(0); //new cycle started
-      expect(cycleEvent).to.be.not.empty;
+      expect(cycleEvent.args.day.toNumber()).to.be.a("number");
+      expect(cycleEvent.args.pool.toNumber()).to.be.equal(1000);
+      expect(cycleEvent.args.cycleLength.toNumber()).to.be.equal(cycleLength);
+      expect(cycleEvent.args.dailyUBIPool.toNumber()).to.be.equal(
+        Math.floor(1000 / cycleLength)
+      );
     });
 
-    it("should  have calculated dailyCyclePool and dailyUbi", async () => {
+    it("should  have calculated dailyCyclePool and dailyUbi correctly", async () => {
       increaseTime(ONE_DAY);
       let transaction = await ubi.claim({ from: claimer2 });
       expect(await goodDollar.balanceOf(claimer2).then(_ => _.toNumber())).to.be.equal(
@@ -188,15 +177,19 @@ contract(
       expect(await ubi.currentDayInCycle().then(_ => _.toNumber())).to.be.equal(1); //1 day passed
     });
 
-    it("should calculate next cycle even if missed a day", async () => {
+    it("should calculate next cycle even if day passed without claims(setDay)", async () => {
       increaseTime(ONE_DAY * 9);
-      expect(await ubi.currentDayInCycle().then(_ => _.toNumber())).to.be.equal(10); //1 day passed
-      let transaction = await ubi.claim({ from: claimer1 });
-
+      expect(await ubi.currentDayInCycle().then(_ => _.toNumber())).to.be.equal(10); //10 days passed total
+      let transaction = await ubi.claim({ from: claimer1 }); //claims in new ubi cycle
+      expect(await goodDollar.balanceOf(claimer1).then(_ => _.toNumber())).to.be.equal(
+        100 + 58 //58 amount of new ubicycle
+      );
       const cycleEvent = transaction.logs.find(e => e.event === "UBICycleCalculated");
+
       expect(cycleEvent).to.be.not.empty;
+
       expect(await ubi.currentDayInCycle().then(_ => _.toNumber())).to.be.equal(0); //new cycle started
-      expect(cycleEvent.args.dailyUBIPool.toNumber()).to.be.equal(109); //(1000 - 2*62 in pool) divided by 8 days
+      expect(cycleEvent.args.dailyUBIPool.toNumber()).to.be.equal(117); //(1000 - 62 in pool) divided by 8 days - only first claimer got 62 in first cycle
     });
   }
 );

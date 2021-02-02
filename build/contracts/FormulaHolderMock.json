@@ -2,11 +2,73 @@
   "contractName": "FormulaHolderMock",
   "abi": [
     {
+      "inputs": [
+        {
+          "internalType": "contract FeeFormula",
+          "name": "_formula",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
       "constant": true,
       "inputs": [],
       "name": "formula",
       "outputs": [
         {
+          "internalType": "contract AbstractFees",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "isOwner",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
           "name": "",
           "type": "address"
         }
@@ -25,37 +87,10 @@
       "type": "function"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "owner",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "isOwner",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "constant": false,
       "inputs": [
         {
+          "internalType": "contract AbstractFees",
           "name": "_formula",
           "type": "address"
         }
@@ -70,6 +105,7 @@
       "constant": false,
       "inputs": [
         {
+          "internalType": "address",
           "name": "newOwner",
           "type": "address"
         }
@@ -79,82 +115,55 @@
       "payable": false,
       "stateMutability": "nonpayable",
       "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "name": "_formula",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "name": "previousOwner",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "OwnershipTransferred",
-      "type": "event"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.4+commit.9549d8ff\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[],\"name\":\"formula\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_formula\",\"type\":\"address\"}],\"name\":\"setFormula\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_formula\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}],\"devdoc\":{\"methods\":{\"isOwner()\":{\"return\":\"true if `msg.sender` is the owner of the contract.\"},\"owner()\":{\"return\":\"the address of the owner.\"},\"renounceOwnership()\":{\"details\":\"Allows the current owner to relinquish control of the contract.\"},\"transferOwnership(address)\":{\"details\":\"Allows the current owner to transfer control of the contract to a newOwner.\",\"params\":{\"newOwner\":\"The address to transfer ownership to.\"}}}},\"userdoc\":{\"methods\":{\"renounceOwnership()\":{\"notice\":\"Renouncing to ownership will leave the contract without an owner. It will not be possible to call the functions with the `onlyOwner` modifier anymore.\"}}}},\"settings\":{\"compilationTarget\":{\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/FormulaHolderMock.sol\":\"FormulaHolderMock\"},\"evmVersion\":\"byzantium\",\"libraries\":{},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FeeFormula.sol\":{\"keccak256\":\"0xb57a014be76514e7cb3ef4846201b37a21d36340efeeb347dc8e8f6e5ced8040\",\"urls\":[\"bzzr://59818faddcb55bae98e3c25739f0e84540e2e85228f924120ade24ee5e903673\"]},\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FormulaHolder.sol\":{\"keccak256\":\"0x7f87484c88431288097a2e955eb5b3b4fb283f417dad8c20262783b6f286a041\",\"urls\":[\"bzzr://dc804f6ea2d124c5b49cc22f58fd256f430d8d0d95d3e19b9f24f967f00cd126\"]},\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/SchemeGuard.sol\":{\"keccak256\":\"0xbf0b5a7a7c8a3718b4110d188c69fdf07ce3127232903d1e094c237c57d11e46\",\"urls\":[\"bzzr://391e945d3821401aff3ccaf7747d45ad2add33d663b5843e67e57234f40e4cc0\"]},\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/FormulaHolderMock.sol\":{\"keccak256\":\"0x74ee3539938fd28e29d0714f68a9fc0c07afa2ba41f62ce9c62663e054158ef6\",\"urls\":[\"bzzr://1c6fb4103ff2e17d7f21145deec8b24e0ed13afde3befd26612ab4fba3e24d96\"]},\"@daostack/arc/contracts/controller/Avatar.sol\":{\"keccak256\":\"0x4e4fb9d3bc21f42fbfc6a01e9f8aa483a59e9f447b0d604f55b587a81ec09ef4\",\"urls\":[\"bzzr://b0af60e651a75274a028dc4b53d06091a46ca0efa3bfb4153879e76cf86a49dc\"]},\"@daostack/arc/contracts/controller/ControllerInterface.sol\":{\"keccak256\":\"0x933e92612c90f292c7b59908958b003f1a13d90b97bed0572b566353c20974dc\",\"urls\":[\"bzzr://e8050774c20b9b22636b47cdd353eaf5df72e0bca8f2b8569365be30f4eaef0c\"]},\"@daostack/arc/contracts/controller/DAOToken.sol\":{\"keccak256\":\"0x9b213e4e3ceeffcfc1c962a43b70b8d763d8091a2dd713fc1989b97bb68786e6\",\"urls\":[\"bzzr://7ba306fdbad344e01474e3ae9c37b27b64efdc1cb17ffc0f3ec1c4427fde359d\"]},\"@daostack/arc/contracts/globalConstraints/GlobalConstraintInterface.sol\":{\"keccak256\":\"0xc006c4591ec10b845a56e13f6791db2c428610953034686d52b2a934b6c8f36f\",\"urls\":[\"bzzr://d1f293a0bbaa292296a83977cb36a14048db404a32e3f6aa9bd79ea61ac3c4c3\"]},\"@daostack/arc/contracts/libs/SafeERC20.sol\":{\"keccak256\":\"0xf6727d432f67046145b078f40c1cc4f6be7b0d12a6678ecaf457edf7550d244c\",\"urls\":[\"bzzr://cd706a2dc7540d093b591a280b464256c596ddad598b68886e6db2e7958f9916\"]},\"@daostack/infra/contracts/Reputation.sol\":{\"keccak256\":\"0x3d226dac0fe7d758f0287fb28bc25fcec1f69d19888ae3a550fa49856d61c482\",\"urls\":[\"bzzr://7f219e1874d4f1aea860cc665b75015797f55f149e9bf490abab5d7ad2adfeb9\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x965012d27b4262d7a41f5028cbb30c51ebd9ecd4be8fb30380aaa7a3c64fbc8b\",\"urls\":[\"bzzr://41ca38f6b0fa4b77b0feec43e422cfbec48b7eb38a41edf0b85c77e8d9a296b1\"]},\"openzeppelin-solidity/contracts/ownership/Ownable.sol\":{\"keccak256\":\"0x980de387a1a020a498f53d00f89fecebb12c949a17e8f160093c0303ede2b786\",\"urls\":[\"bzzr://08894efa2a557982070beda6a81a032407e70532d24bdafe80d39660c74904d9\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0xba431353cb4fe70777ac026231eb5468e41aa1e81240a2b8136917acc5fff4dc\",\"urls\":[\"bzzr://80cd02a56e6e33504318124d0d645c82e615cc8a4b5829cc9d82d17635c644c8\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol\":{\"keccak256\":\"0xa3e68fd7f987c8fbdaf4867d428a69a15f3cf2f69709a5b0a0fbef750b0e6fbc\",\"urls\":[\"bzzr://f4ebb7c5b9e429b98b07e2caca6156c13c3724e9b1191cca8423ab8427bc6265\"]},\"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x079c4e23ee448f529e43bfa3c4e8fb4be52cd0318ee923a276835bedf45b93d8\",\"urls\":[\"bzzr://48248e86f64407a95f241d6c5c8cfea6b4d4ebf4ebb467e5c98c8af3868fafe4\"]},\"openzeppelin-solidity/contracts/utils/Address.sol\":{\"keccak256\":\"0x5c731061b804fa256fc8c05150eafe5d20b6bb94541a8f187912bf84f7033f34\",\"urls\":[\"bzzr://63fc4af0d7a99a770925b96a6cf48f25fc00d30274266f82db05f30baa238267\"]}},\"version\":1}",
-  "bytecode": "0x608060405234801561001057600080fd5b506040516020806104698339810180604052602081101561003057600080fd5b505160008054600160a060020a03191633178082556040518392600160a060020a039290921691907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3600160a060020a03811615156100f457604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152601860248201527f537570706c69656420666f726d756c61206973206e756c6c0000000000000000604482015290519081900360640190fd5b60018054600160a060020a031916600160a060020a039290921691909117905550610345806101246000396000f3fe608060405234801561001057600080fd5b506004361061007e577c010000000000000000000000000000000000000000000000000000000060003504634b75f54f8114610083578063715018a6146100a75780638da5cb5b146100b15780638f32d59b146100b9578063ecc06c76146100d5578063f2fde38b146100fb575b600080fd5b61008b610121565b60408051600160a060020a039092168252519081900360200190f35b6100af610130565b005b61008b61019a565b6100c16101a9565b604080519115158252519081900360200190f35b6100af600480360360208110156100eb57600080fd5b5035600160a060020a03166101ba565b6100af6004803603602081101561011157600080fd5b5035600160a060020a031661027d565b600154600160a060020a031681565b6101386101a9565b151561014357600080fd5b60008054604051600160a060020a03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a36000805473ffffffffffffffffffffffffffffffffffffffff19169055565b600054600160a060020a031690565b600054600160a060020a0316331490565b6101c26101a9565b15156101cd57600080fd5b80600160a060020a031663223668446040518163ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040160206040518083038186803b15801561022257600080fd5b505afa158015610236573d6000803e3d6000fd5b505050506040513d602081101561024c57600080fd5b50506001805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b6102856101a9565b151561029057600080fd5b6102998161029c565b50565b600160a060020a03811615156102b157600080fd5b60008054604051600160a060020a03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a36000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a039290921691909117905556fea165627a7a72305820fdf8a40ba16d0532ef13ea2d2ce1af0a27ed1bab926fac55054ee111582d1cbc0029",
-  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061007e577c010000000000000000000000000000000000000000000000000000000060003504634b75f54f8114610083578063715018a6146100a75780638da5cb5b146100b15780638f32d59b146100b9578063ecc06c76146100d5578063f2fde38b146100fb575b600080fd5b61008b610121565b60408051600160a060020a039092168252519081900360200190f35b6100af610130565b005b61008b61019a565b6100c16101a9565b604080519115158252519081900360200190f35b6100af600480360360208110156100eb57600080fd5b5035600160a060020a03166101ba565b6100af6004803603602081101561011157600080fd5b5035600160a060020a031661027d565b600154600160a060020a031681565b6101386101a9565b151561014357600080fd5b60008054604051600160a060020a03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a36000805473ffffffffffffffffffffffffffffffffffffffff19169055565b600054600160a060020a031690565b600054600160a060020a0316331490565b6101c26101a9565b15156101cd57600080fd5b80600160a060020a031663223668446040518163ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040160206040518083038186803b15801561022257600080fd5b505afa158015610236573d6000803e3d6000fd5b505050506040513d602081101561024c57600080fd5b50506001805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b6102856101a9565b151561029057600080fd5b6102998161029c565b50565b600160a060020a03811615156102b157600080fd5b60008054604051600160a060020a03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a36000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a039290921691909117905556fea165627a7a72305820fdf8a40ba16d0532ef13ea2d2ce1af0a27ed1bab926fac55054ee111582d1cbc0029",
-  "sourceMap": "108:125:30:-;;;159:72;8:9:-1;5:2;;;30:1;27;20:12;5:2;159:72:30;;;;;;;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;159:72:30;515:6:68;:19;;-1:-1:-1;;;;;;515:19:68;524:10;515:19;;;;549:40;;159:72:30;;-1:-1:-1;;;;;582:6:68;;;;;515;549:40;;515:6;;549:40;-1:-1:-1;;;;;469:27:11;;;;461:64;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;535:7;:18;;-1:-1:-1;;;;;;535:18:11;-1:-1:-1;;;;;535:18:11;;;;;;;;;;-1:-1:-1;108:125:30;;;-1:-1:-1;108:125:30;;",
-  "deployedSourceMap": "108:125:30:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;108:125:30;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;244:27:11;;;:::i;:::-;;;;-1:-1:-1;;;;;244:27:11;;;;;;;;;;;;;;1347:137:68;;;:::i;:::-;;659:77;;;:::i;979:90::-;;;:::i;:::-;;;;;;;;;;;;;;;;;;758:128:11;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;758:128:11;-1:-1:-1;;;;;758:128:11;;:::i;1655:107:68:-;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;1655:107:68;-1:-1:-1;;;;;1655:107:68;;:::i;244:27:11:-;;;-1:-1:-1;;;;;244:27:11;;:::o;1347:137:68:-;863:9;:7;:9::i;:::-;855:18;;;;;;;;1445:1;1429:6;;1408:40;;-1:-1:-1;;;;;1429:6:68;;;;1408:40;;1445:1;;1408:40;1475:1;1458:19;;-1:-1:-1;;1458:19:68;;;1347:137::o;659:77::-;697:7;723:6;-1:-1:-1;;;;;723:6:68;659:77;:::o;979:90::-;1019:4;1056:6;-1:-1:-1;;;;;1056:6:68;1042:10;:20;;979:90::o;758:128:11:-;863:9:68;:7;:9::i;:::-;855:18;;;;;;;;828:8:11;-1:-1:-1;;;;;828:21:11;;:23;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;828:23:11;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;828:23:11;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;;861:7:11;:18;;-1:-1:-1;;861:18:11;-1:-1:-1;;;;;861:18:11;;;;;;;;;;758:128::o;1655:107:68:-;863:9;:7;:9::i;:::-;855:18;;;;;;;;1727:28;1746:8;1727:18;:28::i;:::-;1655:107;:::o;1906:183::-;-1:-1:-1;;;;;1979:22:68;;;;1971:31;;;;;;2038:6;;;2017:38;;-1:-1:-1;;;;;2017:38:68;;;;2038:6;;;2017:38;;;2065:6;:17;;-1:-1:-1;;2065:17:68;-1:-1:-1;;;;;2065:17:68;;;;;;;;;;1906:183::o",
-  "source": "pragma solidity 0.5.4;\n\nimport \"../dao/schemes/FormulaHolder.sol\";\nimport \"../dao/schemes/FeeFormula.sol\";\n\ncontract FormulaHolderMock is FormulaHolder {\n\n    constructor(FeeFormula _formula) public FormulaHolder(_formula) {\n\n    }\n}",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.16+commit.9c3226ce\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract FeeFormula\",\"name\":\"_formula\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[],\"name\":\"formula\",\"outputs\":[{\"internalType\":\"contract AbstractFees\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"contract AbstractFees\",\"name\":\"_formula\",\"type\":\"address\"}],\"name\":\"setFormula\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{\"isOwner()\":{\"return\":\"true if `msg.sender` is the owner of the contract.\"},\"owner()\":{\"return\":\"the address of the owner.\"},\"renounceOwnership()\":{\"details\":\"Allows the current owner to relinquish control of the contract.\"},\"transferOwnership(address)\":{\"details\":\"Allows the current owner to transfer control of the contract to a newOwner.\",\"params\":{\"newOwner\":\"The address to transfer ownership to.\"}}}},\"userdoc\":{\"methods\":{\"renounceOwnership()\":{\"notice\":\"Renouncing to ownership will leave the contract without an owner. It will not be possible to call the functions with the `onlyOwner` modifier anymore.\"}}}},\"settings\":{\"compilationTarget\":{\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/FormulaHolderMock.sol\":\"FormulaHolderMock\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FeeFormula.sol\":{\"keccak256\":\"0x2ac93f891a65aa60b93e2b27552850dfa459b88f5a19edc29bb5bab0cc4f3eaa\",\"urls\":[\"bzz-raw://bddb94bc0230d959d2362887a253a47b91f0de6804cba8e4569a7cac47c39b5a\",\"dweb:/ipfs/QmTdkPQHRdzxJ7D7pi9cowLgYY9wVja416dhBwCsdtPEv5\"]},\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FormulaHolder.sol\":{\"keccak256\":\"0xb3c0d3bc21e71497784e1be11698ff501ee11545c3106bec2cae2e8af1bacd9b\",\"urls\":[\"bzz-raw://783b4e28b67231de0fbbe48e58f43f69db3f98fd7f75668edce145a55a9b5b17\",\"dweb:/ipfs/QmdeyRfeix3PGfaXqtRQpH1sjmjFpdtuGaPwnvRn7nHAWd\"]},\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/SchemeGuard.sol\":{\"keccak256\":\"0x32e1b2a172e2c22a6aa757bfcb0722cc67f64c5c2e48df3dec2737903516d565\",\"urls\":[\"bzz-raw://bee57a8eba08348e93a0c18f3ab534e67865c0fa27afe27f5cf234bd5f248915\",\"dweb:/ipfs/Qmd8aveHWcUkYWMyJrJRZPyVXj8MAMBfpBFo6g4Z2VJeo3\"]},\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/FormulaHolderMock.sol\":{\"keccak256\":\"0xa7e9ec9bffe2acda6b29a37d3a4c748a9f2f0d888f8ca9db0c3c489f3be4bd4b\",\"urls\":[\"bzz-raw://f0230e7ff612fefe51745412934d88d97294090ca8e9c249a041308aa52f17bd\",\"dweb:/ipfs/QmU3xXfB2hEUiBzJB4GLHEDUmWXR8mE5uf2dALiqxXyrPc\"]},\"@daostack/arc/contracts/controller/Avatar.sol\":{\"keccak256\":\"0x4e4fb9d3bc21f42fbfc6a01e9f8aa483a59e9f447b0d604f55b587a81ec09ef4\",\"urls\":[\"bzz-raw://9d3c1c7575cf6075ea1d89921f09b9b8e322b208dacaf0446cd4f64506c999f0\",\"dweb:/ipfs/QmVGDDHAR2ByuQpbgV7BBKXGEAcbaWvejpEZYzHgaagBFK\"]},\"@daostack/arc/contracts/controller/ControllerInterface.sol\":{\"keccak256\":\"0x933e92612c90f292c7b59908958b003f1a13d90b97bed0572b566353c20974dc\",\"urls\":[\"bzz-raw://ce1fcf85b744fcce2dbd4205e3943e9b4ec36a5f0330d4bbf61e65f1a3e0e470\",\"dweb:/ipfs/QmUWiLkBDdekhpy93nTzBtxDHL6yNh6sTUM9G8VbsHcBzy\"]},\"@daostack/arc/contracts/controller/DAOToken.sol\":{\"keccak256\":\"0x9b213e4e3ceeffcfc1c962a43b70b8d763d8091a2dd713fc1989b97bb68786e6\",\"urls\":[\"bzz-raw://51d1d6e85fd90f45395a16b7a3c703c4636e836041f2a13f806e4222ef2e59c1\",\"dweb:/ipfs/QmQjeCeFf7TJzsYjT5scyZUDDixBA8Yy8YppgBuxcKPDnP\"]},\"@daostack/arc/contracts/globalConstraints/GlobalConstraintInterface.sol\":{\"keccak256\":\"0xc006c4591ec10b845a56e13f6791db2c428610953034686d52b2a934b6c8f36f\",\"urls\":[\"bzz-raw://19495cd88280e54d7ddcd043ffeff75e6d3777a0c42debcd61cae448e9497ea0\",\"dweb:/ipfs/QmYxWz7CgFmmddrcVXJKfob5Ktwykc2imNVUwLSR5WR8bJ\"]},\"@daostack/arc/contracts/libs/SafeERC20.sol\":{\"keccak256\":\"0xf6727d432f67046145b078f40c1cc4f6be7b0d12a6678ecaf457edf7550d244c\",\"urls\":[\"bzz-raw://5dba7734c4fed446c084a707761cbc66ba22b8b93ef53c8d4a22a76b6e271690\",\"dweb:/ipfs/QmP2VpPKUqLh4ZZs6LaxHVpCN1zCmiorygL9bMub4mbYCw\"]},\"@daostack/infra/contracts/Reputation.sol\":{\"keccak256\":\"0x3d226dac0fe7d758f0287fb28bc25fcec1f69d19888ae3a550fa49856d61c482\",\"urls\":[\"bzz-raw://8856852c8fe0ba1c9aab326f0a9a6e7f31a238de2778fa5188e6fc399f7eb352\",\"dweb:/ipfs/QmVH4ppR9Dk7v8yxaSgeArdMv9gBBVoQxEf4E3UsqQ4rY2\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x965012d27b4262d7a41f5028cbb30c51ebd9ecd4be8fb30380aaa7a3c64fbc8b\",\"urls\":[\"bzz-raw://1eb493553b27efd46c231a836a83ce50d215639feb97b4aac9f301d0fd034ff5\",\"dweb:/ipfs/QmbMdvSXcqGKxeeYvzF3VrWpoHQyVzMXBhzhAokF2Gdymv\"]},\"openzeppelin-solidity/contracts/ownership/Ownable.sol\":{\"keccak256\":\"0x980de387a1a020a498f53d00f89fecebb12c949a17e8f160093c0303ede2b786\",\"urls\":[\"bzz-raw://f07a2c393caa85f62f0aaa461e3edd50aa59371d4209778ba0558d7f8b4b856c\",\"dweb:/ipfs/QmeN3ZiYGSjCnQFeYaJNgoXjF9eDue1g3e9pqManRkeBtV\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0xba431353cb4fe70777ac026231eb5468e41aa1e81240a2b8136917acc5fff4dc\",\"urls\":[\"bzz-raw://f40c91ca270bdc9b156f339081a0fc2bbcf73cf5f62b8c73ba555df753ff6619\",\"dweb:/ipfs/QmT8y2VVjGaFdGphpcXrgvdPi2EgF9LuCDgJiJ89LvpFRV\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol\":{\"keccak256\":\"0xa3e68fd7f987c8fbdaf4867d428a69a15f3cf2f69709a5b0a0fbef750b0e6fbc\",\"urls\":[\"bzz-raw://50b1ff986d3b2793850a66c8429d9886fdfb134b1509b3e98714e3e2a71e24f5\",\"dweb:/ipfs/QmSQBYPeY9tbR3ciGRNQqvcWKnNiuxtVMq2MsPWpLwuGGm\"]},\"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x079c4e23ee448f529e43bfa3c4e8fb4be52cd0318ee923a276835bedf45b93d8\",\"urls\":[\"bzz-raw://ee762ff5b7746e41d27dcbcea00c7a3034b58adb1b45ddadddb5b721aff450df\",\"dweb:/ipfs/QmdxqtgEFZjHCoiYyz6pUAQ5iBm7As25jcyEbZoTaAgyDa\"]},\"openzeppelin-solidity/contracts/utils/Address.sol\":{\"keccak256\":\"0x5c731061b804fa256fc8c05150eafe5d20b6bb94541a8f187912bf84f7033f34\",\"urls\":[\"bzz-raw://a3c2d9f046beebab7fb41b1b124a6a124a36f510f7c67365861402ac831bdc71\",\"dweb:/ipfs/QmUtASRgitregbKH83anopLtF9vFQe3BKeAjhUa6F7t9YV\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506040516103f23803806103f28339818101604052602081101561003357600080fd5b5051600080546001600160a01b031916331780825560405183926001600160a01b039290921691907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a36001600160a01b0381166100db576040805162461bcd60e51b815260206004820152601860248201527f537570706c69656420666f726d756c61206973206e756c6c0000000000000000604482015290519081900360640190fd5b600180546001600160a01b0319166001600160a01b0392909216919091179055506102e78061010b6000396000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c80634b75f54f14610067578063715018a61461008b5780638da5cb5b146100955780638f32d59b1461009d578063ecc06c76146100b9578063f2fde38b146100df575b600080fd5b61006f610105565b604080516001600160a01b039092168252519081900360200190f35b610093610114565b005b61006f61016f565b6100a561017e565b604080519115158252519081900360200190f35b610093600480360360208110156100cf57600080fd5b50356001600160a01b031661018f565b610093600480360360208110156100f557600080fd5b50356001600160a01b0316610227565b6001546001600160a01b031681565b61011c61017e565b61012557600080fd5b600080546040516001600160a01b03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600080546001600160a01b0319169055565b6000546001600160a01b031690565b6000546001600160a01b0316331490565b61019761017e565b6101a057600080fd5b806001600160a01b031663223668446040518163ffffffff1660e01b815260040160206040518083038186803b1580156101d957600080fd5b505afa1580156101ed573d6000803e3d6000fd5b505050506040513d602081101561020357600080fd5b5050600180546001600160a01b0319166001600160a01b0392909216919091179055565b61022f61017e565b61023857600080fd5b61024181610244565b50565b6001600160a01b03811661025757600080fd5b600080546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a3600080546001600160a01b0319166001600160a01b039290921691909117905556fea265627a7a723158202eb6afded8455b44e2485a29f2568b3e3d1b4f47d641cf46bbb17a6406ccfca264736f6c63430005100032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100625760003560e01c80634b75f54f14610067578063715018a61461008b5780638da5cb5b146100955780638f32d59b1461009d578063ecc06c76146100b9578063f2fde38b146100df575b600080fd5b61006f610105565b604080516001600160a01b039092168252519081900360200190f35b610093610114565b005b61006f61016f565b6100a561017e565b604080519115158252519081900360200190f35b610093600480360360208110156100cf57600080fd5b50356001600160a01b031661018f565b610093600480360360208110156100f557600080fd5b50356001600160a01b0316610227565b6001546001600160a01b031681565b61011c61017e565b61012557600080fd5b600080546040516001600160a01b03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600080546001600160a01b0319169055565b6000546001600160a01b031690565b6000546001600160a01b0316331490565b61019761017e565b6101a057600080fd5b806001600160a01b031663223668446040518163ffffffff1660e01b815260040160206040518083038186803b1580156101d957600080fd5b505afa1580156101ed573d6000803e3d6000fd5b505050506040513d602081101561020357600080fd5b5050600180546001600160a01b0319166001600160a01b0392909216919091179055565b61022f61017e565b61023857600080fd5b61024181610244565b50565b6001600160a01b03811661025757600080fd5b600080546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a3600080546001600160a01b0319166001600160a01b039290921691909117905556fea265627a7a723158202eb6afded8455b44e2485a29f2568b3e3d1b4f47d641cf46bbb17a6406ccfca264736f6c63430005100032",
+  "sourceMap": "109:118:31:-;;;159:66;8:9:-1;5:2;;;30:1;27;20:12;5:2;159:66:31;;;;;;;;;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;159:66:31;515:6:69;:19;;-1:-1:-1;;;;;;515:19:69;524:10;515:19;;;;549:40;;159:66:31;;-1:-1:-1;;;;;582:6:69;;;;;515;549:40;;515:6;;549:40;-1:-1:-1;;;;;469:27:12;;461:64;;;;;-1:-1:-1;;;461:64:12;;;;;;;;;;;;;;;;;;;;;;;;;;;;535:7;:18;;-1:-1:-1;;;;;;535:18:12;-1:-1:-1;;;;;535:18:12;;;;;;;;;;-1:-1:-1;109:118:31;;;-1:-1:-1;109:118:31;;",
+  "deployedSourceMap": "109:118:31:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;109:118:31;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;244:27:12;;;:::i;:::-;;;;-1:-1:-1;;;;;244:27:12;;;;;;;;;;;;;;1347:137:69;;;:::i;:::-;;659:77;;;:::i;979:90::-;;;:::i;:::-;;;;;;;;;;;;;;;;;;758:128:12;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;758:128:12;-1:-1:-1;;;;;758:128:12;;:::i;1655:107:69:-;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;1655:107:69;-1:-1:-1;;;;;1655:107:69;;:::i;244:27:12:-;;;-1:-1:-1;;;;;244:27:12;;:::o;1347:137:69:-;863:9;:7;:9::i;:::-;855:18;;;;;;1445:1;1429:6;;1408:40;;-1:-1:-1;;;;;1429:6:69;;;;1408:40;;1445:1;;1408:40;1475:1;1458:19;;-1:-1:-1;;;;;;1458:19:69;;;1347:137::o;659:77::-;697:7;723:6;-1:-1:-1;;;;;723:6:69;659:77;:::o;979:90::-;1019:4;1056:6;-1:-1:-1;;;;;1056:6:69;1042:10;:20;;979:90::o;758:128:12:-;863:9:69;:7;:9::i;:::-;855:18;;;;;;828:8:12;-1:-1:-1;;;;;828:21:12;;:23;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;828:23:12;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;828:23:12;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;;861:7:12;:18;;-1:-1:-1;;;;;;861:18:12;-1:-1:-1;;;;;861:18:12;;;;;;;;;;758:128::o;1655:107:69:-;863:9;:7;:9::i;:::-;855:18;;;;;;1727:28;1746:8;1727:18;:28::i;:::-;1655:107;:::o;1906:183::-;-1:-1:-1;;;;;1979:22:69;;1971:31;;;;;;2038:6;;;2017:38;;-1:-1:-1;;;;;2017:38:69;;;;2038:6;;;2017:38;;;2065:6;:17;;-1:-1:-1;;;;;;2065:17:69;-1:-1:-1;;;;;2065:17:69;;;;;;;;;;1906:183::o",
+  "source": "pragma solidity >0.5.4;\n\nimport \"../dao/schemes/FormulaHolder.sol\";\nimport \"../dao/schemes/FeeFormula.sol\";\n\ncontract FormulaHolderMock is FormulaHolder {\n    constructor(FeeFormula _formula) public FormulaHolder(_formula) {}\n}\n",
   "sourcePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/FormulaHolderMock.sol",
   "ast": {
     "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/FormulaHolderMock.sol",
     "exportedSymbols": {
       "FormulaHolderMock": [
-        5435
+        5233
       ]
     },
-    "id": 5436,
+    "id": 5234,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 5421,
+        "id": 5219,
         "literals": [
           "solidity",
+          ">",
           "0.5",
           ".4"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:22:30"
+        "src": "0:23:31"
       },
       {
         "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FormulaHolder.sol",
         "file": "../dao/schemes/FormulaHolder.sol",
-        "id": 5422,
+        "id": 5220,
         "nodeType": "ImportDirective",
-        "scope": 5436,
-        "sourceUnit": 1814,
-        "src": "24:42:30",
+        "scope": 5234,
+        "sourceUnit": 2127,
+        "src": "25:42:31",
         "symbolAliases": [],
         "unitAlias": ""
       },
       {
         "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FeeFormula.sol",
         "file": "../dao/schemes/FeeFormula.sol",
-        "id": 5423,
+        "id": 5221,
         "nodeType": "ImportDirective",
-        "scope": 5436,
-        "sourceUnit": 1434,
-        "src": "67:39:30",
+        "scope": 5234,
+        "sourceUnit": 1747,
+        "src": "68:39:31",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -164,46 +173,46 @@
             "arguments": null,
             "baseName": {
               "contractScope": null,
-              "id": 5424,
+              "id": 5222,
               "name": "FormulaHolder",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 1813,
-              "src": "138:13:30",
+              "referencedDeclaration": 2126,
+              "src": "139:13:31",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_FormulaHolder_$1813",
+                "typeIdentifier": "t_contract$_FormulaHolder_$2126",
                 "typeString": "contract FormulaHolder"
               }
             },
-            "id": 5425,
+            "id": 5223,
             "nodeType": "InheritanceSpecifier",
-            "src": "138:13:30"
+            "src": "139:13:31"
           }
         ],
         "contractDependencies": [
-          1813,
-          16028
+          2126,
+          15841
         ],
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 5435,
+        "id": 5233,
         "linearizedBaseContracts": [
-          5435,
-          1813,
-          16028
+          5233,
+          2126,
+          15841
         ],
         "name": "FormulaHolderMock",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "body": {
-              "id": 5433,
+              "id": 5231,
               "nodeType": "Block",
-              "src": "223:8:30",
+              "src": "223:2:31",
               "statements": []
             },
             "documentation": null,
-            "id": 5434,
+            "id": 5232,
             "implemented": true,
             "kind": "constructor",
             "modifiers": [
@@ -211,64 +220,64 @@
                 "arguments": [
                   {
                     "argumentTypes": null,
-                    "id": 5430,
+                    "id": 5228,
                     "name": "_formula",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5427,
-                    "src": "213:8:30",
+                    "referencedDeclaration": 5225,
+                    "src": "213:8:31",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_FeeFormula_$1433",
+                      "typeIdentifier": "t_contract$_FeeFormula_$1746",
                       "typeString": "contract FeeFormula"
                     }
                   }
                 ],
-                "id": 5431,
+                "id": 5229,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 5429,
+                  "id": 5227,
                   "name": "FormulaHolder",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 1813,
-                  "src": "199:13:30",
+                  "referencedDeclaration": 2126,
+                  "src": "199:13:31",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_type$_t_contract$_FormulaHolder_$1813_$",
+                    "typeIdentifier": "t_type$_t_contract$_FormulaHolder_$2126_$",
                     "typeString": "type(contract FormulaHolder)"
                   }
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "199:23:30"
+                "src": "199:23:31"
               }
             ],
             "name": "",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 5428,
+              "id": 5226,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 5427,
+                  "id": 5225,
                   "name": "_formula",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5434,
-                  "src": "171:19:30",
+                  "scope": 5232,
+                  "src": "171:19:31",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_contract$_FeeFormula_$1433",
+                    "typeIdentifier": "t_contract$_FeeFormula_$1746",
                     "typeString": "contract FeeFormula"
                   },
                   "typeName": {
                     "contractScope": null,
-                    "id": 5426,
+                    "id": 5224,
                     "name": "FeeFormula",
                     "nodeType": "UserDefinedTypeName",
-                    "referencedDeclaration": 1433,
-                    "src": "171:10:30",
+                    "referencedDeclaration": 1746,
+                    "src": "171:10:31",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_FeeFormula_$1433",
+                      "typeIdentifier": "t_contract$_FeeFormula_$1746",
                       "typeString": "contract FeeFormula"
                     }
                   },
@@ -276,66 +285,67 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "170:21:30"
+              "src": "170:21:31"
             },
             "returnParameters": {
-              "id": 5432,
+              "id": 5230,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "223:0:30"
+              "src": "223:0:31"
             },
-            "scope": 5435,
-            "src": "159:72:30",
+            "scope": 5233,
+            "src": "159:66:31",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
-        "scope": 5436,
-        "src": "108:125:30"
+        "scope": 5234,
+        "src": "109:118:31"
       }
     ],
-    "src": "0:233:30"
+    "src": "0:228:31"
   },
   "legacyAST": {
     "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/FormulaHolderMock.sol",
     "exportedSymbols": {
       "FormulaHolderMock": [
-        5435
+        5233
       ]
     },
-    "id": 5436,
+    "id": 5234,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 5421,
+        "id": 5219,
         "literals": [
           "solidity",
+          ">",
           "0.5",
           ".4"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:22:30"
+        "src": "0:23:31"
       },
       {
         "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FormulaHolder.sol",
         "file": "../dao/schemes/FormulaHolder.sol",
-        "id": 5422,
+        "id": 5220,
         "nodeType": "ImportDirective",
-        "scope": 5436,
-        "sourceUnit": 1814,
-        "src": "24:42:30",
+        "scope": 5234,
+        "sourceUnit": 2127,
+        "src": "25:42:31",
         "symbolAliases": [],
         "unitAlias": ""
       },
       {
         "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/FeeFormula.sol",
         "file": "../dao/schemes/FeeFormula.sol",
-        "id": 5423,
+        "id": 5221,
         "nodeType": "ImportDirective",
-        "scope": 5436,
-        "sourceUnit": 1434,
-        "src": "67:39:30",
+        "scope": 5234,
+        "sourceUnit": 1747,
+        "src": "68:39:31",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -345,46 +355,46 @@
             "arguments": null,
             "baseName": {
               "contractScope": null,
-              "id": 5424,
+              "id": 5222,
               "name": "FormulaHolder",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 1813,
-              "src": "138:13:30",
+              "referencedDeclaration": 2126,
+              "src": "139:13:31",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_FormulaHolder_$1813",
+                "typeIdentifier": "t_contract$_FormulaHolder_$2126",
                 "typeString": "contract FormulaHolder"
               }
             },
-            "id": 5425,
+            "id": 5223,
             "nodeType": "InheritanceSpecifier",
-            "src": "138:13:30"
+            "src": "139:13:31"
           }
         ],
         "contractDependencies": [
-          1813,
-          16028
+          2126,
+          15841
         ],
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 5435,
+        "id": 5233,
         "linearizedBaseContracts": [
-          5435,
-          1813,
-          16028
+          5233,
+          2126,
+          15841
         ],
         "name": "FormulaHolderMock",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "body": {
-              "id": 5433,
+              "id": 5231,
               "nodeType": "Block",
-              "src": "223:8:30",
+              "src": "223:2:31",
               "statements": []
             },
             "documentation": null,
-            "id": 5434,
+            "id": 5232,
             "implemented": true,
             "kind": "constructor",
             "modifiers": [
@@ -392,64 +402,64 @@
                 "arguments": [
                   {
                     "argumentTypes": null,
-                    "id": 5430,
+                    "id": 5228,
                     "name": "_formula",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5427,
-                    "src": "213:8:30",
+                    "referencedDeclaration": 5225,
+                    "src": "213:8:31",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_FeeFormula_$1433",
+                      "typeIdentifier": "t_contract$_FeeFormula_$1746",
                       "typeString": "contract FeeFormula"
                     }
                   }
                 ],
-                "id": 5431,
+                "id": 5229,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 5429,
+                  "id": 5227,
                   "name": "FormulaHolder",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 1813,
-                  "src": "199:13:30",
+                  "referencedDeclaration": 2126,
+                  "src": "199:13:31",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_type$_t_contract$_FormulaHolder_$1813_$",
+                    "typeIdentifier": "t_type$_t_contract$_FormulaHolder_$2126_$",
                     "typeString": "type(contract FormulaHolder)"
                   }
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "199:23:30"
+                "src": "199:23:31"
               }
             ],
             "name": "",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 5428,
+              "id": 5226,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 5427,
+                  "id": 5225,
                   "name": "_formula",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5434,
-                  "src": "171:19:30",
+                  "scope": 5232,
+                  "src": "171:19:31",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_contract$_FeeFormula_$1433",
+                    "typeIdentifier": "t_contract$_FeeFormula_$1746",
                     "typeString": "contract FeeFormula"
                   },
                   "typeName": {
                     "contractScope": null,
-                    "id": 5426,
+                    "id": 5224,
                     "name": "FeeFormula",
                     "nodeType": "UserDefinedTypeName",
-                    "referencedDeclaration": 1433,
-                    "src": "171:10:30",
+                    "referencedDeclaration": 1746,
+                    "src": "171:10:31",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_FeeFormula_$1433",
+                      "typeIdentifier": "t_contract$_FeeFormula_$1746",
                       "typeString": "contract FeeFormula"
                     }
                   },
@@ -457,34 +467,34 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "170:21:30"
+              "src": "170:21:31"
             },
             "returnParameters": {
-              "id": 5432,
+              "id": 5230,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "223:0:30"
+              "src": "223:0:31"
             },
-            "scope": 5435,
-            "src": "159:72:30",
+            "scope": 5233,
+            "src": "159:66:31",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
-        "scope": 5436,
-        "src": "108:125:30"
+        "scope": 5234,
+        "src": "109:118:31"
       }
     ],
-    "src": "0:233:30"
+    "src": "0:228:31"
   },
   "compiler": {
     "name": "solc",
-    "version": "0.5.4+commit.9549d8ff.Emscripten.clang"
+    "version": "0.5.16+commit.9c3226ce.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.0.16",
-  "updatedAt": "2020-07-07T14:28:01.652Z",
+  "schemaVersion": "3.2.3",
+  "updatedAt": "2021-01-27T19:47:05.841Z",
   "devdoc": {
     "methods": {
       "isOwner()": {

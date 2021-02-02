@@ -2,11 +2,72 @@
   "contractName": "ActivePeriodMock",
   "abi": [
     {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_periodStart",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_periodEnd",
+          "type": "uint256"
+        },
+        {
+          "internalType": "contract Avatar",
+          "name": "_avatar",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "by",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "time",
+          "type": "uint256"
+        }
+      ],
+      "name": "SchemeEnded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "by",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "time",
+          "type": "uint256"
+        }
+      ],
+      "name": "SchemeStarted",
+      "type": "event"
+    },
+    {
       "constant": true,
       "inputs": [],
       "name": "isActive",
       "outputs": [
         {
+          "internalType": "bool",
           "name": "",
           "type": "bool"
         }
@@ -21,6 +82,7 @@
       "name": "periodEnd",
       "outputs": [
         {
+          "internalType": "uint256",
           "name": "",
           "type": "uint256"
         }
@@ -35,6 +97,7 @@
       "name": "periodStart",
       "outputs": [
         {
+          "internalType": "uint256",
           "name": "",
           "type": "uint256"
         }
@@ -42,59 +105,6 @@
       "payable": false,
       "stateMutability": "view",
       "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "name": "_periodStart",
-          "type": "uint256"
-        },
-        {
-          "name": "_periodEnd",
-          "type": "uint256"
-        },
-        {
-          "name": "_avatar",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "name": "by",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "time",
-          "type": "uint256"
-        }
-      ],
-      "name": "SchemeStarted",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "name": "by",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "time",
-          "type": "uint256"
-        }
-      ],
-      "name": "SchemeEnded",
-      "type": "event"
     },
     {
       "constant": false,
@@ -115,52 +125,53 @@
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.4+commit.9549d8ff\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[],\"name\":\"isActive\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"periodEnd\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"start\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"periodStart\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"end\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_periodStart\",\"type\":\"uint256\"},{\"name\":\"_periodEnd\",\"type\":\"uint256\"},{\"name\":\"_avatar\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"by\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"SchemeStarted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"by\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"SchemeEnded\",\"type\":\"event\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/ActivePeriodMock.sol\":\"ActivePeriodMock\"},\"evmVersion\":\"byzantium\",\"libraries\":{},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/ActivePeriod.sol\":{\"keccak256\":\"0xc80181687fe6a78e40aebb6481a881ed83766e95355499c8cc922536d62161ed\",\"urls\":[\"bzzr://cef27224c6e9220188a79b77f15b46c6f78dfbba347d1a64e92e48638dc760eb\"]},\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/ActivePeriodMock.sol\":{\"keccak256\":\"0x044864c100e08304d505527c2fc7fd2eceee91480b3e87bbe1315fdac7af1532\",\"urls\":[\"bzzr://2a385582dd00cd75eaf7fbe8ea8f50fc6de93267aa606d566aa7928d6da98964\"]},\"@daostack/arc/contracts/controller/Avatar.sol\":{\"keccak256\":\"0x4e4fb9d3bc21f42fbfc6a01e9f8aa483a59e9f447b0d604f55b587a81ec09ef4\",\"urls\":[\"bzzr://b0af60e651a75274a028dc4b53d06091a46ca0efa3bfb4153879e76cf86a49dc\"]},\"@daostack/arc/contracts/controller/DAOToken.sol\":{\"keccak256\":\"0x9b213e4e3ceeffcfc1c962a43b70b8d763d8091a2dd713fc1989b97bb68786e6\",\"urls\":[\"bzzr://7ba306fdbad344e01474e3ae9c37b27b64efdc1cb17ffc0f3ec1c4427fde359d\"]},\"@daostack/arc/contracts/libs/SafeERC20.sol\":{\"keccak256\":\"0xf6727d432f67046145b078f40c1cc4f6be7b0d12a6678ecaf457edf7550d244c\",\"urls\":[\"bzzr://cd706a2dc7540d093b591a280b464256c596ddad598b68886e6db2e7958f9916\"]},\"@daostack/infra/contracts/Reputation.sol\":{\"keccak256\":\"0x3d226dac0fe7d758f0287fb28bc25fcec1f69d19888ae3a550fa49856d61c482\",\"urls\":[\"bzzr://7f219e1874d4f1aea860cc665b75015797f55f149e9bf490abab5d7ad2adfeb9\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x965012d27b4262d7a41f5028cbb30c51ebd9ecd4be8fb30380aaa7a3c64fbc8b\",\"urls\":[\"bzzr://41ca38f6b0fa4b77b0feec43e422cfbec48b7eb38a41edf0b85c77e8d9a296b1\"]},\"openzeppelin-solidity/contracts/ownership/Ownable.sol\":{\"keccak256\":\"0x980de387a1a020a498f53d00f89fecebb12c949a17e8f160093c0303ede2b786\",\"urls\":[\"bzzr://08894efa2a557982070beda6a81a032407e70532d24bdafe80d39660c74904d9\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0xba431353cb4fe70777ac026231eb5468e41aa1e81240a2b8136917acc5fff4dc\",\"urls\":[\"bzzr://80cd02a56e6e33504318124d0d645c82e615cc8a4b5829cc9d82d17635c644c8\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol\":{\"keccak256\":\"0xa3e68fd7f987c8fbdaf4867d428a69a15f3cf2f69709a5b0a0fbef750b0e6fbc\",\"urls\":[\"bzzr://f4ebb7c5b9e429b98b07e2caca6156c13c3724e9b1191cca8423ab8427bc6265\"]},\"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x079c4e23ee448f529e43bfa3c4e8fb4be52cd0318ee923a276835bedf45b93d8\",\"urls\":[\"bzzr://48248e86f64407a95f241d6c5c8cfea6b4d4ebf4ebb467e5c98c8af3868fafe4\"]},\"openzeppelin-solidity/contracts/utils/Address.sol\":{\"keccak256\":\"0x5c731061b804fa256fc8c05150eafe5d20b6bb94541a8f187912bf84f7033f34\",\"urls\":[\"bzzr://63fc4af0d7a99a770925b96a6cf48f25fc00d30274266f82db05f30baa238267\"]}},\"version\":1}",
-  "bytecode": "0x608060405234801561001057600080fd5b506040516060806104438339810180604052606081101561003057600080fd5b508051602082015160409092015190919082828281831061009c576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602681526020018061041d6026913960400191505060405180910390fd5b6000929092556001556002805460ff19600160a060020a039093166101000261010060a860020a03199091161791909116905550505061033c806100e16000396000f3fe608060405234801561001057600080fd5b5060043610610073577c0100000000000000000000000000000000000000000000000000000000600035046322f3e2d48114610078578063506ec09514610094578063be9a6555146100ae578063eda4e6d6146100b8578063efbe1c1c146100c0575b600080fd5b6100806100c8565b604080519115158252519081900360200190f35b61009c6100d1565b60408051918252519081900360200190f35b6100b66100d7565b005b61009c6100e1565b6100b66100e7565b60025460ff1681565b60015481565b6100df61010e565b565b60005481565b6002546100df90610100900473ffffffffffffffffffffffffffffffffffffffff16610245565b6000544210158015610121575060015442105b151561018e57604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152600d60248201527f6e6f7420696e20706572696f6400000000000000000000000000000000000000604482015290519081900360640190fd5b60025460ff161561020057604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152601260248201527f63616e6e6f742073746172742074776963650000000000000000000000000000604482015290519081900360640190fd5b6002805460ff1916600117905560408051428152905133917f727dd98701807c5fdf715b9f1fd7d87461a558e2ab3e05935add76e42e330fa3919081900360200190a2565b60025460ff1615156102b857604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152600d60248201527f6973206e6f742061637469766500000000000000000000000000000000000000604482015290519081900360640190fd5b6002805460ff1916905560408051428152905133917ef689ee9beb942c1c9c0d6642687ace05a9000d5f2979d344163c57829fa779919081900360200190a28073ffffffffffffffffffffffffffffffffffffffff16fffea165627a7a72305820e1fd5d6d63fa56c11d10b359c345c3f673d98cfc4c9cb26a9b50c46246e7d4a6002973746172742063616e6e6f74206265206166746572206e6f7220657175616c20746f20656e64",
-  "deployedBytecode": "0x608060405234801561001057600080fd5b5060043610610073577c0100000000000000000000000000000000000000000000000000000000600035046322f3e2d48114610078578063506ec09514610094578063be9a6555146100ae578063eda4e6d6146100b8578063efbe1c1c146100c0575b600080fd5b6100806100c8565b604080519115158252519081900360200190f35b61009c6100d1565b60408051918252519081900360200190f35b6100b66100d7565b005b61009c6100e1565b6100b66100e7565b60025460ff1681565b60015481565b6100df61010e565b565b60005481565b6002546100df90610100900473ffffffffffffffffffffffffffffffffffffffff16610245565b6000544210158015610121575060015442105b151561018e57604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152600d60248201527f6e6f7420696e20706572696f6400000000000000000000000000000000000000604482015290519081900360640190fd5b60025460ff161561020057604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152601260248201527f63616e6e6f742073746172742074776963650000000000000000000000000000604482015290519081900360640190fd5b6002805460ff1916600117905560408051428152905133917f727dd98701807c5fdf715b9f1fd7d87461a558e2ab3e05935add76e42e330fa3919081900360200190a2565b60025460ff1615156102b857604080517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152600d60248201527f6973206e6f742061637469766500000000000000000000000000000000000000604482015290519081900360640190fd5b6002805460ff1916905560408051428152905133917ef689ee9beb942c1c9c0d6642687ace05a9000d5f2979d344163c57829fa779919081900360200190a28073ffffffffffffffffffffffffffffffffffffffff16fffea165627a7a72305820e1fd5d6d63fa56c11d10b359c345c3f673d98cfc4c9cb26a9b50c46246e7d4a60029",
-  "sourceMap": "124:327:26:-;;;172:147;8:9:-1;5:2;;;30:1;27;20:12;5:2;172:147:26;;;;;;;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;172:147:26;;;;;;;;;;;;;;;;;1599:25:3;;;1591:76;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1678:11;:26;;;;1714:9;:22;1746:6;:16;;-1:-1:-1;;;;;;;1746:16:3;;;;;-1:-1:-1;;;;;;1746:16:3;;;;1773;;;;;;-1:-1:-1;;;124:327:26;;;;;;",
-  "deployedSourceMap": "124:327:26:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;124:327:26;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;274:20:3;;;:::i;:::-;;;;;;;;;;;;;;;;;;243:24;;;:::i;:::-;;;;;;;;;;;;;;;;325:54:26;;;:::i;:::-;;211:26:3;;;:::i;385:64:26:-;;;:::i;274:20:3:-;;;;;;:::o;243:24::-;;;;:::o;325:54:26:-;359:13;:11;:13::i;:::-;325:54::o;211:26:3:-;;;;:::o;385:64:26:-;435:6;;417:25;;435:6;;;;;417:17;:25::i;1980:134:3:-;918:11;;911:3;:18;;:37;;;;;939:9;;933:3;:15;911:37;903:63;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;708:8;;;;707:9;699:40;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2047:8;:15;;-1:-1:-1;;2047:15:3;2058:4;2047:15;;;2077:30;;;2103:3;2077:30;;;;2091:10;;2077:30;;;;;;;;;;1980:134::o;2695:176::-;544:8;;;;536:34;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2765:8;:16;;-1:-1:-1;;2765:16:3;;;2796:28;;;2820:3;2796:28;;;;2808:10;;2796:28;;;;;;;;;;2855:7;2834:30;;",
-  "source": "pragma solidity 0.5.4;\n\nimport \"../dao/schemes/ActivePeriod.sol\";\nimport \"@daostack/arc/contracts/controller/Avatar.sol\";\n\n\ncontract ActivePeriodMock is ActivePeriod {\n    constructor(uint256 _periodStart, uint256 _periodEnd, Avatar _avatar)\n        public\n        ActivePeriod(_periodStart, _periodEnd, _avatar)\n    {}\n\n    function start() public {\n        super.start();\n    }\n\n    function end() public {\n        super.internalEnd(avatar);\n    }\n}\n",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.16+commit.9c3226ce\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_periodStart\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_periodEnd\",\"type\":\"uint256\"},{\"internalType\":\"contract Avatar\",\"name\":\"_avatar\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"by\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"SchemeEnded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"by\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"SchemeStarted\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[],\"name\":\"end\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isActive\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"periodEnd\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"periodStart\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"start\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/ActivePeriodMock.sol\":\"ActivePeriodMock\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/ActivePeriod.sol\":{\"keccak256\":\"0xd6b17fe8c789a03e87c80046319caee9fc9c9b5ded9008b09a550027c205c5ab\",\"urls\":[\"bzz-raw://0f77e8dc5f6abeefc9a2e185c257516f7f0266ae2781dd67c18daf1aac667daf\",\"dweb:/ipfs/QmbeRqLP2MvTZifqPBSK3PUDh8TjC1RaTA8b1dRRAXahmJ\"]},\"/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/ActivePeriodMock.sol\":{\"keccak256\":\"0xf5e75d758b737c78e2f2540947139d787936c3276c4e9bc55f4c7e086b2a98b0\",\"urls\":[\"bzz-raw://eba4913bc1dc1d68e08ab8f8a42d4db2442722d55f691ad7bd43b1d8c3b1e944\",\"dweb:/ipfs/QmfDWRbKh2JdFm7S94rrFMkU8eSHzLLBi5buQnz3bym9FJ\"]},\"@daostack/arc/contracts/controller/Avatar.sol\":{\"keccak256\":\"0x4e4fb9d3bc21f42fbfc6a01e9f8aa483a59e9f447b0d604f55b587a81ec09ef4\",\"urls\":[\"bzz-raw://9d3c1c7575cf6075ea1d89921f09b9b8e322b208dacaf0446cd4f64506c999f0\",\"dweb:/ipfs/QmVGDDHAR2ByuQpbgV7BBKXGEAcbaWvejpEZYzHgaagBFK\"]},\"@daostack/arc/contracts/controller/DAOToken.sol\":{\"keccak256\":\"0x9b213e4e3ceeffcfc1c962a43b70b8d763d8091a2dd713fc1989b97bb68786e6\",\"urls\":[\"bzz-raw://51d1d6e85fd90f45395a16b7a3c703c4636e836041f2a13f806e4222ef2e59c1\",\"dweb:/ipfs/QmQjeCeFf7TJzsYjT5scyZUDDixBA8Yy8YppgBuxcKPDnP\"]},\"@daostack/arc/contracts/libs/SafeERC20.sol\":{\"keccak256\":\"0xf6727d432f67046145b078f40c1cc4f6be7b0d12a6678ecaf457edf7550d244c\",\"urls\":[\"bzz-raw://5dba7734c4fed446c084a707761cbc66ba22b8b93ef53c8d4a22a76b6e271690\",\"dweb:/ipfs/QmP2VpPKUqLh4ZZs6LaxHVpCN1zCmiorygL9bMub4mbYCw\"]},\"@daostack/infra/contracts/Reputation.sol\":{\"keccak256\":\"0x3d226dac0fe7d758f0287fb28bc25fcec1f69d19888ae3a550fa49856d61c482\",\"urls\":[\"bzz-raw://8856852c8fe0ba1c9aab326f0a9a6e7f31a238de2778fa5188e6fc399f7eb352\",\"dweb:/ipfs/QmVH4ppR9Dk7v8yxaSgeArdMv9gBBVoQxEf4E3UsqQ4rY2\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x965012d27b4262d7a41f5028cbb30c51ebd9ecd4be8fb30380aaa7a3c64fbc8b\",\"urls\":[\"bzz-raw://1eb493553b27efd46c231a836a83ce50d215639feb97b4aac9f301d0fd034ff5\",\"dweb:/ipfs/QmbMdvSXcqGKxeeYvzF3VrWpoHQyVzMXBhzhAokF2Gdymv\"]},\"openzeppelin-solidity/contracts/ownership/Ownable.sol\":{\"keccak256\":\"0x980de387a1a020a498f53d00f89fecebb12c949a17e8f160093c0303ede2b786\",\"urls\":[\"bzz-raw://f07a2c393caa85f62f0aaa461e3edd50aa59371d4209778ba0558d7f8b4b856c\",\"dweb:/ipfs/QmeN3ZiYGSjCnQFeYaJNgoXjF9eDue1g3e9pqManRkeBtV\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0xba431353cb4fe70777ac026231eb5468e41aa1e81240a2b8136917acc5fff4dc\",\"urls\":[\"bzz-raw://f40c91ca270bdc9b156f339081a0fc2bbcf73cf5f62b8c73ba555df753ff6619\",\"dweb:/ipfs/QmT8y2VVjGaFdGphpcXrgvdPi2EgF9LuCDgJiJ89LvpFRV\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol\":{\"keccak256\":\"0xa3e68fd7f987c8fbdaf4867d428a69a15f3cf2f69709a5b0a0fbef750b0e6fbc\",\"urls\":[\"bzz-raw://50b1ff986d3b2793850a66c8429d9886fdfb134b1509b3e98714e3e2a71e24f5\",\"dweb:/ipfs/QmSQBYPeY9tbR3ciGRNQqvcWKnNiuxtVMq2MsPWpLwuGGm\"]},\"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x079c4e23ee448f529e43bfa3c4e8fb4be52cd0318ee923a276835bedf45b93d8\",\"urls\":[\"bzz-raw://ee762ff5b7746e41d27dcbcea00c7a3034b58adb1b45ddadddb5b721aff450df\",\"dweb:/ipfs/QmdxqtgEFZjHCoiYyz6pUAQ5iBm7As25jcyEbZoTaAgyDa\"]},\"openzeppelin-solidity/contracts/utils/Address.sol\":{\"keccak256\":\"0x5c731061b804fa256fc8c05150eafe5d20b6bb94541a8f187912bf84f7033f34\",\"urls\":[\"bzz-raw://a3c2d9f046beebab7fb41b1b124a6a124a36f510f7c67365861402ac831bdc71\",\"dweb:/ipfs/QmUtASRgitregbKH83anopLtF9vFQe3BKeAjhUa6F7t9YV\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506040516103823803806103828339818101604052606081101561003357600080fd5b50805160208201516040909201519091908282828183106100855760405162461bcd60e51b815260040180806020018281038252602681526020018061035c6026913960400191505060405180910390fd5b6000929092556001556002805460ff196001600160a01b0390931661010002610100600160a81b031990911617919091169055505050610292806100ca6000396000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c806322f3e2d41461005c578063506ec09514610078578063be9a655514610092578063eda4e6d61461009c578063efbe1c1c146100a4575b600080fd5b6100646100ac565b604080519115158252519081900360200190f35b6100806100b5565b60408051918252519081900360200190f35b61009a6100bb565b005b6100806100c5565b61009a6100cb565b60025460ff1681565b60015481565b6100c36100e5565b565b60005481565b6002546100c39061010090046001600160a01b03166101cb565b60005442101580156100f8575060015442105b610139576040805162461bcd60e51b815260206004820152600d60248201526c1b9bdd081a5b881c195c9a5bd9609a1b604482015290519081900360640190fd5b60025460ff1615610186576040805162461bcd60e51b815260206004820152601260248201527163616e6e6f7420737461727420747769636560701b604482015290519081900360640190fd5b6002805460ff1916600117905560408051428152905133917f727dd98701807c5fdf715b9f1fd7d87461a558e2ab3e05935add76e42e330fa3919081900360200190a2565b60025460ff16610212576040805162461bcd60e51b815260206004820152600d60248201526c6973206e6f742061637469766560981b604482015290519081900360640190fd5b6002805460ff1916905560408051428152905133917ef689ee9beb942c1c9c0d6642687ace05a9000d5f2979d344163c57829fa779919081900360200190a2806001600160a01b0316fffea265627a7a72315820ae1886e82217e5929032d6ad1619148a3d5a3c565b892b3688b7fb1f11c318a164736f6c6343000510003273746172742063616e6e6f74206265206166746572206e6f7220657175616c20746f20656e64",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100575760003560e01c806322f3e2d41461005c578063506ec09514610078578063be9a655514610092578063eda4e6d61461009c578063efbe1c1c146100a4575b600080fd5b6100646100ac565b604080519115158252519081900360200190f35b6100806100b5565b60408051918252519081900360200190f35b61009a6100bb565b005b6100806100c5565b61009a6100cb565b60025460ff1681565b60015481565b6100c36100e5565b565b60005481565b6002546100c39061010090046001600160a01b03166101cb565b60005442101580156100f8575060015442105b610139576040805162461bcd60e51b815260206004820152600d60248201526c1b9bdd081a5b881c195c9a5bd9609a1b604482015290519081900360640190fd5b60025460ff1615610186576040805162461bcd60e51b815260206004820152601260248201527163616e6e6f7420737461727420747769636560701b604482015290519081900360640190fd5b6002805460ff1916600117905560408051428152905133917f727dd98701807c5fdf715b9f1fd7d87461a558e2ab3e05935add76e42e330fa3919081900360200190a2565b60025460ff16610212576040805162461bcd60e51b815260206004820152600d60248201526c6973206e6f742061637469766560981b604482015290519081900360640190fd5b6002805460ff1916905560408051428152905133917ef689ee9beb942c1c9c0d6642687ace05a9000d5f2979d344163c57829fa779919081900360200190a2806001600160a01b0316fffea265627a7a72315820ae1886e82217e5929032d6ad1619148a3d5a3c565b892b3688b7fb1f11c318a164736f6c63430005100032",
+  "sourceMap": "124:337:27:-;;;172:157;8:9:-1;5:2;;;30:1;27;20:12;5:2;172:157:27;;;;;;;;;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;-1:-1;172:157:27;;;;;;;;;;;;;;;;;1629:25:4;;;1621:76;;;;-1:-1:-1;;;1621:76:4;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1708:11;:26;;;;1744:9;:22;1776:6;:16;;-1:-1:-1;;;;;;;1776:16:4;;;;;-1:-1:-1;;;;;;1776:16:4;;;;1803;;;;;;-1:-1:-1;;;124:337:27;;;;;;",
+  "deployedSourceMap": "124:337:27:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;124:337:27;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;274:20:4;;;:::i;:::-;;;;;;;;;;;;;;;;;;243:24;;;:::i;:::-;;;;;;;;;;;;;;;;335:54:27;;;:::i;:::-;;211:26:4;;;:::i;395:64:27:-;;;:::i;274:20:4:-;;;;;;:::o;243:24::-;;;;:::o;335:54:27:-;369:13;:11;:13::i;:::-;335:54::o;211:26:4:-;;;;:::o;395:64:27:-;445:6;;427:25;;445:6;;;-1:-1:-1;;;;;445:6:27;427:17;:25::i;2010:134:4:-;918:11;;911:3;:18;;:37;;;;;939:9;;933:3;:15;911:37;903:63;;;;;-1:-1:-1;;;903:63:4;;;;;;;;;;;;-1:-1:-1;;;903:63:4;;;;;;;;;;;;;;;708:8;;;;707:9;699:40;;;;;-1:-1:-1;;;699:40:4;;;;;;;;;;;;-1:-1:-1;;;699:40:4;;;;;;;;;;;;;;;2077:8;:15;;-1:-1:-1;;2077:15:4;2088:4;2077:15;;;2107:30;;;2133:3;2107:30;;;;2121:10;;2107:30;;;;;;;;;;2010:134::o;2725:176::-;544:8;;;;536:34;;;;;-1:-1:-1;;;536:34:4;;;;;;;;;;;;-1:-1:-1;;;536:34:4;;;;;;;;;;;;;;;2795:8;:16;;-1:-1:-1;;2795:16:4;;;2826:28;;;2850:3;2826:28;;;;2838:10;;2826:28;;;;;;;;;;2885:7;-1:-1:-1;;;;;2864:30:4;",
+  "source": "pragma solidity >0.5.4;\n\nimport \"../dao/schemes/ActivePeriod.sol\";\nimport \"@daostack/arc/contracts/controller/Avatar.sol\";\n\ncontract ActivePeriodMock is ActivePeriod {\n    constructor(\n        uint256 _periodStart,\n        uint256 _periodEnd,\n        Avatar _avatar\n    ) public ActivePeriod(_periodStart, _periodEnd, _avatar) {}\n\n    function start() public {\n        super.start();\n    }\n\n    function end() public {\n        super.internalEnd(avatar);\n    }\n}\n",
   "sourcePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/ActivePeriodMock.sol",
   "ast": {
     "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/ActivePeriodMock.sol",
     "exportedSymbols": {
       "ActivePeriodMock": [
-        5090
+        4888
       ]
     },
-    "id": 5091,
+    "id": 4889,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 5051,
+        "id": 4849,
         "literals": [
           "solidity",
+          ">",
           "0.5",
           ".4"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:22:26"
+        "src": "0:23:27"
       },
       {
         "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/ActivePeriod.sol",
         "file": "../dao/schemes/ActivePeriod.sol",
-        "id": 5052,
+        "id": 4850,
         "nodeType": "ImportDirective",
-        "scope": 5091,
-        "sourceUnit": 1028,
-        "src": "24:41:26",
+        "scope": 4889,
+        "sourceUnit": 1331,
+        "src": "25:41:27",
         "symbolAliases": [],
         "unitAlias": ""
       },
       {
         "absolutePath": "@daostack/arc/contracts/controller/Avatar.sol",
         "file": "@daostack/arc/contracts/controller/Avatar.sol",
-        "id": 5053,
+        "id": 4851,
         "nodeType": "ImportDirective",
-        "scope": 5091,
-        "sourceUnit": 7317,
-        "src": "66:55:26",
+        "scope": 4889,
+        "sourceUnit": 7130,
+        "src": "67:55:27",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -170,44 +181,44 @@
             "arguments": null,
             "baseName": {
               "contractScope": null,
-              "id": 5054,
+              "id": 4852,
               "name": "ActivePeriod",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 1027,
-              "src": "153:12:26",
+              "referencedDeclaration": 1330,
+              "src": "153:12:27",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_ActivePeriod_$1027",
+                "typeIdentifier": "t_contract$_ActivePeriod_$1330",
                 "typeString": "contract ActivePeriod"
               }
             },
-            "id": 5055,
+            "id": 4853,
             "nodeType": "InheritanceSpecifier",
-            "src": "153:12:26"
+            "src": "153:12:27"
           }
         ],
         "contractDependencies": [
-          1027
+          1330
         ],
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 5090,
+        "id": 4888,
         "linearizedBaseContracts": [
-          5090,
-          1027
+          4888,
+          1330
         ],
         "name": "ActivePeriodMock",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "body": {
-              "id": 5069,
+              "id": 4867,
               "nodeType": "Block",
-              "src": "317:2:26",
+              "src": "327:2:27",
               "statements": []
             },
             "documentation": null,
-            "id": 5070,
+            "id": 4868,
             "implemented": true,
             "kind": "constructor",
             "modifiers": [
@@ -215,12 +226,12 @@
                 "arguments": [
                   {
                     "argumentTypes": null,
-                    "id": 5064,
+                    "id": 4862,
                     "name": "_periodStart",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5057,
-                    "src": "278:12:26",
+                    "referencedDeclaration": 4855,
+                    "src": "292:12:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -228,12 +239,12 @@
                   },
                   {
                     "argumentTypes": null,
-                    "id": 5065,
+                    "id": 4863,
                     "name": "_periodEnd",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5059,
-                    "src": "292:10:26",
+                    "referencedDeclaration": 4857,
+                    "src": "306:10:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -241,49 +252,49 @@
                   },
                   {
                     "argumentTypes": null,
-                    "id": 5066,
+                    "id": 4864,
                     "name": "_avatar",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5061,
-                    "src": "304:7:26",
+                    "referencedDeclaration": 4859,
+                    "src": "318:7:27",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_Avatar_$7316",
+                      "typeIdentifier": "t_contract$_Avatar_$7129",
                       "typeString": "contract Avatar"
                     }
                   }
                 ],
-                "id": 5067,
+                "id": 4865,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 5063,
+                  "id": 4861,
                   "name": "ActivePeriod",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 1027,
-                  "src": "265:12:26",
+                  "referencedDeclaration": 1330,
+                  "src": "279:12:27",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_type$_t_contract$_ActivePeriod_$1027_$",
+                    "typeIdentifier": "t_type$_t_contract$_ActivePeriod_$1330_$",
                     "typeString": "type(contract ActivePeriod)"
                   }
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "265:47:26"
+                "src": "279:47:27"
               }
             ],
             "name": "",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 5062,
+              "id": 4860,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 5057,
+                  "id": 4855,
                   "name": "_periodStart",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5070,
-                  "src": "184:20:26",
+                  "scope": 4868,
+                  "src": "193:20:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -291,10 +302,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 5056,
+                    "id": 4854,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "184:7:26",
+                    "src": "193:7:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -305,11 +316,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 5059,
+                  "id": 4857,
                   "name": "_periodEnd",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5070,
-                  "src": "206:18:26",
+                  "scope": 4868,
+                  "src": "223:18:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -317,10 +328,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 5058,
+                    "id": 4856,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "206:7:26",
+                    "src": "223:7:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -331,26 +342,26 @@
                 },
                 {
                   "constant": false,
-                  "id": 5061,
+                  "id": 4859,
                   "name": "_avatar",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5070,
-                  "src": "226:14:26",
+                  "scope": 4868,
+                  "src": "251:14:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_contract$_Avatar_$7316",
+                    "typeIdentifier": "t_contract$_Avatar_$7129",
                     "typeString": "contract Avatar"
                   },
                   "typeName": {
                     "contractScope": null,
-                    "id": 5060,
+                    "id": 4858,
                     "name": "Avatar",
                     "nodeType": "UserDefinedTypeName",
-                    "referencedDeclaration": 7316,
-                    "src": "226:6:26",
+                    "referencedDeclaration": 7129,
+                    "src": "251:6:27",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_Avatar_$7316",
+                      "typeIdentifier": "t_contract$_Avatar_$7129",
                       "typeString": "contract Avatar"
                     }
                   },
@@ -358,25 +369,25 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "183:58:26"
+              "src": "183:88:27"
             },
             "returnParameters": {
-              "id": 5068,
+              "id": 4866,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "317:0:26"
+              "src": "327:0:27"
             },
-            "scope": 5090,
-            "src": "172:147:26",
+            "scope": 4888,
+            "src": "172:157:27",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           },
           {
             "body": {
-              "id": 5078,
+              "id": 4876,
               "nodeType": "Block",
-              "src": "349:30:26",
+              "src": "359:30:27",
               "statements": [
                 {
                   "expression": {
@@ -386,32 +397,32 @@
                       "argumentTypes": [],
                       "expression": {
                         "argumentTypes": null,
-                        "id": 5073,
+                        "id": 4871,
                         "name": "super",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 16931,
-                        "src": "359:5:26",
+                        "referencedDeclaration": 16748,
+                        "src": "369:5:27",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_super$_ActivePeriodMock_$5090",
+                          "typeIdentifier": "t_super$_ActivePeriodMock_$4888",
                           "typeString": "contract super ActivePeriodMock"
                         }
                       },
-                      "id": 5075,
+                      "id": 4873,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
                       "lValueRequested": false,
                       "memberName": "start",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 992,
-                      "src": "359:11:26",
+                      "referencedDeclaration": 1295,
+                      "src": "369:11:27",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 5076,
+                    "id": 4874,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -419,48 +430,48 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "359:13:26",
+                    "src": "369:13:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 5077,
+                  "id": 4875,
                   "nodeType": "ExpressionStatement",
-                  "src": "359:13:26"
+                  "src": "369:13:27"
                 }
               ]
             },
             "documentation": null,
-            "id": 5079,
+            "id": 4877,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
             "name": "start",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 5071,
+              "id": 4869,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "339:2:26"
+              "src": "349:2:27"
             },
             "returnParameters": {
-              "id": 5072,
+              "id": 4870,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "349:0:26"
+              "src": "359:0:27"
             },
-            "scope": 5090,
-            "src": "325:54:26",
+            "scope": 4888,
+            "src": "335:54:27",
             "stateMutability": "nonpayable",
-            "superFunction": 992,
+            "superFunction": 1295,
             "visibility": "public"
           },
           {
             "body": {
-              "id": 5088,
+              "id": 4886,
               "nodeType": "Block",
-              "src": "407:42:26",
+              "src": "417:42:27",
               "statements": [
                 {
                   "expression": {
@@ -468,14 +479,14 @@
                     "arguments": [
                       {
                         "argumentTypes": null,
-                        "id": 5085,
+                        "id": 4883,
                         "name": "avatar",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 884,
-                        "src": "435:6:26",
+                        "referencedDeclaration": 1187,
+                        "src": "445:6:27",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_Avatar_$7316",
+                          "typeIdentifier": "t_contract$_Avatar_$7129",
                           "typeString": "contract Avatar"
                         }
                       }
@@ -483,38 +494,38 @@
                     "expression": {
                       "argumentTypes": [
                         {
-                          "typeIdentifier": "t_contract$_Avatar_$7316",
+                          "typeIdentifier": "t_contract$_Avatar_$7129",
                           "typeString": "contract Avatar"
                         }
                       ],
                       "expression": {
                         "argumentTypes": null,
-                        "id": 5082,
+                        "id": 4880,
                         "name": "super",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 16931,
-                        "src": "417:5:26",
+                        "referencedDeclaration": 16748,
+                        "src": "427:5:27",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_super$_ActivePeriodMock_$5090",
+                          "typeIdentifier": "t_super$_ActivePeriodMock_$4888",
                           "typeString": "contract super ActivePeriodMock"
                         }
                       },
-                      "id": 5084,
+                      "id": 4882,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
                       "lValueRequested": false,
                       "memberName": "internalEnd",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 1026,
-                      "src": "417:17:26",
+                      "referencedDeclaration": 1329,
+                      "src": "427:17:27",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_nonpayable$_t_contract$_Avatar_$7316_$returns$__$",
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_contract$_Avatar_$7129_$returns$__$",
                         "typeString": "function (contract Avatar)"
                       }
                     },
-                    "id": 5086,
+                    "id": 4884,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -522,89 +533,90 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "417:25:26",
+                    "src": "427:25:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 5087,
+                  "id": 4885,
                   "nodeType": "ExpressionStatement",
-                  "src": "417:25:26"
+                  "src": "427:25:27"
                 }
               ]
             },
             "documentation": null,
-            "id": 5089,
+            "id": 4887,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
             "name": "end",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 5080,
+              "id": 4878,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "397:2:26"
+              "src": "407:2:27"
             },
             "returnParameters": {
-              "id": 5081,
+              "id": 4879,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "407:0:26"
+              "src": "417:0:27"
             },
-            "scope": 5090,
-            "src": "385:64:26",
+            "scope": 4888,
+            "src": "395:64:27",
             "stateMutability": "nonpayable",
-            "superFunction": 1002,
+            "superFunction": 1305,
             "visibility": "public"
           }
         ],
-        "scope": 5091,
-        "src": "124:327:26"
+        "scope": 4889,
+        "src": "124:337:27"
       }
     ],
-    "src": "0:452:26"
+    "src": "0:462:27"
   },
   "legacyAST": {
     "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/mocks/ActivePeriodMock.sol",
     "exportedSymbols": {
       "ActivePeriodMock": [
-        5090
+        4888
       ]
     },
-    "id": 5091,
+    "id": 4889,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 5051,
+        "id": 4849,
         "literals": [
           "solidity",
+          ">",
           "0.5",
           ".4"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:22:26"
+        "src": "0:23:27"
       },
       {
         "absolutePath": "/Users/hadar/workspace/GoodDollar/GoodBootstrap/packages/contracts/contracts/dao/schemes/ActivePeriod.sol",
         "file": "../dao/schemes/ActivePeriod.sol",
-        "id": 5052,
+        "id": 4850,
         "nodeType": "ImportDirective",
-        "scope": 5091,
-        "sourceUnit": 1028,
-        "src": "24:41:26",
+        "scope": 4889,
+        "sourceUnit": 1331,
+        "src": "25:41:27",
         "symbolAliases": [],
         "unitAlias": ""
       },
       {
         "absolutePath": "@daostack/arc/contracts/controller/Avatar.sol",
         "file": "@daostack/arc/contracts/controller/Avatar.sol",
-        "id": 5053,
+        "id": 4851,
         "nodeType": "ImportDirective",
-        "scope": 5091,
-        "sourceUnit": 7317,
-        "src": "66:55:26",
+        "scope": 4889,
+        "sourceUnit": 7130,
+        "src": "67:55:27",
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -614,44 +626,44 @@
             "arguments": null,
             "baseName": {
               "contractScope": null,
-              "id": 5054,
+              "id": 4852,
               "name": "ActivePeriod",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 1027,
-              "src": "153:12:26",
+              "referencedDeclaration": 1330,
+              "src": "153:12:27",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_ActivePeriod_$1027",
+                "typeIdentifier": "t_contract$_ActivePeriod_$1330",
                 "typeString": "contract ActivePeriod"
               }
             },
-            "id": 5055,
+            "id": 4853,
             "nodeType": "InheritanceSpecifier",
-            "src": "153:12:26"
+            "src": "153:12:27"
           }
         ],
         "contractDependencies": [
-          1027
+          1330
         ],
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 5090,
+        "id": 4888,
         "linearizedBaseContracts": [
-          5090,
-          1027
+          4888,
+          1330
         ],
         "name": "ActivePeriodMock",
         "nodeType": "ContractDefinition",
         "nodes": [
           {
             "body": {
-              "id": 5069,
+              "id": 4867,
               "nodeType": "Block",
-              "src": "317:2:26",
+              "src": "327:2:27",
               "statements": []
             },
             "documentation": null,
-            "id": 5070,
+            "id": 4868,
             "implemented": true,
             "kind": "constructor",
             "modifiers": [
@@ -659,12 +671,12 @@
                 "arguments": [
                   {
                     "argumentTypes": null,
-                    "id": 5064,
+                    "id": 4862,
                     "name": "_periodStart",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5057,
-                    "src": "278:12:26",
+                    "referencedDeclaration": 4855,
+                    "src": "292:12:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -672,12 +684,12 @@
                   },
                   {
                     "argumentTypes": null,
-                    "id": 5065,
+                    "id": 4863,
                     "name": "_periodEnd",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5059,
-                    "src": "292:10:26",
+                    "referencedDeclaration": 4857,
+                    "src": "306:10:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -685,49 +697,49 @@
                   },
                   {
                     "argumentTypes": null,
-                    "id": 5066,
+                    "id": 4864,
                     "name": "_avatar",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5061,
-                    "src": "304:7:26",
+                    "referencedDeclaration": 4859,
+                    "src": "318:7:27",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_Avatar_$7316",
+                      "typeIdentifier": "t_contract$_Avatar_$7129",
                       "typeString": "contract Avatar"
                     }
                   }
                 ],
-                "id": 5067,
+                "id": 4865,
                 "modifierName": {
                   "argumentTypes": null,
-                  "id": 5063,
+                  "id": 4861,
                   "name": "ActivePeriod",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
-                  "referencedDeclaration": 1027,
-                  "src": "265:12:26",
+                  "referencedDeclaration": 1330,
+                  "src": "279:12:27",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_type$_t_contract$_ActivePeriod_$1027_$",
+                    "typeIdentifier": "t_type$_t_contract$_ActivePeriod_$1330_$",
                     "typeString": "type(contract ActivePeriod)"
                   }
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "265:47:26"
+                "src": "279:47:27"
               }
             ],
             "name": "",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 5062,
+              "id": 4860,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 5057,
+                  "id": 4855,
                   "name": "_periodStart",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5070,
-                  "src": "184:20:26",
+                  "scope": 4868,
+                  "src": "193:20:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -735,10 +747,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 5056,
+                    "id": 4854,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "184:7:26",
+                    "src": "193:7:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -749,11 +761,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 5059,
+                  "id": 4857,
                   "name": "_periodEnd",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5070,
-                  "src": "206:18:26",
+                  "scope": 4868,
+                  "src": "223:18:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -761,10 +773,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 5058,
+                    "id": 4856,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "206:7:26",
+                    "src": "223:7:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -775,26 +787,26 @@
                 },
                 {
                   "constant": false,
-                  "id": 5061,
+                  "id": 4859,
                   "name": "_avatar",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5070,
-                  "src": "226:14:26",
+                  "scope": 4868,
+                  "src": "251:14:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_contract$_Avatar_$7316",
+                    "typeIdentifier": "t_contract$_Avatar_$7129",
                     "typeString": "contract Avatar"
                   },
                   "typeName": {
                     "contractScope": null,
-                    "id": 5060,
+                    "id": 4858,
                     "name": "Avatar",
                     "nodeType": "UserDefinedTypeName",
-                    "referencedDeclaration": 7316,
-                    "src": "226:6:26",
+                    "referencedDeclaration": 7129,
+                    "src": "251:6:27",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_Avatar_$7316",
+                      "typeIdentifier": "t_contract$_Avatar_$7129",
                       "typeString": "contract Avatar"
                     }
                   },
@@ -802,25 +814,25 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "183:58:26"
+              "src": "183:88:27"
             },
             "returnParameters": {
-              "id": 5068,
+              "id": 4866,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "317:0:26"
+              "src": "327:0:27"
             },
-            "scope": 5090,
-            "src": "172:147:26",
+            "scope": 4888,
+            "src": "172:157:27",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           },
           {
             "body": {
-              "id": 5078,
+              "id": 4876,
               "nodeType": "Block",
-              "src": "349:30:26",
+              "src": "359:30:27",
               "statements": [
                 {
                   "expression": {
@@ -830,32 +842,32 @@
                       "argumentTypes": [],
                       "expression": {
                         "argumentTypes": null,
-                        "id": 5073,
+                        "id": 4871,
                         "name": "super",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 16931,
-                        "src": "359:5:26",
+                        "referencedDeclaration": 16748,
+                        "src": "369:5:27",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_super$_ActivePeriodMock_$5090",
+                          "typeIdentifier": "t_super$_ActivePeriodMock_$4888",
                           "typeString": "contract super ActivePeriodMock"
                         }
                       },
-                      "id": 5075,
+                      "id": 4873,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
                       "lValueRequested": false,
                       "memberName": "start",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 992,
-                      "src": "359:11:26",
+                      "referencedDeclaration": 1295,
+                      "src": "369:11:27",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 5076,
+                    "id": 4874,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -863,48 +875,48 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "359:13:26",
+                    "src": "369:13:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 5077,
+                  "id": 4875,
                   "nodeType": "ExpressionStatement",
-                  "src": "359:13:26"
+                  "src": "369:13:27"
                 }
               ]
             },
             "documentation": null,
-            "id": 5079,
+            "id": 4877,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
             "name": "start",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 5071,
+              "id": 4869,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "339:2:26"
+              "src": "349:2:27"
             },
             "returnParameters": {
-              "id": 5072,
+              "id": 4870,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "349:0:26"
+              "src": "359:0:27"
             },
-            "scope": 5090,
-            "src": "325:54:26",
+            "scope": 4888,
+            "src": "335:54:27",
             "stateMutability": "nonpayable",
-            "superFunction": 992,
+            "superFunction": 1295,
             "visibility": "public"
           },
           {
             "body": {
-              "id": 5088,
+              "id": 4886,
               "nodeType": "Block",
-              "src": "407:42:26",
+              "src": "417:42:27",
               "statements": [
                 {
                   "expression": {
@@ -912,14 +924,14 @@
                     "arguments": [
                       {
                         "argumentTypes": null,
-                        "id": 5085,
+                        "id": 4883,
                         "name": "avatar",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 884,
-                        "src": "435:6:26",
+                        "referencedDeclaration": 1187,
+                        "src": "445:6:27",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_Avatar_$7316",
+                          "typeIdentifier": "t_contract$_Avatar_$7129",
                           "typeString": "contract Avatar"
                         }
                       }
@@ -927,38 +939,38 @@
                     "expression": {
                       "argumentTypes": [
                         {
-                          "typeIdentifier": "t_contract$_Avatar_$7316",
+                          "typeIdentifier": "t_contract$_Avatar_$7129",
                           "typeString": "contract Avatar"
                         }
                       ],
                       "expression": {
                         "argumentTypes": null,
-                        "id": 5082,
+                        "id": 4880,
                         "name": "super",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 16931,
-                        "src": "417:5:26",
+                        "referencedDeclaration": 16748,
+                        "src": "427:5:27",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_super$_ActivePeriodMock_$5090",
+                          "typeIdentifier": "t_super$_ActivePeriodMock_$4888",
                           "typeString": "contract super ActivePeriodMock"
                         }
                       },
-                      "id": 5084,
+                      "id": 4882,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
                       "lValueRequested": false,
                       "memberName": "internalEnd",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 1026,
-                      "src": "417:17:26",
+                      "referencedDeclaration": 1329,
+                      "src": "427:17:27",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_nonpayable$_t_contract$_Avatar_$7316_$returns$__$",
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_contract$_Avatar_$7129_$returns$__$",
                         "typeString": "function (contract Avatar)"
                       }
                     },
-                    "id": 5086,
+                    "id": 4884,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -966,57 +978,57 @@
                     "lValueRequested": false,
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "417:25:26",
+                    "src": "427:25:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 5087,
+                  "id": 4885,
                   "nodeType": "ExpressionStatement",
-                  "src": "417:25:26"
+                  "src": "427:25:27"
                 }
               ]
             },
             "documentation": null,
-            "id": 5089,
+            "id": 4887,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
             "name": "end",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 5080,
+              "id": 4878,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "397:2:26"
+              "src": "407:2:27"
             },
             "returnParameters": {
-              "id": 5081,
+              "id": 4879,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "407:0:26"
+              "src": "417:0:27"
             },
-            "scope": 5090,
-            "src": "385:64:26",
+            "scope": 4888,
+            "src": "395:64:27",
             "stateMutability": "nonpayable",
-            "superFunction": 1002,
+            "superFunction": 1305,
             "visibility": "public"
           }
         ],
-        "scope": 5091,
-        "src": "124:327:26"
+        "scope": 4889,
+        "src": "124:337:27"
       }
     ],
-    "src": "0:452:26"
+    "src": "0:462:27"
   },
   "compiler": {
     "name": "solc",
-    "version": "0.5.4+commit.9549d8ff.Emscripten.clang"
+    "version": "0.5.16+commit.9c3226ce.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.0.16",
-  "updatedAt": "2020-07-07T14:28:01.644Z",
+  "schemaVersion": "3.2.3",
+  "updatedAt": "2021-01-27T19:47:05.833Z",
   "devdoc": {
     "methods": {}
   },

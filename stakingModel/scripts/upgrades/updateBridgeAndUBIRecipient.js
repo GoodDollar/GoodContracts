@@ -9,6 +9,7 @@ const getFounders = require("../../../migrations/getFounders");
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
+const gasPrice = 61500000000;
 const getNetworkName = () => {
   const argslist = process.argv;
   let found = false;
@@ -61,7 +62,7 @@ const upgrade = async function() {
     staking_addresses.FundManager,
     staking_addresses_home.UBIScheme,
     networkSettings.foreignBridge,
-    { gas: 2000000, from: accounts[0] }
+    { gasPrice, gas: 1000000, from: accounts[0] }
   );
 
   console.log("Scheme deployed at:", {
@@ -79,7 +80,8 @@ const upgrade = async function() {
     ubiupdate.address,
     NULL_HASH,
     "0x00000010",
-    NULL_HASH
+    NULL_HASH,
+    { gasPrice }
   );
 
   let proposalId = proposal.logs[0].args._proposalId;
@@ -90,13 +92,14 @@ const upgrade = async function() {
     founders.slice(0, Math.ceil(founders.length / 2)).map(f =>
       absoluteVote.vote(proposalId, 1, 0, f, {
         from: f,
-        gas: 200000
+        gas: 500000,
+        gasPrice
       })
     )
   );
 
   console.log("updating contracts...");
-  const res = await ubiupdate.setContracts();
+  const res = await ubiupdate.setContracts({ gasPrice });
   console.log("result:", { res, logs: res.logs });
 };
 

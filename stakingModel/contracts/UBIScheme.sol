@@ -104,6 +104,11 @@ contract UBIScheme is AbstractUBI {
 		uint256 dailyUBIPool
 	);
 
+	modifier requireStarted() {
+		require(now >= periodStart, "not in periodStarted");
+		_;
+	}
+
 	/**
 	 * @dev Constructor
 	 * @param _avatar The avatar of the DAO
@@ -284,7 +289,7 @@ contract UBIScheme is AbstractUBI {
 		uint256 _amount,
 		bool _isClaimed,
 		bool _isFirstTime
-	) private requireActive {
+	) internal {
 		// updates the stats
 		Day storage day = claimDay[currentDay];
 		day.amountOfClaimers = day.amountOfClaimers.add(1);
@@ -370,7 +375,13 @@ contract UBIScheme is AbstractUBI {
 	 * to the caller. Emits the address of caller and amount claimed.
 	 * @return A bool indicating if UBI was claimed
 	 */
-	function claim() public requireActive onlyWhitelisted returns (bool) {
+	function claim()
+		public
+		requireStarted
+		requireActive
+		onlyWhitelisted
+		returns (bool)
+	{
 		return _claim(msg.sender);
 	}
 
@@ -438,7 +449,7 @@ contract UBIScheme is AbstractUBI {
 	 */
 	function start() public onlyRegistered {
 		super.start();
-		periodStart = now.div(1 days) * 1 days - 12 hours; //set start time to GMT noon
+		periodStart = now.div(1 days) * 1 days + 12 hours; //set start time to GMT noon
 		startOfCycle = periodStart;
 		controller.genericCall(
 			address(firstClaimPool),
@@ -482,6 +493,7 @@ contract UBIScheme is AbstractUBI {
 				avatar,
 				0
 			);
+
 			if (ubiBalance > 0) {
 				controller.externalTokenTransfer(
 					gd,
@@ -490,7 +502,6 @@ contract UBIScheme is AbstractUBI {
 					avatar
 				);
 			}
-			distributionFormula(0, address(0));
 		}
 	}
 }

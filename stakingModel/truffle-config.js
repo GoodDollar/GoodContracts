@@ -20,7 +20,7 @@ const alchemy_key = process.env.ALCHEMY_KEY;
 
 const admin_mnemonic = process.env.ADMIN_MNEMONIC;
 const admin_password = process.env.ADMIN_PASSWORD;
-const FUSE_RPC = "https://gooddollar-rpc.fuse.io/";
+const FUSE_RPC = "https://rpc.fuse.io/";
 const ropsten_settings = {
   provider: function() {
     return new HDWalletProvider(

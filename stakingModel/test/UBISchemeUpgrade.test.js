@@ -55,12 +55,28 @@ contract("UBIScheme", ([founder, claimer1]) => {
     avatar = await avatarMock.new("", goodDollar.address, NULL_ADDRESS);
     controller = await ControllerMock.new(avatar.address);
     await avatar.transferOwnership(controller.address);
+    await controller.registerScheme(
+      identity.address,
+      "0x00",
+      "0x0000001F",
+      avatar.address
+    );
+    await identity.setAuthenticationPeriod(180);
+    await identity.setAvatar(avatar.address);
+    await identity.addWhitelistedWithDID(claimer1, "did");
     firstClaimPool = await FirstClaimPool.new(avatar.address, identity.address, 100);
+    await controller.registerScheme(
+      firstClaimPool.address,
+      "0x00",
+      "0x0000001F",
+      avatar.address
+    );
+    await firstClaimPool.start();
   });
 
   it("should deploy the ubi", async () => {
     const block = await web3.eth.getBlock("latest");
-    const startUBI = block.timestamp;
+    const startUBI = block.timestamp - 60 * 60 * 24 * 2;
     const endUBI = startUBI + 60 * 60 * 24 * 30;
     ubi = await UBIMock.new(
       avatar.address,
@@ -121,15 +137,14 @@ contract("UBIScheme", ([founder, claimer1]) => {
       "0x0000001F",
       avatar.address
     );
-    const res = await ubiUpgrade.upgrade(ubi.address).catch(_ => false);
-    expect(res).to.not.be.false;
+    const res = await ubiUpgrade.upgrade(ubi.address);
 
     let isActive = await ubiUpgrade.isActive();
     const newUbi = await firstClaimPool.ubi();
     let periodStart = await ubiUpgrade.periodStart().then(_ => _.toNumber());
+    let startDate = new Date(periodStart * 1000);
     expect(newUbi.toString()).to.be.equal(ubiUpgrade.address);
     expect(isActive).to.be.true;
-    let startDate = new Date(periodStart * 1000);
     expect(startDate.toISOString()).to.have.string("T12:00:00.000Z"); //contract set itself to start at noon GMT
   });
 
@@ -147,5 +162,32 @@ contract("UBIScheme", ([founder, claimer1]) => {
   it("should not be able to call upgrade again", async () => {
     const res = await ubiUpgrade.upgrade(ubi.address).catch(_ => false);
     expect(res).to.be.false;
+  });
+
+  it("should not be able to claim until 12pm", async () => {
+    const res = await ubiUpgrade.claim({ from: claimer1 }).catch(e => e.message);
+    expect(res).to.contain("not in periodStarted");
+  });
+
+  it("should be able to claim after 12pm", async () => {
+    const block = await web3.eth.getBlock("latest");
+    const now = block.timestamp;
+    console.log(
+      new Date(now * 1000),
+      new Date(await ubiUpgrade.periodStart().then(_ => _.toNumber() * 1000))
+    );
+    const start = await ubiUpgrade.periodStart().then(_ => _.toNumber());
+    const diff = start - now;
+
+    await increaseTime(diff + 1);
+    console.log({
+      start,
+      now,
+      diff,
+      is: await identity.isWhitelisted(claimer1),
+      isActtive: await ubiUpgrade.isActive()
+    });
+    const res = await ubiUpgrade.claim({ from: claimer1 });
+    expect(res).to.not.be.false;
   });
 });

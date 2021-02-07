@@ -153,6 +153,7 @@ contract(
     });
 
     it("should calculate cycle on first day", async () => {
+      await increaseTime(ONE_DAY); //make sure
       let transaction = await ubi.claim({ from: claimer1 });
       await ubi.claim({ from: claimer2 });
       let cycleLength = await ubi.cycleLength().then(_ => _.toNumber());

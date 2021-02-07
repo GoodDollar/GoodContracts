@@ -38,10 +38,14 @@ export const increaseTime = async function(duration) {
   );
 };
 
-contract("UBIScheme", ([founder, claimer1]) => {
+contract("UBIScheme Upgrade Process", ([founder, claimer1]) => {
   let goodDollar, identity, formula, avatar, ubi, controller, firstClaimPool, ubiUpgrade;
 
   before(async () => {
+    const block = await web3.eth.getBlock("latest");
+    const roundToNextMidnight = block.timestamp % (60 * 60 * 24);
+    await increaseTime(60 * 60 * 24 - roundToNextMidnight);
+
     formula = await Formula.new(0);
     identity = await Identity.new();
     goodDollar = await GoodDollar.new(

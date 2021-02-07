@@ -115,30 +115,6 @@ contract(
       );
     });
 
-    it("should allow non-whitelisted to checkEntitlement", async () => {
-      const claimAmount = await vanillaFixedUBI.checkEntitlement({
-        from: nonWhitelisted
-      });
-      expect(claimAmount.toString()).to.be.equal(helpers.toGD("1"));
-
-      const claimAmount2 = await vanillaFixedUBI.checkEntitlement({
-        from: whitelisted
-      });
-      expect(claimAmount2.toString()).to.be.equal(helpers.toGD("1"));
-    });
-
-    it("should allow non-whitelisted to checkEntitlement", async () => {
-      const claimAmount = await vanillaFixedUBI.checkEntitlement({
-        from: nonWhitelisted
-      });
-      expect(claimAmount.toString()).to.be.equal(helpers.toGD("1"));
-
-      const claimAmount2 = await vanillaFixedUBI.checkEntitlement({
-        from: whitelisted
-      });
-      expect(claimAmount2.toString()).to.be.equal(helpers.toGD("1"));
-    });
-
     it("should end UBI scheme with no remaining reserve", async () => {
       // Propose it
       const schemeRegistrar = await SchemeRegistrar.deployed();
@@ -215,6 +191,19 @@ contract(
       await helpers.assertVMException(ubi.start(), "not in period");
       await helpers.increaseTime(periodOffset);
       assert(await ubi.start());
+    });
+
+    it("should allow non-whitelisted to checkEntitlement after it started", async () => {
+      await vanillaFixedUBI.start();
+      const claimAmount = await vanillaFixedUBI.checkEntitlement({
+        from: nonWhitelisted
+      });
+      expect(claimAmount.toString()).to.be.equal(helpers.toGD("1"));
+
+      const claimAmount2 = await vanillaFixedUBI.checkEntitlement({
+        from: whitelisted
+      });
+      expect(claimAmount2.toString()).to.be.equal(helpers.toGD("1"));
     });
 
     it("should not allow starting scheme without enough funds", async () => {

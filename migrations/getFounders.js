@@ -10,11 +10,13 @@ const getFounders = async (web3, network) => {
   }
 
   await Promise.all(
-    founders.map(async f => {
+    founders.slice(0, 2).map(async f => {
       const b = await web3.eth.getBalance(f);
       console.log("founder balance:", { f, b });
-      if (BigInt(b) < BigInt(web3.utils.toWei("0.004", "ether"))) {
-        const toTop = (BigInt(web3.utils.toWei("0.009", "ether")) - BigInt(b)).toString();
+      if (BigInt(b) < BigInt(web3.utils.toWei("0.05", "ether"))) {
+        const toTop = (BigInt(web3.utils.toWei("0.10", "ether")) - BigInt(b)).toString();
+        console.log("topping founder...", { f });
+
         const receipt = await web3.eth.sendTransaction({
           from: accounts[0],
           to: f,

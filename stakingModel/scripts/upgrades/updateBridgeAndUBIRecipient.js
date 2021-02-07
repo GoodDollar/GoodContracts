@@ -9,7 +9,8 @@ const getFounders = require("../../../migrations/getFounders");
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 const NULL_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-const gasPrice = 61500000000;
+const gasPrice = 140000000000;
+const gas = 500000;
 const getNetworkName = () => {
   const argslist = process.argv;
   let found = false;
@@ -92,14 +93,14 @@ const upgrade = async function() {
     founders.slice(0, Math.ceil(founders.length / 2)).map(f =>
       absoluteVote.vote(proposalId, 1, 0, f, {
         from: f,
-        gas: 500000,
+        gas: gas / 2,
         gasPrice
       })
     )
   );
 
   console.log("updating contracts...");
-  const res = await ubiupdate.setContracts({ gasPrice });
+  const res = await ubiupdate.setContracts({ gasPrice, gas });
   console.log("result:", { res, logs: res.logs });
 };
 

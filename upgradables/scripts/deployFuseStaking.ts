@@ -8,7 +8,7 @@ networkNames[1] = networkName;
 networkNames[122] = networkName;
 networkNames[3] = networkName;
 
-async function main() {
+async function deploy() {
   const {
     daoAddresses,
     modelAddresses,
@@ -49,6 +49,11 @@ async function upgrade() {
   // staking.upgrade1(daoAddresses.GoodDollar, modelAddresses.UBIScheme);
   console.log("Fusestaking upgraded", { staking });
 }
+async function main() {
+  const { upgradableAddresses } = await getSettings(networkName);
+  if (process.env.FORCE === "true" || upgradableAddresses.FuseStaking == null) {
+    return deploy();
+  } else return upgrade();
+}
 
-if (process.env.UPGRADE === "true") upgrade().catch(e => console.log(e));
-else main().catch(e => console.log(e));
+main().catch(e => console.log(e));

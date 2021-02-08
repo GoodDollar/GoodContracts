@@ -116,6 +116,15 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		}
 	}
 
+	function setContracts(address _gd, address _ubischeme) public onlyOwner {
+		if (_gd != address(0)) {
+			GD = GoodDollar(_gd);
+		}
+		if (_ubischeme != address(0)) {
+			ubischeme = UBIScheme(_ubischeme);
+		}
+	}
+
 	function stake() public payable returns (bool) {
 		return stake(address(0));
 	}

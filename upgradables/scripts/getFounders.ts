@@ -5,12 +5,12 @@ export const getFounders = async network => {
   let founders = accounts.slice(0, 3);
   if (network.indexOf("production") >= 0) {
     const keystore = JSON.parse(process.env.FOUNDERS_KEYSTORE);
-    founders = keystore.map(key =>
-      ethers.Wallet.fromEncryptedJsonSync(
-        keystore,
+    founders = keystore.map(key => {
+      return ethers.Wallet.fromEncryptedJsonSync(
+        JSON.stringify(key),
         process.env.FOUNDERS_PASSWORD
-      ).connect(ethers.provider)
-    );
+      ).connect(ethers.provider);
+    });
   }
 
   await Promise.all(

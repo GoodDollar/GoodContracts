@@ -1,3 +1,8 @@
+/***
+ * Use openzeppelin ProxyFactory to deploy the proxy contracts with create2
+ * so we can make sure proxies have same address across chains
+ */
+
 import { fetchOrDeploy, getVersion } from "@openzeppelin/upgrades-core";
 import ProxyFactoryABI from "@openzeppelin/upgrades/build/contracts/ProxyFactory.json";
 import { ethers } from "hardhat";

@@ -295,7 +295,7 @@ contract UBIScheme is AbstractUBI {
 		day.amountOfClaimers = day.amountOfClaimers.add(1);
 		day.hasClaimed[_account] = true;
 		lastClaimed[_account] = now;
-		totalClaimsPerUser[_account].add(1);
+		totalClaimsPerUser[_account] = totalClaimsPerUser[_account].add(1);
 
 		// awards a new user or a fished user
 		if (_isFirstTime) {

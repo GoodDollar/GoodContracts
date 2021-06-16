@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../utils/DSMath.sol";
 
 import "../Interfaces.sol";
+import "hardhat/console.sol";
 
 interface IConsensus {
 	/**
@@ -54,13 +55,16 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 	uint256 public lastDayCollected; //ubi day from ubischeme
 
 	uint256 public stakeBackRatio;
-	uint256 public maxSlippageRatio;
+	uint256 public maxSlippageRatio; //actually its max price impact ratio
 	uint256 public keeperFeeRatio;
 	uint256 public RATIO_BASE;
 	uint256 public communityPoolRatio; //out of G$ bought how much should goto pool
 
 	uint256 communityPoolBalance;
 	uint256 pendingFuseEarnings; //earnings not  used because of slippage
+
+	address public USDC;
+	address public fUSD;
 
 	event UBICollected(
 		uint256 indexed currentDay,
@@ -113,6 +117,13 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 				uniswapFactory.getPair(uniswap.WETH(), _gd)
 			);
 			upgrade0();
+		}
+	}
+
+	function upgrade2() public {
+		if (USDC == address(0)) {
+			USDC = address(0x620fd5fa44BE6af63715Ef4E65DDFA0387aD13F5);
+			fUSD = address(0x249BE57637D8B013Ad64785404b24aeBaE9B098B);
 		}
 	}
 
@@ -317,10 +328,21 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 	function _buyGD(uint256 _value) internal returns (uint256[] memory) {
 		//buy from uniwasp
 		require(_value > 0, "buy value should be > 0");
-		uint256 maxFuse = calcMaxFuseWithSlippage(_value);
-		address[] memory path = new address[](2);
-		path[1] = address(GD);
-		path[0] = uniswap.WETH();
+		uint256 maxFuse = calcMaxFuseWithPriceImpact(_value);
+		uint256 maxFuseUSDC = calcMaxFuseUSDCWithPriceImpact(_value);
+		address[] memory path;
+		if (maxFuse >= maxFuseUSDC) {
+			path = new address[](2);
+			path[1] = address(GD);
+			path[0] = uniswap.WETH();
+		} else {
+			maxFuse = maxFuseUSDC;
+			path = new address[](4);
+			path[3] = address(GD);
+			path[2] = USDC;
+			path[1] = fUSD;
+			path[0] = uniswap.WETH();
+		}
 		return
 			uniswap.swapExactETHForTokens{ value: maxFuse }(
 				0,
@@ -330,14 +352,45 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 			);
 	}
 
-	function calcMaxFuseWithSlippage(uint256 _value)
+	function calcMaxFuseWithPriceImpact(uint256 _value)
 		public
 		view
 		returns (uint256)
 	{
 		(uint256 r_fuse, uint256 r_gd, ) = uniswapPair.getReserves();
 
-		return calcMaxFuseWithSlippage(r_fuse, r_gd, _value);
+		return calcMaxTokenWithPriceImpact(r_fuse, r_gd, _value);
+	}
+
+	function calcMaxFuseUSDCWithPriceImpact(uint256 _value)
+		public
+		view
+		returns (uint256 maxFuse)
+	{
+		UniswapPair uniswapFUSEUSDCPair =
+			UniswapPair(uniswapFactory.getPair(uniswap.WETH(), fUSD)); //fusd is pegged 1:1 to usdc
+		UniswapPair uniswapGDUSDCPair =
+			UniswapPair(uniswapFactory.getPair(address(GD), USDC));
+		(uint256 rg_gd, uint256 rg_usdc, ) = uniswapGDUSDCPair.getReserves();
+		(uint256 r_fuse, uint256 r_usdc, ) = uniswapFUSEUSDCPair.getReserves();
+		uint256 usdcPriceInFuse = r_fuse.mul(1e6).div(r_usdc); //usdc is 1e6 so to keep in original 1e18 precision we first multiply by 1e8
+		// console.log(
+		// 	"rgd: %s rusdc:%s usdcPriceInFuse: %s",
+		// 	rg_gd,
+		// 	rg_usdc,
+		// 	usdcPriceInFuse
+		// );
+		// console.log("rfuse: %s rusdc:%s", r_fuse, r_usdc);
+
+		//how many usdc we can get for fuse
+		uint256 fuseValueInUSDC = _value.mul(1e18).div(usdcPriceInFuse); //value and usdPriceInFuse are in 1e18, we mul by 1e18 to keep 18 decimals precision
+		// console.log("fuse usdc value: %s", fuseValueInUSDC);
+
+		uint256 maxUSDC =
+			calcMaxTokenWithPriceImpact(rg_usdc * 1e12, rg_gd, fuseValueInUSDC); //expect r_token to be in 18 decimals
+		// console.log("max USDC: %s", maxUSDC);
+
+		maxFuse = maxUSDC.mul(usdcPriceInFuse).div(1e18); //both are in 1e18 precision, div by 1e18 to keep precision
 	}
 
 	/**
@@ -355,18 +408,28 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 	}
 
 	/**
-	 * @dev use binary search to find quantity that will result with slippage < maxSlippageRatio
+	 * @dev use binary search to find quantity that will result with price impact < maxPriceImpactRatio
 	 */
-	function calcMaxFuseWithSlippage(
-		uint256 r_fuse,
+	function calcMaxTokenWithPriceImpact(
+		uint256 r_token,
 		uint256 r_gd,
 		uint256 _value
 	) public view returns (uint256) {
 		uint256 start = 0;
 		uint256 end = _value.div(1e18); //save iterations by moving precision to whole Fuse quantity
-		uint256 curPriceWei = uint256(100).mul(r_fuse) / r_gd; //uniswap quote  formula UniswapV2Library.sol
+		// uint256 curPriceWei = uint256(1e18).mul(r_gd) / r_token; //uniswap quote  formula UniswapV2Library.sol
+		uint256 gdForQuantity = getAmountOut(1e18, r_token, r_gd);
+		uint256 priceForQuantityWei =
+			rdiv(1e18, gdForQuantity.mul(1e16)).div(1e9);
 		uint256 maxPriceWei =
-			curPriceWei.mul(RATIO_BASE.add(maxSlippageRatio)).div(RATIO_BASE);
+			priceForQuantityWei.mul(RATIO_BASE.add(maxSlippageRatio)).div(
+				RATIO_BASE
+			);
+		// console.log(
+		// 	"curPrice: %s, maxPrice %s",
+		// 	priceForQuantityWei,
+		// 	maxPriceWei
+		// );
 		uint256 fuseAmount = _value;
 
 		//Iterate while start not meets end
@@ -374,10 +437,15 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 			// Find the mid index
 			uint256 midQuantityWei = start.add(end).mul(1e18).div(2); //restore quantity precision
 			if (midQuantityWei == 0) break;
-			uint256 gdForQuantity = getAmountOut(midQuantityWei, r_fuse, r_gd);
-			uint256 priceForQuantityWei =
-				rdiv(midQuantityWei, gdForQuantity.mul(1e16)).div(1e9);
-
+			gdForQuantity = getAmountOut(midQuantityWei, r_token, r_gd);
+			priceForQuantityWei = rdiv(midQuantityWei, gdForQuantity.mul(1e16))
+				.div(1e9);
+			// console.log(
+			// 	"gdForQuantity: %s, priceForQuantity: %s, midQuantity: %s",
+			// 	gdForQuantity,
+			// 	priceForQuantityWei,
+			// 	midQuantityWei
+			// );
 			if (priceForQuantityWei <= maxPriceWei) {
 				start = midQuantityWei.div(1e18) + 1; //reduce precision to whole quantity div 1e18
 				fuseAmount = midQuantityWei;

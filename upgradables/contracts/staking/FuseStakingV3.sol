@@ -291,7 +291,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		);
 		stakeNextValidator(stakeBack, address(0)); //stake back the rest of the earnings
 
-		uint256 gdBought = fuseswapResult[1];
+		uint256 gdBought = fuseswapResult[fuseswapResult.length - 1];
 		uint256 keeperFee = gdBought.mul(keeperFeeRatio).div(RATIO_BASE);
 		if (keeperFee > 0) GD.transfer(msg.sender, keeperFee);
 

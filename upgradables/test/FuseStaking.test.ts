@@ -51,8 +51,8 @@ describe("FuseStakingV3", () => {
     );
     await gdusdcPair.mock.getReserves.returns("4984886100", "10789000000", "0");
     await fusefusdPair.mock.getReserves.returns(
-      ethers.utils.parseEther("100000"),
-      "20000000000", //200$ usdc 6 decimals
+      ethers.utils.parseEther("10000"),
+      ethers.utils.parseEther("2000"), //200$ fusd 18 decimals
       "0"
     );
   };
@@ -66,13 +66,11 @@ describe("FuseStakingV3", () => {
     staking = (await (
       await ethers.getContractFactory("FuseStakingV3")
     ).deploy()) as FuseStakingV3;
-    console.log(
-      "getPair",
-      await uniswapFactory.getPair(uniswap.address, uniswap.address)
-    );
+
     await staking.initialize();
     await staking.upgrade0();
     await staking.upgrade1(NULL_ADDRESS, ubiMock.address, uniswap.address);
+    await staking.upgrade2();
   });
 
   it("should have owner", async () => {
@@ -113,7 +111,6 @@ describe("FuseStakingV3", () => {
   });
 
   it("should calculate gd/usdc quantity with 0 price impact ", async () => {
-    await staking.upgrade2();
     const res = await staking["calcMaxFuseUSDCWithPriceImpact(uint256)"](
       ethers.utils.parseEther("10")
     );
@@ -123,12 +120,28 @@ describe("FuseStakingV3", () => {
   });
 
   it("should detect gd/usdc price impact", async () => {
-    await staking.upgrade2();
     const res = await staking["calcMaxFuseUSDCWithPriceImpact(uint256)"](
       ethers.utils.parseEther("10000")
     );
-    //exchanging 10 fuse which are equal 2$ USDC should have no significant price impact on usdc/gd swap so we should be able to swap the whole 10
     expect(res).to.lt(ethers.utils.parseEther("10000"));
     expect(res).to.equal(ethers.utils.parseEther("1625")); //on fuse swap it was around 335$ on above gd/usdc reserves that reaches 3% impact, that means 335*5=1675fuse
+  });
+
+  it("should match fuseswap and allow to exchange +-4600 fuse to G$", async () => {
+    //G$/usdc reserves 52,841,23400/10410000000
+    //fuse/fusd reserves 619085*1e18/42905*1e18
+
+    await gdusdcPair.mock.getReserves.returns("5284123400", "10410000000", "0");
+    await fusefusdPair.mock.getReserves.returns(
+      ethers.utils.parseEther("619085"),
+      ethers.utils.parseEther("42905"),
+      "0"
+    );
+
+    const res = await staking["calcMaxFuseUSDCWithPriceImpact(uint256)"](
+      ethers.utils.parseEther("10000")
+    );
+    expect(res).to.lt(ethers.utils.parseEther("5000"));
+    expect(res).to.gt(ethers.utils.parseEther("4500"));
   });
 });

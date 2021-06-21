@@ -367,30 +367,30 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		view
 		returns (uint256 maxFuse)
 	{
-		UniswapPair uniswapFUSEUSDCPair =
+		UniswapPair uniswapFUSEfUSDPair =
 			UniswapPair(uniswapFactory.getPair(uniswap.WETH(), fUSD)); //fusd is pegged 1:1 to usdc
 		UniswapPair uniswapGDUSDCPair =
 			UniswapPair(uniswapFactory.getPair(address(GD), USDC));
 		(uint256 rg_gd, uint256 rg_usdc, ) = uniswapGDUSDCPair.getReserves();
-		(uint256 r_fuse, uint256 r_usdc, ) = uniswapFUSEUSDCPair.getReserves();
-		uint256 usdcPriceInFuse = r_fuse.mul(1e6).div(r_usdc); //usdc is 1e6 so to keep in original 1e18 precision we first multiply by 1e8
+		(uint256 r_fuse, uint256 r_fusd, ) = uniswapFUSEfUSDPair.getReserves();
+		uint256 fusdPriceInFuse = r_fuse.mul(1e18).div(r_fusd); //fusd is 1e18 so to keep in original 1e18 precision we first multiply by 1e18
 		// console.log(
 		// 	"rgd: %s rusdc:%s usdcPriceInFuse: %s",
 		// 	rg_gd,
 		// 	rg_usdc,
-		// 	usdcPriceInFuse
+		// 	fusdPriceInFuse
 		// );
-		// console.log("rfuse: %s rusdc:%s", r_fuse, r_usdc);
+		// console.log("rfuse: %s rusdc:%s", r_fuse, r_fusd);
 
-		//how many usdc we can get for fuse
-		uint256 fuseValueInUSDC = _value.mul(1e18).div(usdcPriceInFuse); //value and usdPriceInFuse are in 1e18, we mul by 1e18 to keep 18 decimals precision
-		// console.log("fuse usdc value: %s", fuseValueInUSDC);
+		//how many fusd we can get for fuse
+		uint256 fuseValueInfUSD = _value.mul(1e18).div(fusdPriceInFuse); //value and usdPriceInFuse are in 1e18, we mul by 1e18 to keep 18 decimals precision
+		// console.log("fuse fusd value: %s", fuseValueInfUSD);
 
 		uint256 maxUSDC =
-			calcMaxTokenWithPriceImpact(rg_usdc * 1e12, rg_gd, fuseValueInUSDC); //expect r_token to be in 18 decimals
+			calcMaxTokenWithPriceImpact(rg_usdc * 1e12, rg_gd, fuseValueInfUSD); //expect r_token to be in 18 decimals
 		// console.log("max USDC: %s", maxUSDC);
 
-		maxFuse = maxUSDC.mul(usdcPriceInFuse).div(1e18); //both are in 1e18 precision, div by 1e18 to keep precision
+		maxFuse = maxUSDC.mul(fusdPriceInFuse).div(1e18); //both are in 1e18 precision, div by 1e18 to keep precision
 	}
 
 	/**

@@ -47,7 +47,31 @@ async function upgrade() {
     FStakingV3
   );
   // staking.upgrade1(daoAddresses.GoodDollar, modelAddresses.UBIScheme);
-  console.log("Fusestaking upgraded", { staking });
+  console.log("Fusestaking upgraded", { staking: staking.address });
+  await staking.upgrade3();
+}
+
+async function upgradeByAvatar() {
+  const {
+    daoAddresses,
+    modelAddresses,
+    upgradableAddresses,
+    founders
+  } = await getSettings(networkName);
+  const FStakingV3 = await ethers.getContractFactory("FuseStakingV3");
+  const impl = await FStakingV3.deploy();
+  console.log("new impl at:", impl.address);
+  const upgradeScheme = await (
+    await ethers.getContractFactory("UpgradeImplScheme.sol")
+  ).deploy(
+    daoAddresses.Avatar,
+    impl.address,
+    upgradableAddresses.FuseStaking,
+    "0x57179b2A8eB019157b0C3E761cdB26c82C982a3B",
+    "",
+    0
+  );
+  console.log("scheme at:", upgradeScheme.address);
 }
 async function main() {
   const { upgradableAddresses } = await getSettings(networkName);

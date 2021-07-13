@@ -12,7 +12,8 @@ networkNames[3] = networkName;
 
 export const proposeUpgradeScheme = async (daoAddresses, schemeAddress) => {
   console.log("proposing conntract upgrade to DAO", {
-    schemeAddress
+    schemeAddress,
+    daoAddresses
   });
 
   const schemeRegistrar = (await ethers.getContractAt(
@@ -66,10 +67,15 @@ const main = async () => {
     founders
   } = await getSettings(networkName);
 
-  // const implementation = "0x7fca2b3e1047291f65c2c914083d970c027f4290";
-  // const deployedProxy = upgradableAddresses.FuseStaking;
-  // const upgradeTimeLock = 0;
-  // const callData = ethers.utils.toUtf8Bytes(""); //ethers.constants.HashZero;
+  // const implementation = "0x8141208203C298f07dDcd794b14722E69Aa42549";
+
+  const deployedProxy = upgradableAddresses.FuseStaking;
+  const upgradeTimeLock = 0;
+  const callData = ethers.utils.toUtf8Bytes(""); //ethers.constants.HashZero;
+  const impl = await (await ethers.getContractFactory("FuseStakingV3")).deploy();
+  await impl.deployed();
+  const implementation = impl.address;
+  console.log("new impl at:", implementation);
 
   const factory = await ethers.getContractFactory("UpgradeImplScheme");
 
@@ -82,16 +88,19 @@ const main = async () => {
     upgradeTimeLock
   );
 
-  //   const scheme = await ethers.getContractAt(
-  //     "UpgradeImplScheme",
-  //     "0x2591E81be398ddEDb8a5A68c1420b7B84C0F39d2"
-  //   );
+  // // let scheme = await ethers.getContractAt(
+  // //   "UpgradeImplScheme",
+  // //   "0x2888268C99d9a0dDab53013C6D3c070d118958ec"
+  // // );
+
+  await scheme.deployed();
 
   const schemeAddress = scheme.address;
 
+  console.log("upgrade scheme:", schemeAddress);
   const proposalId = await proposeUpgradeScheme(daoAddresses, schemeAddress);
 
-  //   const proposalId = "0x67dc1fb651ef33c7943b7a504906b1e45bf0715d35e27a3e562c9d2b49d43586";
+  // const proposalId = "0xda9b0bfa71e0ac696698a16513c18a628cee0a01e85b875c59a8a9c26c23301d";
   console.log("voting upgrade...", { proposalId });
   await voteUpgradeScheme(networkName, daoAddresses, proposalId);
   console.log("vote passed, executing upgrade...");

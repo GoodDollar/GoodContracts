@@ -85,8 +85,9 @@ describe("FuseStakingV3", () => {
     );
 
     // const fuseQuantity = ethers.utils.formatEther(res);
-    expect(res).to.gt(0);
-    expect(res).to.equal(ethers.utils.parseEther("209"));
+    expect(res.fuseAmount).to.gt(0);
+    expect(res.fuseAmount).to.equal(ethers.utils.parseEther("209"));
+    expect(res.tokenOut).to.equal(7770685);
   });
 
   it("should calc quantity with uniswap mock", async () => {
@@ -95,8 +96,8 @@ describe("FuseStakingV3", () => {
     );
 
     // const fuseQuantity = ethers.utils.formatEther(res);
-    expect(res).to.gt(0);
-    expect(res).to.equal(ethers.utils.parseEther("36"));
+    expect(res.fuseAmount).to.gt(0);
+    expect(res.fuseAmount).to.equal(ethers.utils.parseEther("36"));
 
     await uniswapPair.mock.getReserves.returns(
       ethers.utils.parseEther("100"),
@@ -107,7 +108,7 @@ describe("FuseStakingV3", () => {
       ethers.utils.parseEther("500")
     );
 
-    expect(res2).to.equal(ethers.utils.parseEther("4"));
+    expect(res2.fuseAmount).to.equal(ethers.utils.parseEther("4"));
   });
 
   it("should calculate gd/usdc quantity with 0 price impact ", async () => {
@@ -115,16 +116,16 @@ describe("FuseStakingV3", () => {
       ethers.utils.parseEther("10")
     );
     //exchanging 10 fuse which are equal 2$ USDC should have no significant price impact on usdc/gd swap so we should be able to swap the whole 10
-    expect(res).to.gt(0);
-    expect(res).to.equal(ethers.utils.parseEther("10"));
+    expect(res.maxFuse).to.gt(0);
+    expect(res.maxFuse).to.equal(ethers.utils.parseEther("10"));
   });
 
   it("should detect gd/usdc price impact", async () => {
     const res = await staking["calcMaxFuseUSDCWithPriceImpact(uint256)"](
       ethers.utils.parseEther("10000")
     );
-    expect(res).to.lt(ethers.utils.parseEther("10000"));
-    expect(res).to.equal(ethers.utils.parseEther("1625")); //on fuse swap it was around 335$ on above gd/usdc reserves that reaches 3% impact, that means 335*5=1675fuse
+    expect(res.maxFuse).to.lt(ethers.utils.parseEther("10000"));
+    expect(res.maxFuse).to.equal(ethers.utils.parseEther("1625")); //on fuse swap it was around 335$ on above gd/usdc reserves that reaches 3% impact, that means 335*5=1675fuse
   });
 
   it("should match fuseswap and allow to exchange +-4600 fuse to G$", async () => {
@@ -141,7 +142,7 @@ describe("FuseStakingV3", () => {
     const res = await staking["calcMaxFuseUSDCWithPriceImpact(uint256)"](
       ethers.utils.parseEther("10000")
     );
-    expect(res).to.lt(ethers.utils.parseEther("5000"));
-    expect(res).to.gt(ethers.utils.parseEther("4500"));
+    expect(res.maxFuse).to.lt(ethers.utils.parseEther("5000"));
+    expect(res.maxFuse).to.gt(ethers.utils.parseEther("4500"));
   });
 });

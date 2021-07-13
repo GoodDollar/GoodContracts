@@ -9,7 +9,7 @@ const BN = ethers.BigNumber;
 
 describe("InvitesV1", () => {
   let invites: InvitesV1, founder: SignerWithAddress;
-  let inviter1, inviter2, invitee1, invitee2, invitee3, invitee4, invitee5;
+  let inviter1, inviter2, invitee1, invitee2, invitee3, invitee4, invitee5, invitee6;
 
   let avatar, gd: GoodDollar, Controller, id: IIdentity;
 
@@ -22,7 +22,8 @@ describe("InvitesV1", () => {
       invitee2,
       invitee3,
       invitee4,
-      invitee5
+      invitee5,
+      invitee6
     ] = await ethers.getSigners();
 
     const InvitesV1 = await ethers.getContractFactory("InvitesV1");
@@ -263,6 +264,19 @@ describe("InvitesV1", () => {
     expect(log2.args.inviterLevel.toNumber()).to.be.equal(1);
     expect(log2.args.earnedLevel).to.be.equal(false);
     expect(log2.args.bountyPaid.toNumber()).to.be.equal(10);
+  });
+
+  it("should allow to set inviter later and pay bounty", async () => {
+    await invites
+      .connect(invitee6)
+      .join(ethers.utils.hexZeroPad("0xfd", 32), ethers.constants.HashZero);
+    await invites
+      .connect(invitee6)
+      .join(ethers.utils.hexZeroPad("0xfd", 32), ethers.utils.hexZeroPad("0xfa", 32));
+    const invitee = await invites.users(invitee6.address);
+    expect(invitee.invitedBy).to.equal(inviter1.address);
+    await id.addWhitelistedWithDID(invitee6.address, Math.random() + "").catch(e => e);
+    await expect(invites.bountyFor(invitee6.address)).to.emit(invites, "InviterBounty");
   });
 
   it("should end contract by owner", async () => {

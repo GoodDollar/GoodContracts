@@ -18,11 +18,12 @@ export const getFounders = async network => {
       const b = await ethers.provider.getBalance(f.address);
       console.log("founder balance:", { f: f.address, b });
       if (BigInt(b) < BigInt(ethers.utils.parseEther("0.004"))) {
-        const toTop = (BigInt(ethers.utils.parseEther("0.009")) - BigInt(b)).toString();
+        const toTop = ethers.utils.parseEther("0.009");
         const receipt = await founders[0].sendTransaction({
           to: f.address,
           value: toTop
         });
+        await receipt.wait();
         console.log("topped founder,", { f, receipt });
       }
     })

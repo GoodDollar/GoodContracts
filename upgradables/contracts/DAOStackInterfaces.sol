@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6;
+pragma experimental ABIEncoderV2;
 
 interface Avatar {
 	function nativeToken() external returns (address);
@@ -171,4 +172,15 @@ interface IntVoteInterface {
 		external
 		pure
 		returns (uint256 min, uint256 max);
+
+	struct Proposal {
+		bytes32 organizationId; // the organization Id
+		bool open; // voting open flag
+		address callbacks;
+		uint256 numOfChoices;
+		bytes32 paramsHash; // the hash of the parameters of the proposal
+		uint256 totalVotes;
+	}
+
+	function proposals(bytes32) external view returns (Proposal memory);
 }

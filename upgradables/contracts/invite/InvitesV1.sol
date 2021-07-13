@@ -109,16 +109,24 @@ contract InvitesV1 is Initializable {
 
 	function join(bytes32 _myCode, bytes32 _inviterCode) public isActive {
 		User storage user = users[msg.sender];
-		require(user.inviteCode == 0x0, "user already joined");
 		require(
-			codeToUser[_myCode] == address(0),
+			codeToUser[_myCode] == address(0) ||
+				codeToUser[_myCode] == msg.sender,
 			"invite code already in use"
 		);
 		address inviter = codeToUser[_inviterCode];
-		user.inviteCode = _myCode;
-		user.levelStarted = now;
-		user.joinedAt = now;
-		codeToUser[_myCode] = msg.sender;
+		//allow user to set inviter if doesnt have one
+		require(
+			user.inviteCode == 0x0 ||
+				(user.invitedBy == address(0) && inviter != address(0)),
+			"user already joined"
+		);
+		if (user.inviteCode == 0x0) {
+			user.inviteCode = _myCode;
+			user.levelStarted = now;
+			user.joinedAt = now;
+			codeToUser[_myCode] = msg.sender;
+		}
 		if (inviter != address(0)) {
 			user.invitedBy = inviter;
 			User storage inviterUser = users[inviter];
@@ -298,8 +306,9 @@ contract InvitesV1 is Initializable {
 	/**
 	 * @dev
 	 * 1.2.0 - final changes before release
+	 * 1.3.0 - allow to set inviter later
 	 */
 	function version() public pure returns (string memory) {
-		return "1.2.0";
+		return "1.3.0";
 	}
 }

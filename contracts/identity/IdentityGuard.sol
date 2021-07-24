@@ -83,6 +83,11 @@ contract IdentityGuard is Ownable {
         _;
     }
 
+    modifier onlyAccountOwner(address account) {
+        require(account == msg.sender, "Not account owner");
+        _;
+    }
+
     /* @dev Allows owner to set a new identity contract if
      * the given identity contract has been registered as a scheme
      */

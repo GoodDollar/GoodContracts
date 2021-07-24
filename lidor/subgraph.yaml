@@ -1,0 +1,62 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: identity
+    network: mainnet
+    source:
+      address: "0xFa8d865A962ca8456dF331D78806152d3aC5B84F"
+      abi: identity
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - BlacklistAdded
+        - BlacklistRemoved
+        - ContractAdded
+        - ContractRemoved
+        - IdentityAdminAdded
+        - IdentityAdminRemoved
+        - OwnershipTransferred
+        - Paused
+        - PauserAdded
+        - PauserRemoved
+        - Unpaused
+        - WhitelistedAdded
+        - WhitelistedRemoved
+      abis:
+        - name: identity
+          file: ./abis/identity.json
+      eventHandlers:
+        - event: BlacklistAdded(indexed address)
+          handler: handleBlacklistAdded
+        - event: BlacklistRemoved(indexed address)
+          handler: handleBlacklistRemoved
+        - event: ContractAdded(indexed address)
+          handler: handleContractAdded
+        - event: ContractRemoved(indexed address)
+          handler: handleContractRemoved
+        - event: IdentityAdminAdded(indexed address)
+          handler: handleIdentityAdminAdded
+        - event: IdentityAdminRemoved(indexed address)
+          handler: handleIdentityAdminRemoved
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(address)
+          handler: handlePaused
+        - event: PauserAdded(indexed address)
+          handler: handlePauserAdded
+        - event: PauserRemoved(indexed address)
+          handler: handlePauserRemoved
+        - event: Unpaused(address)
+          handler: handleUnpaused
+        - event: WhitelistedAdded(indexed address)
+          handler: handleWhitelistedAdded
+        - event: WhitelistedRemoved(indexed address)
+          handler: handleWhitelistedRemoved
+      callHandlers:
+        - function: authenticate(address)
+          handler: handleAuthenticate
+      file: ./src/mapping.ts

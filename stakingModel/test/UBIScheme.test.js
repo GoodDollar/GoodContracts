@@ -138,6 +138,7 @@ contract(
     });
 
     it("should not be able to execute claiming when the caller is not whitelisted", async () => {
+      await increaseTime(86400);
       let error = await ubi.claim().catch(e => e);
       expect(error.message).to.have.string("is not whitelisted");
     });

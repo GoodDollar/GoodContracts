@@ -13,10 +13,6 @@ jobs:
       - checkout
 
       - run:
-          name: update-npm
-          command: "sudo npm install -g npm@latest"
-
-      - run:
           command: "sudo npm install -g ts-node"
 
       - restore_cache:
@@ -24,32 +20,33 @@ jobs:
 
       - run:
           name: install-npm
-          command: npm install
+          command: npm ci
 
       - save_cache: # special step to save the dependency cache
           key: dependency-cache-{{ checksum "package-lock.json" }}
           paths:
             - ./node_modules
 
-      - run: # run tests
-          name: test
-          command: npm run test
+      # - run: # run tests
+      #     name: test
+      #     command: npm run test
       - run:
           name: coverage
           command: npm run coverage
 
-      - run: # run tests
-          name: test stakingModel
-          command: |
-            cd stakingModel
-            npm ci
-            npm run test            
-            cd ..
+      # - run: # run tests
+      #     name: test stakingModel
+      #     command: |
+      #       cd stakingModel
+      #       npm ci
+      #       npm run test
+      #       cd ..
 
       - run:
           name: coverage stakingModel
           command: |
             cd stakingModel
+            npm ci
             npm run coverage
             cd ..
 

@@ -3,7 +3,7 @@ const exec = util.promisify(require("child_process").exec);
 
 async function serverReadyHandler(config) {
   // console.log({ config }, config.network);
-  console.log("Deploying main project contracts npm run start:main....");
+  console.log(".solcover.js Deploying main project contracts npm run start:main....");
   const { stdout, stderr } = await exec(
     `export NETWORK="${config.network}";npm run start:main`
   );

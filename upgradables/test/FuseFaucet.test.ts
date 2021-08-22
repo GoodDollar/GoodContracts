@@ -6,7 +6,7 @@ import { createDAO } from "./helpers";
 
 const BN = ethers.BigNumber;
 
-describe("InvitesV1", () => {
+describe("FuseFaucet", () => {
   let faucet: FuseFaucet, founder: SignerWithAddress;
   let user1 = ethers.Wallet.createRandom().connect(ethers.provider);
   let user2 = ethers.Wallet.createRandom().connect(ethers.provider);
@@ -38,7 +38,9 @@ describe("InvitesV1", () => {
       ""
     );
 
-    faucet = (await upgrades.deployProxy(FuseFaucetF, [identity])) as FuseFaucet;
+    faucet = (await upgrades.deployProxy(FuseFaucetF, [identity], {
+      kind: "transparent"
+    })) as FuseFaucet;
 
     gd = (await ethers.getContractAt("GoodDollar", gooddollar, founder)) as GoodDollar;
     id = (await ethers.getContractAt("IIdentity", identity, founder)) as IIdentity;
@@ -68,7 +70,7 @@ describe("InvitesV1", () => {
     });
     expect(await faucet.canTop(user1.address)).to.false;
     await expect(faucet.topWallet(user1.address)).to.revertedWith(
-      "revert User not whitelisted or not first time"
+      "User not whitelisted or not first time"
     );
   });
 
@@ -93,14 +95,14 @@ describe("InvitesV1", () => {
     });
     expect(await faucet.canTop(user1.address)).to.false;
     await expect(faucet.topWallet(user1.address)).to.revertedWith(
-      "revert User wallet has been topped too many times today"
+      "User wallet has been topped too many times today"
     );
   });
 
   it("should not top if wallet not half empty", async () => {
     expect(await faucet.canTop(founder.address)).to.false;
     await expect(faucet.topWallet(founder.address)).to.revertedWith(
-      "revert User balance above minimum"
+      "User balance above minimum"
     );
   });
 
@@ -118,17 +120,26 @@ describe("InvitesV1", () => {
         value: ethers.utils.parseUnits("800000", "gwei")
       });
     }
+    await (await faucet.topWallet(user1.address)).wait();
+    await user1.sendTransaction({
+      to: ethers.constants.AddressZero,
+      value: ethers.utils.parseUnits("800000", "gwei")
+    });
+    await ethers.provider.send("evm_increaseTime", [60 * 60 * 24]);
+
     expect(await faucet.canTop(user1.address)).to.false;
     await expect(faucet.topWallet(user1.address)).to.revertedWith(
-      "revert User wallet has been topped too many times this week"
+      "User wallet has been topped too many times this week"
     );
   });
 
   it("should reimburse gas costs", async () => {
     const balance = await ethers.provider.getBalance(founder.address);
     const tx = await (await faucet.topWallet(user2.address, { gasPrice: 1e9 })).wait();
+    const gasCosts = tx.gasUsed.mul(1e9);
+    const afterRefund = gasCosts.sub(await faucet["gasRefund()"]());
     const balanceAfter = await ethers.provider.getBalance(founder.address);
     const diff = balance.sub(balanceAfter).toNumber();
-    expect(diff).to.equal(0);
+    expect(diff).to.equal(afterRefund);
   });
 });

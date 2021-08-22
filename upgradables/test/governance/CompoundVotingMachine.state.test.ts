@@ -57,7 +57,8 @@ describe("CompoundVotingMachine#States", () => {
     );
 
     grep = (await upgrades.deployProxy(GReputation, [root.address], {
-      unsafeAllowCustomTypes: true
+      unsafeAllowCustomTypes: true,
+      kind: "transparent"
     })) as GReputation;
 
     let { daoCreator } = await createDAO();
@@ -102,7 +103,7 @@ describe("CompoundVotingMachine#States", () => {
 
   it("Invalid for proposal not found", async () => {
     await expect(gov.state(5)).to.revertedWith(
-      "revert CompoundVotingMachine::state: invalid proposal id"
+      "CompoundVotingMachine::state: invalid proposal id"
     );
   });
 

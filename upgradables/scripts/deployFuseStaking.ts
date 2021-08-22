@@ -17,7 +17,7 @@ async function deploy() {
   } = await getSettings(networkName);
 
   const FStaking = await ethers.getContractFactory("FuseStakingV3");
-  const fstaking = await upgrades.deployProxy(FStaking, []);
+  const fstaking = await upgrades.deployProxy(FStaking, [], { kind: "transparent" });
   const deployed = await fstaking.deployed();
   console.log("FuseStakig deployed to:", fstaking.address);
   releaser({ FuseStaking: fstaking.address }, networkName);

@@ -66,7 +66,7 @@ const main = async () => {
       const ProxyFactory = await fetchOrDeployProxyFactory();
       grep = (await upgrades.deployProxy(GReputation, [root.address], {
         unsafeAllowCustomTypes: true,
-        proxyFactory: ProxyFactory
+        kind: "transparent"
       })) as GReputation;
 
       console.log("Reputation deployed to:", grep.address);

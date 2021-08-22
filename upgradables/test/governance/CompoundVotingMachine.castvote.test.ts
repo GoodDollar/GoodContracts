@@ -30,7 +30,8 @@ describe("CompoundVotingMachine#CastVote", () => {
     let { daoCreator } = await createDAO();
 
     grep = (await upgrades.deployProxy(GReputation, [root.address], {
-      unsafeAllowCustomTypes: true
+      unsafeAllowCustomTypes: true,
+      kind: "transparent"
     })) as GReputation;
 
     gov = (await CompoundVotingMachine.deploy(
@@ -57,14 +58,14 @@ describe("CompoundVotingMachine#CastVote", () => {
   describe("We must revert if:", () => {
     it("There does not exist a proposal with matching proposal id where the current block number is between the proposal's start block (exclusive) and end block (inclusive)", async () => {
       await expect(gov.castVote(proposalId, true)).to.revertedWith(
-        "revert CompoundVotingMachine::_castVote: voting is closed"
+        "CompoundVotingMachine::_castVote: voting is closed"
       );
     });
 
     it("Such proposal already has an entry in its voters set matching the sender", async () => {
       await gov.connect(signers[0]).castVote(proposalId, true);
       await expect(gov.connect(signers[0]).castVote(proposalId, true)).to.revertedWith(
-        "revert CompoundVotingMachine::_castVote: voter already voted"
+        "CompoundVotingMachine::_castVote: voter already voted"
       );
     });
   });
@@ -141,9 +142,7 @@ describe("CompoundVotingMachine#CastVote", () => {
               ethers.utils.hexZeroPad("0xbac", 32),
               ethers.utils.hexZeroPad("0xbada", 32)
             )
-          ).to.revertedWith(
-            "revert CompoundVotingMachine::castVoteBySig: invalid signature"
-          );
+          ).to.revertedWith("CompoundVotingMachine::castVoteBySig: invalid signature");
         });
 
         describe("casts vote on behalf of the signatory", async () => {
@@ -183,60 +182,60 @@ describe("CompoundVotingMachine#CastVote", () => {
           });
         });
 
-        xit("gas costs for multiple sigs", async () => {
-          let wallet = ethers.Wallet.createRandom();
+        // xit("gas costs for multiple sigs", async () => {
+        //   let wallet = ethers.Wallet.createRandom();
 
-          wallet = wallet.connect(ethers.provider);
-          let actor = wallet;
-          await grep.mint(actor.address, ethers.BigNumber.from("100001"));
-          await gov
-            .connect(actor)
-            .propose(targets, values, signatures, callDatas, "do nothing");
-          let proposalId = await gov.latestProposalIds(actor.address);
+        //   wallet = wallet.connect(ethers.provider);
+        //   let actor = wallet;
+        //   await grep.mint(actor.address, ethers.BigNumber.from("100001"));
+        //   await gov
+        //     .connect(actor)
+        //     .propose(targets, values, signatures, callDatas, "do nothing");
+        //   let proposalId = await gov.latestProposalIds(actor.address);
 
-          const sigsFor = [];
-          const sigsAgainst = [];
-          const createSig = async () => {
-            let wallet = ethers.Wallet.createRandom();
-            wallet = wallet.connect(ethers.provider);
-            let actor = wallet;
-            // await grep.mint(actor.address, ethers.BigNumber.from("1"));
-            let support = Math.random() < 0.5;
-            const signature = await wallet._signTypedData(await Domain(gov), Types, {
-              proposalId: proposalId,
-              support
-            });
-            const sig = ethers.utils.splitSignature(signature);
-            if (support)
-              sigsFor.push({
-                support,
-                v: sig.v,
-                r: sig.r,
-                s: sig.s
-              });
-            else
-              sigsAgainst.push({
-                support,
-                v: sig.v,
-                r: sig.r,
-                s: sig.s
-              });
-          };
-          const ps = [];
-          for (let i = 1; i < 100; i++) {
-            ps.push(createSig());
-          }
-          await Promise.all(ps);
+        //   const sigsFor = [];
+        //   const sigsAgainst = [];
+        //   const createSig = async () => {
+        //     let wallet = ethers.Wallet.createRandom();
+        //     wallet = wallet.connect(ethers.provider);
+        //     let actor = wallet;
+        //     // await grep.mint(actor.address, ethers.BigNumber.from("1"));
+        //     let support = Math.random() < 0.5;
+        //     const signature = await wallet._signTypedData(await Domain(gov), Types, {
+        //       proposalId: proposalId,
+        //       support
+        //     });
+        //     const sig = ethers.utils.splitSignature(signature);
+        //     if (support)
+        //       sigsFor.push({
+        //         support,
+        //         v: sig.v,
+        //         r: sig.r,
+        //         s: sig.s
+        //       });
+        //     else
+        //       sigsAgainst.push({
+        //         support,
+        //         v: sig.v,
+        //         r: sig.r,
+        //         s: sig.s
+        //       });
+        //   };
+        //   const ps = [];
+        //   for (let i = 1; i < 100; i++) {
+        //     ps.push(createSig());
+        //   }
+        //   await Promise.all(ps);
 
-          await ethers.provider.send("evm_mine", []);
+        //   await ethers.provider.send("evm_mine", []);
 
-          let tx = await gov.ecRecoverTest(proposalId, sigsFor, sigsAgainst);
-          let receipt = await tx.wait();
-          console.log("gas for sigs:", {
-            i: sigsFor.length + sigsAgainst.length,
-            gas: receipt.gasUsed.toNumber()
-          });
-        });
+        //   let tx = await gov.ecRecoverTest(proposalId, sigsFor, sigsAgainst);
+        //   let receipt = await tx.wait();
+        //   console.log("gas for sigs:", {
+        //     i: sigsFor.length + sigsAgainst.length,
+        //     gas: receipt.gasUsed.toNumber()
+        //   });
+        // });
       });
     });
   });

@@ -64,7 +64,8 @@ describe("CompoundVotingMachine#DAOScheme", () => {
     );
 
     grep = (await upgrades.deployProxy(GReputation, [root.address], {
-      unsafeAllowCustomTypes: true
+      unsafeAllowCustomTypes: true,
+      kind: "transparent"
     })) as GReputation;
 
     let { daoCreator, controller, avatar: av } = await createDAO();

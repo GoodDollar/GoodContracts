@@ -26,7 +26,8 @@ describe("GovernorAlpha#propose", () => {
     );
 
     grep = (await upgrades.deployProxy(GReputation, [root.address], {
-      unsafeAllowCustomTypes: true
+      unsafeAllowCustomTypes: true,
+      kind: "transparent"
     })) as GReputation;
 
     let { daoCreator } = await createDAO();
@@ -60,7 +61,7 @@ describe("GovernorAlpha#propose", () => {
     await expect(
       gov.propose(targets, values, signatures, callDatas, "do nothing")
     ).to.revertedWith(
-      "revert CompoundVotingMachine::propose: one live proposal per proposer, found an already pending proposal"
+      "CompoundVotingMachine::propose: one live proposal per proposer, found an already pending proposal"
     );
   });
 
@@ -124,7 +125,7 @@ describe("GovernorAlpha#propose", () => {
         await expect(
           gov.propose(targets, values, signatures, callDatas, "do nothing")
         ).to.revertedWith(
-          "revert CompoundVotingMachine::propose: one live proposal per proposer, found an already active proposal"
+          "CompoundVotingMachine::propose: one live proposal per proposer, found an already active proposal"
         );
       });
     });
@@ -136,7 +137,7 @@ describe("GovernorAlpha#propose", () => {
             .connect(signers[4])
             .propose(targets, values, signatures, callDatas, "do nothing")
         ).to.revertedWith(
-          "revert CompoundVotingMachine::propose: proposer votes below proposal threshold"
+          "CompoundVotingMachine::propose: proposer votes below proposal threshold"
         );
       });
 
@@ -150,13 +151,13 @@ describe("GovernorAlpha#propose", () => {
             "do nothing"
           )
         ).to.revertedWith(
-          "revert CompoundVotingMachine::propose: proposal function information arity mismatch"
+          "CompoundVotingMachine::propose: proposal function information arity mismatch"
         );
 
         await expect(
           gov.propose(targets, values.concat(values), signatures, callDatas, "do nothing")
         ).to.revertedWith(
-          "revert CompoundVotingMachine::propose: proposal function information arity mismatch"
+          "CompoundVotingMachine::propose: proposal function information arity mismatch"
         );
 
         await expect(
@@ -168,7 +169,7 @@ describe("GovernorAlpha#propose", () => {
             "do nothing"
           )
         ).to.revertedWith(
-          "revert CompoundVotingMachine::propose: proposal function information arity mismatch"
+          "CompoundVotingMachine::propose: proposal function information arity mismatch"
         );
 
         await expect(
@@ -180,13 +181,13 @@ describe("GovernorAlpha#propose", () => {
             "do nothing"
           )
         ).to.revertedWith(
-          "revert CompoundVotingMachine::propose: proposal function information arity mismatch"
+          "CompoundVotingMachine::propose: proposal function information arity mismatch"
         );
       });
 
       it("or if that length is zero or greater than Max Operations.", async () => {
         await expect(gov.propose([], [], [], [], "do nothing")).to.revertedWith(
-          "revert CompoundVotingMachine::propose: must provide actions"
+          "CompoundVotingMachine::propose: must provide actions"
         );
       });
     });

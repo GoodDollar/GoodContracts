@@ -2,16 +2,16 @@
  * @type import('hardhat/config').HardhatUserConfig
  */
 import { HardhatUserConfig } from "hardhat/types";
-import "hardhat-typechain";
+import "@typechain/hardhat";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
 import "@openzeppelin/hardhat-upgrades";
 import "solidity-coverage";
 import { task, types } from "hardhat/config";
 import { sha3 } from "web3-utils";
-import { load } from "dotenv";
-import { airdrop } from "./scripts/governance/airdropCalculation";
-load();
+import dotenv from "dotenv";
+// import { airdrop } from "./scripts/governance/airdropCalculation";
+dotenv.config();
 
 const mnemonic = process.env.MNEMONIC;
 const infura_api = process.env.INFURA_API;
@@ -37,6 +37,9 @@ const config: HardhatUserConfig = {
     apiKey: etherscan_key
   },
   networks: {
+    hardhat: {
+      initialBaseFeePerGas: 0
+    },
     ropsten: {
       accounts: { mnemonic },
       url: "https://ropsten.infura.io/v3/" + infura_api,
@@ -78,21 +81,21 @@ const config: HardhatUserConfig = {
   }
 };
 
-task("repAirdrop", "Calculates airdrop data and merkle tree")
-  .addParam("action", "calculate/tree/proof")
-  .addOptionalPositionalParam("address", "proof for address")
-  .setAction(async (taskArgs, hre) => {
-    const actions = airdrop(hre.ethers, ethplorer_key);
-    switch (taskArgs.action) {
-      case "calculate":
-        return actions.collectAirdropData();
-      case "tree":
-        return actions.buildMerkleTree();
-      case "proof":
-        return actions.getProof(taskArgs.address);
-      default:
-        console.log("unknown action use calculate or tree");
-    }
-  });
+// task("repAirdrop", "Calculates airdrop data and merkle tree")
+//   .addParam("action", "calculate/tree/proof")
+//   .addOptionalPositionalParam("address", "proof for address")
+//   .setAction(async (taskArgs, hre) => {
+//     const actions = airdrop(hre.ethers, ethplorer_key);
+//     switch (taskArgs.action) {
+//       case "calculate":
+//         return actions.collectAirdropData();
+//       case "tree":
+//         return actions.buildMerkleTree();
+//       case "proof":
+//         return actions.getProof(taskArgs.address);
+//       default:
+//         console.log("unknown action use calculate or tree");
+//     }
+//   });
 
 export default config;

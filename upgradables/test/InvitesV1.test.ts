@@ -51,7 +51,8 @@ describe("InvitesV1", () => {
       InvitesV1,
       [avatar, identity, gooddollar, 500],
       {
-        unsafeAllowCustomTypes: true
+        unsafeAllowCustomTypes: true,
+        kind: "transparent"
       }
     )) as InvitesV1;
 
@@ -70,7 +71,7 @@ describe("InvitesV1", () => {
   it("should have version", async () => {
     expect(await invites.active()).to.be.true;
     const version = await invites.version();
-    expect(version).to.be.equal("1.2.0");
+    expect(version).to.be.equal("1.3.0");
   });
 
   it("should let anyone join", async () => {
@@ -86,7 +87,7 @@ describe("InvitesV1", () => {
       invites
         .connect(inviter1)
         .join(ethers.utils.hexZeroPad("0xfa", 32), ethers.utils.hexZeroPad("0x01", 32))
-    ).to.revertedWith("revert user already joined");
+    ).to.revertedWith("user already joined");
   });
 
   it("should not allow code reuse", async () => {
@@ -95,7 +96,7 @@ describe("InvitesV1", () => {
       invites
         .connect(inviter2)
         .join(ethers.utils.hexZeroPad("0xfa", 32), ethers.constants.HashZero)
-    ).to.revertedWith("revert invite code already in use");
+    ).to.revertedWith("invite code already in use");
   });
 
   it("should mark inviter", async () => {
@@ -110,7 +111,7 @@ describe("InvitesV1", () => {
 
   it("should not pay bounty for non whitelisted invitee", async () => {
     await expect(invites.connect(inviter1).bountyFor(invitee1.address)).to.revertedWith(
-      "revert user not elligble for bounty yet"
+      "user not elligble for bounty yet"
     );
   });
 
@@ -119,7 +120,7 @@ describe("InvitesV1", () => {
     expect(await id.isWhitelisted(invitee1.address)).to.be.true;
     expect(await invites.canCollectBountyFor(invitee1.address)).to.be.false;
     await expect(invites.connect(inviter1).bountyFor(invitee1.address)).to.revertedWith(
-      "revert user not elligble for bounty yet"
+      "user not elligble for bounty yet"
     );
   });
 
@@ -165,7 +166,7 @@ describe("InvitesV1", () => {
 
   it("should not pay bounty twice", async () => {
     await expect(invites.connect(inviter2).bountyFor(invitee1.address)).to.revertedWith(
-      "revert user not elligble for bounty yet"
+      "user not elligble for bounty yet"
     );
   });
 
@@ -213,7 +214,7 @@ describe("InvitesV1", () => {
 
   it("should not set level not by owner", async () => {
     await expect(invites.connect(inviter1).setLevel(0, 1, 5, 1)).to.revertedWith(
-      "revert Only owner or avatar can perform this action"
+      "Only owner or avatar can perform this action"
     );
   });
 

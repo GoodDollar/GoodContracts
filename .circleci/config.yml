@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:10.16
+      - image: circleci/node:12.18
 
     working_directory: ~/repo
 
@@ -53,6 +53,8 @@ jobs:
       - run:
           name: coverage upgradables
           command: |
+            export ADMIN_MNEMONIC='myth like bonus scare over problem client lizard pioneer submit female collect'
+            export MNEMONIC='glad notable bullet donkey fall dolphin simple size stone evil slogan dinner'
             cd upgradables
             npm ci
             npm run coverage

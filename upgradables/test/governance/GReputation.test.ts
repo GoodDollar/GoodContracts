@@ -53,7 +53,8 @@ describe("GReputation", () => {
     [founder, repOwner, rep1, rep2, rep3] = signers.map(_ => _.address);
     delegator = ethers.Wallet.createRandom().connect(ethers.provider);
     grep = (await upgrades.deployProxy(GReputation, [repOwner], {
-      unsafeAllowCustomTypes: true
+      unsafeAllowCustomTypes: true,
+      kind: "transparent"
     })) as GReputation;
 
     grepWithOwner = await grep.connect(ethers.provider.getSigner(repOwner));
@@ -223,7 +224,7 @@ describe("GReputation", () => {
           ethers.utils.hexZeroPad("0xbadd", 32),
           ethers.utils.hexZeroPad("0xbadd", 32)
         )
-      ).to.revertedWith("revert GReputation::delegateBySig: invalid signature");
+      ).to.revertedWith("GReputation::delegateBySig: invalid signature");
     });
 
     it("reverts if the nonce is bad ", async () => {
@@ -240,7 +241,7 @@ describe("GReputation", () => {
       const sig = ethers.utils.splitSignature(signature);
       await expect(
         grep.delegateBySig(delegate, nonce, expiry, sig.v, sig.r, sig.s)
-      ).to.revertedWith("revert GReputation::delegateBySig: invalid nonce");
+      ).to.revertedWith("GReputation::delegateBySig: invalid nonce");
     });
 
     it("reverts if the signature has expired", async () => {
@@ -256,7 +257,7 @@ describe("GReputation", () => {
       const sig = ethers.utils.splitSignature(signature);
       await expect(
         grep.delegateBySig(delegate, nonce, expiry, sig.v, sig.r, sig.s)
-      ).to.revertedWith("revert GReputation::delegateBySig: signature expired");
+      ).to.revertedWith("GReputation::delegateBySig: signature expired");
     });
 
     it("delegates on behalf of the signatory", async () => {
@@ -276,7 +277,7 @@ describe("GReputation", () => {
       const tx = await (
         await grep.delegateBySig(delegate, nonce, expiry, sig.v, sig.r, sig.s)
       ).wait();
-      expect(tx.gasUsed).to.lt(124000);
+      expect(tx.gasUsed).to.lt(130000);
       expect(await grep.delegates(delegator.address)).to.equal(founder);
     });
   });

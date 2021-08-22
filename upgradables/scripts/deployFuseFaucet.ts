@@ -20,7 +20,7 @@ async function main() {
   const FuseFaucet = await ethers.getContractFactory("FuseFaucet");
   const ProxyFactory = await fetchOrDeployProxyFactory();
   let faucet = await upgrades.deployProxy(FuseFaucet, [daoAddresses.Identity], {
-    proxyFactory: ProxyFactory
+    kind: "uups"
   });
 
   console.log("FuseFaucet deployed to:", faucet.address);

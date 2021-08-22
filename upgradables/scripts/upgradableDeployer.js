@@ -112,7 +112,8 @@ export const deployOrDAOUpgrade = async (
     console.log("proxy not found calling deployProxy");
     const instance = await deployProxy(Contract, initParams, {
       deployer,
-      unsafeAllowCustomTypes: allowUnsafe
+      unsafeAllowCustomTypes: allowUnsafe,
+      kind: "transparent"
     });
 
     console.log("proxy deployed at:", instance.address);

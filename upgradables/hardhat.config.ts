@@ -10,7 +10,6 @@ import "solidity-coverage";
 import { task, types } from "hardhat/config";
 import { sha3 } from "web3-utils";
 import dotenv from "dotenv";
-// import { airdrop } from "./scripts/governance/airdropCalculation";
 dotenv.config();
 
 const mnemonic = process.env.MNEMONIC;
@@ -80,22 +79,5 @@ const config: HardhatUserConfig = {
     timeout: 60000
   }
 };
-
-// task("repAirdrop", "Calculates airdrop data and merkle tree")
-//   .addParam("action", "calculate/tree/proof")
-//   .addOptionalPositionalParam("address", "proof for address")
-//   .setAction(async (taskArgs, hre) => {
-//     const actions = airdrop(hre.ethers, ethplorer_key);
-//     switch (taskArgs.action) {
-//       case "calculate":
-//         return actions.collectAirdropData();
-//       case "tree":
-//         return actions.buildMerkleTree();
-//       case "proof":
-//         return actions.getProof(taskArgs.address);
-//       default:
-//         console.log("unknown action use calculate or tree");
-//     }
-//   });
 
 export default config;

@@ -356,9 +356,9 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		if (keeperFee > 0) GD.transfer(msg.sender, keeperFee);
 
 		uint256 communityPoolContribution = gdBought
-		.sub(keeperFee) //subtract fee
-		.mul(communityPoolRatio) // * ommunityPoolRatio
-		.div(RATIO_BASE); // = G$ after fee * communityPoolRatio%
+			.sub(keeperFee)
+			.mul(communityPoolRatio)
+			.div(RATIO_BASE); //subtract fee // * ommunityPoolRatio // = G$ after fee * communityPoolRatio%
 
 		uint256 ubiAfterFeeAndPool = gdBought.sub(communityPoolContribution);
 
@@ -527,44 +527,47 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		uint256 r_token,
 		uint256 r_gd,
 		uint256 _value
-	) public view returns (uint256 fuseAmount, uint256 tokenOut) {
-		uint256 start = 0;
-		uint256 end = _value.div(1e18); //save iterations by moving precision to whole Fuse quantity
-		// uint256 curPriceWei = uint256(1e18).mul(r_gd) / r_token; //uniswap quote  formula UniswapV2Library.sol
-		uint256 gdForQuantity = getAmountOut(1e18, r_token, r_gd);
-		uint256 priceForQuantityWei = rdiv(1e18, gdForQuantity.mul(1e16)).div(
-			1e9
-		);
-		uint256 maxPriceWei = priceForQuantityWei
-		.mul(RATIO_BASE.add(maxSlippageRatio))
-		.div(RATIO_BASE);
-		// console.log(
-		// 	"curPrice: %s, maxPrice %s",
-		// 	priceForQuantityWei,
-		// 	maxPriceWei
+	) public view returns (uint256 maxToken, uint256 tokenOut) {
+		maxToken = (r_token * maxSlippageRatio) / RATIO_BASE;
+		maxToken = maxToken < _value ? maxToken : _value;
+		tokenOut = getAmountOut(maxToken, r_token, r_gd);
+		// uint256 start = 0;
+		// uint256 end = _value.div(1e18); //save iterations by moving precision to whole Fuse quantity
+		// // uint256 curPriceWei = uint256(1e18).mul(r_gd) / r_token; //uniswap quote  formula UniswapV2Library.sol
+		// uint256 gdForQuantity = getAmountOut(1e18, r_token, r_gd);
+		// uint256 priceForQuantityWei = rdiv(1e18, gdForQuantity.mul(1e16)).div(
+		// 	1e9
 		// );
-		fuseAmount = _value;
-		tokenOut;
-		//Iterate while start not meets end
-		while (start <= end) {
-			// Find the mid index
-			uint256 midQuantityWei = start.add(end).mul(1e18).div(2); //restore quantity precision
-			if (midQuantityWei == 0) break;
-			gdForQuantity = getAmountOut(midQuantityWei, r_token, r_gd);
-			priceForQuantityWei = rdiv(midQuantityWei, gdForQuantity.mul(1e16))
-			.div(1e9);
-			// console.log(
-			// 	"gdForQuantity: %s, priceForQuantity: %s, midQuantity: %s",
-			// 	gdForQuantity,
-			// 	priceForQuantityWei,
-			// 	midQuantityWei
-			// );
-			if (priceForQuantityWei <= maxPriceWei) {
-				start = midQuantityWei.div(1e18) + 1; //reduce precision to whole quantity div 1e18
-				fuseAmount = midQuantityWei;
-				tokenOut = gdForQuantity;
-			} else end = midQuantityWei.div(1e18) - 1; //reduce precision to whole quantity div 1e18
-		}
+		// uint256 maxPriceWei = priceForQuantityWei
+		// .mul(RATIO_BASE.add(maxSlippageRatio))
+		// .div(RATIO_BASE);
+		// // console.log(
+		// // 	"curPrice: %s, maxPrice %s",
+		// // 	priceForQuantityWei,
+		// // 	maxPriceWei
+		// // );
+		// fuseAmount = _value;
+		// tokenOut;
+		// //Iterate while start not meets end
+		// while (start <= end) {
+		// 	// Find the mid index
+		// 	uint256 midQuantityWei = start.add(end).mul(1e18).div(2); //restore quantity precision
+		// 	if (midQuantityWei == 0) break;
+		// 	gdForQuantity = getAmountOut(midQuantityWei, r_token, r_gd);
+		// 	priceForQuantityWei = rdiv(midQuantityWei, gdForQuantity.mul(1e16))
+		// 	.div(1e9);
+		// 	// console.log(
+		// 	// 	"gdForQuantity: %s, priceForQuantity: %s, midQuantity: %s",
+		// 	// 	gdForQuantity,
+		// 	// 	priceForQuantityWei,
+		// 	// 	midQuantityWei
+		// 	// );
+		// 	if (priceForQuantityWei <= maxPriceWei) {
+		// 		start = midQuantityWei.div(1e18) + 1; //reduce precision to whole quantity div 1e18
+		// 		fuseAmount = midQuantityWei;
+		// 		tokenOut = gdForQuantity;
+		// 	} else end = midQuantityWei.div(1e18) - 1; //reduce precision to whole quantity div 1e18
+		// }
 	}
 
 	function undelegateWithCatch(address _validator, uint256 _amount)

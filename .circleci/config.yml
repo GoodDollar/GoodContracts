@@ -8,6 +8,7 @@ jobs:
 
     environment:
       NODE_OPTIONS: "--max_old_space_size=4096"
+      TS_NODE_TRANSPILE_ONLY: 1
 
     steps:
       - checkout
@@ -47,6 +48,7 @@ jobs:
           command: |
             cd stakingModel
             npm ci
+            npx truffle compile
             npm run coverage
             cd ..
 
@@ -54,10 +56,7 @@ jobs:
           name: coverage upgradables
           command: |
             export ADMIN_MNEMONIC='myth like bonus scare over problem client lizard pioneer submit female collect'
-            export MNEMONIC='glad notable bullet donkey fall dolphin simple size stone evil slogan dinner'
-            cd stakingModel
-            npx truffle compile
-            cd ..
+            export MNEMONIC='glad notable bullet donkey fall dolphin simple size stone evil slogan dinner'            
             cd upgradables
             yarn --frozen-lockfile            
             npx hardhat compile 

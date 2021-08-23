@@ -12,8 +12,8 @@ jobs:
     steps:
       - checkout
 
-      - run:
-          command: "sudo npm install -g ts-node"
+      # - run:
+      # command: "sudo npm install -g ts-node"
 
       - restore_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
@@ -56,7 +56,8 @@ jobs:
             export ADMIN_MNEMONIC='myth like bonus scare over problem client lizard pioneer submit female collect'
             export MNEMONIC='glad notable bullet donkey fall dolphin simple size stone evil slogan dinner'
             cd upgradables
-            yarn --frozen-lockfile
+            yarn --frozen-lockfile            
+            npx hardhat compile 
             yarn coverage
             cd ..
 

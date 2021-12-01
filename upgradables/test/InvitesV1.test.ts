@@ -23,7 +23,7 @@ describe("InvitesV1", () => {
       invitee3,
       invitee4,
       invitee5,
-      invitee6
+      invitee6,
     ] = await ethers.getSigners();
 
     const InvitesV1 = await ethers.getContractFactory("InvitesV1");
@@ -33,7 +33,7 @@ describe("InvitesV1", () => {
       controller,
       avatar: av,
       gd: gooddollar,
-      identity
+      identity,
     } = await createDAO();
 
     Controller = controller;
@@ -52,7 +52,7 @@ describe("InvitesV1", () => {
       [avatar, identity, gooddollar, 500],
       {
         unsafeAllowCustomTypes: true,
-        kind: "transparent"
+        kind: "transparent",
       }
     )) as InvitesV1;
 
@@ -71,7 +71,7 @@ describe("InvitesV1", () => {
   it("should have version", async () => {
     expect(await invites.active()).to.be.true;
     const version = await invites.version();
-    expect(version).to.be.equal("1.3.0");
+    expect(version).to.be.equal("1.4.0");
   });
 
   it("should let anyone join", async () => {
@@ -126,21 +126,21 @@ describe("InvitesV1", () => {
 
   it("should pay bounty for whitelisted invitee and inviter", async () => {
     const bounty = (await invites.levels(0)).bounty.toNumber();
-    await id.addWhitelistedWithDID(inviter1.address, Math.random() + "").catch(e => e);
-    const startBalance = await gd.balanceOf(inviter1.address).then(_ => _.toNumber());
+    await id.addWhitelistedWithDID(inviter1.address, Math.random() + "").catch((e) => e);
+    const startBalance = await gd.balanceOf(inviter1.address).then((_) => _.toNumber());
     expect(await id.isWhitelisted(inviter1.address)).to.be.true;
     let pending = await invites.getPendingInvitees(inviter1.address);
     expect(pending.length, "pending").to.be.equal(1);
-    const inviteeBalance = await gd.balanceOf(invitee1.address).then(_ => _.toNumber());
+    const inviteeBalance = await gd.balanceOf(invitee1.address).then((_) => _.toNumber());
     await invites.connect(inviter1).bountyFor(invitee1.address);
 
     let invitee = await invites.users(invitee1.address);
     let inviter = await invites.users(inviter1.address);
-    const endBalance = await gd.balanceOf(inviter1.address).then(_ => _.toNumber());
+    const endBalance = await gd.balanceOf(inviter1.address).then((_) => _.toNumber());
 
     pending = await invites.getPendingInvitees(inviter1.address);
-    const txFee = await gd.getFees(bounty).then(_ => _["0"].toNumber()); //gd might have a tx fee
-    const txFee2 = await gd.getFees(bounty / 2).then(_ => _["0"].toNumber()); //gd might have a tx fee
+    const txFee = await gd.getFees(bounty).then((_) => _["0"].toNumber()); //gd might have a tx fee
+    const txFee2 = await gd.getFees(bounty / 2).then((_) => _["0"].toNumber()); //gd might have a tx fee
 
     expect(pending.length, "pending").to.be.equal(0);
     expect(invitee.bountyPaid).to.be.true;
@@ -151,7 +151,7 @@ describe("InvitesV1", () => {
       "inviter rewards not matching bounty"
     ).to.be.equal(bounty);
     expect(
-      (await gd.balanceOf(invitee1.address).then(_ => _.toNumber())) - inviteeBalance,
+      (await gd.balanceOf(invitee1.address).then((_) => _.toNumber())) - inviteeBalance,
       "invitee rewrad should be bounty/2"
     ).to.be.equal(bounty / 2 - txFee2); //test that invitee  got half bonus
   });
@@ -180,12 +180,12 @@ describe("InvitesV1", () => {
     const res = await invites
       .connect(inviter1)
       .collectBounties()
-      .catch(e => e);
+      .catch((e) => e);
     let user1 = await invites.users(invitee2.address);
     let user2 = await invites.users(invitee3.address);
     let pending = await invites.getPendingInvitees(inviter1.address);
     expect(
-      await invites.getPendingBounties(inviter1.address).then(_ => _.toNumber())
+      await invites.getPendingBounties(inviter1.address).then((_) => _.toNumber())
     ).to.be.equal(0);
     expect(pending.length, "pending").to.be.equal(2);
     expect(user1.bountyPaid).to.be.false;
@@ -194,15 +194,15 @@ describe("InvitesV1", () => {
   });
 
   it("should collectBounties for inviter", async () => {
-    await id.addWhitelistedWithDID(invitee2.address, Math.random() + "").catch(e => e);
-    await id.addWhitelistedWithDID(invitee3.address, Math.random() + "").catch(e => e);
+    await id.addWhitelistedWithDID(invitee2.address, Math.random() + "").catch((e) => e);
+    await id.addWhitelistedWithDID(invitee3.address, Math.random() + "").catch((e) => e);
     expect(
-      await invites.getPendingBounties(inviter1.address).then(_ => _.toNumber())
+      await invites.getPendingBounties(inviter1.address).then((_) => _.toNumber())
     ).to.be.equal(2);
     const res = await invites
       .connect(inviter1)
       .collectBounties()
-      .catch(e => e);
+      .catch((e) => e);
 
     let user1 = await invites.users(invitee2.address);
     let user2 = await invites.users(invitee3.address);
@@ -234,10 +234,10 @@ describe("InvitesV1", () => {
     await invites
       .connect(inviter1)
       .join(ethers.utils.hexZeroPad("0xfa", 32), ethers.constants.HashZero)
-      .then(_ => _.wait())
-      .catch(e => e);
+      .then((_) => _.wait())
+      .catch((e) => e);
 
-    await id.addWhitelistedWithDID(inviter1.address, Math.random() + "").catch(e => e);
+    await id.addWhitelistedWithDID(inviter1.address, Math.random() + "").catch((e) => e);
     await invites.setLevel(0, 1, 5, 1); //1 inviter to level up
     await invites.setLevel(1, 0, 10, 2); // 10 bounty for second level
 
@@ -247,11 +247,11 @@ describe("InvitesV1", () => {
     await invites
       .connect(invitee5)
       .join(ethers.utils.hexZeroPad("0x04", 32), ethers.utils.hexZeroPad("0xfa", 32));
-    await id.addWhitelistedWithDID(invitee4.address, Math.random() + "").catch(e => e);
-    await id.addWhitelistedWithDID(invitee5.address, Math.random() + "").catch(e => e);
+    await id.addWhitelistedWithDID(invitee4.address, Math.random() + "").catch((e) => e);
+    await id.addWhitelistedWithDID(invitee5.address, Math.random() + "").catch((e) => e);
     const res1 = await (await invites.bountyFor(invitee4.address)).wait();
 
-    const log1 = res1.events.find(_ => _.event === "InviterBounty");
+    const log1 = res1.events.find((_) => _.event === "InviterBounty");
     expect(log1.event).to.be.equal("InviterBounty");
     expect(log1.args.inviterLevel.toNumber()).to.be.equal(1);
     expect(log1.args.earnedLevel).to.be.equal(true);
@@ -260,7 +260,7 @@ describe("InvitesV1", () => {
     let inviter = await invites.users(inviter1.address);
     expect(inviter.level.toNumber()).to.be.equal(1);
     const res2 = await (await invites.connect(inviter1).collectBounties()).wait();
-    const log2 = res2.events.find(_ => _.event === "InviterBounty");
+    const log2 = res2.events.find((_) => _.event === "InviterBounty");
     expect(log2.event).to.be.equal("InviterBounty");
     expect(log2.args.inviterLevel.toNumber()).to.be.equal(1);
     expect(log2.args.earnedLevel).to.be.equal(false);
@@ -276,13 +276,13 @@ describe("InvitesV1", () => {
       .join(ethers.utils.hexZeroPad("0xfd", 32), ethers.utils.hexZeroPad("0xfa", 32));
     const invitee = await invites.users(invitee6.address);
     expect(invitee.invitedBy).to.equal(inviter1.address);
-    await id.addWhitelistedWithDID(invitee6.address, Math.random() + "").catch(e => e);
+    await id.addWhitelistedWithDID(invitee6.address, Math.random() + "").catch((e) => e);
     await expect(invites.bountyFor(invitee6.address)).to.emit(invites, "InviterBounty");
   });
 
   it("should end contract by owner", async () => {
-    expect(await gd.balanceOf(invites.address).then(_ => _.toNumber())).to.be.gt(0);
+    expect(await gd.balanceOf(invites.address).then((_) => _.toNumber())).to.be.gt(0);
     await invites.end();
-    expect(await gd.balanceOf(invites.address).then(_ => _.toNumber())).to.be.eq(0);
+    expect(await gd.balanceOf(invites.address).then((_) => _.toNumber())).to.be.eq(0);
   });
 });

@@ -138,14 +138,13 @@ contract InvitesV1 is Initializable {
 	}
 
 	function canCollectBountyFor(address _invitee) public view returns (bool) {
-		User memory user = users[_invitee];
-		User memory inviter = users[user.invitedBy];
-		Level memory level = levels[inviter.level];
-		bool isLevelExpired =
-			levelExpirationEnabled == true &&
-				level.daysToComplete > 0 &&
-				level.daysToComplete <
-				user.joinedAt.sub(inviter.levelStarted).div(1 days);
+		User storage user = users[_invitee];
+		User storage inviter = users[user.invitedBy];
+		uint256 daysToComplete = levels[inviter.level].daysToComplete;
+		bool isLevelExpired = levelExpirationEnabled == true &&
+			daysToComplete > 0 &&
+			daysToComplete <
+			user.joinedAt.sub(inviter.levelStarted).div(1 days);
 
 		return
 			!user.bountyPaid &&
@@ -213,42 +212,44 @@ contract InvitesV1 is Initializable {
 			canCollectBountyFor(_invitee),
 			"user not elligble for bounty yet"
 		);
+		return _bountyFor(_invitee);
+	}
 
-		User storage user = users[_invitee];
-		User storage inviter = users[user.invitedBy];
-		Level memory level = levels[inviter.level];
+	function _bountyFor(address _invitee) internal {
+		address invitedBy = users[_invitee].invitedBy;
+		uint256 joinedAt = users[_invitee].joinedAt;
+		Level memory level = levels[users[invitedBy].level];
 
-		bool isLevelExpired =
-			level.daysToComplete > 0 &&
-				user.joinedAt > inviter.levelStarted && //prevent overflow in subtraction
-				level.daysToComplete <
-				user.joinedAt.sub(inviter.levelStarted).div(1 days); //how long after level started did invitee join
+		bool isLevelExpired = level.daysToComplete > 0 &&
+			joinedAt > users[invitedBy].levelStarted && //prevent overflow in subtraction
+			level.daysToComplete <
+			joinedAt.sub(users[invitedBy].levelStarted).div(1 days); //how long after level started did invitee join
 
-		user.bountyPaid = true;
-		inviter.totalApprovedInvites += 1;
-		inviter.totalEarned += level.bounty;
+		users[_invitee].bountyPaid = true;
+		users[invitedBy].totalApprovedInvites += 1;
+		users[invitedBy].totalEarned += level.bounty;
 		stats.totalApprovedInvites += 1;
 		stats.totalBountiesPaid += level.bounty;
 
 		bool earnedLevel = false;
 		if (
 			level.toNext > 0 &&
-			inviter.totalApprovedInvites >= level.toNext &&
+			users[invitedBy].totalApprovedInvites >= level.toNext &&
 			isLevelExpired == false
 		) {
-			inviter.level += 1;
-			inviter.levelStarted = now;
+			users[invitedBy].level += 1;
+			users[invitedBy].levelStarted = now;
 			earnedLevel = true;
 		}
 
-		goodDollar.transfer(user.invitedBy, level.bounty);
+		goodDollar.transfer(invitedBy, level.bounty);
 		goodDollar.transfer(_invitee, level.bounty.div(2)); //pay invitee half the bounty
 
 		emit InviterBounty(
-			user.invitedBy,
+			invitedBy,
 			_invitee,
 			level.bounty,
-			inviter.level,
+			users[invitedBy].level,
 			earnedLevel
 		);
 	}
@@ -260,10 +261,12 @@ contract InvitesV1 is Initializable {
 		User storage inviter = users[msg.sender];
 
 		for (uint256 i = 0; i < inviter.pending.length; i++) {
-			if (canCollectBountyFor(inviter.pending[i])) {
-				bountyFor(inviter.pending[i]);
+			if (gasleft() < 340000) return;
+			address pending = inviter.pending[i];
+			if (canCollectBountyFor(pending)) {
+				_bountyFor(pending);
 			}
-			if (users[inviter.pending[i]].bountyPaid) {
+			if (users[pending].bountyPaid) {
 				//if still elements in array move last item to current position
 				if (inviter.pending.length - 1 > i) {
 					inviter.pending[i] = inviter.pending[
@@ -307,8 +310,9 @@ contract InvitesV1 is Initializable {
 	 * @dev
 	 * 1.2.0 - final changes before release
 	 * 1.3.0 - allow to set inviter later
+	 * 1.4.0 - improve gas for bounty collection
 	 */
 	function version() public pure returns (string memory) {
-		return "1.3.0";
+		return "1.4.0";
 	}
 }

@@ -7,6 +7,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
 import "@openzeppelin/hardhat-upgrades";
 import "solidity-coverage";
+import "hardhat-gas-reporter";
 import { task, types } from "hardhat/config";
 import { sha3 } from "web3-utils";
 import dotenv from "dotenv";
@@ -25,59 +26,59 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
-      }
-    }
+        runs: 200,
+      },
+    },
   },
   typechain: {
-    outDir: "types"
+    outDir: "types",
   },
   etherscan: {
-    apiKey: etherscan_key
+    apiKey: etherscan_key,
   },
   networks: {
     hardhat: {
-      initialBaseFeePerGas: 0
+      initialBaseFeePerGas: 0,
     },
     ropsten: {
       accounts: { mnemonic },
       url: "https://ropsten.infura.io/v3/" + infura_api,
       gas: 3000000,
       gasPrice: 25000000000,
-      chainId: 3
+      chainId: 3,
     },
     fuse: {
       accounts: { mnemonic },
       url: "https://rpc.fuse.io/",
       gas: 3000000,
       gasPrice: 1000000000,
-      chainId: 122
+      chainId: 122,
     },
     staging: {
       accounts: { mnemonic },
       url: "https://rpc.fuse.io/",
       gas: 3000000,
       gasPrice: 1000000000,
-      chainId: 122
+      chainId: 122,
     },
     production: {
       accounts: { mnemonic },
       url: "https://rpc.fuse.io/",
       gas: 3000000,
       gasPrice: 1000000000,
-      chainId: 122
+      chainId: 122,
     },
     "production-mainnet": {
       accounts: { mnemonic },
       url: "https://mainnet.infura.io/v3/" + infura_api,
       gas: 3000000,
       gasPrice: 25000000000,
-      chainId: 1
-    }
+      chainId: 1,
+    },
   },
   mocha: {
-    timeout: 60000
-  }
+    timeout: 60000,
+  },
 };
 
 export default config;

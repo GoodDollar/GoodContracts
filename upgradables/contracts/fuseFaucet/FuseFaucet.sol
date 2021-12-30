@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0;
+pragma solidity >=0.8.0;
 
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../Interfaces.sol";
 
 /**
@@ -25,17 +25,37 @@ contract FuseFaucet is Initializable {
 	mapping(uint256 => mapping(address => uint256)) public toppings;
 	mapping(address => bool) public notFirstTime;
 
+	struct Wallet {
+		uint128 lastDayTopped;
+		uint32 dailyToppingCount;
+		uint128[7] lastWeekToppings;
+	}
+
+	mapping(address => Wallet) public wallets;
+	uint32 public maxDailyToppings;
+	uint32 public gasPrice;
+
 	function initialize(address _identity) public initializer {
-		toppingAmount = 1000000 * 1e9; //1M gwei
-		gasRefund = 131350 * 1e9; //100K gwei
+		toppingAmount = 1200000 * 1e9; //1.2M gwei
 		perDayRoughLimit = 2 * toppingAmount;
-		startTime = now;
+		maxDailyToppings = 3;
+		gasPrice = 1e9;
+		startTime = block.timestamp;
 		identity = IIdentity(_identity);
 	}
 
 	modifier reimburseGas() {
+		uint256 _gasRefund = gasleft();
 		_;
-		msg.sender.transfer(gasRefund);
+		_gasRefund = _gasRefund - gasleft() + 42000;
+		payable(msg.sender).transfer(_gasRefund * gasPrice); //gas price assumed 1e9 = 1gwei
+	}
+
+	function upgrade1() public {
+		toppingAmount = 1200000 * 1e9; //1M gwei
+		perDayRoughLimit = 2 * toppingAmount;
+		maxDailyToppings = 3;
+		gasPrice = 1e9;
 	}
 
 	receive() external payable {}
@@ -43,8 +63,9 @@ contract FuseFaucet is Initializable {
 	modifier toppingLimit(address _user) {
 		setDay();
 		require(
-			address(_user).balance < toppingAmount / 2,
-			"User balance above minimum"
+			wallets[_user].lastDayTopped != uint128(currentDay) ||
+				wallets[_user].dailyToppingCount < maxDailyToppings,
+			"max daily toppings"
 		);
 
 		require(
@@ -57,14 +78,12 @@ contract FuseFaucet is Initializable {
 			"User not whitelisted or not first time"
 		);
 
-		uint256 weekTotal = 0;
-		for (
-			int256 i = int256(currentDay);
-			i >= 0 && i > int256(currentDay) - 7;
-			i--
-		) {
-			weekTotal += toppings[uint256(i)][_user];
+		uint256 dayOfWeek = currentDay % 7;
+		uint128 weekTotal = 0;
+		for (uint256 i = 0; i <= dayOfWeek; i++) {
+			weekTotal += wallets[_user].lastWeekToppings[uint256(i)];
 		}
+
 		require(
 			weekTotal < perDayRoughLimit * 3,
 			"User wallet has been topped too many times this week"
@@ -75,23 +94,21 @@ contract FuseFaucet is Initializable {
 	/* @dev Internal function that sets current day
 	 */
 	function setDay() internal {
-		currentDay = (now - startTime) / 1 days;
+		currentDay = (block.timestamp - startTime) / 1 days;
 	}
 
 	function canTop(address _user) public view returns (bool) {
-		uint256 currentDay = (now - startTime) / 1 days;
-		bool can =
-			address(_user).balance < toppingAmount / 2 &&
-				toppings[currentDay][_user] < perDayRoughLimit &&
-				(identity.isWhitelisted(_user) || notFirstTime[_user] == false);
+		uint256 _currentDay = (block.timestamp - startTime) / 1 days;
+		bool can = (wallets[_user].lastDayTopped != uint128(currentDay) ||
+			wallets[_user].dailyToppingCount < 3) &&
+			wallets[_user].lastWeekToppings[_currentDay % 7] <
+			perDayRoughLimit &&
+			(identity.isWhitelisted(_user) || notFirstTime[_user] == false);
 
-		uint256 weekTotal = 0;
-		for (
-			int256 i = int256(currentDay);
-			i >= 0 && i > int256(currentDay) - 7;
-			i--
-		) {
-			weekTotal += toppings[uint256(i)][_user];
+		uint128 weekTotal = 0;
+		uint256 dayOfWeek = currentDay % 7;
+		for (uint256 i = 0; i <= dayOfWeek; i++) {
+			weekTotal += wallets[_user].lastWeekToppings[uint256(i)];
 		}
 
 		can = can && weekTotal < perDayRoughLimit * 3;
@@ -113,7 +130,23 @@ contract FuseFaucet is Initializable {
 	function _topWallet(address payable _wallet) internal {
 		require(toppingAmount > address(_wallet).balance);
 		uint256 toTop = toppingAmount - address(_wallet).balance;
-		toppings[currentDay][_wallet] += toTop;
+		Wallet storage wallet = wallets[_wallet];
+
+		uint256 dayOfWeek = currentDay % 7;
+		uint256 dayDiff = (currentDay - wallet.lastDayTopped);
+		dayDiff = dayDiff > 7 ? 7 : dayDiff;
+		dayDiff = dayDiff > dayOfWeek ? dayOfWeek + 1 : dayDiff;
+		for (uint256 day = dayOfWeek + 1 - dayDiff; day <= dayOfWeek; day++) {
+			wallet.lastWeekToppings[day] = 0;
+		}
+
+		// toppings[currentDay][_wallet] += toTop;
+		if (wallet.lastDayTopped == uint128(currentDay))
+			wallet.dailyToppingCount += 1;
+		else wallet.dailyToppingCount = 1;
+		wallet.lastDayTopped = uint128(currentDay);
+		wallet.lastWeekToppings[dayOfWeek] += uint128(toTop);
+
 		notFirstTime[_wallet] = true;
 		_wallet.transfer(toTop);
 		emit WalletTopped(_wallet, toTop);

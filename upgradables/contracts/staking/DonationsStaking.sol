@@ -4,7 +4,7 @@ pragma solidity >=0.6.0;
 
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../Interfaces.sol";
 
 /**
@@ -112,7 +112,7 @@ contract DonationsStaking is Initializable {
 			_minDAIAmount,
 			path,
 			address(this),
-			now
+			block.timestamp
 		);
 		return ethBalance;
 	}

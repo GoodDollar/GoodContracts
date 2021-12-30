@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6;
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 interface IConsensus {
 	/**
@@ -56,7 +56,7 @@ contract FuseStaking is Initializable, OwnableUpgradeable {
 	// function stake() public payable {
 	// 	require(msg.value > 0, "stake must be > 0");
 	// 	stakeNextValidator();
-	// 	stakers[msg.sender] = stakers[msg.sender].add(msg.value);
+	// 	stakers[msg.sender] = stakers[msg.sender] + msg.value);
 	// }
 
 	function balanceOf(address _owner) public view returns (uint256) {
@@ -67,8 +67,10 @@ contract FuseStaking is Initializable, OwnableUpgradeable {
 		uint256 toWithdraw = stakers[msg.sender];
 		require(toWithdraw > 0, "no stake  to withdraw");
 		for (uint256 i = 0; i < validators.length; i++) {
-			uint256 cur =
-				consensus.delegatedAmount(address(this), validators[i]);
+			uint256 cur = consensus.delegatedAmount(
+				address(this),
+				validators[i]
+			);
 			if (cur == 0) continue;
 			if (cur <= toWithdraw) {
 				consensus.withdraw(validators[i], cur);
@@ -79,7 +81,7 @@ contract FuseStaking is Initializable, OwnableUpgradeable {
 			}
 			if (toWithdraw == 0) break;
 		}
-		msg.sender.transfer(stakers[msg.sender]);
+		payable(msg.sender).transfer(stakers[msg.sender]);
 	}
 
 	function stakeNextValidator() internal {
@@ -87,17 +89,16 @@ contract FuseStaking is Initializable, OwnableUpgradeable {
 		uint256 min = validatorsStaked[validators[0]];
 		uint256 minIdx = 0;
 		for (uint256 i = 1; i < validators.length; i++) {
-			uint256 cur =
-				consensus.delegatedAmount(address(this), validators[i]);
+			uint256 cur = consensus.delegatedAmount(
+				address(this),
+				validators[i]
+			);
 			if (cur < min) minIdx = i;
 		}
 		uint256 balance = payable(address(this)).balance;
 
 		consensus.delegate{ value: balance }(validators[minIdx]);
-		validatorsStaked[validators[minIdx]] = validatorsStaked[
-			validators[minIdx]
-		]
-			.add(balance);
+		validatorsStaked[validators[minIdx]] += balance;
 	}
 
 	function addValidator(address _v) public onlyOwner {
@@ -107,9 +108,11 @@ contract FuseStaking is Initializable, OwnableUpgradeable {
 	function totalDelegated() public view returns (uint256) {
 		uint256 total = 0;
 		for (uint256 i = 0; i < validators.length; i++) {
-			uint256 cur =
-				consensus.delegatedAmount(address(this), validators[i]);
-			total = total.add(cur);
+			uint256 cur = consensus.delegatedAmount(
+				address(this),
+				validators[i]
+			);
+			total += cur;
 		}
 		return total;
 	}
@@ -122,12 +125,14 @@ contract FuseStaking is Initializable, OwnableUpgradeable {
 	function end() public onlyOwner {
 		uint256 total = 0;
 		for (uint256 i = 0; i < validators.length; i++) {
-			uint256 cur =
-				consensus.delegatedAmount(address(this), validators[i]);
+			uint256 cur = consensus.delegatedAmount(
+				address(this),
+				validators[i]
+			);
 			consensus.withdraw(validators[i], cur);
-			total = total.add(cur);
+			total += cur;
 		}
-		msg.sender.transfer(total);
+		payable(msg.sender).transfer(total);
 	}
 
 	receive() external payable {}

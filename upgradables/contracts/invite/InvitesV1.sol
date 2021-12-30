@@ -4,8 +4,8 @@ pragma solidity >=0.6.0;
 
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../Interfaces.sol";
 
 /**
@@ -123,8 +123,8 @@ contract InvitesV1 is Initializable {
 		);
 		if (user.inviteCode == 0x0) {
 			user.inviteCode = _myCode;
-			user.levelStarted = now;
-			user.joinedAt = now;
+			user.levelStarted = block.timestamp;
+			user.joinedAt = block.timestamp;
 			codeToUser[_myCode] = msg.sender;
 		}
 		if (inviter != address(0)) {
@@ -238,7 +238,7 @@ contract InvitesV1 is Initializable {
 			isLevelExpired == false
 		) {
 			users[invitedBy].level += 1;
-			users[invitedBy].levelStarted = now;
+			users[invitedBy].levelStarted = block.timestamp;
 			earnedLevel = true;
 		}
 
@@ -260,8 +260,8 @@ contract InvitesV1 is Initializable {
 	function collectBounties() public isActive {
 		User storage inviter = users[msg.sender];
 
-		for (uint256 i = 0; i < inviter.pending.length; i++) {
-			if (gasleft() < 340000) return;
+		for (uint256 i = 0; i < inviter.pending.length; ) {
+			// if (gasleft() < 340000) return;
 			address pending = inviter.pending[i];
 			if (canCollectBountyFor(pending)) {
 				_bountyFor(pending);
@@ -272,14 +272,14 @@ contract InvitesV1 is Initializable {
 					inviter.pending[i] = inviter.pending[
 						inviter.pending.length - 1
 					];
-
-					//force loop to do current position again so we dont miss the just moved last item
-					i--;
 				}
 
 				//extract item from pendig array
 				inviter.pending.pop();
+				//force loop to do current position again so we dont miss the just moved last item
+				continue;
 			}
+			i++;
 		}
 	}
 

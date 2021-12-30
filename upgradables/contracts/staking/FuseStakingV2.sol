@@ -1,7 +1,7 @@
 pragma solidity >=0.6;
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 // SPDX-License-Identifier: MIT
 
@@ -49,7 +49,7 @@ contract FuseStakingV2 is Initializable, OwnableUpgradeable {
 	function stake() public payable {
 		require(msg.value > 0, "stake must be > 0");
 		stakeNextValidator();
-		stakers[msg.sender] = stakers[msg.sender].add(msg.value);
+		stakers[msg.sender] += msg.value;
 	}
 
 	function balanceOf(address _owner) public view returns (uint256) {
@@ -64,8 +64,10 @@ contract FuseStakingV2 is Initializable, OwnableUpgradeable {
 			"invalid withdraw amount"
 		);
 		for (uint256 i = 0; i < validators.length; i++) {
-			uint256 cur =
-				consensus.delegatedAmount(address(this), validators[i]);
+			uint256 cur = consensus.delegatedAmount(
+				address(this),
+				validators[i]
+			);
 			if (cur == 0) continue;
 			if (cur <= toCollect) {
 				consensus.withdraw(validators[i], cur);
@@ -93,8 +95,10 @@ contract FuseStakingV2 is Initializable, OwnableUpgradeable {
 		uint256 min = consensus.delegatedAmount(address(this), validators[0]);
 		uint256 minIdx = 0;
 		for (uint256 i = 1; i < validators.length; i++) {
-			uint256 cur =
-				consensus.delegatedAmount(address(this), validators[i]);
+			uint256 cur = consensus.delegatedAmount(
+				address(this),
+				validators[i]
+			);
 			if (cur < min) minIdx = i;
 		}
 		uint256 balance = payable(address(this)).balance;
@@ -109,15 +113,20 @@ contract FuseStakingV2 is Initializable, OwnableUpgradeable {
 	function totalDelegated() public view returns (uint256) {
 		uint256 total = 0;
 		for (uint256 i = 0; i < validators.length; i++) {
-			uint256 cur =
-				consensus.delegatedAmount(address(this), validators[i]);
-			total = total.add(cur);
+			uint256 cur = consensus.delegatedAmount(
+				address(this),
+				validators[i]
+			);
+			total += cur;
 		}
 		return total;
 	}
 
 	function removeValidator(address _validator) public onlyOwner {
-		uint256 delegated = consensus.delegatedAmount(address(this), _validator);
+		uint256 delegated = consensus.delegatedAmount(
+			address(this),
+			_validator
+		);
 		if (delegated > 0) {
 			uint256 prevBalance = balance();
 			undelegateWithCatch(_validator, delegated);
@@ -128,7 +137,7 @@ contract FuseStakingV2 is Initializable, OwnableUpgradeable {
 				return;
 			}
 		}
-		
+
 		for (uint256 i = 0; i < validators.length; i++) {
 			if (validators[i] == _validator) {
 				if (i < validators.length - 1)

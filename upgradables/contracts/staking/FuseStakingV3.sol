@@ -2,9 +2,9 @@
 
 pragma solidity >=0.6;
 pragma experimental ABIEncoderV2;
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 import "../utils/DSMath.sol";
 
@@ -209,7 +209,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		);
 
 		bool staked = stakeNextValidator(msg.value, _validator);
-		stakers[msg.sender] = stakers[msg.sender].add(msg.value);
+		stakers[msg.sender] += msg.value;
 		return staked;
 	}
 
@@ -264,9 +264,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 			return true;
 		}
 
-		uint256 perValidator = totalDelegated().add(_value).div(
-			validators.length
-		);
+		uint256 perValidator = (totalDelegated() + _value) / validators.length;
 		uint256 left = _value;
 		for (uint256 i = 0; i < validators.length && left > 0; i++) {
 			uint256 cur = consensus.delegatedAmount(
@@ -296,7 +294,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 				address(this),
 				validators[i]
 			);
-			total = total.add(cur);
+			total += cur;
 		}
 		return total;
 	}
@@ -343,12 +341,8 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		);
 		uint256 stakeBack = earnings - fuseUBI;
 
-		uint256[] memory fuseswapResult = _buyGD(
-			fuseUBI.add(pendingFuseEarnings)
-		); //buy GD with X% of earnings
-		pendingFuseEarnings = fuseUBI.add(pendingFuseEarnings).sub(
-			fuseswapResult[0]
-		);
+		uint256[] memory fuseswapResult = _buyGD(fuseUBI + pendingFuseEarnings); //buy GD with X% of earnings
+		pendingFuseEarnings = fuseUBI + pendingFuseEarnings - fuseswapResult[0];
 		stakeNextValidator(stakeBack, address(0)); //stake back the rest of the earnings
 
 		uint256 gdBought = fuseswapResult[fuseswapResult.length - 1];
@@ -363,9 +357,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		uint256 ubiAfterFeeAndPool = gdBought.sub(communityPoolContribution);
 
 		GD.transfer(address(ubischeme), ubiAfterFeeAndPool); //transfer to ubischeme
-		communityPoolBalance = communityPoolBalance.add(
-			communityPoolContribution
-		);
+		communityPoolBalance += communityPoolContribution;
 
 		emit UBICollected(
 			curDay,
@@ -404,7 +396,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 					(fuseGDOut * 95) / 100,
 					path,
 					address(this),
-					now
+					block.timestamp
 				);
 		} else {
 			(uint256 usdcAmount, uint256 usedFuse) = _buyUSDC(maxFuseUSDC);
@@ -417,7 +409,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 				(usdcGDOut * 95) / 100,
 				path,
 				address(this),
-				now
+				block.timestamp
 			);
 			//buyGD should return how much fuse was used in [0] and how much G$ we got in [1]
 			result[0] = usedFuse;
@@ -453,7 +445,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		path[0] = uniswap.WETH();
 		uint256[] memory result = uniswap.swapExactETHForTokens{
 			value: maxFuse
-		}((tokenOut * 95) / 100, path, address(this), now);
+		}((tokenOut * 95) / 100, path, address(this), block.timestamp);
 
 		pegSwap.swap(result[1], fUSD, USDC);
 		usedFuse = result[0];
@@ -514,9 +506,9 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		uint256 _reserveIn,
 		uint256 _reserveOut
 	) internal pure returns (uint256 amountOut) {
-		uint256 amountInWithFee = _amountIn.mul(997);
-		uint256 numerator = amountInWithFee.mul(_reserveOut);
-		uint256 denominator = _reserveIn.mul(1000).add(amountInWithFee);
+		uint256 amountInWithFee = _amountIn * 997;
+		uint256 numerator = amountInWithFee * _reserveOut;
+		uint256 denominator = _reserveIn * 1000 + amountInWithFee;
 		amountOut = numerator / denominator;
 	}
 

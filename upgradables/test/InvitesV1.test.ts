@@ -9,7 +9,16 @@ const BN = ethers.BigNumber;
 
 describe("InvitesV1", () => {
   let invites: InvitesV1, founder: SignerWithAddress;
-  let inviter1, inviter2, invitee1, invitee2, invitee3, invitee4, invitee5, invitee6;
+  let inviter1,
+    inviter2,
+    invitee1,
+    invitee2,
+    invitee3,
+    invitee4,
+    invitee5,
+    invitee6,
+    invitee7,
+    invitee8;
 
   let avatar, gd: GoodDollar, Controller, id: IIdentity;
 
@@ -24,6 +33,8 @@ describe("InvitesV1", () => {
       invitee4,
       invitee5,
       invitee6,
+      invitee7,
+      invitee8,
     ] = await ethers.getSigners();
 
     const InvitesV1 = await ethers.getContractFactory("InvitesV1");
@@ -71,7 +82,7 @@ describe("InvitesV1", () => {
   it("should have version", async () => {
     expect(await invites.active()).to.be.true;
     const version = await invites.version();
-    expect(version).to.be.equal("1.4.0");
+    expect(version).to.be.equal("1.5.0");
   });
 
   it("should let anyone join", async () => {
@@ -172,30 +183,29 @@ describe("InvitesV1", () => {
 
   it("should not fail in collectBounties for invalid invitees", async () => {
     await invites
-      .connect(invitee2)
+      .connect(invitee7)
       .join(ethers.utils.hexZeroPad("0x01", 32), ethers.utils.hexZeroPad("0xfa", 32));
     await invites
-      .connect(invitee3)
+      .connect(invitee8)
       .join(ethers.utils.hexZeroPad("0x02", 32), ethers.utils.hexZeroPad("0xfa", 32));
-    const res = await invites
-      .connect(inviter1)
-      .collectBounties()
-      .catch((e) => e);
-    let user1 = await invites.users(invitee2.address);
-    let user2 = await invites.users(invitee3.address);
+
     let pending = await invites.getPendingInvitees(inviter1.address);
+    expect(pending.length, "pending").to.be.equal(2);
+    await expect(invites.connect(inviter1).collectBounties()).to.not.reverted;
+    let user1 = await invites.users(invitee7.address);
+    let user2 = await invites.users(invitee8.address);
+    pending = await invites.getPendingInvitees(inviter1.address);
     expect(
       await invites.getPendingBounties(inviter1.address).then((_) => _.toNumber())
     ).to.be.equal(0);
-    expect(pending.length, "pending").to.be.equal(2);
     expect(user1.bountyPaid).to.be.false;
     expect(user2.bountyPaid).to.be.false;
-    expect(res).not.to.be.an("error");
+    expect(pending.length, "pending").to.be.equal(2);
   });
 
   it("should collectBounties for inviter", async () => {
-    await id.addWhitelistedWithDID(invitee2.address, Math.random() + "").catch((e) => e);
-    await id.addWhitelistedWithDID(invitee3.address, Math.random() + "").catch((e) => e);
+    await id.addWhitelistedWithDID(invitee7.address, Math.random() + "").catch((e) => e);
+    await id.addWhitelistedWithDID(invitee8.address, Math.random() + "").catch((e) => e);
     expect(
       await invites.getPendingBounties(inviter1.address).then((_) => _.toNumber())
     ).to.be.equal(2);
@@ -204,9 +214,12 @@ describe("InvitesV1", () => {
       .collectBounties()
       .catch((e) => e);
 
-    let user1 = await invites.users(invitee2.address);
-    let user2 = await invites.users(invitee3.address);
+    let user1 = await invites.users(invitee7.address);
+    let user2 = await invites.users(invitee8.address);
     let pending = await invites.getPendingInvitees(inviter1.address);
+    expect(
+      await invites.getPendingBounties(inviter1.address).then((_) => _.toNumber())
+    ).to.be.equal(0);
     expect(pending.length, "pending").to.be.equal(0);
     expect(user1.bountyPaid, "user1").to.be.true;
     expect(user2.bountyPaid, "user2").to.be.true;

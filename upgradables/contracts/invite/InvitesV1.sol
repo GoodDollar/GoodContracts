@@ -271,7 +271,7 @@ contract InvitesV1 is Initializable {
 		address[] storage pendings = users[msg.sender].pending;
 		uint256 totalBounties = 0;
 		for (int256 i = int256(pendings.length) - 1; i >= 0; i--) {
-			if (gasleft() < 100000) return;
+			if (gasleft() < 100000) break;
 			address pending = pendings[uint256(i)];
 			if (canCollectBountyFor(pending)) {
 				totalBounties += _bountyFor(pending, false);

@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../Interfaces.sol";
 
+// import "hardhat/console.sol";
+
 /**
  * @title InvitesV1 contract that handles invites with pre allocated bounty pool
  * 1.1 adds invitee bonus
@@ -108,12 +110,12 @@ contract InvitesV1 is Initializable {
 	}
 
 	function join(bytes32 _myCode, bytes32 _inviterCode) public isActive {
-		User storage user = users[msg.sender];
 		require(
 			codeToUser[_myCode] == address(0) ||
 				codeToUser[_myCode] == msg.sender,
 			"invite code already in use"
 		);
+		User storage user = users[msg.sender]; // this is not expensive as user is new
 		address inviter = codeToUser[_inviterCode];
 		//allow user to set inviter if doesnt have one
 		require(
@@ -129,28 +131,28 @@ contract InvitesV1 is Initializable {
 		}
 		if (inviter != address(0)) {
 			user.invitedBy = inviter;
-			User storage inviterUser = users[inviter];
-			inviterUser.invitees.push(msg.sender);
-			inviterUser.pending.push(msg.sender);
+			users[inviter].invitees.push(msg.sender);
+			users[inviter].pending.push(msg.sender);
 			stats.totalInvited += 1;
 		}
 		emit InviteeJoined(inviter, msg.sender);
 	}
 
 	function canCollectBountyFor(address _invitee) public view returns (bool) {
-		User storage user = users[_invitee];
-		User storage inviter = users[user.invitedBy];
-		uint256 daysToComplete = levels[inviter.level].daysToComplete;
+		address invitedBy = users[_invitee].invitedBy;
+		uint256 daysToComplete = levels[users[invitedBy].level].daysToComplete;
 		bool isLevelExpired = levelExpirationEnabled == true &&
 			daysToComplete > 0 &&
 			daysToComplete <
-			user.joinedAt.sub(inviter.levelStarted).div(1 days);
+			users[_invitee].joinedAt.sub(users[invitedBy].levelStarted).div(
+				1 days
+			);
 
 		return
-			!user.bountyPaid &&
-			user.invitedBy != address(0) &&
+			invitedBy != address(0) &&
+			!users[_invitee].bountyPaid &&
 			identity.isWhitelisted(_invitee) &&
-			identity.isWhitelisted(user.invitedBy) &&
+			identity.isWhitelisted(invitedBy) &&
 			isLevelExpired == false;
 	}
 
@@ -207,15 +209,22 @@ contract InvitesV1 is Initializable {
 	 * @dev  pay bounty for the inviter of _invitee
 	 * invitee need to be whitelisted
 	 */
-	function bountyFor(address _invitee) public isActive {
+	function bountyFor(address _invitee)
+		public
+		isActive
+		returns (uint256 bounty)
+	{
 		require(
 			canCollectBountyFor(_invitee),
 			"user not elligble for bounty yet"
 		);
-		return _bountyFor(_invitee);
+		return _bountyFor(_invitee, true);
 	}
 
-	function _bountyFor(address _invitee) internal {
+	function _bountyFor(address _invitee, bool isSingleBounty)
+		internal
+		returns (uint256 bounty)
+	{
 		address invitedBy = users[_invitee].invitedBy;
 		uint256 joinedAt = users[_invitee].joinedAt;
 		Level memory level = levels[users[invitedBy].level];
@@ -242,9 +251,8 @@ contract InvitesV1 is Initializable {
 			earnedLevel = true;
 		}
 
-		goodDollar.transfer(invitedBy, level.bounty);
+		if (isSingleBounty) goodDollar.transfer(invitedBy, level.bounty);
 		goodDollar.transfer(_invitee, level.bounty.div(2)); //pay invitee half the bounty
-
 		emit InviterBounty(
 			invitedBy,
 			_invitee,
@@ -252,35 +260,25 @@ contract InvitesV1 is Initializable {
 			users[invitedBy].level,
 			earnedLevel
 		);
+
+		return level.bounty;
 	}
 
 	/**
      @dev collect bounties for invitees by msg.sender that are now whitelisted
      */
 	function collectBounties() public isActive {
-		User storage inviter = users[msg.sender];
-
-		for (uint256 i = 0; i < inviter.pending.length; ) {
-			// if (gasleft() < 340000) return;
-			address pending = inviter.pending[i];
+		address[] storage pendings = users[msg.sender].pending;
+		uint256 totalBounties = 0;
+		for (int256 i = int256(pendings.length) - 1; i >= 0; i--) {
+			if (gasleft() < 100000) return;
+			address pending = pendings[uint256(i)];
 			if (canCollectBountyFor(pending)) {
-				_bountyFor(pending);
+				totalBounties += _bountyFor(pending, false);
+				pendings.pop();
 			}
-			if (users[pending].bountyPaid) {
-				//if still elements in array move last item to current position
-				if (inviter.pending.length - 1 > i) {
-					inviter.pending[i] = inviter.pending[
-						inviter.pending.length - 1
-					];
-				}
-
-				//extract item from pendig array
-				inviter.pending.pop();
-				//force loop to do current position again so we dont miss the just moved last item
-				continue;
-			}
-			i++;
 		}
+		if (totalBounties > 0) goodDollar.transfer(msg.sender, totalBounties);
 	}
 
 	function setLevel(
@@ -311,8 +309,9 @@ contract InvitesV1 is Initializable {
 	 * 1.2.0 - final changes before release
 	 * 1.3.0 - allow to set inviter later
 	 * 1.4.0 - improve gas for bounty collection
+	 * 1.5.0 - more gas improvements
 	 */
 	function version() public pure returns (string memory) {
-		return "1.4.0";
+		return "1.5.0";
 	}
 }

@@ -6,29 +6,13 @@ import "@daostack/infra/contracts/Reputation.sol";
 import "../token/GoodDollar.sol";
 import "../identity/IdentityGuard.sol";
 import "../dao/schemes/FeeFormula.sol";
-
-/**
- * @title ControllerCreator for creating a single controller. Taken from @daostack.
- */
-contract ControllerCreatorGoodDollar {
-	function create(Avatar _avatar, address _sender) public returns (address) {
-		Controller controller = new Controller(_avatar);
-		controller.registerScheme(
-			_sender,
-			bytes32(0),
-			bytes4(0x0000001f),
-			address(_avatar)
-		);
-		controller.unregisterScheme(address(this), address(_avatar));
-		return address(controller);
-	}
-}
+import "./DaoCreator.sol";
 
 /**
  * @title Contract for adding founders to the DAO. Separated from DaoCreator to reduce
  * contract sizes
  */
-contract AddFoundersGoodDollar {
+contract AddFoundersGoodDollarWithRep {
 	function create(Avatar _avatar, address _sender)
 		internal
 		returns (address)
@@ -86,7 +70,7 @@ contract AddFoundersGoodDollar {
 
 		avatar.transferOwnership(address(controller));
 		nativeToken.transferOwnership(address(avatar));
-		nativeReputation.transferOwnership(address(controller));
+		// nativeReputation.transferOwnership(address(controller)); //GReputation doesnt have ownership
 
 		// Add minters
 		nativeToken.addMinter(_sender);
@@ -100,16 +84,16 @@ contract AddFoundersGoodDollar {
 /**
  * @title Genesis Scheme that creates organizations. Taken and modified from @daostack.
  */
-contract DaoCreatorGoodDollar {
+contract DaoCreatorGoodDollarWithRep {
 	Avatar public avatar;
 	address public lock;
 
 	event NewOrg(address _avatar);
 	event InitialSchemesSet(address _avatar);
 
-	AddFoundersGoodDollar private addFoundersGoodDollar;
+	AddFoundersGoodDollarWithRep private addFoundersGoodDollar;
 
-	constructor(AddFoundersGoodDollar _addFoundersGoodDollar) public {
+	constructor(AddFoundersGoodDollarWithRep _addFoundersGoodDollar) public {
 		addFoundersGoodDollar = _addFoundersGoodDollar;
 	}
 
@@ -130,6 +114,7 @@ contract DaoCreatorGoodDollar {
 		uint256 _cap,
 		FeeFormula _formula,
 		Identity _identity,
+		Reputation _reputation,
 		address[] calldata _founders,
 		uint256 _avatarTokenAmount,
 		uint256[] calldata _foundersReputationAmount
@@ -142,6 +127,7 @@ contract DaoCreatorGoodDollar {
 				_cap,
 				_formula,
 				_identity,
+				_reputation,
 				_founders,
 				_avatarTokenAmount,
 				_foundersReputationAmount
@@ -201,6 +187,7 @@ contract DaoCreatorGoodDollar {
 		uint256 _cap,
 		FeeFormula _formula,
 		Identity _identity,
+		Reputation _nativeReputation,
 		address[] memory _founders,
 		uint256 _avatarTokenAmount,
 		uint256[] memory _foundersReputationAmount
@@ -211,7 +198,7 @@ contract DaoCreatorGoodDollar {
 			_founders.length == _foundersReputationAmount.length,
 			"Founder reputation missing"
 		);
-		require(_founders.length > 0, "Must have at least one founder");
+		// require(_founders.length > 0, "Must have at least one founder");
 		GoodDollar nativeToken = new GoodDollar(
 			_tokenName,
 			_tokenSymbol,
@@ -220,18 +207,16 @@ contract DaoCreatorGoodDollar {
 			_identity,
 			address(0)
 		);
-		Reputation nativeReputation = new Reputation();
 
 		// renounce minter
 		nativeToken.addMinter(address(addFoundersGoodDollar));
 		nativeToken.renounceMinter();
 
 		nativeToken.transferOwnership(address(addFoundersGoodDollar));
-		nativeReputation.transferOwnership(address(addFoundersGoodDollar));
 
 		avatar = addFoundersGoodDollar.addFounders(
 			nativeToken,
-			nativeReputation,
+			_nativeReputation,
 			msg.sender,
 			_founders,
 			_avatarTokenAmount,

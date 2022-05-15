@@ -25,7 +25,7 @@ interface GoodDollar is cERC20 {
 
 	function mint(address to, uint256 mintAmount) external returns (uint256);
 
-	function isMinter(address account) external view returns (bool)
+	function isMinter(address account) external view returns (bool);
 }
 
 interface Staking {

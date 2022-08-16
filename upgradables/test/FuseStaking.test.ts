@@ -1,5 +1,5 @@
-import { ethers, upgrades, network as networkConfig } from "hardhat";
-import { FuseStakingV3, Uniswap, UniswapFactory, UniswapPair } from "../types";
+import { ethers, network as networkConfig } from "hardhat";
+import { FuseStakingV3 } from "../types";
 import { expect } from "chai";
 import { deployMockContract, MockContract } from "ethereum-waffle";
 import hre from "hardhat";
@@ -60,7 +60,7 @@ describe("FuseStakingV3", () => {
 
   before(async () => {
     signers = await ethers.getSigners();
-    [founder, staker1, staker2] = signers.map(_ => _.address);
+    [founder, staker1, staker2] = signers.map((_) => _.address);
     await deployMocks();
 
     let network = networkConfig.name;
@@ -88,9 +88,7 @@ describe("FuseStakingV3", () => {
     // const fuseQuantity = ethers.utils.formatEther(res);
     expect(res.maxToken).to.gt(0);
     expect(res.maxToken).to.equal(
-      BigNumber.from("6917100025787759640000")
-        .mul(3)
-        .div(100)
+      BigNumber.from("6917100025787759640000").mul(3).div(100)
     );
     expect(res.tokenOut).to.equal(7717004);
   });

@@ -75,8 +75,8 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 	uint256 public RATIO_BASE;
 	uint256 public communityPoolRatio; //out of G$ bought how much should goto pool
 
-	uint256 communityPoolBalance;
-	uint256 pendingFuseEarnings; //earnings not  used because of slippage
+	uint256 public communityPoolBalance;
+	uint256 public pendingFuseEarnings; //earnings not  used because of slippage
 
 	address public USDC;
 	address public fUSD;
@@ -118,7 +118,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		_;
 	}
 
-	function upgrade0() public {
+	function upgrade0() external {
 		if (RATIO_BASE == 0) {
 			stakeBackRatio = 33333; //%33
 			communityPoolRatio = 33333; //%33
@@ -132,7 +132,7 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		address _gd,
 		address _ubischeme,
 		address _uniswap
-	) public {
+	) external {
 		if (address(uniswapPair) == address(0)) {
 			uniswap = Uniswap(
 				_uniswap == address(0)
@@ -146,34 +146,42 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 			uniswapPair = UniswapPair(
 				uniswapFactory.getPair(uniswap.WETH(), _gd)
 			);
-			upgrade0();
 		}
 	}
 
-	function upgrade2() public {
+	function upgrade2() external {
 		if (USDC == address(0)) {
 			USDC = address(0x620fd5fa44BE6af63715Ef4E65DDFA0387aD13F5);
 			fUSD = address(0x249BE57637D8B013Ad64785404b24aeBaE9B098B);
 		}
 	}
 
-	function upgrade3() public {
+	function upgrade3() external {
 		if (guardian == address(0)) {
 			paused = true;
 			guardian = address(0x5128E3C1f8846724cc1007Af9b4189713922E4BB);
 		}
 	}
 
-	function upgrade4() public {
+	function upgrade4() external {
 		if (address(pegSwap) == address(0)) {
 			pegSwap = PegSwap(0xdfE016328E7BcD6FA06614fE3AF3877E931F7e0a);
 			paused = false;
 		}
 	}
 
-	function upgrade5() public {
+	function upgrade5() external {
 		cERC20(fUSD).approve(address(pegSwap), type(uint256).max);
 		cERC20(USDC).approve(address(uniswap), type(uint256).max);
+	}
+
+	function upgrade6() external {
+		//switch to voltage
+		uniswap = Uniswap(0xE3F85aAd0c8DD7337427B9dF5d0fB741d65EEEB5);
+		uniswapFactory = UniswapFactory(uniswap.factory());
+		uniswapPair = UniswapPair(
+			uniswapFactory.getPair(uniswap.WETH(), address(GD))
+		);
 	}
 
 	function setContracts(address _gd, address _ubischeme) public onlyOwner {
@@ -189,7 +197,12 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		return stake(address(0));
 	}
 
-	function stake(address _validator) public payable returns (bool) {
+	function stake(address _validator)
+		public
+		payable
+		onlyGuardian
+		returns (bool)
+	{
 		require(msg.value > 0, "stake must be > 0");
 		require(validators.length > 0, "no approved validators");
 		bool found;
@@ -215,6 +228,22 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 
 	function balanceOf(address _owner) public view returns (uint256) {
 		return stakers[_owner];
+	}
+
+	function withdrawAll() public onlyGuardian {
+		for (uint256 i = 0; i < validators.length; i++) {
+			uint256 cur = consensus.delegatedAmount(
+				address(this),
+				validators[i]
+			);
+			if (cur == 0) continue;
+			undelegateWithCatch(validators[i], cur);
+		}
+		uint256 effectiveBalance = balance(); //use only undelegated funds
+		pendingFuseEarnings = 0;
+		if (effectiveBalance > 0) {
+			msg.sender.call{ value: effectiveBalance }("");
+		}
 	}
 
 	function withdraw(uint256 _value) public returns (uint256) {
@@ -250,7 +279,9 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		}
 
 		stakers[msg.sender] = stakers[msg.sender].sub(toWithdraw);
-		if (toWithdraw > 0) payable(msg.sender).transfer(toWithdraw);
+		if (toWithdraw > 0) {
+			msg.sender.call{ value: toWithdraw }("");
+		}
 		return toWithdraw;
 	}
 
@@ -348,9 +379,8 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		uint256 gdBought = fuseswapResult[fuseswapResult.length - 1];
 		uint256 keeperFee = gdBought.mul(keeperFeeRatio).div(RATIO_BASE);
 		if (keeperFee > 0) GD.transfer(msg.sender, keeperFee);
-
+		gdBought -= keeperFee;
 		uint256 communityPoolContribution = gdBought
-			.sub(keeperFee)
 			.mul(communityPoolRatio)
 			.div(RATIO_BASE); //subtract fee // * ommunityPoolRatio // = G$ after fee * communityPoolRatio%
 
@@ -457,7 +487,9 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		view
 		returns (uint256 fuseAmount, uint256 tokenOut)
 	{
-		(uint256 r_fuse, uint256 r_gd, ) = uniswapPair.getReserves();
+		(uint256 r_fuse, uint256 r_gd, ) = UniswapPair(
+			uniswapFactory.getPair(uniswap.WETH(), address(GD))
+		).getReserves();
 
 		return calcMaxTokenWithPriceImpact(r_fuse, r_gd, _value);
 	}
@@ -475,7 +507,8 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		);
 		(uint256 rg_gd, uint256 rg_usdc, ) = uniswapGDUSDCPair.getReserves();
 		(uint256 r_fuse, uint256 r_fusd, ) = uniswapFUSEfUSDPair.getReserves();
-		uint256 fusdPriceInFuse = r_fuse.mul(1e18).div(r_fusd); //fusd is 1e18 so to keep in original 1e18 precision we first multiply by 1e18
+		//fusd is 1e18 so to keep in original 1e18 precision we first multiply by 1e18
+		uint256 fusdPriceInFuse = r_fuse.mul(1e18).div(r_fusd);
 		// console.log(
 		// 	"rgd: %s rusdc:%s usdcPriceInFuse: %s",
 		// 	rg_gd,
@@ -485,7 +518,8 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		// console.log("rfuse: %s rusdc:%s", r_fuse, r_fusd);
 
 		//how many fusd we can get for fuse
-		uint256 fuseValueInfUSD = _value.mul(1e18).div(fusdPriceInFuse); //value and usdPriceInFuse are in 1e18, we mul by 1e18 to keep 18 decimals precision
+		//value and usdPriceInFuse are in 1e18, we mul by 1e18 to keep 18 decimals precision
+		uint256 fuseValueInfUSD = _value.mul(1e18).div(fusdPriceInFuse);
 		// console.log("fuse fusd value: %s", fuseValueInfUSD);
 
 		(uint256 maxUSDC, uint256 tokenOut) = calcMaxTokenWithPriceImpact(
@@ -589,8 +623,20 @@ contract FuseStakingV3 is Initializable, OwnableUpgradeable, DSMath {
 		return payable(address(this)).balance;
 	}
 
-	function setPaused(bool _paused) public onlyGuardian {
+	function setPaused(bool _paused) external onlyGuardian {
 		paused = _paused;
+	}
+
+	function setGuardian(address _guardian) external onlyGuardian {
+		guardian = _guardian;
+	}
+
+	function collectCommunityPool(address _to, uint256 amount)
+		external
+		onlyGuardian
+	{
+		communityPoolBalance -= amount;
+		GD.transfer(_to, amount);
 	}
 
 	receive() external payable {}

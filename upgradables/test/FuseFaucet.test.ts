@@ -66,7 +66,7 @@ describe("FuseFaucet", () => {
   it("should not let new user top more than once", async () => {
     await user1.sendTransaction({
       to: ethers.constants.AddressZero,
-      value: ethers.utils.parseUnits("600000", "gwei"),
+      value: ethers.utils.parseUnits("500000", "gwei"),
     });
     expect(await faucet.canTop(user1.address)).to.false;
     await expect(faucet.topWallet(user1.address)).to.revertedWith(
@@ -99,12 +99,12 @@ describe("FuseFaucet", () => {
   it("should not let identified user top over daily limit", async () => {
     await user1.sendTransaction({
       to: ethers.constants.AddressZero,
-      value: ethers.utils.parseUnits("600000", "gwei"),
+      value: ethers.utils.parseUnits("500000", "gwei"),
     });
     const tx = await (await faucet.topWallet(user1.address)).wait();
     await user1.sendTransaction({
       to: ethers.constants.AddressZero,
-      value: ethers.utils.parseUnits("600000", "gwei"),
+      value: ethers.utils.parseUnits("500000", "gwei"),
     });
     expect(await faucet.canTop(user1.address)).to.false;
     await expect(faucet.topWallet(user1.address)).to.revertedWith("max daily toppings");
@@ -123,19 +123,19 @@ describe("FuseFaucet", () => {
       await (await faucet.topWallet(user1.address)).wait();
       await user1.sendTransaction({
         to: ethers.constants.AddressZero,
-        value: ethers.utils.parseUnits("1000000", "gwei"),
+        value: ethers.utils.parseUnits("500000", "gwei"),
       });
-      await (await faucet.topWallet(user1.address)).wait();
-      await user1.sendTransaction({
-        to: ethers.constants.AddressZero,
-        value: ethers.utils.parseUnits("1000000", "gwei"),
-      });
+      // await (await faucet.topWallet(user1.address)).wait();
+      // await user1.sendTransaction({
+      //   to: ethers.constants.AddressZero,
+      //   value: ethers.utils.parseUnits("500000", "gwei"),
+      // });
     }
-    await (await faucet.topWallet(user1.address)).wait();
-    await user1.sendTransaction({
-      to: ethers.constants.AddressZero,
-      value: ethers.utils.parseUnits("1000000", "gwei"),
-    });
+    // await (await faucet.topWallet(user1.address)).wait();
+    // await user1.sendTransaction({
+    //   to: ethers.constants.AddressZero,
+    //   value: ethers.utils.parseUnits("500000", "gwei"),
+    // });
     await ethers.provider.send("evm_increaseTime", [60 * 60 * 24]);
 
     expect(await faucet.canTop(user1.address)).to.false;

@@ -16,7 +16,7 @@ const privateKey = process.env.PRIVATE_KEY;
 
 const infura_api = process.env.INFURA_API;
 const alchemy_key = process.env.ALCHEMY_KEY;
-
+const celoscan_key = process.env.CELOSCAN_KEY;
 const admin_mnemonic = process.env.ADMIN_MNEMONIC;
 
 const FUSE_RPC = "https://rpc.fuse.io";
@@ -164,6 +164,14 @@ module.exports = {
       gas: 3000000,
       skipDryRun: true,
       gasPrice: 1000000000 //1 gwei
+    },
+    celo: {
+      network_id: 42220,
+      verify: {
+        apiUrl: "https://api.celoscan.io/api",
+        apiKey: celoscan_key,
+        explorerUrl: "https://celoscan.io/address"
+      }
     }
   },
   plugins: ["solidity-coverage", "truffle-plugin-verify"],
